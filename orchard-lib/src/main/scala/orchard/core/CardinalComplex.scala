@@ -1,0 +1,88 @@
+/**
+  * CardinalComplex.scala - A Cardinal Complex
+  * 
+  * @author Eric Finster
+  * @version 0.1 
+  */
+
+package orchard.core
+
+import scala.collection.mutable.ListBuffer
+
+sealed trait Polarity[+A]
+case object Positive extends Polarity[Nothing] { override def toString = "+" }
+case object Negative extends Polarity[Nothing] { override def toString = "-" }
+case class Neutral[A](value : A) extends Polarity[A] { override def toString = value.toString }
+
+class CardinalComplex[A](seed : NCell[Polarity[A]]) extends MutableComplex[Polarity[A]] {
+
+  type CellType = CardinalCell
+
+  private val myBaseCells : ListBuffer[CellType] = new ListBuffer
+  myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
+
+  def newCell(item : Polarity[A]) : CellType = new CardinalCell(item)
+
+  def baseCells = myBaseCells.toList
+  def appendBaseCell(cell : CellType) = myBaseCells += cell
+  def setBaseCell(i : Int, cell : CellType) = myBaseCells(i) = cell
+
+  def extend = glob(Negative, Positive)
+
+  class CardinalCell(var item : Polarity[A]) extends MutableCell {
+    def isPositive : Boolean = 
+      item match {
+        case Positive => true
+        case _ => false 
+      }
+
+    def isNegative : Boolean =
+      item match {
+        case Negative => true
+        case _ => false
+      }
+
+    def isNeutral : Boolean =
+      item match {
+        case Neutral(_) => true
+        case _ => false
+      }
+
+    def isPolarized : Boolean = isPositive || isNegative
+
+    override def toString = item.toString
+  }
+}
+
+object CardinalComplex {
+  def defaultCardinal[A](item : A) : NCell[Polarity[A]] = 
+    Object(Neutral(item)).glob(Positive, Negative)
+
+  def neutralize[D <: Nat, A](cell : Cell[D, A]) : Cell[D, Polarity[A]] =
+    cell map (value => Neutral(value))
+
+  def apply[D <: Nat, A](cell : Cell[D, A]) : Cell[S[D], Polarity[A]] = 
+    cell match {
+      case Object(value, ev) => {
+        implicit val isZero = ev
+        Composite(Negative, SeedClass(ObjectCell(Neutral(value))), Positive)
+      }
+      case Composite(value, srcTree, tgtValue, ev) => {
+        implicit val hasPred = ev
+
+        val targetCardinal = CardinalComplex(srcTree.target(tgtValue))
+
+        targetCardinal match {
+          case Composite(_, Seed(_), _, e) => {
+            Composite(Negative, Graft(targetCardinal, neutralize(cell).corolla :: Nil), Positive)
+          }
+          case Composite(neg, Graft(card, branches, f), pos, e) => {
+            Composite(Negative, Graft(targetCardinal, 
+                                      neutralize(cell).corolla :: 
+                                        Leaf(card).asInstanceOf[CellTree[D, Polarity[A]]] :: 
+                                        Nil), Positive)
+          }
+        }
+      }
+    }
+}

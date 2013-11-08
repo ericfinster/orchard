@@ -1,0 +1,473 @@
+/**
+  * CardinalTray.scala - A Tray for manipulating and opetopic cardinal
+  * 
+  * @author Eric Finster
+  * @version 0.1
+  */
+
+package orchard.ui.javafx
+
+import scala.language.existentials
+import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Set
+import scala.collection.mutable.HashSet
+
+import javafx.scene.layout.VBox
+import javafx.scene.layout.HBox
+import javafx.scene.layout.Region
+import javafx.scene.layout.StackPane
+import javafx.scene.layout.BorderPane
+
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
+
+import javafx.scene.control.Label
+import javafx.scene.control.Button
+import javafx.scene.control.TextField
+import javafx.scene.control.RadioButton
+import javafx.scene.control.ToggleGroup
+import javafx.scene.control.MultipleSelectionModel
+
+import javafx.beans.property.IntegerProperty
+import javafx.beans.property.SimpleIntegerProperty
+
+import javafx.event.Event
+import javafx.event.ActionEvent
+import javafx.event.EventHandler
+
+import javafx.scene.input.KeyEvent
+import javafx.scene.input.MouseEvent
+
+import javafx.geometry.Pos
+import javafx.application.Platform
+import javafx.collections.ObservableList
+
+import orchard.core._
+import orchard.core.Util._
+
+class CardinalTray(cardinal : Cell[_ <: Nat, CardinalExpr]) extends Region with EventConduit[CellEvent[CardinalExpr]] {
+
+  //============================================================================================
+  // UI INITIALIZATION
+  //
+
+  protected var topCell : MutableCell[CardinalExpr] = null
+  protected val panels : ListBuffer[CardinalPanel] = new ListBuffer
+
+  getStyleClass.add("cardinal-tray")
+
+  val spinner = new Spinner
+
+  protected val inputHBox = new HBox
+  inputHBox.setSpacing(10)
+  inputHBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+
+  protected val compositeTextField = new TextField
+  protected val universalTextField = new TextField
+
+  inputHBox.getChildren.addAll(new Label("Composite:"), compositeTextField, 
+                               new Label("Universal:"), universalTextField)
+
+  val gutterPane = new GutterPane {
+      main = spinner
+      gutter = inputHBox
+    }
+
+  // Spinner control buttons
+
+  protected val nextBtn = new Button
+  nextBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/skip_forward.png")))
+  nextBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  nextBtn.setPrefSize(32, 32)
+
+  protected val prevBtn = new Button
+  prevBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/skip_backward.png")))
+  prevBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  prevBtn.setPrefSize(32, 32)
+
+  protected val ffBtn = new Button
+  ffBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/fast_forward.png")))
+  ffBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  ffBtn.setPrefSize(32, 32)
+
+  protected val rewBtn = new Button
+  rewBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/rewind.png")))
+  rewBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  rewBtn.setPrefSize(32, 32)
+
+  // Selection Control Buttons
+
+  protected val selectionToggleGrp = new ToggleGroup
+
+  protected val facesBtn = new RadioButton
+  facesBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/users.png")))
+  facesBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  facesBtn.setPrefSize(32, 32)
+  facesBtn.setToggleGroup(selectionToggleGrp)
+  facesBtn.setSelected(true)
+
+  protected val nbhdBtn = new RadioButton
+  nbhdBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/home.png")))
+  nbhdBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  nbhdBtn.setPrefSize(32, 32)
+  nbhdBtn.setToggleGroup(selectionToggleGrp)
+
+  protected val leftButtonVBox = new VBox
+  leftButtonVBox.setStyle("-fx-padding: 0pt 10pt 10pt 0pt; -fx-background-color: gainsboro")
+  leftButtonVBox.setSpacing(10)
+  leftButtonVBox.setMaxWidth(Region.USE_PREF_SIZE)
+  leftButtonVBox.getChildren addAll (nextBtn, prevBtn, ffBtn, rewBtn, facesBtn, nbhdBtn)
+
+  // Semantic Buttons
+
+  protected val globBtn = new Button
+  globBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/plus.png")))
+  globBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  globBtn.setPrefSize(32, 32)
+
+  protected val cmpsBtn = new Button
+  cmpsBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/target.png")))
+  cmpsBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  cmpsBtn.setPrefSize(32, 32)
+
+  protected val idBtn = new Button
+  idBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/info.png")))
+  idBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  idBtn.setPrefSize(32, 32)
+
+  protected val newBtn = new Button
+  newBtn.setGraphic(new ImageView(new Image("orchard/ui/javafx/blank_page.png")))
+  newBtn.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE)
+  newBtn.setPrefSize(32, 32)
+
+  protected val rightButtonVBox = new VBox
+  rightButtonVBox.setStyle("-fx-padding: 0pt 0pt 10pt 10pt; -fx-background-color: gainsboro")
+  rightButtonVBox.setSpacing(10)
+  rightButtonVBox.setMaxWidth(Region.USE_PREF_SIZE)
+  rightButtonVBox.getChildren addAll(globBtn, cmpsBtn, idBtn, newBtn)
+
+  // The main pane
+
+  protected val trayPane = new BorderPane
+  trayPane.setCenter(gutterPane)
+  trayPane.setRight(rightButtonVBox)
+  trayPane.setLeft(leftButtonVBox)
+
+  getChildren.add(trayPane)
+
+  loadCardinal(cardinal)
+
+  //============================================================================================
+  // SELECTION
+  //
+
+  var selectionBase : Option[CardinalCell] = None
+  val selectedCells : Set[CardinalCell] = new HashSet
+
+  def deselectAll = {
+    selectedCells foreach
+      (cell => cell.mutableCell.emitToFaces(new RequestDeselected))
+    selectedCells.clear
+    selectionBase = None
+  }
+
+  def clearSelection = {
+  }
+
+  def clearAndSelect(cell : CardinalCell) = {
+    deselectAll
+    selectAsBase(cell)
+  }
+
+  def selectAsBase(cell : CardinalCell) = {
+    select(cell)
+    selectionBase = Some(cell)
+  }
+
+  def isSelected(cell : CardinalCell) =
+    selectedCells contains cell
+
+  def trySelect(cell : CardinalCell) : Boolean = {
+    // This should be guaranteed by the cardinal structure
+    val base = selectionBase.force
+    val baseContainer = base.container.force
+
+    if (cell.container.force != baseContainer)
+      return false
+
+    val candidates : Set[CardinalCell] = new HashSet
+    candidates add cell
+
+    // Now look up a zipper to this guy
+    var ptrOpt = (new RoseZipper(baseContainer.shell.force, Nil)).lookup(cell)
+      .force("Lookup failed for selected cell.").zipOnce
+
+    // Step back through the zipper and look for the base selection
+    while (ptrOpt != None) {
+      val ptr = ptrOpt.force
+
+      val testCell = 
+        ptr.focus.rootElement.force("No root element?")
+          .asInstanceOf[CardinalCell]
+
+      if (isSelected(testCell)) {
+        // We're done!!
+        candidates foreach (c => select(c))
+        return true
+      } else {
+        candidates add testCell
+        ptrOpt = ptr.zipOnce
+      }
+    }
+
+    return false
+  }
+
+  def select(cell : CardinalCell) = {
+    cell.mutableCell.emitToFaces(new RequestSelected)
+    selectedCells add cell
+  }
+
+  //============================================================================================
+  // EVENTS
+  //
+
+  // The casts are pretty annoying, can you get rid of them??
+  override def onEventEmitted(ev : CellEvent[CardinalExpr]) = {
+    ev match {
+      case CellEntered(c) => {
+        val cell = c.asInstanceOf[CardinalCell]
+
+        if (facesBtn.isSelected)
+          cell.mutableCell.emitToFaces(new RequestHovered)
+        else
+          cell.mutableCell.emitToNeighborhood(new RequestHovered)
+      }
+
+      case CellExited(c) => {
+        val cell = c.asInstanceOf[CardinalCell]
+        
+        if (facesBtn.isSelected)
+          cell.mutableCell.emitToFaces(new RequestUnhovered)
+        else
+          cell.mutableCell.emitToNeighborhood(new RequestUnhovered)
+      }
+
+      case CellClicked(c) => {
+        val cell = c.asInstanceOf[CardinalCell]
+
+        if (cell.isNeutral)
+          clearAndSelect(cell)
+        else
+          deselectAll
+      }
+
+      case CellCtrlClicked(c) => {
+        val cell = c.asInstanceOf[CardinalCell]
+
+        selectionBase match {
+          case None => if (cell.isNeutral) selectAsBase(cell)
+          case Some(base) => {
+            if (cell != base) {
+              if (cell.isPolarized) {
+                deselectAll
+              } else {
+                if (!trySelect(cell)) clearAndSelect(cell)
+              }
+            }
+          }
+        }
+      }
+
+      case CellDoubleClicked(c) => ()
+
+      case _ => ()
+    }
+
+    super.onEventEmitted(ev)
+  }
+
+  nextBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        spinner.next
+      }
+    })
+
+  prevBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        spinner.prev
+      }
+    })
+
+  ffBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        spinner.fastForward
+      }
+    })
+
+  rewBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        spinner.rewind
+      }
+    })
+
+  globBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        extendCardinal
+      }
+    })
+
+  cmpsBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        composeSelection
+      }
+    })
+
+  newBtn.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        newOpetope
+      }
+    })
+
+  compositeTextField.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        universalTextField.requestFocus
+      }
+    })
+
+  universalTextField.setOnAction(
+    new EventHandler[ActionEvent] {
+      def handle(ev : ActionEvent) = {
+        // clean up the focus ...
+        gutterPane.hide
+        requestFocus
+      }
+    })
+
+  addEventHandler(KeyEvent.KEY_TYPED,
+                  new EventHandler[KeyEvent] {
+                    def handle(ev : KeyEvent) {
+                      ev.getCharacter match {
+                        case "n" => spinner.next
+                        case "p" => spinner.prev
+                        case _ => ()
+                      }
+                    }
+                  })
+
+  //============================================================================================
+  // LAYOUT AND RENDERING
+  //
+
+  override def layoutChildren = {
+    val insets = getInsets
+    val left = insets.getLeft
+    val right = insets.getRight
+    val top = insets.getTop
+    val bottom = insets.getBottom
+
+    trayPane.relocate(left, top)
+    trayPane.setPrefSize(getWidth - right - left, getHeight - top - bottom)
+
+    super.layoutChildren
+  }
+
+  //============================================================================================
+  // SEMANTICS
+  //
+
+  def loadCardinal(cardinal : Cell[_ <: Nat, CardinalExpr]) : Unit =
+    loadCardinal(MutableCell.fromCell(cardinal))
+
+  def loadCardinal(cardinal : MutableCell[CardinalExpr]) : Unit = {
+    topCell = cardinal
+    panels.clear
+    panels ++= cardinal.targets map (cell => new CardinalPanel(cell))
+    spinner.items.setAll(panels)
+    panels foreach (panel => { reactTo(panel) ; panel.refresh })
+  }
+
+  def extendCardinal = {
+    val (newGlob, newTarget) = topCell.glob(Negative, Positive)
+
+    val globPanel = new CardinalPanel(newGlob)
+    panels += globPanel
+    spinner.items add globPanel
+    reactTo(globPanel)
+    globPanel.refresh
+    topCell = newGlob
+
+    spinner.fastForward
+  }
+
+  def withComposites(action : (String, String) => Unit) = {
+    compositeTextField.clear
+    universalTextField.clear
+    gutterPane.onGutterShow = { () => compositeTextField.requestFocus }
+    gutterPane.show
+    gutterPane.onGutterHide = { () => action(compositeTextField.getText, universalTextField.getText) }
+  }
+
+  def composeSelection : Unit = {
+    selectionBase match {
+      case None => ()
+      case Some(base) => {
+        if (base.mutableCell.dimension >= topCell.dimension - 1)
+          extendCardinal
+
+        val baseContainer = base.mutableCell.container.force
+
+        val basePtr = (new RoseZipper(baseContainer.shell.force, Nil))
+          .lookup(base.mutableCell)
+          .force("Lookup failed for selection base")
+
+        val mutables = selectedCells map (_.mutableCell)
+
+        withComposites {
+          (cmpStr, unvStr) => {
+            baseContainer.insertComposite(Var(cmpStr), Var(unvStr), basePtr, (mcell => mutables contains mcell))
+          }}
+
+        deselectAll
+      }
+    }
+  }
+
+  def insertDrop : Unit = {
+    selectionBase match {
+      case None => ()
+      case Some(base) => {
+        ()
+      }
+    }
+  }
+
+  def newOpetope : Unit = {
+    val positiveArrow = panels(1).baseCell.mutableCell
+
+    deselectAll
+    spinner.rewind
+
+    if (topCell.dimension < 3)
+      extendCardinal
+
+    withComposites {
+      (cmpStr, unvStr) => {
+        positiveArrow
+          .insertComposite(Var(cmpStr), Var(unvStr),
+                           new RoseZipper(positiveArrow.shell.force, Nil), (_ => false))
+      }}
+
+  }
+
+
+}

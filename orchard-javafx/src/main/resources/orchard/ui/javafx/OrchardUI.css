@@ -1,0 +1,69 @@
+/*
+ *  OchardUI.css - User interface CSS declarations
+ */
+
+.orchard-button {
+    -fx-background-color: gainsboro;
+    -fx-background-radius: 4pt;
+    -fx-border-style: solid;
+    -fx-border-radius: 4pt;
+    -fx-border-width: 2pt;
+    -fx-border-color: dimgrey;
+}
+
+.orchard-dialog {
+    -fx-background-color: gainsboro;
+}
+
+.orchard-button:hover {
+    -fx-background-color: grey;
+}
+
+.javafx-panel {
+    -fx-background-color: white;
+    -fx-padding: 10pt;
+    -fx-border-style: solid;
+    -fx-border-color: grey;
+    -fx-border-width: 1pt;
+}
+
+.javafx-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 4pt;
+    -fx-border-style: solid;
+    -fx-border-color: black;
+    -fx-border-width: 2pt;
+    -fx-border-radius: 4pt;
+}
+
+.javafx-gallery {
+    -fx-background-color: gainsboro;
+    -fx-padding: 10pt;
+}
+
+.cardinal-cell {
+}
+
+.cardinal-cell-polarized {
+    -fx-background-color: gainsboro;
+}
+
+.cardinal-cell-neutral {
+    -fx-background-color: white;
+}
+
+.cardinal-neutral-hover {
+    -fx-background-color: lightskyblue;
+}
+
+.cardinal-neutral-selected {
+    -fx-background-color: cornflowerblue;
+}
+
+.cardinal-polarized-hover {
+    -fx-background-color: grey;
+}
+
+.cardinal-polarized-selected {
+    -fx-background-color: dimgrey;
+}
