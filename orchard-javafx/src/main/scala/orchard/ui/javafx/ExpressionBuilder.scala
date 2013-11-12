@@ -1,5 +1,5 @@
 /**
-  * CardinalGallery.scala - A Gallery of cardinal panels
+  * ExpressionBuilder.scala
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -8,36 +8,26 @@
 package orchard.ui.javafx
 
 import scala.collection.JavaConversions._
-
-import scala.collection.mutable.Set
-import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
-
-import javafx.scene.layout.HBox
 
 import orchard.core._
 import Util._
 
-class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polarity[A]] {
+class ExpressionBuilder extends JavaFXGallery[Polarity[Option[Expression]]] {
 
   //============================================================================================
   // INITIALIZATION
   //
 
-  type PanelType = CardinalPanel[A]
+  type PanelType = ExpressionBuilderPanel
 
-  val complex : SimpleCardinalComplex[A] = new SimpleCardinalComplex(seed)
+  val complex = new ExpressionBuilderComplex(Composite(Negative, Seed(Object(Neutral(None))), Positive))
 
-  def newPanel(i : Int) : CardinalPanel[A] = { val panel = new CardinalPanel(complex, i) ; reactTo(panel) ; panel }
-
-  def selectionIsComposable : Boolean =
-    selectionBase match {
-      case None => false
-      case Some(base) => {
-        val baseContainer = base.container.force("Selection has no container.")
-        if (baseContainer.owner.isPositive) true else false
-      }
-    }
+  def newPanel(i : Int) : ExpressionBuilderPanel = {
+    val panel = new ExpressionBuilderPanel(complex, i)
+    reactTo(panel) 
+    panel 
+  }
 
   initialize
 
@@ -89,7 +79,7 @@ class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polari
   // SEMANTICS
   //
 
-  def composeSelection(composite : A, universal : A) =
+  def emptyComposition = 
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -107,11 +97,11 @@ class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polari
 
         val owners = selectedCells map (_.owner.asInstanceOf[complex.CellType])
 
-        baseContainer.insertComposite(Neutral(composite), Neutral(universal), basePtr, (cell => owners contains cell))
+        baseContainer.insertComposite(Neutral(None), Neutral(None), basePtr, (cell => owners contains cell))
       }
     }
 
-  def insertDrop(loopStr : A, dropStr : A) = 
+  def emptyDrop = 
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -144,7 +134,8 @@ class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polari
           }
         }
 
-        positiveBase.insertComposite(Neutral(loopStr), Neutral(dropStr), basePtr, (_ => false))
+        positiveBase.insertComposite(Neutral(None), Neutral(None), basePtr, (_ => false))
       }
     }
+
 }

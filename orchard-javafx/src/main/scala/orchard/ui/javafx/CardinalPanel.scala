@@ -7,18 +7,25 @@
 
 package orchard.ui.javafx
 
+import javafx.scene.Node
+import javafx.scene.text.Text
 import javafx.scene.paint.Color
 
 import orchard.core._
 
-class CardinalPanel[A](val complex : CardinalComplex[A], baseIndex : Int) extends JavaFXPanel[Polarity[A]] with MutablePanel[Polarity[A]] {
+class CardinalPanel[A](val complex : SimpleCardinalComplex[A], baseIndex : Int) extends JavaFXPanel[Polarity[A]] with MutablePanel[Polarity[A]] {
 
   type CellType = CardinalCell
   type EdgeType = CardinalEdge
 
-  type ComplexType = CardinalComplex[A]
+  type ComplexType = SimpleCardinalComplex[A]
 
-  class CardinalCell(val owner : complex.CardinalCell) extends JavaFXCell with MutablePanelCell {
+  class CardinalCell(owner : complex.SimpleCardinalCell) extends JavaFXCell(owner) with MutablePanelCell {
+
+    // This should be more complicated.  You should use the renderability of A somehow.  I guess
+    // I'll experiment with this in the expression class
+
+    def renderLabel = new Text(item.toString)
 
     if (owner.isPolarized)
       getStyleClass.add("cardinal-cell-polarized")
@@ -31,41 +38,28 @@ class CardinalPanel[A](val complex : CardinalComplex[A], baseIndex : Int) extend
       if (ev.isInstanceOf[complex.ChangeEvents.ChangeEvent]) {
         onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
       } else {
-        ev match {
-          case CellEntered(cell) => owner.emitToFaces(RequestHovered)
-          case CellExited(cell) => owner.emitToFaces(RequestUnhovered)
-          case RequestSelected => doSelect
-          case RequestDeselected => doDeselect
-          case RequestHovered => doHover
-          case RequestUnhovered => doUnhover
-          case _ => ()
-        }
+        super.onEventEmitted(ev)
       }
     }
 
-    def doHover = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-hover" else "cardinal-neutral-hover")
-    def doSelect = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-selected" else "cardinal-neutral-selected")
-    def doUnhover = getStyleClass.remove(if (owner.isPolarized) "cardinal-polarized-hover" else "cardinal-neutral-hover")
-    def doDeselect = getStyleClass.remove(if (owner.isPolarized) "cardinal-polarized-selected" else "cardinal-neutral-selected")
+    override def doHover = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-hover" else "cardinal-neutral-hover")
+    override def doSelect = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-selected" else "cardinal-neutral-selected")
+    override def doUnhover = getStyleClass.remove(if (owner.isPolarized) "cardinal-polarized-hover" else "cardinal-neutral-hover")
+    override def doDeselect = getStyleClass.remove(if (owner.isPolarized) "cardinal-polarized-selected" else "cardinal-neutral-selected")
 
   }
 
-  class CardinalEdge(val owner : complex.CardinalCell) extends JavaFXEdge with MutablePanelEdge {
-    override def onEventEmitted(ev : CellEvent) = {
-      ev match {
-        case RequestSelected => setStroke(Color.RED)
-        case RequestDeselected => setStroke(Color.BLACK)
-        case RequestHovered => setStroke(Color.RED)
-        case RequestUnhovered => setStroke(Color.BLACK)
-        case _ => ()
-      }
+  class CardinalEdge(owner : complex.SimpleCardinalCell) extends JavaFXEdge(owner) with MutablePanelEdge {
 
-    super.onEventEmitted(ev)
-    }
+    override def doHover : Unit = setStroke(Color.RED)
+    override def doSelect : Unit = setStroke(Color.RED)
+    override def doUnhover : Unit = setStroke(Color.BLACK)
+    override def doDeselect : Unit = setStroke(Color.BLACK)
+
   }
 
-  def newCell(owner : complex.CardinalCell) : CardinalCell = { val cell = new CardinalCell(owner) ; reactTo(cell) ; cell }
-  def newEdge(owner : complex.CardinalCell) : CardinalEdge = { val edge = new CardinalEdge(owner) ; reactTo(edge) ; edge }
+  def newCell(owner : complex.SimpleCardinalCell) : CardinalCell = { val cell = new CardinalCell(owner) ; reactTo(cell) ; cell }
+  def newEdge(owner : complex.SimpleCardinalCell) : CardinalEdge = { val edge = new CardinalEdge(owner) ; reactTo(edge) ; edge }
 
   //============================================================================================
   // UI INITIALIZATION

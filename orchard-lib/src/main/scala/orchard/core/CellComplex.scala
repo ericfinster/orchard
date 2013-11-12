@@ -18,9 +18,10 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
   def newCell(item : A) : CellType
 
   def baseCells : List[CellType] 
-  def topCell : CellType = baseCells.last
-  def apply(idx : Int) : CellType = baseCells(idx)
 
+  def topCell : CellType = baseCells.last
+  def dimension : Int = baseCells.length - 1
+  def apply(idx : Int) : CellType = baseCells(idx)
   def toCell : NCell[A] = topCell.skeleton map (_.item)
 
   def forAllCells(action : CellType => Unit) : Unit = {
@@ -39,8 +40,8 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     def item : A
     def complex : CellComplex[A] = thisComplex
 
-    var loops : List[CellType]
-    var skeleton : NCell[CellType]
+    var loops : List[CellType] = Nil
+    var skeleton : NCell[CellType] = null
 
     //============================================================================================
     // EVENT EMISSION

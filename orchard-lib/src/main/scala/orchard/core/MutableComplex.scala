@@ -20,8 +20,14 @@ trait MutableComplex[A] extends CellComplex[A] {
   // COMPLEX ROUTINES
   //
 
-  def appendBaseCell(cell : CellType) 
-  def setBaseCell(i : Int, cell : CellType)
+  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
+
+  def populateComplex(seed : NCell[A]) = 
+    myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
+
+  def baseCells : List[CellType] = myBaseCells.toList
+  def appendBaseCell(cell : CellType) : Unit = myBaseCells += cell
+  def setBaseCell(i : Int, cell : CellType) = myBaseCells(i) = cell
 
   def glob(globValue : A, targetValue : A) : CellType = {
     val newGlob = newCell(globValue)
@@ -71,6 +77,8 @@ trait MutableComplex[A] extends CellComplex[A] {
       selector : CellType => Boolean) extends ChangeEvent
 
     case class GlobEncloseEvent(newTarget : CellType) extends ChangeEvent
+
+    case class ItemChangedEvent(oldItem : A) extends ChangeEvent
   }
 
   //============================================================================================
@@ -79,14 +87,13 @@ trait MutableComplex[A] extends CellComplex[A] {
 
   trait MutableCell extends ComplexCell { thisCell : CellType =>
 
-    var skeleton : NCell[CellType] = null
-    var loops : List[CellType] = Nil
-    
     //============================================================================================
     // MUTATION
     //
 
     import ChangeEvents._
+
+    def item_=(newItem : A) : Unit
 
     override def spawn(oldCell : CellType,
                        newCell : CellType,

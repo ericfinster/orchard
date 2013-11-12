@@ -31,25 +31,6 @@ object Example {
   val Psi = Composite("Psi", Graft(W, Graft(Y, Leaf(alpha) :: X.corolla :: Nil) :: Z.corolla :: Leaf(delta) :: Nil), "S")
 }
 
-// [info] <cell label="x" id="1969931593">  </cell>
-// [info] <cell label="f" id="1403886703"> <source id="1969931593"/> </cell>
-// [info] <cell label="g" id="143241509"> <source id="130873476"/> </cell>
-// [info] <cell label="h" id="567256604"> <source id="1201834395"/> </cell>
-// [info] <cell label="-" id="2146976730"> <source id="70180569"/> </cell>
-// [info] <cell label="beta" id="556300980">  </cell>
-// [info] <cell label="gamma" id="1754255469"> <source id="143241509"/><source id="968677820"/><source id="567256604"/> </cell>
-// [info] <cell label="alpha" id="494592833"> <source id="1403886703"/> </cell>
-// [info] <cell label="delta" id="1860030341"> <source id="610491808"/><source id="2006435337"/> </cell>
-// [info] <cell label="-" id="223000118"> <source id="604019211"/><source id="2146976730"/> </cell>
-// [info] <cell label="Z" id="595679908"> <source id="556300980"/><source id="1754255469"/> </cell>
-// [info] <cell label="X" id="23451442">  </cell>
-// [info] <cell label="Y" id="1158878293"> <source id="494592833"/><source id="1738275808"/> </cell>
-// [info] <cell label="W" id="833971268"> <source id="2076820954"/><source id="2078059187"/><source id="1860030341"/> </cell>
-// [info] <cell label="-" id="1414204748"> <source id="190194640"/><source id="223000118"/> </cell>
-// [info] <cell label="Psi" id="1145647744"> <source id="23451442"/><source id="1158878293"/><source id="595679908"/><source id="833971268"/> </cell>
-// [info] <cell label="-" id="563254406"> <source id="508885666"/><source id="1414204748"/> </cell>
-// [info] <cell label="-" id="1561506108"> <source id="1145647744"/><source id="563254406"/> </cell>
-
 object Example1 {
   val a = Object(1)
 

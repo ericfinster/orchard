@@ -69,87 +69,6 @@ object Cell {
   implicit def fromSuccList[D <: Nat : HasPred, A](l : List[Cell[S[D#Pred], A]]) : List[Cell[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
 
-
-  //============================================================================================
-  // XML CONVERSION
-  //
-
-  // def toXML[A : XmlSerializable](cell : Cell[_ <: Nat, A]) : xml.Node = {
-  //   val cplx = new SimpleMutableComplex(cell)
-  //   val nodes = new ListBuffer[xml.Node]
-
-  //   cplx forAllCells (c => nodes += c.cellToXML(implicitly[XmlSerializable[A]]))
-
-  //   <complex topCell={cplx.topCell.hashCode.toString}> {nodes} </complex>
-  // }
-
-  // def fromXML[A : XmlSerializable](node : xml.Node) : Cell[_ <: Nat, A] = {
-
-  //   val ds : XmlSerializable[A] = implicitly[XmlSerializable[A]]
-  //   def trimText(els : Seq[xml.Node]) = els filterNot (_.isInstanceOf[xml.Text])
-
-  //   node match {
-  //     case <complex>{cells @ _*}</complex> => {
-  //       val topCellId = (node \ "@topCell").text.toInt
-  //       val env = new HashMap[Int, Cell[_ <: Nat, A]]
-
-  //       for (cell <- trimText(cells)) {
-  //         cell match {
-  //           case <obj>{objContents @ _*}</obj> => {
-  //             val id = (cell \ "@id").text.toInt
-  //             val item = ds.fromXML(trimText((objContents \\ "label")(0).descendant)(0))
-
-  //             env(id) = Object(item)
-  //           }
-  //           case <cell>{cellContents @ _*}</cell> => {
-
-  //             val id = (cell \ "@id").text.toInt
-  //             val targetId = ((cellContents \\ "target")(0) \ "@ref").text.toInt
-  //             val item = ds.fromXML(trimText((cellContents \\ "label")(0).descendant)(0))
-
-  //             def extractTree[D <: Nat](node : xml.Node) : CellTree[D, A] = {
-  //               node match {
-  //                 case s @ <seed /> => {
-  //                   val srcId = (s \ "@ref").text.toInt
-  //                   val srcObj = env(srcId).asInstanceOf[ObjectCell[_0, A]]
-
-  //                   Seed(srcObj).asInstanceOf[CellTree[D, A]]
-  //                 }
-  //                 case l @ <leaf /> => {
-  //                   val leafId = (l \ "@ref").text.toInt
-  //                   val leafCell = env(leafId).asInstanceOf[Cell[D#Pred, A]]
-
-  //                   Leaf(leafCell).asInstanceOf[CellTree[D, A]]
-  //                 }
-  //                 case g @ <graft>{graftContents @ _*}</graft> => {
-  //                   // Fake it.
-  //                   implicit val hasPred : HasPred[D] = new HasPred[D] { type Pred = D#Pred }
-
-  //                   val graftId = (g \ "@ref").text.toInt
-  //                   val graftCell = env(graftId).asInstanceOf[Cell[D, A]]
-  //                   val branches = trimText(graftContents).toList map (n => extractTree[D](n))
-
-  //                   Graft(graftCell, branches)
-  //                 }
-  //                 case other @ _ => throw new IllegalArgumentException
-  //               }
-  //             }
-
-  //             val dim : Nat = env(targetId).dimension
-  //             val srcTree = extractTree[dim.Self](trimText((cellContents \\ "sourcetree")(0).descendant)(0))
-
-  //             env(id) = Composite(item, srcTree, env(targetId).value)
-  //           }
-  //           case other @ _ => println("Skipping unrecognized element." ++ other.toString)
-  //         }
-  //       }
-
-  //       env(topCellId)
-  //     }
-  //     case _ => throw new IllegalArgumentException("Not a complex")
-  //   }
-  // }
-
   //============================================================================================
   // CELL OPERATIONS
   //
@@ -163,6 +82,18 @@ object Cell {
       CompositeCell[S[S[D]], B](dropLbl, LeafClass[S[D], B](cell), globLbl)
 
     def map[B](f : A => B) : Cell[D, B] = cell.regenerateFrom(CellRegenerator.mapRegenerator(f))
+
+    def comultiply : Cell[D, NCell[A]] = 
+      cell match {
+        case Object(value, ev) => {
+          implicit val isZero = ev
+          ObjectCell(cell)
+        }
+        case Composite(value, srcTree, tgtValue, ev) => {
+          implicit val hasPred = ev
+          CompositeCell(cell, srcTree.comultiply, cell.target)
+        }
+      }
 
     def finalObject : Cell[_0, A] =
       cell match {
@@ -289,7 +220,7 @@ object Cell {
 //  For abstracting over the dimension
 //
 
-trait NCell[A] {
+abstract class NCell[A] {
   type Dim
 
   val dim : Nat
@@ -302,6 +233,14 @@ trait NCell[A] {
     }
 
   override def toString = cell.toString
+
+  override def equals(that : Any) = {
+    if (that.isInstanceOf[NCell[A]]) {
+      cell == that.asInstanceOf[NCell[A]].cell
+    } else {
+      false
+    }
+  }
 }
 
 object NCell {

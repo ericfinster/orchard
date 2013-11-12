@@ -14,23 +14,13 @@ case object Positive extends Polarity[Nothing] { override def toString = "+" }
 case object Negative extends Polarity[Nothing] { override def toString = "-" }
 case class Neutral[A](value : A) extends Polarity[A] { override def toString = value.toString }
 
-class CardinalComplex[A](seed : NCell[Polarity[A]]) extends MutableComplex[Polarity[A]] {
+trait CardinalComplex[A] { thisComplex : MutableComplex[Polarity[A]] =>
 
-  type CellType = CardinalCell
+  override type CellType <: CardinalCell
 
-  private val myBaseCells : ListBuffer[CellType] = new ListBuffer
-  myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
+  trait CardinalCell { thisCardinal : MutableCell =>
 
-  def newCell(item : Polarity[A]) : CellType = new CardinalCell(item)
-
-  def baseCells = myBaseCells.toList
-  def appendBaseCell(cell : CellType) = myBaseCells += cell
-  def setBaseCell(i : Int, cell : CellType) = myBaseCells(i) = cell
-
-  def extend = glob(Negative, Positive)
-
-  class CardinalCell(var item : Polarity[A]) extends MutableCell {
-    def isPositive : Boolean = 
+    def isPositive : Boolean =
       item match {
         case Positive => true
         case _ => false 
@@ -49,9 +39,8 @@ class CardinalComplex[A](seed : NCell[Polarity[A]]) extends MutableComplex[Polar
       }
 
     def isPolarized : Boolean = isPositive || isNegative
-
-    override def toString = item.toString
   }
+
 }
 
 object CardinalComplex {

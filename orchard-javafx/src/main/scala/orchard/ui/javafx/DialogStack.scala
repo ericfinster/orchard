@@ -87,81 +87,36 @@ class DialogStack(initialRoot : Node) extends jfxsl.Region {
         defaultButton = true
       }
 
-    protected val cancelBtn =
-      new Button("Cancel") { 
-        onAction = onCancelAction
-        cancelButton = true 
+    protected val btnBox = 
+      new HBox {
+        spacing = 10
+        content = okBtn
       }
 
     borderPane.top = heading
-    borderPane.bottom = 
-      new HBox {
-        spacing = 10
-        content = List(okBtn, cancelBtn) 
-      }
+    borderPane.bottom = btnBox
 
     def run = push(this)
 
     def onOkAction = { response = DialogOK ; pop } 
-    def onCancelAction = { response = DialogCancel ; pop } 
 
     def onHide : Unit
     def onShow : Unit
 
   }
 
-  // class Dialog extends jfxsl.Region {
+  abstract class CancellableDialog extends Dialog {
 
-  //   private val borderPane = new BorderPane { padding = Insets(10,10,10,10) }
-  //   private val heading = new Label { text = "Dialog" }
+    protected val cancelBtn =
+      new Button("Cancel") { 
+        onAction = onCancelAction
+        cancelButton = true 
+      }
 
-  //   getStyleClass.add("orchard-dialog")
-  //   setMaxSize(jfxsl.Region.USE_PREF_SIZE, jfxsl.Region.USE_PREF_SIZE)
-  //   getChildren.add(borderPane)
+    btnBox.content += cancelBtn
 
-  //   override def layoutChildren = { borderPane.resizeRelocate(0, 0, getWidth, getHeight) }
+    def onCancelAction = { response = DialogCancel ; pop } 
 
-  //   val okBtn = 
-  //     new Button("Ok") { 
-  //       onAction = { response = DialogOK ; hide } 
-  //     }
+  }
 
-  //   val cancelBtn = 
-  //     new Button("Cancel") { 
-  //       onAction = { response = DialogCancel ; hide } 
-  //       cancelButton = true 
-  //     }
-
-  //   def title : String = heading.text()
-  //   def title_=(str : String) = { heading.text = str }
-
-  //   def body : Node = borderPane.center()
-  //   def body_=(n : Node) = { borderPane.center = n }
-
-  //   def show = push(this)
-  //   def hide = if (peek == this) pop
-
-  //   borderPane.top = heading
-  //   borderPane.bottom = 
-  //     new HBox {
-  //       spacing = 10
-  //       content = List(okBtn, cancelBtn) 
-  //     }
-
-  //   private var onShowFun : () => Unit = null
-  //   private var onHideFun : DialogResponse => Unit = null
-
-  //   def onShow = { if (onShowFun != null) onShowFun() }
-  //   def onShow_=(op : => Unit) = onShowFun = { () => op }
-
-  //   def onHide = { if (onHideFun != null) onHideFun(response) }
-  //   def onHide_=(op : DialogResponse => Unit) = onHideFun = op
-
-  //   var response : DialogResponse = DialogOK
-
-  //   def run(cb : DialogResponse => Unit) = {
-
-  //     show
-  //   }
-  // }
 }

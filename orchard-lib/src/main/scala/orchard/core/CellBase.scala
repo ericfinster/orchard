@@ -33,6 +33,12 @@ trait CellBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisCell : C =>
         }
     }
 
+  def sourceCount = 
+    sources match {
+      case None => 0
+      case Some(srcs) => srcs.length
+    }
+
   def baseContainer : C =
     container match {
       case None => this

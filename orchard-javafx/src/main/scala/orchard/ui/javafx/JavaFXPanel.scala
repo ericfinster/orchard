@@ -11,6 +11,7 @@ import scala.collection.JavaConversions._
 
 import orchard.core._
 
+import javafx.scene.Node
 import javafx.scene.Group
 
 import javafx.scene.text.Text
@@ -29,6 +30,10 @@ import javafx.scene.transform.Scale
 import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
+
+trait JavaFXRenderer[A] {
+  def render(a : A) : Node
+}
 
 abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
 
@@ -139,7 +144,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
   // CELL AND EDGE IMPLEMENTATION
   //
 
-  abstract class JavaFXCell extends Region with VisualCell { thisCell : CellType =>
+  abstract class JavaFXCell(val owner : complex.CellType) extends Region with VisualCell { thisCell : CellType =>
 
     //============================================================================================
     // UI INITIALIZATION
@@ -147,10 +152,11 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
 
     getStyleClass().add("javafx-cell")
 
-    var label : Text = new Text(item.toString)
-
     val pane = new Pane
-    pane.getChildren add label
+
+    var label : Node = renderLabel
+
+    def renderLabel : Node
 
     def collectChildren = {
       val myChildren = getChildren
@@ -161,6 +167,15 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
       for { tree <- shell } {
         tree foreachCell (cell => myChildren.add(cell))
       }
+    }
+
+    def setLabelSize = {
+      val w = label.getLayoutBounds.getWidth
+      val h = label.getLayoutBounds.getHeight
+
+      // Set a minimum here???
+      labelWidth = w
+      labelHeight = h
     }
 
     //============================================================================================
@@ -213,12 +228,6 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
                        internalHeight + internalPadding + strokeWidth)
     }
 
-    def renderLabel = {
-      // Should check whether the value has been changed somehow ...
-      labelWidth = label.getLayoutBounds.getWidth
-      labelHeight = label.getLayoutBounds.getHeight
-    }
-
     def setDimensions = {
       setPrefWidth(width)
       setPrefHeight(height)
@@ -227,7 +236,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
     override def toString = "Cell(" ++ item.toString ++ ")"
   }
 
-  abstract class JavaFXEdge extends Path with VisualEdge { thisEdge : EdgeType =>
+  abstract class JavaFXEdge(val owner : complex.CellType) extends Path with VisualEdge { thisEdge : EdgeType =>
 
     //============================================================================================
     // UI INITIALIZATION

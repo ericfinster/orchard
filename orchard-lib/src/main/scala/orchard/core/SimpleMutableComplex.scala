@@ -22,12 +22,7 @@ class SimpleMutableComplex[A](seed : NCell[A]) extends MutableComplex[A] {
 
   def newCell(item : A) = new SimpleMutableCell(item)
 
-  protected val myBaseCells : ListBuffer[SimpleMutableCell] = new ListBuffer
-  myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
-
-  def baseCells : List[CellType] = myBaseCells.toList
-  def appendBaseCell(cell : SimpleMutableCell) : Unit = myBaseCells += cell
-  def setBaseCell(i : Int, cell : SimpleMutableCell) = myBaseCells(i) = cell
+  populateComplex(seed)
 
   //============================================================================================
   // CELL IMPLEMENTATION

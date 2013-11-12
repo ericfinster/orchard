@@ -18,11 +18,8 @@ class SimpleGallery[A](seed : NCell[A]) extends JavaFXGallery[A] {
 
   val complex : SimpleMutableComplex[A] = new SimpleMutableComplex(seed)
 
-  private val myPanels = new ListBuffer[SimplePanel[A]]
-  myPanels ++= { for { i <- Range(0, complex.baseCells.length) } yield { new SimplePanel(complex, i) } }
+  def newPanel(i : Int) = new SimplePanel(complex, i)
 
-  def panels : List[PanelType] = myPanels.toList
-
-  hbox.getChildren.addAll(panels)
+  initialize
 
 }

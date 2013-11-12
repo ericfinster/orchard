@@ -121,6 +121,22 @@ object CellTree {
           }
       }
 
+    def comultiply : CellTree[D, NCell[A]] = 
+      tree match {
+        case Seed(obj, ev) => {
+          implicit val isZero = ev
+          Seed(obj.comultiply).asInstanceOf[CellTree[D, NCell[A]]]
+        }
+        case Leaf(shape, ev) => {
+          implicit val hasPred = ev
+          Leaf(shape.comultiply)
+        }
+        case Graft(cell, branches, ev) => {
+          implicit val hasPred = ev
+          Graft(cell.comultiply, branches map (_.comultiply))
+        }
+      }
+
     def foreach(action : Cell[D, A] => Unit) : Unit =
       tree match {
         case Seed(obj, _) => action(obj)
@@ -131,30 +147,6 @@ object CellTree {
             action(cell)
           }
       }
-
-    // def plainTree : Tree[A] =
-    //     tree match {
-    //       case Seed(obj, _) => Stem(obj.value, Flower :: Nil) // Is this right?
-    //       case Leaf(_, _) => Flower
-    //       case Graft(cell, branches, _) => Stem(cell.value, branches.map (_.plainTree))
-    //     }
-
-    // def toTree : Tree[A] = 
-    //     tree match {
-    //       case Seed(obj, _) => Flower(obj.value)   // What to do with this fucker ...
-    //       case Leaf(shape, _) => Flower(shape.value)
-    //       case Graft(cell, branches, ev) => 
-    //         {
-    //           implicit val hasPred = ev
-    //           Stem(cell.targetValue, branches map (_.toTree))
-    //         }
-    //     }
- 
-    // def targetTree(implicit hasPred : HasPred[D]) : Tree[Cell[D#Pred, A]] = 
-    //     tree match {
-    //       case Leaf(shape, _) => Flower(shape)
-    //       case Graft(cell, branches, _) => Stem(cell.target, branches map (_.targetTree))
-    //     }
 
     def getUnit : CellTree[D, A] =
       tree match {

@@ -11,6 +11,10 @@
     -fx-border-color: dimgrey;
 }
 
+.orchard-editor {
+    -fx-background-color: gainsboro;
+}
+
 .orchard-dialog {
     -fx-background-color: gainsboro;
 }
@@ -40,6 +44,55 @@
     -fx-background-color: gainsboro;
     -fx-padding: 10pt;
 }
+
+/* Expression cells */
+
+.expression-cell {
+    empty: aliceblue;
+    polarized: gainsboro;
+}
+
+.expression-cell-polarized {
+    -fx-background-color: gainsboro;
+}
+
+.expression-cell-empty {
+    -fx-background-color: aliceblue;
+}
+
+.expression-cell-expr {
+    -fx-background-color: white;
+}
+
+.expression-cell-thin {
+    -fx-background-color: lightblue;
+}
+
+.expression-cell-polarized-hovered {
+    -fx-background-color: derive(gainsboro, -10%)
+}
+
+.expression-cell-empty-hovered {
+    -fx-background-color: derive(aliceblue, -10%)
+}
+
+.expression-cell-expr-hovered {
+    -fx-background-color: derive(white, -10%)
+}
+
+.expression-cell-polarized-selected {
+    -fx-background-color: derive(gainsboro, -20%)
+}
+
+.expression-cell-empty-selected {
+    -fx-background-color: derive(aliceblue, -20%)
+}
+
+.expression-cell-expr-selected {
+    -fx-background-color: derive(white, -20%)
+}
+
+/* Cardinal cells */
 
 .cardinal-cell {
 }

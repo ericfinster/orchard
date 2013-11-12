@@ -89,6 +89,8 @@ trait MutablePanel[A] extends Panel[A] {
           baseCell = newPanelTarget
           refresh
         }
+
+        case _ => ()
       }
     }
   }

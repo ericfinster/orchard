@@ -7,6 +7,9 @@
 
 package orchard.ui.javafx
 
+import javafx.scene.Node
+import javafx.scene.text.Text
+
 import orchard.core._
 
 class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends JavaFXPanel[A] {
@@ -16,8 +19,13 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
 
   type ComplexType = SimpleMutableComplex[A]
 
-  class SimpleCell(val owner : complex.SimpleMutableCell) extends JavaFXCell
-  class SimpleEdge(val owner : complex.SimpleMutableCell) extends JavaFXEdge
+  class SimpleCell(owner : complex.SimpleMutableCell) extends JavaFXCell(owner) {
+
+    def renderLabel : Node = new Text(item.toString)
+
+  }
+
+  class SimpleEdge(owner : complex.SimpleMutableCell) extends JavaFXEdge(owner)
 
   def newCell(owner : complex.SimpleMutableCell) : SimpleCell = new SimpleCell(owner)
   def newEdge(owner : complex.SimpleMutableCell) : SimpleEdge = new SimpleEdge(owner)

@@ -72,7 +72,7 @@ trait RenderingPanel[A] extends Panel[A] {
 
   protected def render(cell : CellType, sourceMarkers : Array[LayoutMarker]) : LayoutMarker = {
 
-    cell.renderLabel
+    cell.setLabelSize
 
     val cellMarker : LayoutMarker = 
       cell.shell match {
@@ -402,8 +402,6 @@ trait RenderingPanel[A] extends Panel[A] {
 
   trait VisualCell extends PanelCell with Rooted { thisCell : CellType =>
 
-    def renderLabel : Unit
-
     var internalWidth : Double = 0.0
     var internalHeight : Double = 0.0
 
@@ -418,6 +416,8 @@ trait RenderingPanel[A] extends Panel[A] {
 
     val vertDeps = new ListBuffer[Rooted]
     val horzDeps = new ListBuffer[Rooted]
+
+    def setLabelSize : Unit
 
     def addVerticalDependent(r : Rooted) = { vertDeps += r }
     def addHorizontalDependent(r : Rooted) = { horzDeps += r }
@@ -525,6 +525,26 @@ trait RenderingPanel[A] extends Panel[A] {
     }
 
     //============================================================================================
+    // SELECTION AND HIGHLIGHTING
+    //
+
+    def doHover : Unit = ()
+    def doSelect : Unit = ()
+    def doUnhover : Unit = ()
+    def doDeselect : Unit = ()
+
+    override def onEventEmitted(ev : CellEvent) =
+      ev match {
+        case CellEntered(cell) => owner.emitToFaces(RequestHovered)
+        case CellExited(cell) => owner.emitToFaces(RequestUnhovered)
+        case RequestSelected => doSelect
+        case RequestDeselected => doDeselect
+        case RequestHovered => doHover
+        case RequestUnhovered => doUnhover
+        case _ => super.onEventEmitted(ev)
+      }
+
+    //============================================================================================
     // MISC
     //
 
@@ -572,6 +592,24 @@ trait RenderingPanel[A] extends Panel[A] {
       incomingY = 0.0
       outgoingX = 0.0
       outgoingY = 0.0
+    }
+
+    def doHover : Unit = ()
+    def doSelect : Unit = ()
+    def doUnhover : Unit = ()
+    def doDeselect : Unit = ()
+
+    override def onEventEmitted(ev : CellEvent) = {
+      // Edges consume their events.  I think this might
+      // have been fucking up the event stream.  But seriously,
+      // you need to fix it.
+      ev match {
+        case RequestSelected => doSelect
+        case RequestDeselected => doDeselect
+        case RequestHovered => doHover
+        case RequestUnhovered => doUnhover
+        case _ => ()
+      }
     }
 
     def renderInfo : String =
