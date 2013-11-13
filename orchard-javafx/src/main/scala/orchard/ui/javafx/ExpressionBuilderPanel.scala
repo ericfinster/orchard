@@ -61,15 +61,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
 
     def assignStyle = 
       item match {
-        case Positive => getStyleClass.add("expression-cell-polarized")
-        case Negative => getStyleClass.add("expression-cell-polarized")
-        case Neutral(None) => getStyleClass.add("expression-cell-empty")
-        case Neutral(Some(expr)) => {
-          if (expr.isThin) 
-            getStyleClass.add("expression-cell-thin")
-          else
-            getStyleClass.add("expression-cell-expr")
-        }
+        case Positive => getStyleClass.add("expr-cell-polarized")
+        case Negative => getStyleClass.add("expr-cell-polarized")
+        case Neutral(None) => getStyleClass.add("expr-cell-empty")
+        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var")
+        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin")
+        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler")
+        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.add("expr-cell-filler-tgt")
+        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.add("expr-cell-filler-tgt-thin")
       }
 
     assignStyle
@@ -85,10 +84,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       isHovered = true
 
       item match {
-        case Positive => () // getStyleClass.add("expression-cell-polarized-hovered")
-        case Negative => () // getStyleClass.add("expression-cell-polarized-hovered")
-        case Neutral(None) => getStyleClass.add("expression-cell-empty-hovered")
-        case Neutral(Some(expr)) => getStyleClass.add("expression-cell-expr-hovered")
+        case Positive => () 
+        case Negative => () 
+        case Neutral(None) => getStyleClass.add("expr-cell-empty-hovered")
+        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-hovered")
+        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-hovered")
+        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-hovered")
+        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.add("expr-cell-filler-tgt-hovered")
+        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.add("expr-cell-filler-tgt-thin-hovered")
       }
     }
 
@@ -96,10 +99,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       isHovered = false
 
       item match {
-        case Positive => () // getStyleClass.remove("expression-cell-polarized-hovered")
-        case Negative => () // getStyleClass.remove("expression-cell-polarized-hovered")
-        case Neutral(None) => getStyleClass.remove("expression-cell-empty-hovered")
-        case Neutral(Some(expr)) => getStyleClass.remove("expression-cell-expr-hovered")
+        case Positive => () 
+        case Negative => () 
+        case Neutral(None) => getStyleClass.remove("expr-cell-empty-hovered")
+        case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-hovered")
+        case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-hovered")
+        case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-hovered")
+        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.remove("expr-cell-filler-tgt-hovered")
+        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.remove("expr-cell-filler-tgt-thin-hovered")
       }
     }
 
@@ -107,10 +114,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       isSelected = true
 
       item match {
-        case Positive => getStyleClass.add("expression-cell-polarized-selected")
-        case Negative => getStyleClass.add("expression-cell-polarized-selected")
-        case Neutral(None) => getStyleClass.add("expression-cell-empty-selected")
-        case Neutral(Some(expr)) => getStyleClass.add("expression-cell-expr-selected")
+        case Positive => ()
+        case Negative => ()
+        case Neutral(None) => getStyleClass.add("expr-cell-empty-selected")
+        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-selected")
+        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-selected")
+        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-selected")
+        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.add("expr-cell-filler-tgt-selected")
+        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.add("expr-cell-filler-tgt-thin-selected")
       }
 
     }
@@ -119,10 +130,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       isSelected = false
 
       item match {
-        case Positive => getStyleClass.remove("expression-cell-polarized-selected")
-        case Negative => getStyleClass.remove("expression-cell-polarized-selected")
-        case Neutral(None) => getStyleClass.remove("expression-cell-empty-selected")
-        case Neutral(Some(expr)) => getStyleClass.remove("expression-cell-expr-selected")
+        case Positive => ()
+        case Negative => ()
+        case Neutral(None) => getStyleClass.remove("expr-cell-empty-selected")
+        case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-selected")
+        case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-selected")
+        case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-selected")
+        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.remove("expr-cell-filler-tgt-selected")
+        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.remove("expr-cell-filler-tgt-thin-selected")
       }
     }
 
@@ -143,7 +158,11 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
           case _ => onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
         }
       } else {
-        super.onEventEmitted(ev)
+        ev match {
+          case CellEntered(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestHovered)
+          case CellExited(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestUnhovered)
+          case _ => super.onEventEmitted(ev)
+        }
       }
     }
   }

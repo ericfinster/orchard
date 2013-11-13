@@ -13,7 +13,9 @@ import scala.collection.mutable.ListBuffer
 import orchard.core._
 import Util._
 
-class ExpressionBuilder extends JavaFXGallery[Polarity[Option[Expression]]] {
+class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends JavaFXGallery[Polarity[Option[Expression]]] {
+
+  def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
 
   //============================================================================================
   // INITIALIZATION
@@ -21,7 +23,7 @@ class ExpressionBuilder extends JavaFXGallery[Polarity[Option[Expression]]] {
 
   type PanelType = ExpressionBuilderPanel
 
-  val complex = new ExpressionBuilderComplex(Composite(Negative, Seed(Object(Neutral(None))), Positive))
+  val complex = new ExpressionBuilderComplex(seed)
 
   def newPanel(i : Int) : ExpressionBuilderPanel = {
     val panel = new ExpressionBuilderPanel(complex, i)

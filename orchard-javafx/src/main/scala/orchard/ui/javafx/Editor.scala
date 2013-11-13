@@ -113,6 +113,10 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   val environment = new ObservableBuffer[ExpressionWrapper]
 
+  def envContains(id : String) : Boolean = {
+    environment exists (expr => expr.idProperty.getValue == id)
+  }
+
   val environmentTable = buildEnvironmentTable
 
   AnchorPane.setLeftAnchor(environmentTable, 10)
@@ -200,7 +204,6 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     val thinField = new TextField { promptText = "Thin Filler" ; onMouseClicked = { nookBtn.fire } }
 
     val thinCheckBox = new CheckBox("Thin") { allowIndeterminate = false }
-    if (emptyCell.owner.isObject) { thinCheckBox.selected = true }
 
     val envTable = buildEnvironmentTable
     envTable.onMouseClicked = { envBtn.fire }
@@ -226,30 +229,81 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
         case DialogOK => {
           if (assBtn.selected()) {
             if (emptyCell.owner.isShell) {
-              activeBuilder.deselectAll
-              emptyCell.owner.item = Neutral(Some(Variable(idField.text(), thinCheckBox.selected())))
+              if (envContains(idField.text())) {
+                println("Duplicate identifier.")
+              } else {
+                activeBuilder.deselectAll
+                emptyCell.owner.item = Neutral(Some(Variable(idField.text(), thinCheckBox.selected())))
+
+                val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toCell map (_.force)
+                environment += new ExpressionWrapper(exprCell)
+              }
             } else {
               println("Cell is not a shell!!!")
             }
           } else if (envBtn.selected()) {
-            println("Environment not supported yet.")
+            val exprWrapper = envTable.getSelectionModel.getSelectedItem
+            if (exprWrapper != null) {
+
+              println("Seeing if it fits ...")
+
+              // Here is perhaps a better way to do this: implement a zipping operation for
+              // cells which returns None when they have a different shape and the whole cell
+              // with pairs decorating them when they are the same.
+
+              def comparison(e : Option[Expression])(f : Expression) : Boolean =
+                e match {
+                  case None => true
+                  case Some(g) => g == f  // Umm ... is this okay? Oh boy, here comes the equality ...
+                }
+
+              val first : NCell[Option[Expression]] = emptyCell.owner.getSimpleFramework.toCell
+              val second : NCell[Expression] = exprWrapper.expr
+
+              val itFits = first.compareWith(second, comparison)
+
+              if (itFits) {
+
+                println("it does!!!")
+
+                activeBuilder.deselectAll
+                emptyCell.owner.skeleton.simultaneously(second, (e => (f : Expression) => e.item = Neutral(Some(f))))
+
+                println("Uh .. transfer complete?")
+              } else {
+                println("nope :(")
+              }
+
+            } else {
+              println("You didn't select anything!!")
+            }
           } else {
             if (emptyCell.owner.isExposedNook) {
               println("Filling nook ...")
-              activeBuilder.deselectAll
 
-              val nook = emptyCell.owner.getSimpleFramework.toCell
-
-              if (emptyCell.owner.isOutNook) {
-                val targetIsThin = (true /: (emptyCell.owner.sources.force map (_.isThin))) (_&&_)
-                emptyCell.owner.target.force.item = Neutral(Some(FillerTarget(compField.text(), nook, targetIsThin)))
+              if (envContains(compField.text()) || envContains(thinField.text())) {
+                println("Duplicate identifier") 
               } else {
-                val targetIsThin = emptyCell.owner.target.force.isThin
-                emptyCell.owner.emptySources.head.item = Neutral(Some(FillerTarget(compField.text(), nook, targetIsThin)))
+
+                activeBuilder.deselectAll
+
+                val nook = emptyCell.owner.getSimpleFramework.toCell
+
+                val (targetIsThin, targetCell) =
+                  if (emptyCell.owner.isOutNook) {
+                    ((true /: (emptyCell.owner.sources.force map (_.isThin))) (_&&_), emptyCell.owner.target.force)
+                  } else {
+                    (emptyCell.owner.target.force.isThin, emptyCell.owner.emptySources.head)
+                  }
+
+                targetCell.item = Neutral(Some(FillerTarget(compField.text(), nook, targetIsThin)))
+                val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.force)
+                environment += new ExpressionWrapper(tgtExprCell)
+
+                emptyCell.owner.item = Neutral(Some(Filler(thinField.text(), nook)))
+                val exprCell = emptyCell.owner.getSimpleFramework.toCell map (_.force)
+                environment += new ExpressionWrapper(exprCell)
               }
-
-              emptyCell.owner.item = Neutral(Some(Filler(thinField.text(), nook)))
-
             } else {
               println("Not and exposed nook.")
             }
@@ -273,6 +327,10 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
         if (cell.owner.isEmpty) {
           val fillDialog = new FillDialog(cell)
           fillDialog.run
+        } else {
+          // Let's open the cell in a new tab here
+          val theCell : NCell[Option[Expression]] = cell.owner.getSimpleFramework.toCell
+          newBuilder(theCell)
         }
       }
 
@@ -291,7 +349,16 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   def newBuilder = {
     val builder = new ExpressionBuilder
-    editorPane += new Tab { content = builder }
+    editorPane += new Tab { text = "Untitled" ; content = builder }
+    reactTo(builder)
+    builder.renderAll
+  }
+
+  def newBuilder(seed : NCell[Option[Expression]]) = {
+    val builder = new ExpressionBuilder(CardinalComplex(seed))
+    val newTab = new Tab { text = "Derived" ; content = builder }
+    editorPane += newTab
+    editorPane.selectionModel().select(newTab)
     reactTo(builder)
     builder.renderAll
   }

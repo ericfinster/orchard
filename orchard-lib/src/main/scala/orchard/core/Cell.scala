@@ -83,6 +83,46 @@ object Cell {
 
     def map[B](f : A => B) : Cell[D, B] = cell.regenerateFrom(CellRegenerator.mapRegenerator(f))
 
+    def compareWith[B](other : Cell[D, B], eqv : A => B => Boolean) = 
+      cell match {
+        case Object(cv, _) => {
+          other match {
+            case Object(ov, _) => eqv(cv)(ov)
+            case _ => false
+          }
+        }
+        case Composite(cv, cst, ctv, _) => {
+          other match {
+            case Composite(ov, ost, otv, _) => {
+              if (eqv(cv)(ov) && eqv(ctv)(otv)) {
+                cst.compareWith(ost, eqv)
+              } else false
+            }
+            case _ => false
+          }
+        }
+      }
+
+    def simultaneously[B](other : Cell[D, B], action : A => B => Unit) : Unit = 
+      cell match {
+        case Object(cv, _) => {
+          other match {
+            case Object(ov, _) => action(cv)(ov)
+            case _ => ()
+          }
+        }
+        case Composite(cv, cst, ctv, _) => {
+          other match {
+            case Composite(ov, ost, otv, _) => {
+              action(cv)(ov)
+              action(ctv)(otv)
+              cst.simultaneously(ost, action)
+            }
+            case _ => ()
+          }
+        }
+      }
+
     def comultiply : Cell[D, NCell[A]] = 
       cell match {
         case Object(value, ev) => {
@@ -233,6 +273,30 @@ abstract class NCell[A] {
     }
 
   override def toString = cell.toString
+
+  def compareWith[B](other : NCell[B], eqv : A => B => Boolean) : Boolean = {
+    try {
+      val o = other.cell.asInstanceOf[Cell[dim.Self, B]]
+      cell.compareWith(o, eqv)
+    } catch {
+      case e : Throwable => {
+        println("Comparison failed.")
+        false
+      }
+    }
+  }
+
+  def simultaneously[B](other : NCell[B], action : A => B => Unit) : Unit = {
+    try {
+      val o = other.cell.asInstanceOf[Cell[dim.Self, B]]
+      cell.simultaneously(o, action)
+    } catch {
+      case e : Throwable => {
+        println("Simultaneous action failed.")
+        ()
+      }
+    }
+  }
 
   override def equals(that : Any) = {
     if (that.isInstanceOf[NCell[A]]) {

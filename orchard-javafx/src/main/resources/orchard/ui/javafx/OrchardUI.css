@@ -2,25 +2,12 @@
  *  OchardUI.css - User interface CSS declarations
  */
 
-.orchard-button {
-    -fx-background-color: gainsboro;
-    -fx-background-radius: 4pt;
-    -fx-border-style: solid;
-    -fx-border-radius: 4pt;
-    -fx-border-width: 2pt;
-    -fx-border-color: dimgrey;
-}
-
 .orchard-editor {
     -fx-background-color: gainsboro;
 }
 
 .orchard-dialog {
     -fx-background-color: gainsboro;
-}
-
-.orchard-button:hover {
-    -fx-background-color: grey;
 }
 
 .javafx-panel {
@@ -47,50 +34,57 @@
 
 /* Expression cells */
 
-.expression-cell {
-    empty: aliceblue;
-    polarized: gainsboro;
+.root {
+
+    /* http://colorschemedesigner.com */
+
+    primary-1: #4C82FF;
+    primary-2: #5A6FA1;
+    primary-3: #0A2C7C;
+    primary-4: #89ADFF;
+    primary-5: #BACFFF;
+
+    secondary-a-1: #5D53FF;
+    secondary-a-2: #605CA1;
+    secondary-a-3: #110B7C;
+    secondary-a-4: #948EFF;
+    secondary-a-5: #C1BDFF;
+
+    secondary-b-1: #42B9FF;
+    secondary-b-2: #5685A1;
+    secondary-b-3: #08517C;
+    secondary-b-4: #83D1FF;
+    secondary-b-5: #B7E4FF;
+
+    complement-1: #FFBC37;
+    complement-2: #A18751;
+    complement-3: #7C5507;
+    complement-4: #FFD37B;
+    complement-5: #FFE5B2;
 }
 
-.expression-cell-polarized {
-    -fx-background-color: gainsboro;
-}
+.expr-cell-polarized { -fx-background-color: gainsboro; }
 
-.expression-cell-empty {
-    -fx-background-color: aliceblue;
-}
+.expr-cell-empty { -fx-background-color: white }
+.expr-cell-var { -fx-background-color: white }
+.expr-cell-var-thin { -fx-background-color: secondary-a-5 }
+.expr-cell-filler { -fx-background-color: primary-5 }
+.expr-cell-filler-tgt { -fx-background-color: complement-5 }
+.expr-cell-filler-tgt-thin { -fx-background-color: secondary-b-5 }
 
-.expression-cell-expr {
-    -fx-background-color: white;
-}
+.expr-cell-empty-hovered { -fx-background-color: lightgrey }
+.expr-cell-var-hovered { -fx-background-color:  lightgrey }
+.expr-cell-var-thin-hovered { -fx-background-color: secondary-a-4 }
+.expr-cell-filler-hovered { -fx-background-color: primary-4 }
+.expr-cell-filler-tgt-hovered { -fx-background-color: complement-4 }
+.expr-cell-filler-tgt-thin-hovered { -fx-background-color: secondary-b-4 }
 
-.expression-cell-thin {
-    -fx-background-color: lightblue;
-}
-
-.expression-cell-polarized-hovered {
-    -fx-background-color: derive(gainsboro, -10%)
-}
-
-.expression-cell-empty-hovered {
-    -fx-background-color: derive(aliceblue, -10%)
-}
-
-.expression-cell-expr-hovered {
-    -fx-background-color: derive(white, -10%)
-}
-
-.expression-cell-polarized-selected {
-    -fx-background-color: derive(gainsboro, -20%)
-}
-
-.expression-cell-empty-selected {
-    -fx-background-color: derive(aliceblue, -20%)
-}
-
-.expression-cell-expr-selected {
-    -fx-background-color: derive(white, -20%)
-}
+.expr-cell-empty-selected { -fx-background-color: grey }
+.expr-cell-var-selected { -fx-background-color: grey }
+.expr-cell-var-thin-selected { -fx-background-color: secondary-a-1 }
+.expr-cell-filler-selected { -fx-background-color: primary-1 }
+.expr-cell-filler-tgt-selected { -fx-background-color: complement-1 }
+.expr-cell-filler-tgt-thin-selected { -fx-background-color: secondary-b-1 }
 
 /* Cardinal cells */
 

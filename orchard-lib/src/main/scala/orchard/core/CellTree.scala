@@ -121,6 +121,57 @@ object CellTree {
           }
       }
 
+    def compareWith[B](other : CellTree[D, B], eqv : A => B => Boolean) : Boolean = 
+      tree match {
+        case SeedClass(to) => {
+          other match {
+            case SeedClass(oo) => to.compareWith(oo, eqv)
+            case _ => false
+          }
+        }
+        case LeafClass(ts) => {
+          other match {
+            case LeafClass(os) => ts.compareWith(os, eqv)
+            case _ => false
+          }
+        }
+        case GraftClass(tc, tbs) => {
+          other match {
+            case GraftClass(oc, obs) => {
+              if (tc.compareWith(oc, eqv)) {
+                (true /: (tbs.zip(obs) map (pr => { val (tb, ob) = pr ; tb.compareWith(ob, eqv) }))) (_&&_)
+              } else false
+            }
+            case _ => false
+          }
+        }
+      }
+
+    def simultaneously[B](other : CellTree[D, B], action : A => B => Unit) : Unit = 
+      tree match {
+        case SeedClass(to) => {
+          other match {
+            case SeedClass(oo) => to.simultaneously(oo, action)
+            case _ => ()
+          }
+        }
+        case LeafClass(ts) => {
+          other match {
+            case LeafClass(os) => ts.simultaneously(os, action)
+            case _ => ()
+          }
+        }
+        case GraftClass(tc, tbs) => {
+          other match {
+            case GraftClass(oc, obs) => {
+              tc.simultaneously(oc, action)
+              tbs.zip(obs) foreach (pr => { val (tb, ob) = pr ; tb.simultaneously(ob, action) })
+            }
+            case _ => ()
+          }
+        }
+      }
+
     def comultiply : CellTree[D, NCell[A]] = 
       tree match {
         case Seed(obj, ev) => {
