@@ -33,6 +33,9 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
 
   initialize
 
+  var lastComposite : GalleryCell = null
+  var lastFiller : GalleryCell = null
+
   //============================================================================================
   // EVENTS
   //
@@ -73,6 +76,10 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
         }
       }
 
+      // This makes the inserted cells available for inspection later ...
+      case Enclose(cell) => { lastComposite = cell.asInstanceOf[GalleryCell] }
+      case Spawn(cell) => { lastFiller = cell.asInstanceOf[GalleryCell] }
+
       case _ => super.onEventEmitted(ev)
     }
   }
@@ -81,7 +88,9 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
   // SEMANTICS
   //
 
-  def emptyComposition = 
+  def emptyComposition = composeSelection(None, None)
+
+  def composeSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) = 
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -99,11 +108,13 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
 
         val owners = selectedCells map (_.owner.asInstanceOf[complex.CellType])
 
-        baseContainer.insertComposite(Neutral(None), Neutral(None), basePtr, (cell => owners contains cell))
+        baseContainer.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (cell => owners contains cell))
       }
     }
 
-  def emptyDrop = 
+  def emptyDrop = dropAtSelection(None, None)
+
+  def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) =
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -136,7 +147,7 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
           }
         }
 
-        positiveBase.insertComposite(Neutral(None), Neutral(None), basePtr, (_ => false))
+        positiveBase.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (_ => false))
       }
     }
 

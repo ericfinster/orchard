@@ -11,6 +11,7 @@ import scala.language.implicitConversions
 import scala.collection.mutable.ListBuffer
 
 import Nats._
+import Util._
 
 sealed trait CellTree[D <: Nat, +A]
 
@@ -121,53 +122,32 @@ object CellTree {
           }
       }
 
-    def compareWith[B](other : CellTree[D, B], eqv : A => B => Boolean) : Boolean = 
+    def zip[B](other : CellTree[D, B]) : Option[CellTree[D, (A, B)]] = 
       tree match {
-        case SeedClass(to) => {
+        case Seed(to, ev) => {
+          implicit val isZero = ev
           other match {
-            case SeedClass(oo) => to.compareWith(oo, eqv)
-            case _ => false
+            case Seed(oo, _) => for { res <- to.zip(oo) } yield SeedClass(res.asInstanceOf[ObjectCell[D, (A, B)]])
+            case _ => None
           }
         }
-        case LeafClass(ts) => {
+        case Leaf(ts, ev) => {
+          implicit val hasPred = ev
           other match {
-            case LeafClass(os) => ts.compareWith(os, eqv)
-            case _ => false
+            case Leaf(os, _) => for { res <- ts.zip(os) } yield Leaf(res)
+            case _ => None
           }
         }
-        case GraftClass(tc, tbs) => {
+        case Graft(tc, tbs, ev) => {
+          implicit val hasPred = ev
           other match {
-            case GraftClass(oc, obs) => {
-              if (tc.compareWith(oc, eqv)) {
-                (true /: (tbs.zip(obs) map (pr => { val (tb, ob) = pr ; tb.compareWith(ob, eqv) }))) (_&&_)
-              } else false
+            case Graft(oc, obs, _) => {
+              for { zcell <- tc.zip(oc) 
+                    zbrs <- optSwitch(tbs.zip(obs) map 
+                      (pr => { val (tb, ob) = pr ; tb.zip(ob) })) } 
+              yield Graft(zcell, zbrs)
             }
-            case _ => false
-          }
-        }
-      }
-
-    def simultaneously[B](other : CellTree[D, B], action : A => B => Unit) : Unit = 
-      tree match {
-        case SeedClass(to) => {
-          other match {
-            case SeedClass(oo) => to.simultaneously(oo, action)
-            case _ => ()
-          }
-        }
-        case LeafClass(ts) => {
-          other match {
-            case LeafClass(os) => ts.simultaneously(os, action)
-            case _ => ()
-          }
-        }
-        case GraftClass(tc, tbs) => {
-          other match {
-            case GraftClass(oc, obs) => {
-              tc.simultaneously(oc, action)
-              tbs.zip(obs) foreach (pr => { val (tb, ob) = pr ; tb.simultaneously(ob, action) })
-            }
-            case _ => ()
+            case _ => None
           }
         }
       }

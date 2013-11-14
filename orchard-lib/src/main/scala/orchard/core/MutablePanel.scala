@@ -70,6 +70,9 @@ trait MutablePanel[A] extends Panel[A] {
 
           // This will set the semantic properties and then comb the tree
           spawn(oldVisualCell, newVisualCell, newVisualEdge, oldVisualCellSources, newVisualCellSources)
+
+          emit(new Spawn(newVisualCell))
+
           refresh
         }
 
@@ -80,6 +83,9 @@ trait MutablePanel[A] extends Panel[A] {
           val newPanelCell : CellType = newCell(enclosingCell)
 
           val (fillerSources, universalSources) = enclose(newPanelCell, myLocation, mySelector)
+
+          emit(new Enclose(newPanelCell))
+
           refresh
         }
 

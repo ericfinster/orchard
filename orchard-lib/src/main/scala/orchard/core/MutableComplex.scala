@@ -95,35 +95,35 @@ trait MutableComplex[A] extends CellComplex[A] {
 
     def item_=(newItem : A) : Unit
 
-    override def spawn(oldCell : CellType,
-                       newCell : CellType,
-                       newEdge : CellType,
-                       oldCellSources : List[CellType],
-                       newCellSources : List[CellType])
-        : RoseTree[CellType, Int] =
-    {
-      val resultShell = super.spawn(oldCell, newCell, newEdge, oldCellSources, newCellSources)
-      emit(new SpawnEvent(oldCell, newCell, newEdge, oldCellSources, newCellSources))
-      resultShell
-    }
+    // override def spawn(oldCell : CellType,
+    //                    newCell : CellType,
+    //                    newEdge : CellType,
+    //                    oldCellSources : List[CellType],
+    //                    newCellSources : List[CellType])
+    //     : RoseTree[CellType, Int] =
+    // {
+    //   val resultShell = super.spawn(oldCell, newCell, newEdge, oldCellSources, newCellSources)
+    //   emit(new SpawnEvent(oldCell, newCell, newEdge, oldCellSources, newCellSources))
+    //   resultShell
+    // }
 
-    override def sprout(newEdge : CellType,
-                        newSources : List[CellType]) : Unit =
-    {
-      super.sprout(newEdge, newSources)
-      emit(new SproutEvent(newEdge, newSources))
-    }
+    // override def sprout(newEdge : CellType,
+    //                     newSources : List[CellType]) : Unit =
+    // {
+    //   super.sprout(newEdge, newSources)
+    //   emit(new SproutEvent(newEdge, newSources))
+    // }
 
-    override def enclose(enclosingCell : CellType,
-                         location : RoseZipper[CellType, Int],
-                         selector : CellType => Boolean)
-        : (RoseTree[CellType, Int],
-           RoseTree[CellType, Int])  =
-    {
-      val (fillerTree, newCellTree) = super.enclose(enclosingCell, location, selector)
-      emit(new EncloseEvent(enclosingCell, location, selector))
-      (fillerTree, newCellTree)
-    }
+    // override def enclose(enclosingCell : CellType,
+    //                      location : RoseZipper[CellType, Int],
+    //                      selector : CellType => Boolean)
+    //     : (RoseTree[CellType, Int],
+    //        RoseTree[CellType, Int])  =
+    // {
+    //   val (fillerTree, newCellTree) = super.enclose(enclosingCell, location, selector)
+    //   emit(new EncloseEvent(enclosingCell, location, selector))
+    //   (fillerTree, newCellTree)
+    // }
 
     def insertComposite(compositeValue : A, universalValue : A,
                         location : RoseZipper[CellType, Int],
@@ -143,6 +143,7 @@ trait MutableComplex[A] extends CellComplex[A] {
       val (fillerSources, universalSources) =
         enclose(compositeCell, location, selector)
 
+
       // Spawn a new external cell in the next dimension
       val newLeaves = fillingContainer.spawn(fillingCell,
                                              universalCell,
@@ -153,6 +154,7 @@ trait MutableComplex[A] extends CellComplex[A] {
       // Finally, add a new leaf for the new external cell
       topFiller.sprout(universalCell, newLeaves.toList)
 
+
       // Now fix up the skeletons
 
       compositeCell.rebuildSkeleton
@@ -162,6 +164,14 @@ trait MutableComplex[A] extends CellComplex[A] {
       (neighbor => {
          neighbor.rebuildSkeleton
        })
+
+      // And pass on the events to any listeners
+      emit(new EncloseEvent(compositeCell, location, selector))
+
+      fillingContainer.emit(new SpawnEvent(fillingCell, universalCell, compositeCell, 
+        fillerSources.toList, universalSources.toList))
+
+      topFiller.emit(new SproutEvent(universalCell, newLeaves.toList))
     }
 
     // Ech.  This is a mess and should be redone.

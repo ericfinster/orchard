@@ -14,6 +14,8 @@ import scalafx.scene.text.Text
 import scalafx.scene.layout.Region
 import scalafx.scene.effect.ColorAdjust
 
+import scalafx.scene.paint.Color
+
 import scalafx.geometry.Bounds
 
 import javafx.{scene => jfxs}
@@ -167,7 +169,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     }
   }
 
-  class ExpressionBuilderEdge(owner : complex.ExpressionBuilderCell) extends JavaFXEdge(owner) with MutablePanelEdge
+  class ExpressionBuilderEdge(owner : complex.ExpressionBuilderCell) extends JavaFXEdge(owner) with MutablePanelEdge {
+
+    override def doHover : Unit = setStroke(Color.RED)
+    override def doSelect : Unit = setStroke(Color.RED)
+    override def doUnhover : Unit = setStroke(Color.BLACK)
+    override def doDeselect : Unit = setStroke(Color.BLACK)
+    
+  }
 
   def newCell(owner : complex.ExpressionBuilderCell) : ExpressionBuilderCell = { 
     val cell = new ExpressionBuilderCell(owner)

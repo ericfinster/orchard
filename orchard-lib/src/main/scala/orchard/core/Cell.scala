@@ -83,42 +83,22 @@ object Cell {
 
     def map[B](f : A => B) : Cell[D, B] = cell.regenerateFrom(CellRegenerator.mapRegenerator(f))
 
-    def compareWith[B](other : Cell[D, B], eqv : A => B => Boolean) = 
+    def zip[B](other : Cell[D, B]) : Option[Cell[D, (A, B)]] = 
       cell match {
-        case Object(cv, _) => {
+        case Object(cv, ev) => {
+          implicit val isZero = ev
           other match {
-            case Object(ov, _) => eqv(cv)(ov)
-            case _ => false
+            case Object(ov, _) => Some(Object((cv, ov)).asInstanceOf[Cell[D, (A, B)]])
+            case _ => None
           }
         }
-        case Composite(cv, cst, ctv, _) => {
+        case Composite(cv, cst, ctv, ev) => {
+          implicit val hasPred = ev
           other match {
             case Composite(ov, ost, otv, _) => {
-              if (eqv(cv)(ov) && eqv(ctv)(otv)) {
-                cst.compareWith(ost, eqv)
-              } else false
+              for { res <- cst.zip(ost) } yield Composite((cv, ov), res, (ctv, otv))
             }
-            case _ => false
-          }
-        }
-      }
-
-    def simultaneously[B](other : Cell[D, B], action : A => B => Unit) : Unit = 
-      cell match {
-        case Object(cv, _) => {
-          other match {
-            case Object(ov, _) => action(cv)(ov)
-            case _ => ()
-          }
-        }
-        case Composite(cv, cst, ctv, _) => {
-          other match {
-            case Composite(ov, ost, otv, _) => {
-              action(cv)(ov)
-              action(ctv)(otv)
-              cst.simultaneously(ost, action)
-            }
-            case _ => ()
+            case _ => None
           }
         }
       }
@@ -274,26 +254,14 @@ abstract class NCell[A] {
 
   override def toString = cell.toString
 
-  def compareWith[B](other : NCell[B], eqv : A => B => Boolean) : Boolean = {
+  def zip[B](other : NCell[B]) : Option[NCell[(A, B)]] = {
     try {
       val o = other.cell.asInstanceOf[Cell[dim.Self, B]]
-      cell.compareWith(o, eqv)
+      for { res <- cell.zip(o) } yield res
     } catch {
       case e : Throwable => {
-        println("Comparison failed.")
-        false
-      }
-    }
-  }
-
-  def simultaneously[B](other : NCell[B], action : A => B => Unit) : Unit = {
-    try {
-      val o = other.cell.asInstanceOf[Cell[dim.Self, B]]
-      cell.simultaneously(o, action)
-    } catch {
-      case e : Throwable => {
-        println("Simultaneous action failed.")
-        ()
+        println("Zip failed.")
+        None
       }
     }
   }

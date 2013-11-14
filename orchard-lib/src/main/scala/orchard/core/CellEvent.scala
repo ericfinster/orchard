@@ -23,3 +23,6 @@ case class CellDoubleClicked[A](cell : Panel[A]#CellType) extends CellEvent
 sealed trait ComplexEvent extends CellEvent
 case object ComplexExtended extends ComplexEvent
 
+sealed trait PanelEvent extends CellEvent
+case class Enclose[A](cell : Panel[A]#CellType) extends PanelEvent
+case class Spawn[A](cell : Panel[A]#CellType) extends PanelEvent

@@ -40,6 +40,12 @@ import scalafx.application.Platform
 
 import scalafx.collections.ObservableBuffer
 
+import javafx.event.Event
+import javafx.event.EventHandler
+
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
+
 import javafx.scene.{layout => jfxsl}
 import javafx.scene.{control => jfxsc}
 
@@ -59,38 +65,38 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   val mainPane = new StackPane(root.asInstanceOf[jfxsl.StackPane])
 
-  val accordionPane = 
-    new StackPane {
-      padding = Insets(10, 10, 10, 10)
-      style = "-fx-background-color: gainsboro"
-      content = new Accordion {
-        panes = List(
-          new TitledPane {
-            text = "File"
-            content = new VBox {
-              padding = Insets(10,10,10,10)
-              content = List(
-                new Button("New") { prefWidth = 100 ; onAction = newBuilder },
-                new Button("Open") { prefWidth = 100 ; onAction = onOpenAction },
-                new Button("Save") { prefWidth = 100 ; onAction = onSaveAction })
-            }
-          },
-          new TitledPane {
-            text = "Action"
-            content = new VBox {
-              padding = Insets(10,10,10,10)
-              content = List(
-                new Button("Assume") { prefWidth = 100 },
-                new Button("Fill") { prefWidth = 100 },
-                new Button("Compose") { prefWidth = 100 ; onAction = activeBuilder.emptyComposition },
-                new Button("Extend") { prefWidth = 100 ; onAction = activeBuilder.complex.extend },
-                new Button("Drop") { prefWidth = 100 ; onAction = activeBuilder.emptyDrop },
-                new Button("Dump") { prefWidth = 100 ; onAction = displayMessage("Dump", "This is the dump button.") },
-                new Button("Refresh") { prefWidth = 100 ; onAction = activeBuilder.refreshAll })
-            }
-          })
-      }
-    }
+  // val accordionPane = 
+  //   new StackPane {
+  //     padding = Insets(10, 10, 10, 10)
+  //     style = "-fx-background-color: gainsboro"
+  //     content = new Accordion {
+  //       panes = List(
+  //         new TitledPane {
+  //           text = "File"
+  //           content = new VBox {
+  //             padding = Insets(10,10,10,10)
+  //             content = List(
+  //               new Button("New") { prefWidth = 100 ; onAction = newBuilder },
+  //               new Button("Open") { prefWidth = 100 },
+  //               new Button("Save") { prefWidth = 100 })
+  //           }
+  //         },
+  //         new TitledPane {
+  //           text = "Action"
+  //           content = new VBox {
+  //             padding = Insets(10,10,10,10)
+  //             content = List(
+  //               new Button("Assume") { prefWidth = 100 },
+  //               new Button("Fill") { prefWidth = 100 },
+  //               new Button("Compose") { prefWidth = 100 ; onAction = activeBuilder.emptyComposition },
+  //               new Button("Extend") { prefWidth = 100 ; onAction = activeBuilder.complex.extend },
+  //               new Button("Drop") { prefWidth = 100 ; onAction = activeBuilder.emptyDrop },
+  //               new Button("Dump") { prefWidth = 100 ; onAction = displayMessage("Dump", "This is the dump button.") },
+  //               new Button("Refresh") { prefWidth = 100 ; onAction = activeBuilder.refreshAll })
+  //           }
+  //         })
+  //     }
+  //   }
 
   val editorPane = new TabPane
 
@@ -123,7 +129,6 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
   AnchorPane.setTopAnchor(environmentTable, 10)
   AnchorPane.setBottomAnchor(environmentTable, 10)
 
-
   val explorerPane = new AnchorPane {
     content = environmentTable
     style = "-fx-background-color: gainsboro"
@@ -136,17 +141,14 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   splitPane.getItems.addAll(editorPane, explorerPane)
 
-  mainPane.content = new HBox {
-    content = List(accordionPane, splitPane)
-  }
-
-  HBox.setHgrow(splitPane, Priority.ALWAYS)
+  mainPane.content = splitPane
 
   newBuilder
 
   def buildEnvironmentTable : TableView[ExpressionWrapper] = {
 
     val table = new TableView[ExpressionWrapper] {
+      prefWidth = 400
       items = environment
     }
 
@@ -191,127 +193,133 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     EditorMessage.run
   }
 
-  class FillDialog(emptyCell : ExpressionBuilder#GalleryCell) extends CancellableDialog {
+  abstract class ComposeInfoDialog extends CancellableDialog {
 
-    heading.text = "Fill"
+    val composeField = new TextField { promptText = "Composite" ; onAction = fillerField.requestFocus }
+    val fillerField = new TextField { promptText = "Filler" ; onAction = okBtn.fire }
 
-    val assBtn = new RadioButton("New Assumption") 
-    val envBtn = new RadioButton("From Environment") 
-    val nookBtn = new RadioButton("Fill Exposed Nook")
-
-    val idField = new TextField { promptText = "Identifier" ; onMouseClicked = { assBtn.fire } }
-    val compField = new TextField { promptText = "Composite" ; onMouseClicked = { nookBtn.fire } }
-    val thinField = new TextField { promptText = "Thin Filler" ; onMouseClicked = { nookBtn.fire } }
-
-    val thinCheckBox = new CheckBox("Thin") { allowIndeterminate = false }
-
-    val envTable = buildEnvironmentTable
-    envTable.onMouseClicked = { envBtn.fire }
-    envTable.prefHeight = 200
-
-    val sourceToggle = new ToggleGroup {
-      toggles = List(assBtn, envBtn, nookBtn)
-    }
-
-    assBtn.selected = true
-
-    borderPane.center =
+    borderPane.center = 
       new VBox {
         padding = Insets(10,10,10,10)
         spacing = 10
-        content = List(assBtn, idField, thinCheckBox, envBtn, envTable, nookBtn, compField, thinField)
+        content = List(composeField, fillerField)
       }
 
-    def onShow = { idField.requestFocus }
+  }
 
-    def onHide = {
+  class FillNookDialog(nookCell : ExpressionBuilder#GalleryCell) extends ComposeInfoDialog {
+
+    heading.text = "Fill Nook"
+
+    def onShow = {
+      composeField.clear
+      fillerField.clear
+      composeField.requestFocus
+    }
+
+    def onHide =
       response match {
         case DialogOK => {
-          if (assBtn.selected()) {
-            if (emptyCell.owner.isShell) {
-              if (envContains(idField.text())) {
-                println("Duplicate identifier.")
-              } else {
-                activeBuilder.deselectAll
-                emptyCell.owner.item = Neutral(Some(Variable(idField.text(), thinCheckBox.selected())))
 
-                val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toCell map (_.force)
-                environment += new ExpressionWrapper(exprCell)
-              }
-            } else {
-              println("Cell is not a shell!!!")
-            }
-          } else if (envBtn.selected()) {
-            val exprWrapper = envTable.getSelectionModel.getSelectedItem
-            if (exprWrapper != null) {
+          val compositeId = composeField.text()
+          val fillerId = fillerField.text()
 
-              println("Seeing if it fits ...")
-
-              // Here is perhaps a better way to do this: implement a zipping operation for
-              // cells which returns None when they have a different shape and the whole cell
-              // with pairs decorating them when they are the same.
-
-              def comparison(e : Option[Expression])(f : Expression) : Boolean =
-                e match {
-                  case None => true
-                  case Some(g) => g == f  // Umm ... is this okay? Oh boy, here comes the equality ...
-                }
-
-              val first : NCell[Option[Expression]] = emptyCell.owner.getSimpleFramework.toCell
-              val second : NCell[Expression] = exprWrapper.expr
-
-              val itFits = first.compareWith(second, comparison)
-
-              if (itFits) {
-
-                println("it does!!!")
-
-                activeBuilder.deselectAll
-                emptyCell.owner.skeleton.simultaneously(second, (e => (f : Expression) => e.item = Neutral(Some(f))))
-
-                println("Uh .. transfer complete?")
-              } else {
-                println("nope :(")
-              }
-
-            } else {
-              println("You didn't select anything!!")
-            }
+          if (envContains(compositeId) || envContains(fillerId)) {
+            println("Error: Duplicate Identifier")
           } else {
-            if (emptyCell.owner.isExposedNook) {
-              println("Filling nook ...")
-
-              if (envContains(compField.text()) || envContains(thinField.text())) {
-                println("Duplicate identifier") 
-              } else {
-
-                activeBuilder.deselectAll
-
-                val nook = emptyCell.owner.getSimpleFramework.toCell
-
-                val (targetIsThin, targetCell) =
-                  if (emptyCell.owner.isOutNook) {
-                    ((true /: (emptyCell.owner.sources.force map (_.isThin))) (_&&_), emptyCell.owner.target.force)
-                  } else {
-                    (emptyCell.owner.target.force.isThin, emptyCell.owner.emptySources.head)
-                  }
-
-                targetCell.item = Neutral(Some(FillerTarget(compField.text(), nook, targetIsThin)))
-                val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.force)
-                environment += new ExpressionWrapper(tgtExprCell)
-
-                emptyCell.owner.item = Neutral(Some(Filler(thinField.text(), nook)))
-                val exprCell = emptyCell.owner.getSimpleFramework.toCell map (_.force)
-                environment += new ExpressionWrapper(exprCell)
-              }
-            } else {
-              println("Not and exposed nook.")
-            }
+            fillExposedNook(nookCell, composeField.text(), fillerField.text())
           }
         }
         case DialogCancel => ()
       }
+  }
+
+  class IdentityDialog(expr : Expression) extends ComposeInfoDialog {
+
+    heading.text = "Insert Identity"
+
+    composeField.text = "id-" ++ expr.id
+    fillerField.text = "univ-" ++ expr.id
+
+    def onShow = composeField.requestFocus
+
+    def onHide = 
+      response match {
+        case DialogOK => {
+          extrudeDrop
+
+          val compositeId = composeField.text()
+          val fillerId = fillerField.text()
+
+          if (envContains(compositeId) || envContains(fillerId)) {
+            println("Error: Duplicate Identifier")
+          } else {
+            fillExposedNook(activeBuilder.lastFiller, composeField.text(), fillerField.text())
+          }
+        }
+        case DialogCancel => ()
+      }
+
+  }
+
+  object ComposeDialog extends ComposeInfoDialog {
+
+    heading.text = "Insert Composite"
+
+    def onShow = {
+      composeField.clear()
+      fillerField.clear()
+      composeField.requestFocus
     }
+
+    def onHide = 
+      response match {
+        case DialogOK => {
+          extrudeSelection
+
+          val compositeId = composeField.text()
+          val fillerId = fillerField.text()
+
+          if (envContains(compositeId) || envContains(fillerId)) {
+            println("Error: Duplicate Identifier")
+          } else {
+            fillExposedNook(activeBuilder.lastFiller, composeField.text(), fillerField.text())
+          }
+        }
+        case DialogCancel => ()
+      }
+  }
+
+  object VariableDialog extends Dialog {
+
+    heading.text = "Assume Variable"
+
+    val idField = new TextField { promptText = "Identifier" ; onAction = okBtn.fire }
+    val thinCheckBox = new CheckBox("Thin") { allowIndeterminate = false }
+
+    borderPane.center = 
+      new VBox {
+        padding = Insets(10,10,10,10)
+        spacing = 10
+        content = List(idField, thinCheckBox)
+      }
+
+    def onShow = {
+      idField.clear
+      idField.requestFocus
+    }
+
+    def onHide = 
+      response match {
+        case DialogOK => {
+          if (envContains(idField.text())) {
+            println("Error: Duplicate Identifier")
+          } else {
+            assumeVariable(activeBuilder.selectionBase.force, idField.text(), thinCheckBox.selected())
+          }
+        }
+        case DialogCancel => ()
+      }
 
   }
 
@@ -325,8 +333,7 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
         val cell = c.asInstanceOf[ExpressionBuilder#GalleryCell]
 
         if (cell.owner.isEmpty) {
-          val fillDialog = new FillDialog(cell)
-          fillDialog.run
+          onFill
         } else {
           // Let's open the cell in a new tab here
           val theCell : NCell[Option[Expression]] = cell.owner.getSimpleFramework.toCell
@@ -337,16 +344,214 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
       case _ => ()
     }
 
-  def onOpenAction = {
+  addEventFilter(KeyEvent.KEY_PRESSED,
+    new EventHandler[KeyEvent] {
+      def handle(ev : KeyEvent) {
+        ev.getCode match {
+          case KeyCode.LEFT => activeBuilder.prev
+          case KeyCode.RIGHT => activeBuilder.next
+          case KeyCode.UP => println("Up.")
+          case KeyCode.DOWN => println("Down.")
+          case KeyCode.F => if (ev.isControlDown) onFill  // I think we can get rid of the full compose dialog, in which case this becomes fill a nook
+          case KeyCode.E => if (ev.isControlDown) extrudeSelection
+          case KeyCode.D => if (ev.isControlDown) extrudeDrop
+          case KeyCode.C => if (ev.isControlDown) onCompose
+          case KeyCode.V => if (ev.isControlDown) onAssumeVariable(ev.isShiftDown)
+          case KeyCode.U => if (ev.isControlDown) onUseEnvironment
+          case KeyCode.I => if (ev.isControlDown) onInsertIdentity
+          case _ => ()
+        }
+      }
+    })
+
+
+  def onCompose = {
+    if (selectionIsComposable) ComposeDialog.run
   }
 
-  def onSaveAction = {
+  // The fact that these are multiplying means you need a routine for it.
+  // You should pass in a function that works on ? only if the thing satisfies
+  // this condition ...
+  def onInsertIdentity = {
+    if (selectionIsComposable) {
+      val cell = activeBuilder.selectionBase.force
+      cell.item match {
+        case Neutral(Some(expr)) => {
+          val idDialog = new IdentityDialog(expr)
+          idDialog.run
+        }
+        case _ => ()
+      }
+    }
+  }
+
+
+  def onUseEnvironment = {
+    if (selectionIsEmptyCell) {
+      val selectedExprWrapper = environmentTable.getSelectionModel.getSelectedItem
+
+      if (selectedExprWrapper != null) {
+        fillFromEnvironment(activeBuilder.selectionBase.force, selectedExprWrapper)
+      }
+    }
+  }
+
+  def onAssumeVariable(thin : Boolean) = {
+    if (selectionIsShell) {
+      VariableDialog.thinCheckBox.selected = thin
+      VariableDialog.run
+    }
+  }
+
+  def onFill = {
+    activeBuilder.selectionBase match {
+      case None => ()
+      case Some(cell) => {
+        if (cell.owner.isExposedNook) {
+          val fillDialog = new FillNookDialog(cell)
+          fillDialog.run
+          // Hmm ...
+        }
+      }
+    }
   }
 
   //============================================================================================
   // EDITOR SEMANTICS
   //
 
+  def selectionIsComposable : Boolean = {
+    val cellsAreComplete = (true /: (activeBuilder.selectedCells map (_.owner.isComplete))) (_&&_)
+    cellsAreComplete && selectionIsExtrudable
+  }
+
+  def selectionIsShell : Boolean = {
+    activeBuilder.selectionBase match {
+      case None => false
+      case Some(cell) => cell.owner.isShell
+    }
+  }
+
+  def selectionIsEmptyCell : Boolean = {
+    activeBuilder.selectionBase match {
+      case None => false
+      case Some(cell) => cell.owner.isEmpty
+    }
+  }
+
+  def selectionIsExtrudable : Boolean = {
+    activeBuilder.selectionBase match {
+      case None => false
+      case Some(cell) => {
+        cell.container match {
+          case None => false
+          case Some(cont) => cont.owner.isPolarized
+        }
+      }
+    }
+  }
+
+  def assumeVariable(emptyCell : ExpressionBuilder#GalleryCell, id : String, isThin : Boolean) = {
+    activeBuilder.deselectAll
+    emptyCell.owner.item = Neutral(Some(Variable(id, isThin)))
+
+    val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toCell map (_.force)
+    environment += new ExpressionWrapper(exprCell)
+
+    activeBuilder.selectAsBase(emptyCell)
+  }
+
+  def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetId : String, fillerId : String) = {
+
+    activeBuilder.deselectAll
+
+    val nook = nookCell.owner.getSimpleFramework.toCell
+
+    val (targetIsThin, targetCell) =
+      if (nookCell.owner.isOutNook) {
+        ((true /: (nookCell.owner.sources.force map (_.isThin))) (_&&_), nookCell.owner.target.force)
+      } else {
+        (nookCell.owner.target.force.isThin, nookCell.owner.emptySources.head)
+      }
+
+    targetCell.item = Neutral(Some(FillerTarget(targetId, nook, targetIsThin)))
+    val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.force)
+    environment += new ExpressionWrapper(tgtExprCell)
+
+    nookCell.owner.item = Neutral(Some(Filler(fillerId, nook)))
+    val exprCell = nookCell.owner.getSimpleFramework.toCell map (_.force)
+    environment += new ExpressionWrapper(exprCell)
+
+  }
+
+  def fillFromEnvironment(emptyCell : ExpressionBuilder#GalleryCell, exprWrapper : ExpressionWrapper) = {
+    println("Checking compatibility ...")
+    val complex = activeBuilder.complex
+
+    emptyCell.owner.skeleton.asInstanceOf[NCell[complex.ExpressionBuilderCell]]
+      .zip(exprWrapper.expr) match {
+      case None => println("Not compatible. Zip failed.")
+      case Some(zippedTree) => {
+
+        var itFits = true
+
+        zippedTree map (pr => {
+          val (eCell, e) = pr
+
+          eCell.item match {
+            case Neutral(None) => ()
+            case Neutral(Some(f)) => if (itFits) { itFits &&= (e == f) } else ()
+            case _ => itFits = false
+          }
+        })
+
+        if (itFits) {
+          println("It does!")
+
+          activeBuilder.deselectAll
+
+          zippedTree map (pr => {
+            val (eCell, e) = pr
+
+            // This is overkill
+            eCell.item = Neutral(Some(e))
+          })
+
+          println("Transfer complete.")
+        } else {
+          println("Nope. Comparison failed.")
+        }
+      }
+    }
+
+  }
+
+  def extrudeSelection = {
+    // Add new empty cells based on the current selection
+    if (selectionIsExtrudable) {
+      activeBuilder.emptyComposition
+      activeBuilder.clearAndSelect(activeBuilder.lastComposite)
+    }
+  }
+
+  def extrudeDrop = {
+    activeBuilder.selectionBase match {
+      case None => ()
+      case Some(cell) => {
+        cell.container match {
+          case None => ()
+          case Some(cont) => {
+            if (cont.owner.isPolarized) {
+              activeBuilder.emptyDrop
+              activeBuilder.clearAndSelect(cell)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Uh, duplicate much?
   def newBuilder = {
     val builder = new ExpressionBuilder
     editorPane += new Tab { text = "Untitled" ; content = builder }
