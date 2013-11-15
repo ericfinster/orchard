@@ -17,7 +17,12 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
 
   def newCell(item : A) : CellType
 
-  def baseCells : List[CellType] 
+  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
+
+  def populateComplex(seed : NCell[A]) = 
+    myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
+
+  def baseCells : List[CellType] = myBaseCells.toList
 
   def topCell : CellType = baseCells.last
   def dimension : Int = baseCells.length - 1

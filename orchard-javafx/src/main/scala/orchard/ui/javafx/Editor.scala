@@ -10,6 +10,7 @@ package orchard.ui.javafx
 import scalafx.Includes._
 
 import scalafx.scene.Scene
+import scalafx.stage.FileChooser
 
 import scalafx.scene.layout.HBox
 import scalafx.scene.layout.VBox
@@ -39,6 +40,8 @@ import scalafx.application.JFXApp
 import scalafx.application.Platform
 
 import scalafx.collections.ObservableBuffer
+
+import scalafx.beans.value.ObservableValue
 
 import javafx.event.Event
 import javafx.event.EventHandler
@@ -98,6 +101,7 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
   //     }
   //   }
 
+  val fileChooser = new FileChooser
   val editorPane = new TabPane
 
   class ExpressionWrapper(val expr : NCell[Expression]) {
@@ -124,15 +128,16 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
   }
 
   val environmentTable = buildEnvironmentTable
+  val previewerPane = new StackPane
 
-  AnchorPane.setLeftAnchor(environmentTable, 10)
-  AnchorPane.setTopAnchor(environmentTable, 10)
-  AnchorPane.setBottomAnchor(environmentTable, 10)
-
-  val explorerPane = new AnchorPane {
-    content = environmentTable
-    style = "-fx-background-color: gainsboro"
+  val explorerPane = new HBox {
+    padding = Insets(10,10,10,10)
+    spacing = 10
+    content = List(environmentTable, previewerPane)
+    style = "-fx-background-color: gainsboro;"
   }
+
+  HBox.setHgrow(previewerPane, Priority.ALWAYS)
 
   val splitPane = new SplitPane {
     orientation = Orientation.VERTICAL
@@ -165,6 +170,8 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
       new jfxsc.cell.PropertyValueFactory[ExpressionWrapper, String]("thin"))
 
     table.columns.addAll(idColumn, originColumn, thinColumn)
+
+    table.selectionModel().selectedItem onChange { (_, _, e) => { setPreview(e.expr) } }
 
     table
   }
@@ -352,18 +359,44 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
           case KeyCode.RIGHT => activeBuilder.next
           case KeyCode.UP => println("Up.")
           case KeyCode.DOWN => println("Down.")
-          case KeyCode.F => if (ev.isControlDown) onFill  // I think we can get rid of the full compose dialog, in which case this becomes fill a nook
+          case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.E => if (ev.isControlDown) extrudeSelection
           case KeyCode.D => if (ev.isControlDown) extrudeDrop
           case KeyCode.C => if (ev.isControlDown) onCompose
           case KeyCode.V => if (ev.isControlDown) onAssumeVariable(ev.isShiftDown)
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
           case KeyCode.I => if (ev.isControlDown) onInsertIdentity
+          case KeyCode.O => if (ev.isControlDown) onOpen
+          case KeyCode.S => if (ev.isControlDown) onSave
           case _ => ()
         }
       }
     })
 
+
+  def onSave = {
+    fileChooser.setTitle("Save")
+
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
+    // val galleryXml = cellSerializable[Polarity[String]].toXML(gallery.complex.toCell)
+
+    // if (file != null) {
+    //   xml.XML.save(file.getAbsolutePath, galleryXml)
+    // }
+  }
+
+  def onOpen = {
+    fileChooser.setTitle("Open")
+
+    val file = fileChooser.showOpenDialog(getScene.getWindow)
+
+    // if (file != null) {
+    //   val elem = xml.XML.loadFile(file.getAbsolutePath)
+    //   val result = cellSerializable[Polarity[String]].fromXML(elem)
+
+    //   setGallery(new CardinalGallery[String](result))
+    // }
+  }
 
   def onCompose = {
     if (selectionIsComposable) ComposeDialog.run
@@ -410,7 +443,6 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
         if (cell.owner.isExposedNook) {
           val fillDialog = new FillNookDialog(cell)
           fillDialog.run
-          // Hmm ...
         }
       }
     }
@@ -551,13 +583,7 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     }
   }
 
-  // Uh, duplicate much?
-  def newBuilder = {
-    val builder = new ExpressionBuilder
-    editorPane += new Tab { text = "Untitled" ; content = builder }
-    reactTo(builder)
-    builder.renderAll
-  }
+  def newBuilder : Unit = newBuilder(Object(None))
 
   def newBuilder(seed : NCell[Option[Expression]]) = {
     val builder = new ExpressionBuilder(CardinalComplex(seed))
@@ -570,6 +596,26 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   def activeBuilder : ExpressionBuilder = {
     editorPane.getSelectionModel.selectedItem().content().asInstanceOf[ExpressionBuilder]
+  }
+
+  // object ExpressionSerializable extends XmlSerializable[Expression] {
+  //   def toXML(expr : Expression) = 
+  //     expr match {
+  //       case Variable(id, isThin) => <var />
+  //     }
+
+  //   def fromXML(node : xml.Node) : Expression = Variable("x", false)
+  // }
+
+  def environmentToXML : xml.Node = {
+    <environment />
+  }
+
+  def setPreview(expr : NCell[Expression]) = {
+    val gallery = new FrameworkGallery(expr map (e => Some(e)))
+    gallery.renderAll
+    previewerPane.content = gallery
+    previewerPane.requestLayout
   }
 }
 

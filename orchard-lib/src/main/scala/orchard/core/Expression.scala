@@ -36,10 +36,7 @@ class ExpressionComplex(seed : NCell[Expression]) extends CellComplex[Expression
 
   def newCell(expr : Expression) = new ExpressionCell(expr)
 
-  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
-  myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
-
-  def baseCells : List[CellType] = myBaseCells.toList
+  populateComplex(seed)
 
   //============================================================================================
   // CELL IMPLEMENTATION
@@ -53,6 +50,7 @@ class ExpressionComplex(seed : NCell[Expression]) extends CellComplex[Expression
 
 }
 
+// Oh.  We can just use the framework.
 class SimpleFramework(seed : NCell[Option[Expression]]) 
     extends MutableComplex[Option[Expression]] with ExpressionFramework[Option[Expression]] {
 

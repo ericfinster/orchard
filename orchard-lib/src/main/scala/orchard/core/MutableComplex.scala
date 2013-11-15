@@ -20,12 +20,6 @@ trait MutableComplex[A] extends CellComplex[A] {
   // COMPLEX ROUTINES
   //
 
-  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
-
-  def populateComplex(seed : NCell[A]) = 
-    myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
-
-  def baseCells : List[CellType] = myBaseCells.toList
   def appendBaseCell(cell : CellType) : Unit = myBaseCells += cell
   def setBaseCell(i : Int, cell : CellType) = myBaseCells(i) = cell
 

@@ -43,7 +43,6 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     def renderCell = {
       assignStyle
       label = renderLabel
-
     }
 
     def renderLabel : jfxs.Node = {
@@ -79,12 +78,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     // HOVER AND SELECTION
     //
 
-    var isSelected : Boolean = false
-    var isHovered : Boolean = false
-
     override def doHover = {
-      isHovered = true
-
       item match {
         case Positive => () 
         case Negative => () 
@@ -98,8 +92,6 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     }
 
     override def doUnhover = {
-      isHovered = false
-
       item match {
         case Positive => () 
         case Negative => () 
@@ -113,8 +105,6 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     }
 
     override def doSelect = {
-      isSelected = true
-
       item match {
         case Positive => ()
         case Negative => ()
@@ -125,12 +115,9 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.add("expr-cell-filler-tgt-selected")
         case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.add("expr-cell-filler-tgt-thin-selected")
       }
-
     }
 
     override def doDeselect = {
-      isSelected = false
-
       item match {
         case Positive => ()
         case Negative => ()
