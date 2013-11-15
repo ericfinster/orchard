@@ -12,6 +12,8 @@ import orchard.core._
 import scalafx.scene.text.Text
 import scalafx.scene.layout.Region
 
+import scalafx.scene.paint.Color
+
 import javafx.scene.Node
 
 class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends JavaFXPanel[Option[Expression]] { thisPanel =>
@@ -99,7 +101,14 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Jav
 
   }
 
-  class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner)
+  class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner) {
+
+    override def doHover : Unit = setStroke(Color.RED)
+    override def doSelect : Unit = setStroke(Color.RED)
+    override def doUnhover : Unit = setStroke(Color.BLACK)
+    override def doDeselect : Unit = setStroke(Color.BLACK)
+
+  }
 
   //============================================================================================
   // INITIALIZATION

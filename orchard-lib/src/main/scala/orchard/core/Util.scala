@@ -15,12 +15,12 @@ import Nats._
 trait XmlSerializable[A] {
   def toXML(a : A) : xml.Node
   def fromXML(node : xml.Node) : A
-
-  // Just for kicks ...
-  def trimText(els : Seq[xml.Node]) = els filterNot (_.isInstanceOf[xml.Text])
 }
 
 object XmlSerializable {
+
+  // Just for kicks ...
+  def trimText(els : Seq[xml.Node]) = els filterNot (_.isInstanceOf[xml.Text])
 
   implicit object StringSerializable extends XmlSerializable[String] {
     def toXML(str : String) = xml.Text(str)
@@ -43,6 +43,57 @@ object XmlSerializable {
           case <negative /> => Negative
           case <neutral>{content}</neutral> => Neutral(ev.fromXML(content))
           case _ => throw new IllegalArgumentException("Polarity read failed.")
+        }
+    }
+
+  implicit def optionSerializable[A : XmlSerializable] : XmlSerializable[Option[A]] =
+    new XmlSerializable[Option[A]] {
+      val ev = implicitly[XmlSerializable[A]]
+      def toXML(o : Option[A]) = 
+        o match {
+          case None => <none />
+          case Some(a) => <some>{ev.toXML(a)}</some>
+        }
+
+      def fromXML(node : xml.Node) : Option[A] =
+        node match {
+          case <none /> => None
+          case <some>{content}</some> => Some(ev.fromXML(content))
+          case _ => throw new IllegalArgumentException("Option read failed.")
+        }
+    }
+
+  // You should probably look at this again.  It seems like there is a more
+  // efficient way ... Yeah, this is wildly inefficient.  Fix it!!
+  implicit def expressionSerializable : XmlSerializable[Expression] =
+    new XmlSerializable[Expression] {
+      def toXML(expr : Expression) = 
+        expr match {
+          case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
+          case Filler(id, nook) => 
+            <filler id={id}>{cellSerializable[Option[Expression]].toXML(nook)}</filler>
+          case FillerTarget(id, nook, isThin) =>
+            <fillertgt id={id} isThin={isThin.toString}>{cellSerializable[Option[Expression]].toXML(nook)}</fillertgt>
+        }
+
+      def fromXML(node : xml.Node) =
+        node match {
+          case v @ <variable /> => {
+            val id = (v \ "@id").text
+            val isThin = (v \ "@isThin").text.toBoolean
+            Variable(id, isThin)
+          }
+          case f @ <filler>{content}</filler> => {
+            val id = (f \ "@id").text
+            val nook = cellSerializable[Option[Expression]].fromXML(content)
+            Filler(id, nook)
+          }
+          case ft @ <fillertgt>{content}</fillertgt> => {
+            val id = (ft \ "@id").text
+            val isThin = (ft \ "@isThin").text.toBoolean
+            val nook = cellSerializable[Option[Expression]].fromXML(content)
+            FillerTarget(id, nook, isThin)
+          }
         }
     }
 

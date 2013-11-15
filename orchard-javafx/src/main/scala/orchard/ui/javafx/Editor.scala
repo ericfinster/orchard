@@ -68,39 +68,6 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   val mainPane = new StackPane(root.asInstanceOf[jfxsl.StackPane])
 
-  // val accordionPane = 
-  //   new StackPane {
-  //     padding = Insets(10, 10, 10, 10)
-  //     style = "-fx-background-color: gainsboro"
-  //     content = new Accordion {
-  //       panes = List(
-  //         new TitledPane {
-  //           text = "File"
-  //           content = new VBox {
-  //             padding = Insets(10,10,10,10)
-  //             content = List(
-  //               new Button("New") { prefWidth = 100 ; onAction = newBuilder },
-  //               new Button("Open") { prefWidth = 100 },
-  //               new Button("Save") { prefWidth = 100 })
-  //           }
-  //         },
-  //         new TitledPane {
-  //           text = "Action"
-  //           content = new VBox {
-  //             padding = Insets(10,10,10,10)
-  //             content = List(
-  //               new Button("Assume") { prefWidth = 100 },
-  //               new Button("Fill") { prefWidth = 100 },
-  //               new Button("Compose") { prefWidth = 100 ; onAction = activeBuilder.emptyComposition },
-  //               new Button("Extend") { prefWidth = 100 ; onAction = activeBuilder.complex.extend },
-  //               new Button("Drop") { prefWidth = 100 ; onAction = activeBuilder.emptyDrop },
-  //               new Button("Dump") { prefWidth = 100 ; onAction = displayMessage("Dump", "This is the dump button.") },
-  //               new Button("Refresh") { prefWidth = 100 ; onAction = activeBuilder.refreshAll })
-  //           }
-  //         })
-  //     }
-  //   }
-
   val fileChooser = new FileChooser
   val editorPane = new TabPane
 
@@ -141,7 +108,7 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
   val splitPane = new SplitPane {
     orientation = Orientation.VERTICAL
-    dividerPositions = 0.5f
+    dividerPositions = 0.7f
   }
 
   splitPane.getItems.addAll(editorPane, explorerPane)
@@ -378,11 +345,10 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     fileChooser.setTitle("Save")
 
     val file = fileChooser.showSaveDialog(getScene.getWindow)
-    // val galleryXml = cellSerializable[Polarity[String]].toXML(gallery.complex.toCell)
 
-    // if (file != null) {
-    //   xml.XML.save(file.getAbsolutePath, galleryXml)
-    // }
+    if (file != null) {
+      saveEditorState(file)
+    }
   }
 
   def onOpen = {
@@ -390,12 +356,9 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
 
     val file = fileChooser.showOpenDialog(getScene.getWindow)
 
-    // if (file != null) {
-    //   val elem = xml.XML.loadFile(file.getAbsolutePath)
-    //   val result = cellSerializable[Polarity[String]].fromXML(elem)
-
-    //   setGallery(new CardinalGallery[String](result))
-    // }
+    if (file != null) {
+      loadEditorState(file)
+    }
   }
 
   def onCompose = {
@@ -598,17 +561,30 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     editorPane.getSelectionModel.selectedItem().content().asInstanceOf[ExpressionBuilder]
   }
 
-  // object ExpressionSerializable extends XmlSerializable[Expression] {
-  //   def toXML(expr : Expression) = 
-  //     expr match {
-  //       case Variable(id, isThin) => <var />
-  //     }
+  def emptyEditor = {
+    editorPane.tabs.clear
+    environment.clear
+  }
 
-  //   def fromXML(node : xml.Node) : Expression = Variable("x", false)
-  // }
+  def environmentFromXML(node : xml.Node) = {
+    import XmlSerializable._
+
+    node match {
+      case <environment>{cells @ _*}</environment> => {
+        trimText(cells) foreach (cell => {
+          val res : NCell[Expression] = cellSerializable[Expression].fromXML(cell)
+          environment += new ExpressionWrapper(res)
+        })
+      }
+    }
+  }
 
   def environmentToXML : xml.Node = {
-    <environment />
+    import XmlSerializable._
+
+    <environment>{
+      environment map (ew => cellSerializable[Expression].toXML(ew.expr))
+    }</environment>
   }
 
   def setPreview(expr : NCell[Expression]) = {
@@ -616,6 +592,43 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     gallery.renderAll
     previewerPane.content = gallery
     previewerPane.requestLayout
+  }
+
+  def saveEditorState(file : java.io.File) = {
+    import XmlSerializable._
+
+    val tabCells : List[NCell[Polarity[Option[Expression]]]] = 
+      (editorPane.tabs map (t => t.content().asInstanceOf[ExpressionBuilder].complex.toCell)).toList
+
+    // Again, this is wildly inefficient.  The serializations should use the environment.
+    val stateXML = <editor><views>{
+      tabCells map (cell => cellSerializable[Polarity[Option[Expression]]].toXML(cell))
+    }</views>{environmentToXML}</editor>
+
+    xml.XML.save(file.getAbsolutePath, stateXML)
+  }
+
+  def loadEditorState(file : java.io.File) = {
+    import XmlSerializable._
+
+    emptyEditor
+
+    val elem = xml.XML.loadFile(file.getAbsolutePath)
+
+    elem match {
+      case <editor><views>{viewCells @ _*}</views>{env}</editor> => {
+        environmentFromXML(env)
+
+        trimText(viewCells) foreach (view => {
+          val viewExpr = cellSerializable[Polarity[Option[Expression]]].fromXML(view)
+          val builder = new ExpressionBuilder(viewExpr)
+          val newTab = new Tab { text = "Loaded" ; content = builder }
+          editorPane += newTab
+          reactTo(builder)
+          builder.renderAll
+        })
+      }
+    }
   }
 }
 
