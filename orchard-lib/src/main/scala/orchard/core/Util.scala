@@ -196,4 +196,6 @@ object Util {
       case Nil => Some(Nil)
       case o :: os => for { n <- o ; ns <- optSwitch(os) } yield (n :: ns)
     }
+
+  var debug : Boolean = false
 }

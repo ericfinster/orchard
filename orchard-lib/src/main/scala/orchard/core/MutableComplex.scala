@@ -89,36 +89,6 @@ trait MutableComplex[A] extends CellComplex[A] {
 
     def item_=(newItem : A) : Unit
 
-    // override def spawn(oldCell : CellType,
-    //                    newCell : CellType,
-    //                    newEdge : CellType,
-    //                    oldCellSources : List[CellType],
-    //                    newCellSources : List[CellType])
-    //     : RoseTree[CellType, Int] =
-    // {
-    //   val resultShell = super.spawn(oldCell, newCell, newEdge, oldCellSources, newCellSources)
-    //   emit(new SpawnEvent(oldCell, newCell, newEdge, oldCellSources, newCellSources))
-    //   resultShell
-    // }
-
-    // override def sprout(newEdge : CellType,
-    //                     newSources : List[CellType]) : Unit =
-    // {
-    //   super.sprout(newEdge, newSources)
-    //   emit(new SproutEvent(newEdge, newSources))
-    // }
-
-    // override def enclose(enclosingCell : CellType,
-    //                      location : RoseZipper[CellType, Int],
-    //                      selector : CellType => Boolean)
-    //     : (RoseTree[CellType, Int],
-    //        RoseTree[CellType, Int])  =
-    // {
-    //   val (fillerTree, newCellTree) = super.enclose(enclosingCell, location, selector)
-    //   emit(new EncloseEvent(enclosingCell, location, selector))
-    //   (fillerTree, newCellTree)
-    // }
-
     def insertComposite(compositeValue : A, universalValue : A,
                         location : RoseZipper[CellType, Int],
                         selector : CellType => Boolean) : Unit =
@@ -171,17 +141,19 @@ trait MutableComplex[A] extends CellComplex[A] {
     // Ech.  This is a mess and should be redone.
     def nskel : NCell[CellType] =
     {
+      if (debug) println("Rebuilding skeleton for " ++ this.toString)
+
       if (isObject) {
         Object(this)
       } else {
         val myTarget = target.force("Higher dimensional cell is missing a target.")
-        val myTargetSkel = myTarget.nskel
+        val myTargetSkel = myTarget.skeleton  // Why do we recalculate the skeleton for the lower dimensional faces?
         var remainingSources = sources.force("Higher dimensional cell has no sources.")
 
         if (isLoop) {
-          Composite(this, myTarget.nskel.corolla, myTarget)
+          Composite(this, myTargetSkel.corolla, myTarget)
         } else if (isArrow) {
-          val srcObj = remainingSources.head.nskel
+          val srcObj = remainingSources.head.skeleton
 
           srcObj.ev match {
             case Left(ev) => {
@@ -203,6 +175,11 @@ trait MutableComplex[A] extends CellComplex[A] {
               def searchCell(cell : CellType, srcs : Array[CellTree[D, CellType]])
                   : CellTree[D, CellType] = {
 
+                if (debug) {
+                  println("Searching cell: " ++ cell.toString)
+                  println("Sources are: " ++ (srcs map (_.toString)).toList.toString)
+                }
+
                 def traverseShell(tree : RoseTree[CellType, Int]) : CellTree[D, CellType]  = {
                   tree match {
                     case Rose(idx) => srcs(idx)
@@ -214,7 +191,15 @@ trait MutableComplex[A] extends CellComplex[A] {
                         case s :: ss => {
                           if (mcell == s) {
                             remainingSources = ss
-                            Graft(mcell.nskel.cell.asInstanceOf[Cell[D, CellType]], newBranches)
+
+                            if (debug) {
+                              println("About to graft: " ++ mcell.toString)
+                              println("New branches are: " ++ (newBranches map (_.toString)).toString)
+                              println("Cell has sources: " ++ (mcell.sources.force map (_.toString)).toString)
+                              println("Skeleton: " ++ mcell.skeleton.toString)
+                            }
+
+                            Graft(mcell.skeleton.cell.asInstanceOf[Cell[D, CellType]], newBranches)
                           } else {
                             searchCell(mcell, newBranches.toArray)
                           }
@@ -230,7 +215,7 @@ trait MutableComplex[A] extends CellComplex[A] {
 
               val tgtSources : List[CellTree[D, CellType]] =
                 myTarget.sources.force map
-              (src => Leaf(src.nskel.cell.asInstanceOf[Cell[D#Pred, CellType]]))
+                  (src => Leaf(src.skeleton.cell.asInstanceOf[Cell[D#Pred, CellType]]))
 
               val myCellTree = searchCell(myTarget, tgtSources.toArray)
               Composite(this, myCellTree, myTarget)

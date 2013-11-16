@@ -335,11 +335,26 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
           case KeyCode.I => if (ev.isControlDown) onInsertIdentity
           case KeyCode.O => if (ev.isControlDown) onOpen
           case KeyCode.S => if (ev.isControlDown) onSave
+          case KeyCode.N => if (ev.isControlDown) onNew
+          case KeyCode.L => if (ev.isControlDown) onLoadExpr
+          case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
           case _ => ()
         }
       }
     })
 
+  def onLoadExpr = {
+    val selectedExprWrapper = environmentTable.getSelectionModel.getSelectedItem
+
+    if (selectedExprWrapper != null) {
+      newBuilder(selectedExprWrapper.expr map (e => Some(e)))
+    }
+  }
+
+  def onNew = {
+    emptyEditor
+    newBuilder
+  }
 
   def onSave = {
     fileChooser.setTitle("Save")

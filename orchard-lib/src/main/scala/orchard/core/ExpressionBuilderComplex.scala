@@ -39,6 +39,8 @@ class ExpressionBuilderComplex(seed : NCell[Polarity[Option[Expression]]])
         case Neutral(expr) => expr
         case _ => throw new IllegalArgumentException("Expression error")
       }
+
+    override def toString = "ExprCell(" ++ item.toString ++ ")@" ++ hashCode.toString
   }
 
 }
