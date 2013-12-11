@@ -9,21 +9,16 @@ package orchard.core
 
 import scala.language.implicitConversions
 
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
-
 import Nats._
 
 sealed trait Cell[D <: Nat, +A]
-
-// Atom and Molecule?
 
 case class ObjectCell[D <: Nat, +A](value : A)(implicit val isZero : IsZero[D]) extends Cell[D, A] {
   override def toString = value.toString
 }
 
 case class CompositeCell[D <: Nat, +A](value : A, srcTree : CellTree[D#Pred, A], tgtValue : A)(implicit val hasPred : HasPred[D]) extends Cell[D, A] {
-  override def toString = value.toString ++ " : " ++ (srcTree.cellList map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
+  override def toString = value.toString ++ " : " ++ (srcTree.cells map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
 }
 
 object Object {
@@ -53,25 +48,25 @@ object Composite {
 
 object Cell {
 
-  //============================================================================================
-  // COERCIONS
-  //
+  // //============================================================================================
+  // // COERCIONS
+  // //
 
   implicit def toSucc[D <: Nat : HasPred, A](tree : Cell[D, A]) : Cell[S[D#Pred], A] =
       tree.asInstanceOf[Cell[S[D#Pred], A]]
 
-  implicit def toSuccList[D <: Nat : HasPred, A](l : List[Cell[D, A]]) : List[Cell[S[D#Pred], A]] =
+  implicit def toSuccVect[D <: Nat : HasPred, A](l : Vector[Cell[D, A]]) : Vector[Cell[S[D#Pred], A]] =
       l map (t => toSucc(t)(implicitly[HasPred[D]]))
 
   implicit def fromSucc[D <: Nat : HasPred, A](tree : Cell[S[D#Pred], A]) : Cell[D, A] =
       tree.asInstanceOf[Cell[D, A]]
 
-  implicit def fromSuccList[D <: Nat : HasPred, A](l : List[Cell[S[D#Pred], A]]) : List[Cell[D, A]] =
+  implicit def fromSuccVect[D <: Nat : HasPred, A](l : Vector[Cell[S[D#Pred], A]]) : Vector[Cell[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
 
-  //============================================================================================
-  // CELL OPERATIONS
-  //
+  // //============================================================================================
+  // // CELL OPERATIONS
+  // //
 
   implicit class CellOps[D <: Nat, A](cell : Cell[D, A]) {
 
@@ -118,8 +113,7 @@ object Cell {
     def finalObject : Cell[_0, A] =
       cell match {
         case Object(value, _) => Object(value)
-        case Composite(_, _, _, ev) =>
-        {
+        case Composite(_, _, _, ev) => {
           implicit val hasPred = ev
           cell.target.finalObject
         }
@@ -140,8 +134,7 @@ object Cell {
     def targetValues : List[A] =
       cell match {
         case Object(value, _) => value :: Nil
-        case Composite(value, _, _, ev) =>
-        {
+        case Composite(value, _, _, ev) => {
           implicit val hasPred = ev
           value :: cell.target.targetValues
         }
@@ -171,52 +164,46 @@ object Cell {
 
     def corolla : CellTree[D, A] =
       cell match {
-        case Object(value, ev) =>
-          {
-            implicit val isZero = ev
-            SeedClass(ObjectCell(value))
-          }
-        case Composite(value, srcTree, tgtValue, ev) =>
-          {
-            implicit val hasPred = ev
-            GraftClass(CompositeCell(value, srcTree, tgtValue), 
-                       srcTree.cellList.map(s => LeafClass(s)))
-          }
+        case Object(value, ev) => {
+          implicit val isZero = ev
+          SeedClass(ObjectCell(value))
+        }
+        case Composite(value, srcTree, tgtValue, ev) => {
+          implicit val hasPred = ev
+          GraftClass(CompositeCell(value, srcTree, tgtValue),
+            srcTree.cells.map(s => LeafClass(s)))
+        }
       }
 
-    def sources : List[Cell[D#Pred, A]] =
+    def sources : Vector[Cell[D#Pred, A]] =
       cell match {
-        case Object(_, _) => Nil
-        case Composite(_, srcTree, _, _) => srcTree.cellList
+        case Object(_, _) => Vector.empty
+        case Composite(_, srcTree, _, _) => srcTree.cells
       }
 
     def target(implicit hasPred : HasPred[D]) : Cell[D#Pred, A] = srcTree.target(targetValue)
 
     def regenerateFrom[T >: A, B](generator : CellRegenerator[T, B]) : Cell[D, B] =
       cell match {
-        case Object(value, ev) => 
-          {
+        case Object(value, ev) => {
             implicit val isZero : IsZero[D] = ev
             generator.generateObject(value)
           }
-        case Composite(value, srcTree, tgtValue, ev) => 
-          {
+        case Composite(value, srcTree, tgtValue, ev) => {
             implicit val hasPred : HasPred[D] = ev
-            cell.target.regenerateFromCtxt(generator, cell.corolla).cellList.head
+            cell.target.regenerateFromCtxt(generator, cell.corolla).cells.head
           }
       }
 
     def regenerateFromCtxt[T >: A, B](generator : CellRegenerator[T, B], ctxt : CellTree[S[D], T])
         : CellTree[S[D], B] = 
       cell match {
-        case Object(_, ev) => 
-          {
-            val obj = ctxt.leafList.head
+        case Object(_, ev) => {
+            val obj = ctxt.leaves.head
             val result = obj.regenerateFrom(generator)
             ctxt.regenerateFrom(generator, result.corolla)
           }
-        case Composite(_, _, _, ev) => 
-          {
+        case Composite(_, _, _, ev) => {
             implicit val hasPred : HasPred[D] = ev
             val lvs = cell.target.regenerateFromCtxt(generator, ctxt.flatten)
             ctxt.regenerateFrom(generator, lvs)
@@ -230,16 +217,16 @@ object Cell {
 //
 
 abstract class NCell[A] {
-  type Dim
+  type Dim <: Nat
 
-  val dim : Nat
+  val dim : Dim
   val cell : Cell[dim.Self, A]
 
-  def ev : Either[IsZero[dim.Self], HasPred[dim.Self]] =
-    dim match {
-      case Z => Left(new IsZero[dim.Self] { })
-      case S(p) => Right(new HasPred[dim.Self] { type Pred = p.Self })
-    }
+  // def ev : Either[IsZero[dim.Self], HasPred[dim.Self]] =
+  //   dim match {
+  //     case Z => Left(new IsZero[dim.Self] { })
+  //     case S(p) => Right(new HasPred[dim.Self] { type Pred = p.Self })
+  //   }
 
   override def toString = cell.toString
 

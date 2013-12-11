@@ -13,7 +13,7 @@ import Util._
 
 sealed trait RoseTree[+A, +B]
 case class Rose[B](value : B) extends RoseTree[Nothing, B] { override def toString = "(Leaf " ++ value.toString ++ ")" }
-case class Branch[A, B](value : A, branches : List[RoseTree[A, B]]) extends RoseTree[A, B]
+case class Branch[A, B](value : A, branches : Vector[RoseTree[A, B]]) extends RoseTree[A, B]
 { override def toString = "(Branch: " ++ value.toString ++ ") => " ++ (branches map (_.toString)).toString }
 
 object RoseTree {
@@ -29,8 +29,7 @@ object RoseTree {
                 roseAction : B => Unit) : Unit =
       tree match {
         case Rose(value) => roseAction(value)
-        case Branch(value, branches) =>
-        {
+        case Branch(value, branches) => {
           branches foreach (branch => branch.foreach(branchAction, roseAction))
           branchAction(value)
         }
@@ -39,9 +38,9 @@ object RoseTree {
     def foreachCell(action : A => Unit) : Unit =
       foreach(action, _ => ())
 
-    def leaves : List[B] =
+    def leaves : Vector[B] =
       tree match {
-        case Rose(value) => value :: Nil
+        case Rose(value) => Vector(value)
         case Branch(value, branches) => branches flatMap (_.leaves)
       }
 
@@ -52,6 +51,14 @@ object RoseTree {
           val buf = new ListBuffer[A]
           branch.foreach((value => buf += value), (_ => ()))
           buf.toList
+        }
+      }
+
+    def nodeVector : Vector[A] = 
+      tree match {
+        case Rose(_) => Vector.empty
+        case Branch(value, branches) => {
+          (branches flatMap (_.nodeVector)) :+ value
         }
       }
 
@@ -66,102 +73,101 @@ object RoseTree {
         case Rose(_) => None
         case Branch(value, _) => Some(value)
       }
-
   }
 }
 
-case class RoseContext[A, B](value : A, 
-                             left : List[RoseTree[A, B]],
-                             right : List[RoseTree[A, B]])
+// case class RoseContext[A, B](value : A, 
+//                              left : List[RoseTree[A, B]],
+//                              right : List[RoseTree[A, B]])
 
-case class RoseZipper[A, B](val focus : RoseTree[A, B], 
-                            val context : List[RoseContext[A, B]]) {
+// case class RoseZipper[A, B](val focus : RoseTree[A, B], 
+//                             val context : List[RoseContext[A, B]]) {
 
-  def setFocus(tree : RoseTree[A, B]) : RoseZipper[A, B] =
-    RoseZipper(tree, context)
+//   def setFocus(tree : RoseTree[A, B]) : RoseZipper[A, B] =
+//     RoseZipper(tree, context)
 
-  def zip : RoseTree[A, B] =
-      context match {
-        case Nil => focus
-        case RoseContext(value, left, right) :: cs => 
-          RoseZipper(Branch(value, left ++ List(focus) ++ right), cs).zip
-      }
+//   def zip : RoseTree[A, B] =
+//       context match {
+//         case Nil => focus
+//         case RoseContext(value, left, right) :: cs => 
+//           RoseZipper(Branch(value, left ++ List(focus) ++ right), cs).zip
+//       }
 
-  def zipOnce : Option[RoseZipper[A, B]] =
-    context match {
-      case RoseContext(value, left, right) :: cs => 
-        Some(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
-      case _ => None
-    }
+//   def zipOnce : Option[RoseZipper[A, B]] =
+//     context match {
+//       case RoseContext(value, left, right) :: cs => 
+//         Some(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
+//       case _ => None
+//     }
 
-  // Should use a buffer ...
-  def toAddrBuffer : ListBuffer[Int] = 
-    context match {
-      case Nil => new ListBuffer[Int]
-      case RoseContext(value, left, right) :: cs =>
-        RoseZipper(Branch(value, left ++ List(focus) ++ right), cs).toAddrBuffer += left.length
-    }
+//   // Should use a buffer ...
+//   def toAddrBuffer : ListBuffer[Int] = 
+//     context match {
+//       case Nil => new ListBuffer[Int]
+//       case RoseContext(value, left, right) :: cs =>
+//         RoseZipper(Branch(value, left ++ List(focus) ++ right), cs).toAddrBuffer += left.length
+//     }
 
-  def toAddr : List[Int] = toAddrBuffer.toList
+//   def toAddr : List[Int] = toAddrBuffer.toList
 
-  def leftSibling : Option[RoseZipper[A, B]] =
-      context match {
-        case RoseContext(value, left, right) :: cs => {
-          for {
-            leftSib <- left.lastOption
-          } yield RoseZipper(leftSib, RoseContext(value, left.init, focus :: right) :: cs)
-        }
-        case _ => None
-      }
+//   def leftSibling : Option[RoseZipper[A, B]] =
+//       context match {
+//         case RoseContext(value, left, right) :: cs => {
+//           for {
+//             leftSib <- left.lastOption
+//           } yield RoseZipper(leftSib, RoseContext(value, left.init, focus :: right) :: cs)
+//         }
+//         case _ => None
+//       }
 
-  def rightSibling : Option[RoseZipper[A, B]] =
-      context match {
-        case RoseContext(value, left, r :: rs) :: cs => {
-          Some(RoseZipper(r, RoseContext(value, left ++ List(focus), rs) :: cs))
-        }
-        case _ => None
-      }
+//   def rightSibling : Option[RoseZipper[A, B]] =
+//       context match {
+//         case RoseContext(value, left, r :: rs) :: cs => {
+//           Some(RoseZipper(r, RoseContext(value, left ++ List(focus), rs) :: cs))
+//         }
+//         case _ => None
+//       }
 
-  def visitBranch(i : Int) : Option[RoseZipper[A, B]] =
-      focus match {
-        case Rose(_) => None
-        case Branch(value, branches) => {
-          if (i > branches.length - 1) None else {
-            val (left, rightPlus) = branches.splitAt(i)
-            Some(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
-          }
-        }
-      }
+//   def visitBranch(i : Int) : Option[RoseZipper[A, B]] =
+//       focus match {
+//         case Rose(_) => None
+//         case Branch(value, branches) => {
+//           if (i > branches.length - 1) None else {
+//             val (left, rightPlus) = branches.splitAt(i)
+//             Some(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
+//           }
+//         }
+//       }
 
-  def seek(addr : List[Int]) : Option[RoseZipper[A, B]] =
-      addr match {
-        case Nil => Some(this)
-        case i :: is => 
-          for {
-            next <- visitBranch(i)
-            res <- next.seek(is)
-          } yield res
-      }
+//   def seek(addr : List[Int]) : Option[RoseZipper[A, B]] =
+//       addr match {
+//         case Nil => Some(this)
+//         case i :: is => 
+//           for {
+//             next <- visitBranch(i)
+//             res <- next.seek(is)
+//           } yield res
+//       }
 
-  def find(prop : A => Boolean) : Option[RoseZipper[A, B]] =
-    focus match {
-      case Rose(_) => None
-      case Branch(value, branches) => {
-        if (prop(value)) Some(this) else {
-          // Ummm ... got a better way?
-          var i : Int = 0
+//   def find(prop : A => Boolean) : Option[RoseZipper[A, B]] =
+//     focus match {
+//       case Rose(_) => None
+//       case Branch(value, branches) => {
+//         if (prop(value)) Some(this) else {
+//           // Ummm ... got a better way?
+//           var i : Int = 0
 
-          while (i < branches.length) {
-            val res = visitBranch(i).force.find(prop)
-            if (res != None) return res
-            i += 1
-          }
+//           while (i < branches.length) {
+//             val res = visitBranch(i).force.find(prop)
+//             if (res != None) return res
+//             i += 1
+//           }
 
-          None
-        }
-      }
-    }
+//           None
+//         }
+//       }
+//     }
 
-  def lookup(v : A) : Option[RoseZipper[A, B]] =
-    find((a => v == a))
-}
+//   def lookup(v : A) : Option[RoseZipper[A, B]] =
+//     find((a => v == a))
+// }

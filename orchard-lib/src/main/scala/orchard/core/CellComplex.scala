@@ -37,9 +37,11 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
   // COMPLEX CELLS
   //
 
+  // Okay ... we currently use the mutable base, but I would really like a complex version
+  // which didn't need that, so that we could religate that to the mutable complex ...
   trait ComplexCell 
-      extends CellBase[CellType, CellType] 
-      with    EdgeBase[CellType, CellType] 
+      extends MutableCellBase[CellType, CellType] 
+      with    MutableEdgeBase[CellType, CellType] 
       with    EventEmitter[CellEvent] { thisCell : CellType =>
 
     def item : A
@@ -109,23 +111,23 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     // XML CONVERSION
     //
 
-    def cellToXML(implicit vs : XmlSerializable[A]) = 
-      skeleton.cell match {
-        case Object(_, ev) => <obj id={hashCode.toString}><label>{vs.toXML(item)}</label></obj>
-        case Composite(_, srcTree, tgtValue, ev) => {
-          <cell id={hashCode.toString}><sourcetree>{
+    // def cellToXML(implicit vs : XmlSerializable[A]) = 
+    //   skeleton.cell match {
+    //     case Object(_, ev) => <obj id={hashCode.toString}><label>{vs.toXML(item)}</label></obj>
+    //     case Composite(_, srcTree, tgtValue, ev) => {
+    //       <cell id={hashCode.toString}><sourcetree>{
 
-            def processSourceTree(tree : CellTree[_ <: Nat, CellType]) : xml.NodeSeq = 
-              tree match {
-                case Seed(o, _) => <seed ref={o.value.hashCode.toString} />
-                case Leaf(l, _) => <leaf ref={l.value.hashCode.toString} />
-                case Graft(c, brs, _) => <graft ref={c.value.hashCode.toString}>{ brs map processSourceTree }</graft>
-              }
+    //         def processSourceTree(tree : CellTree[_ <: Nat, CellType]) : xml.NodeSeq = 
+    //           tree match {
+    //             case Seed(o, _) => <seed ref={o.value.hashCode.toString} />
+    //             case Leaf(l, _) => <leaf ref={l.value.hashCode.toString} />
+    //             case Graft(c, brs, _) => <graft ref={c.value.hashCode.toString}>{ brs map processSourceTree }</graft>
+    //           }
 
-            processSourceTree(srcTree)
-          }</sourcetree><target ref={tgtValue.hashCode.toString} /><label>{vs.toXML(item)}</label></cell>
-        }
-      }
+    //         processSourceTree(srcTree)
+    //       }</sourcetree><target ref={tgtValue.hashCode.toString} /><label>{vs.toXML(item)}</label></cell>
+    //     }
+    //   }
   }
 
   //============================================================================================
@@ -148,7 +150,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
       val thisMutableCell = newCell(cellValue)
       val tgtMutableCell = newCell(tgtValue)
 
-      thisMutableCell.shell = None
+      thisMutableCell.canopy = None
       thisMutableCell.target = Some(tgtMutableCell)
       thisMutableCell.sources = Some(srcs.cellList map
                                        (src => {
@@ -189,9 +191,9 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
             }
         }
 
-      val (tgtShell, tgtTgtOpt, tgtSrcsOpt) = processSources(srcs)
+      val (tgtCanopy, tgtTgtOpt, tgtSrcsOpt) = processSources(srcs)
 
-      tgtMutableCell.shell = Some(tgtShell)
+      tgtMutableCell.canopy = Some(tgtCanopy)
       tgtMutableCell.target = tgtTgtOpt
       tgtMutableCell.sources = tgtSrcsOpt
 

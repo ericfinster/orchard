@@ -87,5 +87,5 @@ object Example2 {
 
   val var20 = Composite("20", Graft(var18, List(Leaf(var10), Leaf(var11), var17.corolla)), "19")
 
-  val testCardinal = CardinalComplex(var20)
+  // val testCardinal = CardinalComplex(var20)
 }
