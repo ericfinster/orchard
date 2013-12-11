@@ -15,6 +15,12 @@ trait IsZero[N <: Nat]
 
 object IsZero {
   implicit def zeroIsZero : IsZero[Z.type] = new IsZero[Z.type] { }
+
+  def unapply[N <: Nat](n : N) : Option[IsZero[N]] = 
+    n match {
+      case Z => Some(new IsZero[N] { })
+      case _ => None
+    }
 }
 
 trait HasPred[A <: Nat] {
@@ -27,6 +33,12 @@ object HasPred {
   implicit def pred[P <: Nat, N <: Nat](implicit pred : IsPred[P, N]) = new HasPred[N] {
     type Out = P
   }
+
+  def unapply[N <: Nat](n : N) : Option[HasPred[N]] =
+    n match {
+      case Z => None
+      case S(p) => Some(new HasPred[N] { type Out = N#Pred })
+    }
 }
 
 object IsPred {
@@ -82,3 +94,35 @@ trait Nats {
 }
 
 object Nats extends Nats
+
+sealed trait HDN[D <: Nat] { def isZero : Boolean }
+case object HZero extends HDN[Nats._0] { override def toString = "0" ; def isZero = true }
+case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
+  def isZero = l.length == 0
+
+  override def toString = {
+    val temp = 
+      if (l.length > 1) {
+        l.head.toString :: (l.tail map ("," ++ _.toString))
+      } else {
+        l map (_.toString)
+      }
+
+    (("[" /: temp) (_ ++ _)) ++ "]"
+  }
+}
+
+object HDN {
+  def apply[D <: Nat](d : D) : HDN[D] = 
+    d match {
+      case Z => HZero.asInstanceOf[HDN[D]]
+      case S(p) => HUnit[D#Pred](List()).asInstanceOf[HDN[D]]
+    }
+
+  implicit class HDNOps[D <: Nat](hdn : HDN[S[D]]) {
+    def +:(h : HDN[D]) : HDN[S[D]] =
+      hdn match {
+        case HUnit(l) => HUnit(h :: l)
+      }
+  }
+}

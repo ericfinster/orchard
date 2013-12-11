@@ -147,10 +147,10 @@ object Cell {
         }
       }
 
-    def dimension : Nat =
+    def dimension : D =
       cell match {
-        case Object(value, _) => _0
-        case Composite(_, srcTree, _, _) => S(srcTree.dimension)
+        case Object(value, _) => _0.asInstanceOf[D]
+        case Composite(_, srcTree, _, _) => S(srcTree.dimension).asInstanceOf[D]
       }
 
     def value : A =
@@ -184,24 +184,13 @@ object Cell {
           }
       }
 
-    def target(implicit hasPred : HasPred[D]) : Cell[D#Pred, A] =
+    def sources : List[Cell[D#Pred, A]] =
       cell match {
-        case Composite(_, Seed(obj, ev), tgtValue, _) =>
-          {
-            implicit val predIsZero : IsZero[D#Pred] = ev
-            ObjectCell(tgtValue)
-          }
-        case Composite(_, Leaf(shape, ev), tgtValue, _) =>
-          {
-            implicit val predHasPred : HasPred[D#Pred] = ev
-            CompositeCell(tgtValue, shape.corolla, shape.value)
-          }
-        case Composite(_, Graft(cell, branches, ev), tgtValue, _) =>
-          {
-            implicit val predHasPred : HasPred[D#Pred] = ev
-            CompositeCell(tgtValue, cell.srcTree.substitute(branches), cell.target.value)
-          }
+        case Object(_, _) => Nil
+        case Composite(_, srcTree, _, _) => srcTree.cellList
       }
+
+    def target(implicit hasPred : HasPred[D]) : Cell[D#Pred, A] = srcTree.target(targetValue)
 
     def regenerateFrom[T >: A, B](generator : CellRegenerator[T, B]) : Cell[D, B] =
       cell match {
@@ -229,7 +218,7 @@ object Cell {
         case Composite(_, _, _, ev) => 
           {
             implicit val hasPred : HasPred[D] = ev
-            val lvs = cell.target.regenerateFromCtxt(generator, ctxt.leaves)
+            val lvs = cell.target.regenerateFromCtxt(generator, ctxt.flatten)
             ctxt.regenerateFrom(generator, lvs)
           }
       }

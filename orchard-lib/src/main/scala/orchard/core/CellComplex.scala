@@ -161,6 +161,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
       tgtMutableCell.incoming = Some(thisMutableCell)
 
       var curIdx : Int = -1
+      val perm = srcs.inversePerm
 
       def processSources(srcTree : CellTree[D#Pred, CellType])
           : (RoseTree[CellType, Int],
@@ -175,7 +176,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
           case Leaf(shape, ev) =>
             {
               curIdx += 1
-              (Rose(curIdx), Some(shape.value), Some(shape.value :: Nil))
+              (Rose(perm(curIdx)), Some(shape.value), Some(shape.value :: Nil))
             }
           case Graft(cell, branches, ev) =>
             {

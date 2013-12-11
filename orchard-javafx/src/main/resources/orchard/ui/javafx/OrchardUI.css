@@ -65,6 +65,8 @@
 
 .expr-cell-polarized { -fx-background-color: gainsboro; }
 
+.expr-cell-exposed-nook { -fx-background-color: red; }
+
 .expr-cell-empty { -fx-background-color: white }
 .expr-cell-var { -fx-background-color: white }
 .expr-cell-var-thin { -fx-background-color: secondary-a-5 }

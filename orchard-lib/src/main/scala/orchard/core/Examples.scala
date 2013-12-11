@@ -68,3 +68,24 @@ object Example1 {
                                 s.corolla ::
                                 Graft(u, Leaf(l) :: t.corolla :: Nil) :: Nil), 44)
 }
+
+object Example2 {
+
+  val var0 = Object("0")
+
+  val var3 = Composite("3", Seed(var0), "1")
+  val var6 = Composite("6", var3.target.corolla, "2")
+
+  val var10 = Composite("10", var3.corolla, "4")
+  val var11 = Composite("11", var6.corolla, "7")
+  val var12 = Composite("12", var10.target.corolla, "5")
+  val var13 = Composite("13", var11.target.corolla, "8")
+  val var14 = Composite("14", Graft(var13.target, List(var12.target.corolla)), "9")
+
+  val var17 = Composite("17", Graft(var14, List(var12.corolla, var13.corolla)), "15")
+  val var18 = Composite("18", Graft(var17.target, List(var10.corolla, var11.corolla)), "16")
+
+  val var20 = Composite("20", Graft(var18, List(Leaf(var10), Leaf(var11), var17.corolla)), "19")
+
+  val testCardinal = CardinalComplex(var20)
+}

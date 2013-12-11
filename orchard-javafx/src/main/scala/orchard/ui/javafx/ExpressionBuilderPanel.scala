@@ -64,7 +64,15 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       item match {
         case Positive => getStyleClass.add("expr-cell-polarized")
         case Negative => getStyleClass.add("expr-cell-polarized")
-        case Neutral(None) => getStyleClass.add("expr-cell-empty")
+        case Neutral(None) => {
+          getStyleClass.add("expr-cell-empty")
+
+          // if (owner.isExposedNook) {
+          //   getStyleClass.add("expr-cell-exposed-nook")
+          // } else {
+          //   getStyleClass.add("expr-cell-empty")
+          // }
+        }
         case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var")
         case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin")
         case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler")

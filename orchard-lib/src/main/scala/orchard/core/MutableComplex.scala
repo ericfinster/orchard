@@ -118,16 +118,22 @@ trait MutableComplex[A] extends CellComplex[A] {
       // Finally, add a new leaf for the new external cell
       topFiller.sprout(universalCell, newLeaves.toList)
 
-
       // Now fix up the skeletons
-
       compositeCell.rebuildSkeleton
       universalCell.rebuildSkeleton
 
       fillingCell.neighborhood foreach
-      (neighbor => {
-         neighbor.rebuildSkeleton
-       })
+        (neighbor => {
+          neighbor.rebuildSkeleton
+        })
+
+      // Okay ... the idea is that, at least for cell complexes, we can do this using the
+      // same method that we use to rebuild the skeleton: a traverse of the target which
+      // picks out the source cells we are looking for.  The result is a tree in the source
+      // order, and when we flatten it, that will be the correct order for the sources.
+
+      // This I think, moreover, is the correct replacement for the "comb" function you
+      // are using currently.
 
       // And pass on the events to any listeners
       emit(new EncloseEvent(compositeCell, location, selector))

@@ -67,8 +67,6 @@ trait CellBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisCell : C =>
   // MUTABILITY ROUTINES
   //
 
-  // I would really like to split these off into a different trait ...
-
   // Reorganize the source lists with the help of the external cells
   // I don't like that the default comparison here is with a null.  You
   // could make it a flag somehow ...
