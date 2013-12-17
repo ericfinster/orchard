@@ -92,6 +92,34 @@ object CellTree {
   implicit def fromSuccVect[D <: Nat : HasPred, A](l : Vector[CellTree[S[D#Pred], A]]) : Vector[CellTree[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
 
+  /*
+   * Conversions to RoseTrees
+   */
+
+  def toRoseTree[D <: Nat, A](t : CellTree[D, A], isZero : IsZero[D]) : RoseTree[Cell[D, A], Unit] =
+    t match {
+      case Seed(obj, _) => Branch(obj, Vector(Rose(())))
+    }
+
+  def toRoseTree[D <: Nat, A](t : CellTree[D, A], hasPred : HasPred[D]) : RoseTree[Cell[D, A], Cell[D#Pred, A]] =
+    t match {
+      case Leaf(shape, _) => Rose(shape)
+      case Graft(cell, branches, _) => Branch(cell, branches map (b => toRoseTree(b, hasPred)))
+    }
+
+  def fromRoseTree[D <: Nat : IsZero, A](t : RoseTree[Cell[D, A], Unit]) : CellTree[D, A] =
+    t match {
+      case Branch(obj, Vector(Rose(()))) => Seed(obj).asInstanceOf[CellTree[D, A]]
+      case _ => throw new IllegalArgumentException("Malformed object tree")
+    }
+
+  def fromRoseTree[D <: Nat : HasPred, A](t : RoseTree[Cell[D, A], Cell[D#Pred, A]]) : CellTree[D, A] = 
+    t match {
+      case Rose(shape) => Leaf(shape)
+      case Branch(cell, branches) => Graft(cell, branches map (b => fromRoseTree(b)))
+    }
+
+
   /**
     * Operations on CellTrees
     * 
@@ -227,12 +255,6 @@ object CellTree {
         }
 
       buildPermTree(tree)
-    }
-
-    // We actually use this one all the time.  Perhaps we should make it the default ...
-    def invertPerm(p : Vector[Int]) : Vector[Int] = {
-      val invP = Range(0, p.length).toVector map (i => (p(i), i))
-      invP.sorted map (pr => { val (_, v) = pr ; v })
     }
 
     def inversePerm : Vector[Int] = invertPerm(permutation)

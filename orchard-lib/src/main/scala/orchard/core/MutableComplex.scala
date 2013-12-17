@@ -12,7 +12,7 @@ import scala.collection.mutable.WeakHashMap
 
 import Util._
 
-trait MutableComplex[A] extends CellComplex[A] {
+trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
 
   type CellType <: MutableCell
 
@@ -20,31 +20,62 @@ trait MutableComplex[A] extends CellComplex[A] {
   // COMPLEX ROUTINES
   //
 
+  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
+
+  def baseCells : Vector[CellType] = myBaseCells.toVector
+
+  def populateComplex(seed : NCell[A]) = 
+    myBaseCells ++= seed.regenerateFrom(MutableComplexGenerator).value.targets
+
   def appendBaseCell(cell : CellType) : Unit = myBaseCells += cell
   def setBaseCell(i : Int, cell : CellType) = myBaseCells(i) = cell
 
   def glob(globValue : A, targetValue : A) : CellType = {
+
+    val newSource = topCell
+
     val newGlob = newCell(globValue)
     val newTarget = newCell(targetValue)
 
-    topCell.globEnclose(newTarget)
-    topCell.emit(new ChangeEvents.GlobEncloseEvent(newTarget))
+    newTarget.target = newSource.target
+    newTarget.sources = newSource.sources
 
-    topCell.outgoing = Some(newGlob)
-    topCell.container = Some(newTarget)
+    newTarget.canopy = 
+      for { srcs <- newSource.sources }
+      yield {
+        var srcIndex = -1
+
+        val branches = srcs map
+          (src => {
+            srcIndex += 1
+            Rose(srcIndex)
+          })
+
+        Branch(newSource, branches)
+      }
+
+    newSource.outgoing = Some(newGlob)
+    newSource.container = Some(newTarget)
 
     newTarget.incoming = Some(newGlob)
 
     newGlob.target = Some(newTarget)
-    newGlob.sources = Some(topCell :: Nil)
+    newGlob.sources = Some(Vector(newSource))
 
-    val globCell = topCell.skeleton.glob(newTarget, newGlob)
+    val globCell = newSource.skeleton.glob(newTarget, newGlob)
 
     newGlob.skeleton = globCell
     newTarget.skeleton = globCell.target
 
-    setBaseCell(topCell.dimension, newTarget)
+    setBaseCell(newSource.dimension, newTarget)
     appendBaseCell(newGlob)
+
+    newSource.cellPanels foreach (panel => {
+      val newPanelCell = panel.newCell(newTarget.asInstanceOf[panel.complex.CellType])
+      panel.baseCell = newPanelCell
+      panel.refreshPanelData
+    })
+
     emit(ComplexExtended)
 
     newGlob
@@ -56,181 +87,369 @@ trait MutableComplex[A] extends CellComplex[A] {
 
   object ChangeEvents {
     sealed trait ChangeEvent extends CellEvent
-
-    case class SproutEvent(newEdge : CellType,
-      newSources : List[CellType]) extends ChangeEvent
-
-    case class SpawnEvent(oldCell : CellType,
-      newCell : CellType,
-      newEdge : CellType,
-      oldCellSources : List[CellType],
-      newCellSources : List[CellType]) extends ChangeEvent
-
-    case class EncloseEvent(enclosingCell : CellType,
-      location : RoseZipper[CellType, Int],
-      selector : CellType => Boolean) extends ChangeEvent
-
-    case class GlobEncloseEvent(newTarget : CellType) extends ChangeEvent
-
     case class ItemChangedEvent(oldItem : A) extends ChangeEvent
+    case class CompositeInsertionEvent(composite : CellType, universal : CellType) extends ChangeEvent
   }
 
   //============================================================================================
   // CELL IMPLEMENTATION
   //
 
-  trait MutableCell extends ComplexCell { thisCell : CellType =>
+  trait MutableCell extends ComplexCell 
+    with MutableCellBase[CellType, CellType]
+    with MutableEdgeBase[CellType, CellType] { thisCell : CellType =>
 
     //============================================================================================
     // MUTATION
     //
 
-    import ChangeEvents._
-
     def item_=(newItem : A) : Unit
+
+    def dumpInfo : Unit = {
+      println("Dumping semantic info for " ++ thisCell.toString)
+
+      sources match {
+        case None => println("No sources")
+        case Some(srcs) => println("Source list: " ++ srcs.toString)
+      }
+
+      canopy match {
+        case None => println("Cell is external")
+        case Some(tree) => println("Leaf permutation: " ++ tree.leaves.toString)
+      }
+    }
 
     def insertComposite(compositeValue : A, universalValue : A,
                         location : RoseZipper[CellType, Int],
-                        selector : CellType => Boolean) : Unit =
-    {
+                        selector : CellType => Boolean) : Unit = {
+
       // This is the main routine for modifying a mutable cell by inserting
       // a composite and its universal cell.
 
-      val fillingCell = incoming.force("Need a filling cell")
-      val fillingContainer = fillingCell.container.force("Filling cell needs a container")
-      val topFiller = fillingCell.outgoing.force("Need a top cell for the new leaf")
+      // Note: since you have moved this whole setup inside MutableComplex here, maybe you should grab a
+      // list of the affected cells *first*, before you start messing with shit and you already know that
+      // everything is in a decent state.  Then you can go ahead and run through the list at the end,
+      // once you know that the lower dimensional information has been corrected.
+
+      // Make sure we have all the available information before proceeding
+      val myFiller = incoming.force("Need a filling cell")
+      val myFillerContainer = myFiller.container.force("Filling cell needs a container")
+      val topFiller = myFiller.outgoing.force("Need a top cell for the new leaf")
 
       val compositeCell = newCell(compositeValue)
       val universalCell = newCell(universalValue)
 
-      // Enclose the selected cells with a new target
-      val (fillerSources, universalSources) =
-        enclose(compositeCell, location, selector)
+      // First step: clip the canopy to the bounds determined by the selector
 
+      var localIndex : Int = -1
 
-      // Spawn a new external cell in the next dimension
-      val newLeaves = fillingContainer.spawn(fillingCell,
-                                             universalCell,
-                                             compositeCell,
-                                             fillerSources.toList,
-                                             universalSources.toList)
+      def clip(loc : RoseTree[CellType, Int]) : (RoseTree[CellType, Int], Vector[RoseTree[CellType, Int]]) = {
+        loc match {
+          case Rose(idx) => {
+            localIndex += 1
+            (Rose(localIndex), Vector(Rose(idx)))
+          }
+          case Branch(value, branches) => {
+            if (selector(value)) {
+              // This cell is part of the selection
+              val (newBranches, newClippings) = (branches map (b => clip(b))).unzip
+              (Branch(value, newBranches), newClippings.flatten)
+            } else {
+              // This cell is not part of the selection (i.e. it's on the boundary)
+              localIndex += 1
+              (Rose(localIndex), Vector(Branch(value, branches)))
+            }
+          }
+        }
+      }
 
-      // Finally, add a new leaf for the new external cell
-      topFiller.sprout(universalCell, newLeaves.toList)
+      // Clip the current canopy to the selection
+      val (compositeCanopy, clippings) = clip(location.focus)
 
-      // Now fix up the skeletons
-      compositeCell.rebuildSkeleton
-      universalCell.rebuildSkeleton
+      // Get all the sources for the new composite cell
+      val compositeSources = optSwitchVect(clippings map (branch => edgeAt(branch)))
 
-      fillingCell.neighborhood foreach
-        (neighbor => {
-          neighbor.rebuildSkeleton
-        })
+      // Update the container of all cells in the newCanopy
+      compositeCanopy foreachCell (cell => cell.container = Some(compositeCell))
 
-      // Okay ... the idea is that, at least for cell complexes, we can do this using the
-      // same method that we use to rebuild the skeleton: a traverse of the target which
-      // picks out the source cells we are looking for.  The result is a tree in the source
-      // order, and when we flatten it, that will be the correct order for the sources.
+      // Build the new canopy for this cell
+      val newCanopy = location.setFocus(Branch(compositeCell, clippings)).zip
 
-      // This I think, moreover, is the correct replacement for the "comb" function you
-      // are using currently.
+      // Set up all the data
+      compositeCell.canopy = Some(compositeCanopy)             // OK: the selection
+      compositeCell.target = edgeAt(location.focus)            // OK: Should be the target of the tree
+      compositeCell.sources = compositeSources                 // OK: Target of all clipped entities
+      compositeCell.container = Some(thisCell)                 // OK: it's contained in this cell
 
-      // And pass on the events to any listeners
-      emit(new EncloseEvent(compositeCell, location, selector))
+      // Update the canopy of this cell.  All other fields are unchanged.
+      canopy = Some(newCanopy)
 
-      fillingContainer.emit(new SpawnEvent(fillingCell, universalCell, compositeCell, 
-        fillerSources.toList, universalSources.toList))
+      // Now, we move on to the next dimension where we look for the filling cell
+      val ptr = RoseZipper(myFillerContainer.canopy.get, Nil).lookup(myFiller).force("Failed to find the filler!")
 
-      topFiller.emit(new SproutEvent(universalCell, newLeaves.toList))
+      val (fillerSources, universalSources) = (newCanopy.nodeVector, compositeCanopy.nodeVector)
+
+      // Now let's put the universal cell into place
+      val newFocus =
+        ptr.focus match {
+          case Branch(fc, branches) => {
+              // Return the new focus with the new cell in its correct place and the
+              // branches adjusted accordingly ...
+
+              val universalBranches = universalSources map
+                (src => {
+                  val branch = (branches find (b => myFillerContainer.edgeAt(b).force == src)).force("No branch found for this edge.")
+                  myFillerContainer.edgeAt(branch).force.outgoing = Some(universalCell)
+                  branch
+                })
+
+              val fillerBranches = fillerSources map
+                (src => {
+                  if (src == compositeCell) {
+                    Branch(universalCell, universalBranches)
+                  } else {
+                    (branches find (b => myFillerContainer.edgeAt(b).force == src)).force("No branch found for this edge.")
+                  }
+                })
+
+              Branch(fc, fillerBranches)
+            }
+          case _ => throw new IllegalArgumentException("This can't happen.")
+        }
+
+      val myFillerContainerCanopy = ptr.setFocus(newFocus).zip
+      myFillerContainer.canopy = Some(myFillerContainerCanopy)
+
+      // Set up the new cell and edge
+      compositeCell.incoming = Some(universalCell)
+      compositeCell.outgoing = Some(myFiller)
+
+      universalCell.target = Some(compositeCell)
+      universalCell.sources = Some(universalSources)
+      universalCell.container = Some(myFillerContainer)
+
+      myFiller.sources = Some(fillerSources)
+
+      universalCell.outgoing = Some(topFiller)
+      topFiller.sources = Some(myFillerContainerCanopy.nodeVector)
+
+      val affectedDimensions = Range(dimension, thisComplex.dimension + 1)
+      affectedDimensions foreach (d => {
+        val theBase = thisComplex(d)
+        theBase.rigidify
+        theBase.cellPanels.foreach (panel => panel.refreshPanelData)
+      })
+
+      thisComplex.emit(ChangeEvents.CompositeInsertionEvent(compositeCell, universalCell))
     }
 
-    // Ech.  This is a mess and should be redone.
-    def nskel : NCell[CellType] =
-    {
-      if (debug) println("Rebuilding skeleton for " ++ this.toString)
+    // After insertion of a new cell, the cell state variables are left in a dirty state. This
+    // routine fixes them using that 1) the lower dimensional information is still correct and
+    // 2) there is no permutation at external cells.
 
-      if (isObject) {
-        Object(this)
-      } else {
-        val myTarget = target.force("Higher dimensional cell is missing a target.")
-        val myTargetSkel = myTarget.skeleton  // Why do we recalculate the skeleton for the lower dimensional faces?
-        var remainingSources = sources.force("Higher dimensional cell has no sources.")
+    def rigidify : Unit = {
+      val dim = Nats.fromInt(dimension)
 
-        if (isLoop) {
-          Composite(this, myTargetSkel.corolla, myTarget)
-        } else if (isArrow) {
-          val srcObj = remainingSources.head.skeleton
+      dim.asInstanceOf[dim.Self] match {
+        case IsZero(ev) => {
+          implicit val isZero : IsZero[dim.Self] = ev
 
-          srcObj.ev match {
-            case Left(ev) => {
-              implicit val isZero = ev
-              Composite(this, Seed(srcObj), myTarget)
+          // If we are looking at an object, there are no sources or targets and the only
+          // thing to do is update the skeleton as so:
+          canopy match {
+            case None => ()
+            case Some(tree) => {
+              tree.rootElement.get.rigidify
             }
-            case _ => throw new IllegalArgumentException("Source has wrong dimension.")
           }
-        } else {
-          myTargetSkel.ev match {
-            case Left(ev) => {
-              throw new IllegalArgumentException("Target has wrong dimension.")
-            }
-            case Right(ev) => {
-              type D = myTargetSkel.dim.Self
 
-              implicit val hasPred : HasPred[D] = ev
+          skeleton = Object(thisCell)
+        }
+        case HasPred(ev) => {
+          implicit val hasPred : HasPred[dim.Self] = ev
 
-              def searchCell(cell : CellType, srcs : Array[CellTree[D, CellType]])
-                  : CellTree[D, CellType] = {
+          // Here we are going to reorder the sources, set the new canopy (which must have its
+          // leaves set to match the correctly ordered sources) and update the skeleton
 
-                if (debug) {
-                  println("Searching cell: " ++ cell.toString)
-                  println("Sources are: " ++ (srcs map (_.toString)).toList.toString)
-                }
+          val mySources : Vector[CellType] = sources.get // Error! this may miss something!
+          val myTarget : CellType = target.get
 
-                def traverseShell(tree : RoseTree[CellType, Int]) : CellTree[D, CellType]  = {
-                  tree match {
-                    case Rose(idx) => srcs(idx)
-                    case Branch(mcell, branches) => {
-                      val newBranches = branches map (branch => traverseShell(branch))
+          val myExtendedCanopy = 
+            for { cnpy <- canopy } 
+            yield {
 
-                      remainingSources match {
-                        case Nil => newBranches.head  // I think this can only happen for a loop ...
-                        case s :: ss => {
-                          if (mcell == s) {
-                            remainingSources = ss
+                def rebuildCanopy(t : RoseTree[CellType, Int]) : RoseTree[CellType, CellType] =
+                  t match {
+                    case Rose(idx) => Rose(mySources(idx))
+                    case Branch(cell, branches) => {
 
-                            if (debug) {
-                              println("About to graft: " ++ mcell.toString)
-                              println("New branches are: " ++ (newBranches map (_.toString)).toString)
-                              println("Cell has sources: " ++ (mcell.sources.force map (_.toString)).toString)
-                              println("Skeleton: " ++ mcell.skeleton.toString)
-                            }
+                      // First do this to the cell, so that the orders are correct
+                      cell.rigidify
 
-                            Graft(mcell.skeleton.cell.asInstanceOf[Cell[D, CellType]], newBranches)
-                          } else {
-                            searchCell(mcell, newBranches.toArray)
-                          }
+                      // We are going to twist so that we are in the order which agrees with
+                      // the sources of the previously rigidified cell.  The one hiccup is that
+                      // we may have added a source (as in the new source for "topFiller" in the
+                      // insertion algorithm) and so if the match fails, we just save this source
+                      // for later. (I think this will successively push it forward into all the
+                      // containers ....)
+
+                      val newBranches = cell.sources.get map (src => {
+                        val branchOpt = branches find (b => edgeAt(b).get == src)
+
+                        branchOpt match {
+                          case None => Rose(src)
+                          case Some(br) => rebuildCanopy(br)
                         }
-                      }
+                      })
+                      
+                      // Now regraft the tree with the twisted branches
+                      Branch(cell, newBranches)
                     }
                   }
-                }
 
-                traverseShell(cell.shell.force("Missing shell"))
-              }
+              rebuildCanopy(cnpy)
+            }
 
+          val myExtendedSources : Vector[CellType] = 
+            myExtendedCanopy match {
+              case None => mySources
+              case Some(ecpy) => ecpy.leaves
+            }
 
-              val tgtSources : List[CellTree[D, CellType]] =
-                myTarget.sources.force map
-                  (src => Leaf(src.skeleton.cell.asInstanceOf[Cell[D#Pred, CellType]]))
+          val mySrcTree : RoseTree[CellType, Int] = myTarget.selectedCanopy(myExtendedSources)
+          val myCorrectedSources : Vector[CellType] = mySrcTree.nodeVector
 
-              val myCellTree = searchCell(myTarget, tgtSources.toArray)
-              Composite(this, myCellTree, myTarget)
+          sources = Some(myCorrectedSources)
+          canopy = myExtendedCanopy map (cpy => {
+            cpy map ((c => c), (l => myCorrectedSources.indexOf(l)))
+          })
+
+          // Next we are going to fix the skeleton, which requires another match on dimension ....
+
+          type SrcDim = dim.Self#Pred
+          val srcDim : SrcDim = Nats.getPred(dim.asInstanceOf[dim.Self])
+
+          srcDim match {
+            case IsZero(ev) => {
+              implicit val srcIsZero : IsZero[SrcDim] = ev
+
+              skeleton = Composite(thisCell, Seed(Object(mySrcTree.rootElement.get)), myTarget)
+            }
+            case HasPred(ev) => {
+              implicit val srcHasPred : HasPred[SrcDim] = ev
+
+              myTarget.dumpInfo
+
+              val mySrcRoseTree = mySrcTree map ((c => c.skeleton.cell.asInstanceOf[Cell[SrcDim, CellType]]),
+                                                 (i => ((myTarget.sources.get)(i)).skeleton.cell.asInstanceOf[Cell[SrcDim#Pred, CellType]]))
+
+              skeleton = Composite(thisCell, CellTree.fromRoseTree(mySrcRoseTree), myTarget)
             }
           }
         }
       }
     }
 
-    def rebuildSkeleton = { skeleton = nskel }
+    // Extract the tree formed by successively passing to canopies and stopping when
+    // the cell is in the list of sources
+    def selectedCanopy(sources : Vector[CellType]) : RoseTree[CellType, Int] = {
+
+      def verticalTrace(cell : CellType, lvs : Vector[RoseTree[CellType, Int]]) : RoseTree[CellType, Int] = {
+        if (sources contains cell) {
+          Branch(cell, lvs)
+        } else {
+
+            def horizontalTrace(tr : RoseTree[CellType, Int]) : RoseTree[CellType, Int] = 
+              tr match {
+                case Rose(idx) => if (cell.isObject) { Rose(idx) } else lvs(idx)
+                case Branch(hCell, hBranches) => {
+                  verticalTrace(hCell, hBranches map horizontalTrace)
+                }
+              }
+
+          horizontalTrace(cell.canopy.get)
+        }
+      }
+
+      val startLeaves = Range(0, sourceCount) map (i => Rose(i))
+      verticalTrace(thisCell, startLeaves.toVector)
+    }
+  }
+
+  //============================================================================================
+  // COMPLEX GENERATION
+  //
+
+  object MutableComplexGenerator extends CellRegenerator[A, CellType] {
+
+    def generateObject[D <: Nat : IsZero](value : A) : Cell[D, CellType] = {
+      val newObj = newCell(value)
+      val newObjSkeleton = ObjectCell(newObj)
+      newObj.skeleton = newObjSkeleton
+      newObjSkeleton
+    }
+
+    def generateCell[D <: Nat : HasPred](cellValue : A,
+                                         srcs : CellTree[D#Pred, CellType],
+                                         tgtValue : A) : Cell[D, CellType] = {
+
+      val thisMutableCell = newCell(cellValue)
+      val tgtMutableCell = newCell(tgtValue)
+
+      thisMutableCell.canopy = None
+      thisMutableCell.target = Some(tgtMutableCell)
+      thisMutableCell.sources = Some(srcs.cells map
+                                       (src => {
+                                          src.value.outgoing = Some(thisMutableCell)
+                                          src.value
+                                        }))
+
+      // We know the incoming cells
+      thisMutableCell.incoming = None
+      tgtMutableCell.incoming = Some(thisMutableCell)
+
+      var curIdx : Int = -1
+      val perm = srcs.inversePerm
+
+      // Yeah, um, this is not good.  What you do is simply flatten the leaves
+      // into a list.  But they should be put in the correct order based on flattening.
+
+      srcs.dimension match {
+        case IsZero(ev) => {
+          implicit val isZero : IsZero[D#Pred] = ev
+
+          val theObject = srcs.cells(0).value
+          theObject.container = Some(tgtMutableCell)
+
+          tgtMutableCell.canopy = Some(Branch(srcs.cells(0).value, Vector(Rose(0))))
+          tgtMutableCell.target = None
+          tgtMutableCell.sources = None
+
+        }
+        case HasPred(ev) => {
+          implicit val hasPred : HasPred[D#Pred] = ev
+
+          val theSources : Vector[Cell[D#Pred#Pred, CellType]] = srcs.flatten.cells
+
+          // I don't like this.  We should use the permutation ...
+          tgtMutableCell.canopy = Some(CellTree.toRoseTree(srcs, ev).map((c => { c.value.container = Some(tgtMutableCell) ; c.value }), 
+                                                                         (l => theSources.indexOf(l))))
+          tgtMutableCell.target = Some(srcs.output.value)
+          tgtMutableCell.sources = Some(theSources map (_.value))
+        }
+      }
+
+      if (tgtMutableCell.isLoop) {
+        for { t <- tgtMutableCell.target } {
+          t.loops = tgtMutableCell :: t.loops
+        }
+      }
+
+      val thisMutableCellSkeleton = CompositeCell(thisMutableCell, srcs, tgtMutableCell)
+      thisMutableCell.skeleton = thisMutableCellSkeleton
+      tgtMutableCell.skeleton = thisMutableCellSkeleton.target
+
+      thisMutableCellSkeleton
+    }
   }
 }

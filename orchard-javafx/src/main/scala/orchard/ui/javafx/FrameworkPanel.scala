@@ -23,8 +23,17 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Jav
 
   type ComplexType = SimpleFramework
 
-  def newCell(owner : complex.CellType) = new FrameworkCell(owner)
-  def newEdge(owner : complex.CellType) = new FrameworkEdge(owner)
+  def newCell(owner : complex.CellType) = { 
+    val frameworkCell = new FrameworkCell(owner)
+    owner.registerPanelCell(thisPanel)(frameworkCell)
+    frameworkCell
+  }
+
+  def newEdge(owner : complex.CellType) = {
+    val frameworkEdge = new FrameworkEdge(owner)
+    owner.registerPanelEdge(thisPanel)(frameworkEdge)
+    frameworkEdge
+  }
 
   class FrameworkCell(owner : complex.CellType) extends JavaFXCell(owner) {
 
@@ -114,11 +123,9 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Jav
   // INITIALIZATION
   //
 
-  var baseCell : FrameworkCell = {
-    val seed = complex.baseCells(baseIndex)
-    generatePanelData(seed, for { srcs <- seed.sources } yield (srcs map (src => newEdge(src))))
-  }
+  var baseCell : FrameworkCell = newCell(complex.baseCells(baseIndex))
 
+  refreshPanelData
   initializeChildren
 
 }

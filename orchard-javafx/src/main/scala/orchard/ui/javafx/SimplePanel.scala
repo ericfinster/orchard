@@ -12,7 +12,7 @@ import javafx.scene.text.Text
 
 import orchard.core._
 
-class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends JavaFXPanel[A] {
+class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends JavaFXPanel[A] { thisPanel =>
 
   type CellType = SimpleCell
   type EdgeType = SimpleEdge
@@ -21,24 +21,47 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
 
   class SimpleCell(owner : complex.SimpleMutableCell) extends JavaFXCell(owner) {
 
-    def renderLabel : Node = new Text(item.toString)
+    def renderLabel : Node = { 
+      val lbl = new Text(item.toString)
+      pane.getChildren.setAll(lbl)
+      lbl
+    }
 
+    //============================================================================================
+    // CELL EVENTS
+    //
+
+    override def onEventEmitted(ev : CellEvent) = {
+      ev match {
+        case CellClicked(cell) => owner.dumpInfo
+        case _ => super.onEventEmitted(ev)
+      }
+    }
+
+    override def toString = "Cell(" ++ item.toString ++ ")@" ++ hashCode.toString
   }
 
   class SimpleEdge(owner : complex.SimpleMutableCell) extends JavaFXEdge(owner)
 
-  def newCell(owner : complex.SimpleMutableCell) : SimpleCell = new SimpleCell(owner)
-  def newEdge(owner : complex.SimpleMutableCell) : SimpleEdge = new SimpleEdge(owner)
+  def newCell(owner : complex.SimpleMutableCell) : SimpleCell = {
+    val simpleCell = new SimpleCell(owner)
+    owner.registerPanelCell(thisPanel)(simpleCell)
+    simpleCell
+  }
+
+  def newEdge(owner : complex.SimpleMutableCell) : SimpleEdge = {
+    val simpleEdge = new SimpleEdge(owner)
+    owner.registerPanelEdge(thisPanel)(simpleEdge)
+    simpleEdge
+  }
 
   //============================================================================================
   // UI INITIALIZATION
   //
 
-  override val baseCell : SimpleCell = {
-    val seed = complex.baseCells(baseIndex)
-    generatePanelData(seed, for { srcs <- seed.sources } yield (srcs map (src => newEdge(src))))
-  }
+  var baseCell : SimpleCell = newCell(complex.baseCells(baseIndex))
 
+  refreshPanelData
   initializeChildren
 
 }

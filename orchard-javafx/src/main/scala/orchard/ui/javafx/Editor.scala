@@ -337,6 +337,8 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
           case KeyCode.S => if (ev.isControlDown) onSave
           case KeyCode.N => if (ev.isControlDown) onNew
           case KeyCode.L => if (ev.isControlDown) onLoadExpr
+          case KeyCode.G => if (ev.isControlDown) onGlobCardinal
+          case KeyCode.X => if (ev.isControlDown) onExtra
           case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
           case _ => ()
         }
@@ -349,6 +351,15 @@ class EditorUI extends DialogStack(new StackPane) with EventReactor[CellEvent] {
     if (selectedExprWrapper != null) {
       newBuilder(selectedExprWrapper.expr map (e => Some(e)))
     }
+  }
+
+  def onExtra = {
+    val selectedCell = activeBuilder.selectionBase.get
+    selectedCell.owner.dumpInfo
+  }
+
+  def onGlobCardinal = {
+    activeBuilder.complex.extend
   }
 
   def onNew = {
@@ -651,9 +662,25 @@ object Editor extends JFXApp {
 
   val editorUI = new EditorUI
 
+  val testGallery = new SimpleGallery(Example2.testCardinal)
+  testGallery.length = 6
+  testGallery.renderAll
+
   val orchardScene = new Scene {
-      root = editorUI
-    }
+    root = editorUI
+    // root = testGallery
+  }
+
+  orchardScene.addEventFilter(KeyEvent.KEY_PRESSED,
+    new EventHandler[KeyEvent] {
+      def handle(ev : KeyEvent) {
+        ev.getCode match {
+          case KeyCode.X => if (ev.isControlDown) testGallery.onExtra
+          case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
+          case _ => ()
+        }
+      }
+    })
 
   orchardScene.getStylesheets.add("orchard/ui/javafx/OrchardUI.css")
 

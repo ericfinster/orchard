@@ -70,7 +70,7 @@ trait Gallery[A] extends EventConduit[CellEvent] {
 
     // Now look up a zipper to this guy
     val zipper : RoseZipper[GalleryCell, Int] =
-      new RoseZipper(baseContainer.shell.force, Nil)
+      new RoseZipper(baseContainer.canopy.force, Nil)
     var ptrOpt = zipper.lookup(cell)
       .force("Lookup failed for selected cell.").zipOnce
 

@@ -14,15 +14,15 @@ case object RequestDeselected extends CellEvent
 case object RequestHovered extends CellEvent
 case object RequestUnhovered extends CellEvent
 
-// case class CellEntered[A](cell : Panel[A]#CellType) extends CellEvent
-// case class CellExited[A](cell : Panel[A]#CellType) extends CellEvent
-// case class CellClicked[A](cell : Panel[A]#CellType) extends CellEvent
-// case class CellCtrlClicked[A](cell : Panel[A]#CellType) extends CellEvent
-// case class CellDoubleClicked[A](cell : Panel[A]#CellType) extends CellEvent
+case class CellEntered[A](cell : Panel[A]#CellType) extends CellEvent
+case class CellExited[A](cell : Panel[A]#CellType) extends CellEvent
+case class CellClicked[A](cell : Panel[A]#CellType) extends CellEvent
+case class CellCtrlClicked[A](cell : Panel[A]#CellType) extends CellEvent
+case class CellDoubleClicked[A](cell : Panel[A]#CellType) extends CellEvent
 
-// sealed trait ComplexEvent extends CellEvent
-// case object ComplexExtended extends ComplexEvent
+sealed trait ComplexEvent extends CellEvent
+case object ComplexExtended extends ComplexEvent
 
-// sealed trait PanelEvent extends CellEvent
-// case class Enclose[A](cell : Panel[A]#CellType) extends PanelEvent
-// case class Spawn[A](cell : Panel[A]#CellType) extends PanelEvent
+sealed trait PanelEvent extends CellEvent
+case class Enclose[A](cell : Panel[A]#CellType) extends PanelEvent
+case class Spawn[A](cell : Panel[A]#CellType) extends PanelEvent

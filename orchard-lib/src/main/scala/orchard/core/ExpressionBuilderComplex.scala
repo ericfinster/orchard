@@ -7,21 +7,21 @@
 
 package orchard.core
 
+import scala.collection.mutable.WeakHashMap
+
 class ExpressionBuilderComplex(seed : NCell[Polarity[Option[Expression]]])
-    extends MutableComplex[Polarity[Option[Expression]]]
+    extends AbstractMutableComplex[Polarity[Option[Expression]]](seed)
     with CardinalComplex[Option[Expression]] 
     with ExpressionFramework[Polarity[Option[Expression]]] {
 
   type CellType = ExpressionBuilderCell
 
-  // Initialize from the seed ...
-  populateComplex(seed)
-
   def newCell(expr : Polarity[Option[Expression]]) = new ExpressionBuilderCell(expr)
+
   def extend = glob(Negative, Positive)
 
   class ExpressionBuilderCell(initialItem : Polarity[Option[Expression]]) 
-      extends MutableCell 
+      extends AbstractMutableCell
       with ExpressionFrameworkCell
       with CardinalCell { thisCell =>
 

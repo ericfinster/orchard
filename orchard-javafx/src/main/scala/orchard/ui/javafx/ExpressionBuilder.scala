@@ -13,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 import orchard.core._
 import Util._
 
-class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends JavaFXGallery[Polarity[Option[Expression]]] {
+class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends JavaFXGallery[Polarity[Option[Expression]]] { thisBuilder =>
 
   def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
 
@@ -24,6 +24,8 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
   type PanelType = ExpressionBuilderPanel
 
   val complex = new ExpressionBuilderComplex(seed)
+
+  reactTo(complex)
 
   def newPanel(i : Int) : ExpressionBuilderPanel = {
     val panel = new ExpressionBuilderPanel(complex, i)
@@ -44,7 +46,8 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
     ev match {
 
       case ComplexExtended => {
-        val extPanel = newPanel(complex.baseCells.length - 1)
+        this(complex.dimension - 1).refresh
+        val extPanel = newPanel(complex.dimension)
         appendPanel(extPanel)
         extPanel.render
         fastForward
@@ -55,8 +58,10 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
 
         if (cell.owner.isNeutral)
           clearAndSelect(cell)
-        else
+        else {
+          c.owner.dumpInfo
           deselectAll
+        }
       }
 
       case CellCtrlClicked(c) => {
@@ -76,9 +81,33 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
         }
       }
 
+      case complex.ChangeEvents.CompositeInsertionEvent(c, u) => {
+        println("Handling an insertion event ...")
+
+        val dim = c.dimension
+
+        println("Composite is in dimension " ++ dim.toString)
+
+        val compPanel = thisBuilder(dim)
+        val univPanel = thisBuilder(dim + 1)
+
+        println("Found the panels")
+
+        lastComposite = c.cellOnPanel(compPanel)
+        lastFiller = u.cellOnPanel(univPanel)
+
+        println("Set the last guys ..")
+
+        val affectedDimensions = Range(dim, complex.dimension + 1)
+
+        println("Going to refresh dimensions: " ++ affectedDimensions.toString)
+
+        affectedDimensions foreach (i => panels(i).refresh)
+      }
+
       // This makes the inserted cells available for inspection later ...
-      case Enclose(cell) => { lastComposite = cell.asInstanceOf[GalleryCell] }
-      case Spawn(cell) => { lastFiller = cell.asInstanceOf[GalleryCell] }
+      // case Enclose(cell) => { lastComposite = cell.asInstanceOf[GalleryCell] }
+      // case Spawn(cell) => { lastFiller = cell.asInstanceOf[GalleryCell] }
 
       case _ => super.onEventEmitted(ev)
     }
@@ -102,7 +131,7 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
         val baseContainer = 
           base.owner.container.force.asInstanceOf[complex.CellType]
 
-        val basePtr = (new RoseZipper(baseContainer.shell.force, Nil))
+        val basePtr = (new RoseZipper(baseContainer.canopy.force, Nil))
           .lookup(base.owner.asInstanceOf[complex.CellType])
           .force("Lookup failed for selection base")
 
@@ -126,9 +155,9 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
 
         val activePanel = panels(base.owner.dimension + 1)
         val positiveBase = activePanel.baseCell.owner
-        val zipper = new RoseZipper(positiveBase.shell.force, Nil)
+        val zipper = new RoseZipper(positiveBase.canopy.force, Nil)
 
-        val basePtr = positiveBase.shell.force match {
+        val basePtr = positiveBase.canopy.force match {
           case Rose(_) => throw new IllegalArgumentException("Negative cell has no sources.")
           case Branch(negCell, brs) => {
             val i = brs indexWhere

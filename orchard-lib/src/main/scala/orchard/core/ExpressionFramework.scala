@@ -26,21 +26,21 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
     def isEmpty : Boolean = exprItem == None
     def isFull : Boolean = ! isEmpty
 
-    def emptySources : List[CellType] =
+    def emptySources : Vector[CellType] =
       sources match {
-        case None => Nil
+        case None => Vector.empty
         case Some(srcs) => srcs filter (_.isEmpty)
       }
 
-    def fullSources : List[CellType] =
+    def fullSources : Vector[CellType] =
       sources match {
-        case None => Nil
+        case None => Vector.empty
         case Some(srcs) => srcs filter (_.isFull)
       }
 
-    def completeSources : List[CellType] =
+    def completeSources : Vector[CellType] =
       sources match {
-        case None => Nil
+        case None => Vector.empty
         case Some(srcs) => srcs filter (_.isComplete)
       }
 
@@ -85,7 +85,7 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
             } else getSimpleFramework
 
           val frameworkTgt = framework.topCell.target.force
-          val emptyPtr = (new RoseZipper(frameworkTgt.shell.force, Nil)).find(c => c.item == None).force
+          val emptyPtr = (new RoseZipper(frameworkTgt.canopy.force, Nil)).find(c => c.item == None).force
 
           var status : Boolean = true
 
@@ -96,7 +96,7 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
             derivedFramework
           }
 
-          def checkBranchList(branches : List[RoseTree[framework.CellType, Int]]) = {
+          def checkBranchList(branches : Vector[RoseTree[framework.CellType, Int]]) = {
             branches foreach
             (branch => {
               branch foreachCell

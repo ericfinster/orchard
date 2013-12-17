@@ -88,31 +88,3 @@
 .expr-cell-filler-tgt-selected { -fx-background-color: complement-1 }
 .expr-cell-filler-tgt-thin-selected { -fx-background-color: secondary-b-1 }
 
-/* Cardinal cells */
-
-.cardinal-cell {
-}
-
-.cardinal-cell-polarized {
-    -fx-background-color: gainsboro;
-}
-
-.cardinal-cell-neutral {
-    -fx-background-color: white;
-}
-
-.cardinal-neutral-hover {
-    -fx-background-color: lightskyblue;
-}
-
-.cardinal-neutral-selected {
-    -fx-background-color: cornflowerblue;
-}
-
-.cardinal-polarized-hover {
-    -fx-background-color: grey;
-}
-
-.cardinal-polarized-selected {
-    -fx-background-color: dimgrey;
-}

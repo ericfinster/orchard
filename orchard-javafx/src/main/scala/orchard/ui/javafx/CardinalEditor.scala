@@ -215,7 +215,7 @@ class CardinalEditor extends DialogStack(new BorderPane) with EventReactor[CellE
 
     // Now look up a zipper to this guy
     val zipper : RoseZipper[EditorCell, Int] = 
-      new RoseZipper(baseContainer.shell.force, Nil)
+      new RoseZipper(baseContainer.canopy.force, Nil)
     var ptrOpt = zipper.lookup(cell)
       .force("Lookup failed for selected cell.").zipOnce
 
@@ -336,7 +336,7 @@ class CardinalEditor extends DialogStack(new BorderPane) with EventReactor[CellE
         val baseContainer = 
           base.owner.container.force.asInstanceOf[currentComplex.CellType]
 
-        val basePtr = (new RoseZipper(baseContainer.shell.force, Nil))
+        val basePtr = (new RoseZipper(baseContainer.canopy.force, Nil))
           .lookup(base.owner.asInstanceOf[currentComplex.CellType])
           .force("Lookup failed for selection base")
 
@@ -358,9 +358,9 @@ class CardinalEditor extends DialogStack(new BorderPane) with EventReactor[CellE
 
         val activePanel = gallery(base.owner.dimension + 1)
         val positiveBase = activePanel.baseCell.owner
-        val zipper = new RoseZipper(positiveBase.shell.force, Nil)
+        val zipper = new RoseZipper(positiveBase.canopy.force, Nil)
 
-        val basePtr = positiveBase.shell.force match {
+        val basePtr = positiveBase.canopy.force match {
           case Rose(_) => throw new IllegalArgumentException("Negative cell has no sources.")
           case Branch(negCell, brs) => {
             val i = brs indexWhere

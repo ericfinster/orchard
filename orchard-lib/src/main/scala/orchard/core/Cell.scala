@@ -18,7 +18,7 @@ case class ObjectCell[D <: Nat, +A](value : A)(implicit val isZero : IsZero[D]) 
 }
 
 case class CompositeCell[D <: Nat, +A](value : A, srcTree : CellTree[D#Pred, A], tgtValue : A)(implicit val hasPred : HasPred[D]) extends Cell[D, A] {
-  override def toString = value.toString ++ " : " ++ (srcTree.cells map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
+  override def toString = value.toString // ++ " : " ++ (srcTree.cells map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
 }
 
 object Object {

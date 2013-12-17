@@ -164,7 +164,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
       myChildren.clear
       myChildren.add(pane)
       
-      for { tree <- shell } {
+      for { tree <- canopy } {
         tree foreachCell (cell => myChildren.add(cell))
       }
     }
@@ -186,10 +186,8 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
       new EventHandler[MouseEvent] {
         def handle(ev : MouseEvent) {
           ev.getEventType match {
-            case MouseEvent.MOUSE_ENTERED =>
-              owner.emit(CellEntered(thisCell))
-            case MouseEvent.MOUSE_EXITED =>
-              owner.emit(CellExited(thisCell))
+            case MouseEvent.MOUSE_ENTERED => owner.emit(CellEntered(thisCell))
+            case MouseEvent.MOUSE_EXITED => owner.emit(CellExited(thisCell))
             case MouseEvent.MOUSE_CLICKED => {
               if (ev.getClickCount > 1) {
                 owner.emit(CellDoubleClicked(thisCell))
@@ -213,7 +211,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
     //
 
     override def layoutChildren = {
-      for { tree <- shell } {
+      for { tree <- canopy } {
         tree foreachCell
         (cell => {
            cell.autosize
@@ -233,7 +231,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
       setPrefHeight(height)
     }
 
-    override def toString = "Cell(" ++ item.toString ++ ")"
+    override def toString = "Cell(" ++ item.toString ++ ")@" ++ hashCode.toString
   }
 
   abstract class JavaFXEdge(val owner : complex.CellType) extends Path with VisualEdge { thisEdge : EdgeType =>

@@ -34,13 +34,9 @@ class CardinalPanel[A](val complex : SimpleCardinalComplex[A], baseIndex : Int) 
 
     // This is awkward because of your event structure right now.  See the discussion in
     // Events.scala ....
-    override def onEventEmitted(ev : CellEvent) = {
-      if (ev.isInstanceOf[complex.ChangeEvents.ChangeEvent]) {
-        onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
-      } else {
-        super.onEventEmitted(ev)
-      }
-    }
+    // override def onEventEmitted(ev : CellEvent) = {
+    //     super.onEventEmitted(ev)
+    // }
 
     override def doHover = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-hover" else "cardinal-neutral-hover")
     override def doSelect = getStyleClass.add(if (owner.isPolarized) "cardinal-polarized-selected" else "cardinal-neutral-selected")
@@ -65,11 +61,9 @@ class CardinalPanel[A](val complex : SimpleCardinalComplex[A], baseIndex : Int) 
   // UI INITIALIZATION
   //
 
-  var baseCell : CardinalCell = {
-    val seed = complex.baseCells(baseIndex)
-    generatePanelData(seed, for { srcs <- seed.sources } yield (srcs map (src => newEdge(src))))
-  }
+  var baseCell : CardinalCell = newCell(complex.baseCells(baseIndex))
 
+  refreshPanelData
   initializeChildren
 
 }

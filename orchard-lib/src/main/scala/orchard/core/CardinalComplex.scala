@@ -63,13 +63,10 @@ object CardinalComplex {
 
         targetCardinal match {
           case Composite(_, Seed(_), _, e) => {
-            Composite(Negative, Graft(targetCardinal, neutralize(cell).corolla :: Nil), Positive)
+            Composite(Negative, Graft(targetCardinal, Vector(neutralize(cell).corolla)), Positive)
           }
           case Composite(neg, Graft(card, branches, f), pos, e) => {
-            Composite(Negative, Graft(targetCardinal, 
-                                      neutralize(cell).corolla :: 
-                                        Leaf(card).asInstanceOf[CellTree[D, Polarity[A]]] :: 
-                                        Nil), Positive)
+            Composite(Negative, Graft(targetCardinal, Vector(neutralize(cell).corolla, Leaf(card).asInstanceOf[CellTree[D, Polarity[A]]])), Positive)
           }
         }
       }

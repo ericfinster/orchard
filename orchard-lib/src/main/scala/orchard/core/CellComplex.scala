@@ -17,12 +17,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
 
   def newCell(item : A) : CellType
 
-  protected val myBaseCells : ListBuffer[CellType] = new ListBuffer
-
-  def populateComplex(seed : NCell[A]) = 
-    myBaseCells ++= seed.regenerateFrom(ComplexGenerator).value.targets
-
-  def baseCells : List[CellType] = myBaseCells.toList
+  def baseCells : Vector[CellType]
 
   def topCell : CellType = baseCells.last
   def dimension : Int = baseCells.length - 1
@@ -37,19 +32,43 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
   // COMPLEX CELLS
   //
 
-  // Okay ... we currently use the mutable base, but I would really like a complex version
-  // which didn't need that, so that we could religate that to the mutable complex ...
   trait ComplexCell 
-      extends MutableCellBase[CellType, CellType] 
-      with    MutableEdgeBase[CellType, CellType] 
+      extends CellBase[CellType, CellType] 
+      with    EdgeBase[CellType, CellType] 
       with    EventEmitter[CellEvent] { thisCell : CellType =>
 
     def item : A
     def complex : CellComplex[A] = thisComplex
 
+    // That these are mutable here is dubious ...
     var loops : List[CellType] = Nil
     var skeleton : NCell[CellType] = null
 
+    //============================================================================================
+    // PANEL TRACKING
+    //
+
+    // The idea here is that instead of events, a cell complex tracks the panels which it has
+    // be incarnated on.  This provides a more direct link between the complex and it's views,
+    // and I think will have some benefits when we work on the mutability routines ....
+
+    // Note that the reason it is not a map is that we have a dependent return type ...
+
+    def cellPanels : Iterable[Panel[A]]
+    def edgePanels : Iterable[Panel[A]]
+
+    def cellOnPanel(panel : Panel[A]) : panel.CellType
+    def edgeOnPanel(panel : Panel[A]) : panel.EdgeType
+
+    def getOrCreateCell(panel : Panel[A]) : panel.CellType
+    def getOrCreateEdge(panel : Panel[A]) : panel.EdgeType
+
+    def registerPanelCell(panel : Panel[A])(cell : panel.CellType) : Unit
+    def registerPanelEdge(panel : Panel[A])(edge : panel.EdgeType) : Unit
+
+    def unregisterPanelCell(panel : Panel[A]) : Unit
+    def unregisterPanelEdge(panel : Panel[A]) : Unit
+    
     //============================================================================================
     // EVENT EMISSION
     //
@@ -111,104 +130,25 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     // XML CONVERSION
     //
 
-    // def cellToXML(implicit vs : XmlSerializable[A]) = 
-    //   skeleton.cell match {
-    //     case Object(_, ev) => <obj id={hashCode.toString}><label>{vs.toXML(item)}</label></obj>
-    //     case Composite(_, srcTree, tgtValue, ev) => {
-    //       <cell id={hashCode.toString}><sourcetree>{
+    def cellToXML(implicit vs : XmlSerializable[A]) = 
+      skeleton.cell match {
+        case Object(_, ev) => <obj id={hashCode.toString}><label>{vs.toXML(item)}</label></obj>
+        case Composite(_, srcTree, tgtValue, ev) => {
+          <cell id={hashCode.toString}><sourcetree>{
 
-    //         def processSourceTree(tree : CellTree[_ <: Nat, CellType]) : xml.NodeSeq = 
-    //           tree match {
-    //             case Seed(o, _) => <seed ref={o.value.hashCode.toString} />
-    //             case Leaf(l, _) => <leaf ref={l.value.hashCode.toString} />
-    //             case Graft(c, brs, _) => <graft ref={c.value.hashCode.toString}>{ brs map processSourceTree }</graft>
-    //           }
+            def processSourceTree(tree : CellTree[_ <: Nat, CellType]) : xml.NodeSeq = 
+              tree match {
+                case Seed(o, _) => <seed ref={o.value.hashCode.toString} />
+                case Leaf(l, _) => <leaf ref={l.value.hashCode.toString} />
+                case Graft(c, brs, _) => <graft ref={c.value.hashCode.toString}>{ brs map processSourceTree }</graft>
+              }
 
-    //         processSourceTree(srcTree)
-    //       }</sourcetree><target ref={tgtValue.hashCode.toString} /><label>{vs.toXML(item)}</label></cell>
-    //     }
-    //   }
-  }
-
-  //============================================================================================
-  // COMPLEX GENERATION
-  //
-
-  object ComplexGenerator extends CellRegenerator[A, CellType] {
-
-    def generateObject[D <: Nat : IsZero](value : A) : Cell[D, CellType] = {
-      val newObj = newCell(value)
-      val newObjSkeleton = ObjectCell(newObj)
-      newObj.skeleton = newObjSkeleton
-      newObjSkeleton
-    }
-
-    def generateCell[D <: Nat : HasPred](cellValue : A,
-                                         srcs : CellTree[D#Pred, CellType],
-                                         tgtValue : A) : Cell[D, CellType] = {
-
-      val thisMutableCell = newCell(cellValue)
-      val tgtMutableCell = newCell(tgtValue)
-
-      thisMutableCell.canopy = None
-      thisMutableCell.target = Some(tgtMutableCell)
-      thisMutableCell.sources = Some(srcs.cellList map
-                                       (src => {
-                                          src.value.outgoing = Some(thisMutableCell)
-                                          src.value
-                                        }))
-
-      // We know the incoming cells
-      thisMutableCell.incoming = None
-      tgtMutableCell.incoming = Some(thisMutableCell)
-
-      var curIdx : Int = -1
-      val perm = srcs.inversePerm
-
-      def processSources(srcTree : CellTree[D#Pred, CellType])
-          : (RoseTree[CellType, Int],
-             Option[CellType],
-             Option[List[CellType]]) =
-        srcTree match {
-          case Seed(obj, ev) =>
-            {
-              obj.value.container = Some(tgtMutableCell)
-              (Branch(obj.value, Rose(curIdx) :: Nil), None, None)
-            }
-          case Leaf(shape, ev) =>
-            {
-              curIdx += 1
-              (Rose(perm(curIdx)), Some(shape.value), Some(shape.value :: Nil))
-            }
-          case Graft(cell, branches, ev) =>
-            {
-              implicit val hasPred = ev
-
-              val (newBranches, tgtOpts, srcOpts) = (branches map (b => processSources(b))).unzip3
-              val srcs = for { ll <- optSwitch(srcOpts) } yield ll.flatten
-              cell.value.container = Some(tgtMutableCell)
-              (Branch(cell.value, newBranches), Some(cell.targetValue), srcs)
-            }
-        }
-
-      val (tgtCanopy, tgtTgtOpt, tgtSrcsOpt) = processSources(srcs)
-
-      tgtMutableCell.canopy = Some(tgtCanopy)
-      tgtMutableCell.target = tgtTgtOpt
-      tgtMutableCell.sources = tgtSrcsOpt
-
-      if (tgtMutableCell.isLoop) {
-        for { t <- tgtMutableCell.target } {
-          t.loops = tgtMutableCell :: t.loops
+            processSourceTree(srcTree)
+          }</sourcetree><target ref={tgtValue.hashCode.toString} /><label>{vs.toXML(item)}</label></cell>
         }
       }
-
-      val thisMutableCellSkeleton = CompositeCell(thisMutableCell, srcs, tgtMutableCell)
-      thisMutableCell.skeleton = thisMutableCellSkeleton
-      tgtMutableCell.skeleton = thisMutableCellSkeleton.target
-      thisMutableCellSkeleton
-    }
   }
+
 }
 
 

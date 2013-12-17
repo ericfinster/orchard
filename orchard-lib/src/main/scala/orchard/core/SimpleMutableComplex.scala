@@ -7,12 +7,11 @@
 
 package orchard.core
 
-import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.WeakHashMap
 
 import Util._
 
-class SimpleMutableComplex[A](seed : NCell[A]) extends MutableComplex[A] {
+class SimpleMutableComplex[A](seed : NCell[A]) extends AbstractMutableComplex[A](seed) {
 
   type CellType = SimpleMutableCell
 
@@ -22,12 +21,12 @@ class SimpleMutableComplex[A](seed : NCell[A]) extends MutableComplex[A] {
 
   def newCell(item : A) = new SimpleMutableCell(item)
 
-  populateComplex(seed)
-
   //============================================================================================
   // CELL IMPLEMENTATION
   //
 
-  class SimpleMutableCell(var item : A) extends MutableCell
+  class SimpleMutableCell(var item : A) extends AbstractMutableCell {
+    override def toString = "Cell(" ++ item.toString ++ ")@" ++ hashCode.toString
+  }
 
 }

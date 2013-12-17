@@ -91,6 +91,11 @@ trait Nats {
       S(fromInt(n - 1))
     }
 
+  def getPred[N <: Nat : HasPred](n : N) : N#Pred = {
+    n match {
+      case S(p) => p.asInstanceOf[N#Pred]
+    }
+  }
 }
 
 object Nats extends Nats

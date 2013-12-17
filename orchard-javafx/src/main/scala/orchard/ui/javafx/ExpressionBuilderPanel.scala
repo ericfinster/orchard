@@ -59,8 +59,8 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       pane.getChildren.setAll(labelNode)
       labelNode
     }
-
-    def assignStyle = 
+ 
+   def assignStyle = 
       item match {
         case Positive => getStyleClass.add("expr-cell-polarized")
         case Negative => getStyleClass.add("expr-cell-polarized")
@@ -152,12 +152,12 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
             renderCell
             refresh
           }
-          case _ => onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
+          case _ => () // onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
         }
       } else {
         ev match {
-          case CellEntered(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestHovered)
-          case CellExited(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestUnhovered)
+          case CellEntered(cell) => /* if (owner.isPolarized) () else */ owner.emitToFaces(RequestHovered)
+          case CellExited(cell) => /* if (owner.isPolarized) () else */ owner.emitToFaces(RequestUnhovered)
           case _ => super.onEventEmitted(ev)
         }
       }
@@ -175,12 +175,14 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
 
   def newCell(owner : complex.ExpressionBuilderCell) : ExpressionBuilderCell = { 
     val cell = new ExpressionBuilderCell(owner)
+    owner.registerPanelCell(thisPanel)(cell)
     reactTo(cell) 
     cell 
   }
   
   def newEdge(owner : complex.ExpressionBuilderCell) : ExpressionBuilderEdge = { 
     val edge = new ExpressionBuilderEdge(owner) 
+    owner.registerPanelEdge(thisPanel)(edge)
     reactTo(edge) 
     edge 
   }
@@ -189,11 +191,9 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
   // INITIALIZATION
   //
 
-  var baseCell : ExpressionBuilderCell = {
-    val seed = complex.baseCells(baseIndex)
-    generatePanelData(seed, for { srcs <- seed.sources } yield (srcs map (src => newEdge(src))))
-  }
+  var baseCell : ExpressionBuilderCell = newCell(complex.baseCells(baseIndex))
 
+  refreshPanelData
   initializeChildren
 
 }

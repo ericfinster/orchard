@@ -101,7 +101,7 @@ class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polari
         val baseContainer = 
           base.owner.container.force.asInstanceOf[complex.CellType]
 
-        val basePtr = (new RoseZipper(baseContainer.shell.force, Nil))
+        val basePtr = (new RoseZipper(baseContainer.canopy.force, Nil))
           .lookup(base.owner.asInstanceOf[complex.CellType])
           .force("Lookup failed for selection base")
 
@@ -123,9 +123,9 @@ class CardinalGallery[A](seed : NCell[Polarity[A]]) extends JavaFXGallery[Polari
 
         val activePanel = panels(base.owner.dimension + 1)
         val positiveBase = activePanel.baseCell.owner
-        val zipper = new RoseZipper(positiveBase.shell.force, Nil)
+        val zipper = new RoseZipper(positiveBase.canopy.force, Nil)
 
-        val basePtr = positiveBase.shell.force match {
+        val basePtr = positiveBase.canopy.force match {
           case Rose(_) => throw new IllegalArgumentException("Negative cell has no sources.")
           case Branch(negCell, brs) => {
             val i = brs indexWhere

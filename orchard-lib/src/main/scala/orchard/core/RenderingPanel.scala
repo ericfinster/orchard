@@ -75,7 +75,7 @@ trait RenderingPanel[A] extends Panel[A] {
     cell.setLabelSize
 
     val cellMarker : LayoutMarker = 
-      cell.shell match {
+      cell.canopy match {
         case None => { // External case
 
           // An external cell needs only make room for its label
@@ -233,8 +233,8 @@ trait RenderingPanel[A] extends Panel[A] {
         case Some(tree) => { // internal case
 
           // This inner loop traverse the source tree, recursively rendering the cells it finds
-          def traverse[D <: Nat](shellTree : RoseTree[CellType, Int]) : LayoutMarker =
-            shellTree match {
+          def traverse[D <: Nat](canopyTree : RoseTree[CellType, Int]) : LayoutMarker =
+            canopyTree match {
               case Rose(leafIndex) =>
                 {
                   val thisMarker = sourceMarkers(leafIndex)
@@ -535,8 +535,8 @@ trait RenderingPanel[A] extends Panel[A] {
 
     override def onEventEmitted(ev : CellEvent) =
       ev match {
-        case CellEntered(cell) => owner.emitToFaces(RequestHovered)
-        case CellExited(cell) => owner.emitToFaces(RequestUnhovered)
+        // case CellEntered(cell) => owner.emitToFaces(RequestHovered)
+        // case CellExited(cell) => owner.emitToFaces(RequestUnhovered)
         case RequestSelected => doSelect
         case RequestDeselected => doDeselect
         case RequestHovered => doHover
