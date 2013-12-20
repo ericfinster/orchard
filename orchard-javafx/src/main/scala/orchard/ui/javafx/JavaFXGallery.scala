@@ -11,6 +11,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 import orchard.core._
+import orchard.ui.javafx.controls.Spinner
 
 abstract class JavaFXGallery[A] extends Spinner with Gallery[A] {
 

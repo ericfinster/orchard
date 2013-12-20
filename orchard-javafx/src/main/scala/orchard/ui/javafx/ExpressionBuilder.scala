@@ -11,6 +11,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 import orchard.core._
+
 import Util._
 
 class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends JavaFXGallery[Polarity[Option[Expression]]] { thisBuilder =>

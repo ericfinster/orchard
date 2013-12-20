@@ -5,7 +5,7 @@
   * @version 0.1
   */
 
-package orchard.ui.javafx
+package orchard.ui.javafx.controls
 
 import javafx.scene.Node
 

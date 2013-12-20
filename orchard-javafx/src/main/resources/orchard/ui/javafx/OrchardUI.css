@@ -2,36 +2,6 @@
  *  OchardUI.css - User interface CSS declarations
  */
 
-.orchard-editor {
-    -fx-background-color: gainsboro;
-}
-
-.orchard-dialog {
-    -fx-background-color: gainsboro;
-}
-
-.javafx-panel {
-    -fx-background-color: white;
-    -fx-padding: 10pt;
-    -fx-border-style: solid;
-    -fx-border-color: grey;
-    -fx-border-width: 1pt;
-}
-
-.javafx-cell {
-    -fx-background-color: white;
-    -fx-background-radius: 4pt;
-    -fx-border-style: solid;
-    -fx-border-color: black;
-    -fx-border-width: 2pt;
-    -fx-border-radius: 4pt;
-}
-
-.javafx-gallery {
-    -fx-background-color: gainsboro;
-    -fx-padding: 10pt;
-}
-
 /* Expression cells */
 
 .root {
@@ -61,6 +31,75 @@
     complement-3: #7C5507;
     complement-4: #FFD37B;
     complement-5: #FFE5B2;
+
+    /* Chaning some JavaFX defaults to go with our scheme */
+
+    /* -fx-selection-bar: primary-4; */
+    /* -fx-body-color: gainsboro; */
+}
+
+/* JavaFX Control Customizations */
+
+/* .tab-pane *.tab-header-background { */
+/*     -fx-background-color: gainsboro; */
+/* } */
+
+/* This will remove the focus highlighting from the table-view control,
+ * which is yucky and doesn't go with our scheme ...  */
+.list-view:focused {
+    -fx-background-color: -fx-box-border, -fx-control-inner-background;
+    -fx-background-insets: 0, 1;
+    -fx-padding: 1; /* 0.083333em; */
+}
+
+/* .list-cell:odd {  */
+/*     -fx-background-color: -fx-table-cell-border-color, -fx-control-inner-background; */
+/* } */
+
+/* Orchard custom classes */
+
+.orch-menu {
+    -fx-background-color: gainsboro;
+    -fx-border-color: grey;
+    -fx-border-radius: 1pt;
+}
+
+.orch-menu-label {
+    -fx-background-color: gainsboro;
+    -fx-padding: 5pt;
+}
+
+.orch-menu-label:hover {
+    -fx-background-color: white;
+}
+
+.orchard-editor {
+    -fx-background-color: gainsboro;
+}
+
+.orchard-dialog {
+    -fx-background-color: gainsboro;
+}
+
+.javafx-panel {
+    -fx-background-color: white;
+    -fx-padding: 10pt;
+    -fx-border-style: solid;
+    -fx-border-color: grey;
+    -fx-border-width: 1pt;
+}
+
+.javafx-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 4pt;
+    -fx-border-style: solid;
+    -fx-border-color: black;
+    -fx-border-width: 2pt;
+    -fx-border-radius: 4pt;
+}
+
+.javafx-gallery {
+    -fx-background-color: gainsboro;
 }
 
 .expr-cell-polarized { -fx-background-color: gainsboro; }
