@@ -1136,7 +1136,7 @@ class NewEditor extends PopupManager(new VBox) with EventReactor[CellEvent] { th
 
     activeBuilder.deselectAll
 
-    val nook = nookCell.owner.getSimpleFramework.toCell
+    val nook = nookCell.owner.getSimpleFramework.getIdNook
 
     val (targetIsThin, targetCell) =
       if (nookCell.owner.isOutNook) {

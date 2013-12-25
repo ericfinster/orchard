@@ -63,17 +63,53 @@ object XmlSerializable {
         }
     }
 
+  implicit def pairSerializable[A : XmlSerializable, B : XmlSerializable] : XmlSerializable[(A, B)] = 
+    new XmlSerializable[(A, B)] {
+      val aIsSerializable = implicitly[XmlSerializable[A]]
+      val bIsSerializable = implicitly[XmlSerializable[B]]
+      def toXML(pr : (A, B)) = {
+        val (a, b) = pr
+        <pair><fst>{aIsSerializable.toXML(a)}</fst><snd>{bIsSerializable.toXML(b)}</snd></pair>
+      }
+      def fromXML(node : xml.Node) = 
+        node match {
+          case <pair><fst>{aContent}</fst><snd>{bContent}</snd></pair> => {
+            (aIsSerializable.fromXML(aContent), bIsSerializable.fromXML(bContent))
+          }
+        }
+    }
+
+  implicit def roseTreeSerializable[A : XmlSerializable, B : XmlSerializable] : XmlSerializable[RoseTree[A, B]] = 
+    new XmlSerializable[RoseTree[A, B]] {
+      val aIsSerializable = implicitly[XmlSerializable[A]]
+      val bIsSerializable = implicitly[XmlSerializable[B]]
+      def toXML(t : RoseTree[A, B]) =
+        t match {
+          case Rose(b) => <rose>{bIsSerializable.toXML(b)}</rose>
+          case Branch(a, brs) => <branch>{aIsSerializable.toXML(a)}<branches>{brs map (b => toXML(b))}</branches></branch>
+        }
+      def fromXML(node : xml.Node) =
+        node match {
+          case <rose>{content}</rose> => Rose(bIsSerializable.fromXML(content))
+          case <branch>{aContent}<branches>{brsContent @ _*}</branches></branch> => {
+            val a = aIsSerializable.fromXML(aContent)
+            val brs = trimText(brsContent).toVector map (br => fromXML(br))
+            Branch(a, brs)
+          }
+        }
+    }
+
   // You should probably look at this again.  It seems like there is a more
   // efficient way ... Yeah, this is wildly inefficient.  Fix it!!
-  implicit def expressionSerializable : XmlSerializable[Expression] =
+  implicit val expressionSerializable : XmlSerializable[Expression] =
     new XmlSerializable[Expression] {
       def toXML(expr : Expression) = 
         expr match {
           case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
           case Filler(id, nook) => 
-            <filler id={id}>{cellSerializable[Option[Expression]].toXML(nook)}</filler>
+            <filler id={id}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(nook)}</filler>
           case FillerTarget(id, nook, isThin) =>
-            <fillertgt id={id} isThin={isThin.toString}>{cellSerializable[Option[Expression]].toXML(nook)}</fillertgt>
+            <fillertgt id={id} isThin={isThin.toString}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(nook)}</fillertgt>
         }
 
       def fromXML(node : xml.Node) =
@@ -85,13 +121,13 @@ object XmlSerializable {
           }
           case f @ <filler>{content}</filler> => {
             val id = (f \ "@id").text
-            val nook = cellSerializable[Option[Expression]].fromXML(content)
+            val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
             Filler(id, nook)
           }
           case ft @ <fillertgt>{content}</fillertgt> => {
             val id = (ft \ "@id").text
             val isThin = (ft \ "@isThin").text.toBoolean
-            val nook = cellSerializable[Option[Expression]].fromXML(content)
+            val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
             FillerTarget(id, nook, isThin)
           }
         }
