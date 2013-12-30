@@ -148,7 +148,6 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       if (ev.isInstanceOf[complex.ChangeEvents.ChangeEvent]) {
         ev match {
           case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
-            println("Item has changed: " ++ item.toString)
             renderCell
             refresh
           }
@@ -156,8 +155,8 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
       } else {
         ev match {
-          case CellEntered(cell) => /* if (owner.isPolarized) () else */ owner.emitToFaces(RequestHovered)
-          case CellExited(cell) => /* if (owner.isPolarized) () else */ owner.emitToFaces(RequestUnhovered)
+          case CellEntered(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestHovered)
+          case CellExited(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestUnhovered)
           case _ => super.onEventEmitted(ev)
         }
       }
@@ -166,8 +165,8 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
 
   class ExpressionBuilderEdge(owner : complex.ExpressionBuilderCell) extends JavaFXEdge(owner) with MutablePanelEdge {
 
-    override def doHover : Unit = setStroke(Color.RED)
-    override def doSelect : Unit = setStroke(Color.RED)
+    override def doHover : Unit = setStroke(Color.TOMATO)
+    override def doSelect : Unit = setStroke(Color.TOMATO)
     override def doUnhover : Unit = setStroke(Color.BLACK)
     override def doDeselect : Unit = setStroke(Color.BLACK)
     

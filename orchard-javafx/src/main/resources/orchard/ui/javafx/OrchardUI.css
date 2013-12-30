@@ -8,41 +8,124 @@
 
     /* http://colorschemedesigner.com */
 
-    primary-1: #4C82FF;
-    primary-2: #5A6FA1;
-    primary-3: #0A2C7C;
-    primary-4: #89ADFF;
-    primary-5: #BACFFF;
+    red-1: #FFAEAE;
+    red-2: #E4A3A3;
+    red-3: #D97474;
+    red-4: #FFCACA;
+    red-5: #FFE0E0;
 
-    secondary-a-1: #5D53FF;
-    secondary-a-2: #605CA1;
-    secondary-a-3: #110B7C;
-    secondary-a-4: #948EFF;
-    secondary-a-5: #C1BDFF;
+    orange-1: #FFD3AE;
+    orange-2: #E4C0A3;
+    orange-3: #D9A274;
+    orange-4: #FFE2CA;
+    orange-5: #FFEEE0;
 
-    secondary-b-1: #42B9FF;
-    secondary-b-2: #5685A1;
-    secondary-b-3: #08517C;
-    secondary-b-4: #83D1FF;
-    secondary-b-5: #B7E4FF;
+    aqua-1: #7CB6B6;
+    aqua-2: #75A3A3;
+    aqua-3: #539B9B;
+    aqua-4: #B8E8E8;
+    aqua-5: #CCE8E8;
 
-    complement-1: #FFBC37;
-    complement-2: #A18751;
-    complement-3: #7C5507;
-    complement-4: #FFD37B;
-    complement-5: #FFE5B2;
+    green-1: #95DB95;
+    green-2: #8CC38C;
+    green-3: #64BA64;
+    green-4: #C1F4C1;
+    green-5: #D6F4D6;
 
-    /* Chaning some JavaFX defaults to go with our scheme */
+    purple-1: #9392C8;
+    purple-2: #8888B3;
+    purple-3: #6361AA;
+    purple-4: #C4C3EE;
+    purple-5: #D6D5EE;
 
-    /* -fx-selection-bar: primary-4; */
-    /* -fx-body-color: gainsboro; */
+    violet-1: #AE88C2;
+    violet-2: #9D7FAE;
+    violet-3: #8B5BA5;
+    violet-4: #DBBDEC;
+    violet-5: #E2D1EC;
+
+    yellow-1: #FFFFAE;
+    yellow-2: #E4E4A3;
+    yellow-3: #D9D974;
+    yellow-4: #FFFFCA;
+    yellow-5: #FFFFE0;
+
+    tangerine-1: #FFEBAE;
+    tangerine-2: #E4D4A3;
+    tangerine-3: #D9C074;
+    tangerine-4: #FFF2CA;
+    tangerine-5: #FFF7E0;
+
+    peach-1: #FFE5AE;
+    peach-2: #E4CFA3;
+    peach-3: #D9B974;
+    peach-4: #FFEECA;
+    peach-5: #FFF5E0;
+
+    lime-1: #D5F2A5;
+    lime-2: #C1D89B;
+    lime-3: #AACD6E;
+    lime-4: #E7FBC6;
+    lime-5: #F0FBDC;
+
+    rose-1: #DF98BC;
+    rose-2: #C78EAB;
+    rose-3: #BD6592;
+    rose-4: #F5C2DC;
+    rose-5: #F5D7E6;
+
+    blue-1: #8D9AC4;
+    blue-2: #838EAF;
+    blue-3: #5E70A6;
+    blue-4: #C1CCEC;
+    blue-5: #D3D9EC;
+
+    /* Semantic Color Definitions */
+
+    empty-base: white;
+    empty-hover: -fx-background;
+    empty-selected: gainsboro;
+
+    var-base: peach-5;
+    var-hover: peach-2;
+    var-selected: peach-3;
+
+    var-thin-base: violet-5;
+    var-thin-hover: violet-2;
+    var-thin-selected: violet-3;
+
+    filler-base: blue-5;
+    filler-hover: blue-2;
+    filler-selected: blue-3;
+    
+    filler-tgt-base: red-5;
+    filler-tgt-hover: red-2;
+    filler-tgt-selected: red-3;
+
+    filler-tgt-thin-base: violet-5;
+    filler-tgt-thin-hover: violet-2;
+    filler-tgt-thin-selected: violet-3;
 }
 
 /* JavaFX Control Customizations */
 
-/* .tab-pane *.tab-header-background { */
-/*     -fx-background-color: gainsboro; */
-/* } */
+.tab-pane *.tab-header-background {
+    -fx-background-color: -fx-background;
+    -fx-effect: null;
+    -fx-border-color: -fx-box-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tab-pane .headers-region {
+    -fx-effect: null;
+}
+
+.tab {
+    -fx-background-color: -fx-background;
+    -fx-border-color: -fx-box-border;
+    -fx-border-width: 1 1 0 1;
+    -fx-border-radius: 4 4 0 0;
+}
 
 /* This will remove the focus highlighting from the table-view control,
  * which is yucky and doesn't go with our scheme ...  */
@@ -52,33 +135,98 @@
     -fx-padding: 1; /* 0.083333em; */
 }
 
-/* .list-cell:odd {  */
-/*     -fx-background-color: -fx-table-cell-border-color, -fx-control-inner-background; */
+.orch-list-cell { -fx-background-color: empty-base; }
+.orch-list-cell:hover { -fx-background-color: empty-hover }
+.orch-list-cell:selected {
+    -fx-background-color: empty-selected;
+    -fx-text-fill: -fx-text-inner-color;
+}
+
+.orch-list-cell-var { -fx-background-color: var-base; -fx-border-color: var-selected; -fx-border-width: 1; }
+.orch-list-cell-var:hover { -fx-background-color: var-hover; }
+.orch-list-cell-var:selected { -fx-background-color: var-selected; }
+
+.orch-list-cell-filler { -fx-background-color: filler-base; -fx-border-color: filler-selected; -fx-border-width: 1; }
+.orch-list-cell-filler:hover { -fx-background-color: filler-hover }
+.orch-list-cell-filler:selected { -fx-background-color: filler-selected }
+
+.orch-list-cell-filler-tgt { -fx-background-color: filler-tgt-base; -fx-border-color: filler-tgt-selected; -fx-border-width: 1; }
+.orch-list-cell-filler-tgt:hover { -fx-background-color: filler-tgt-hover }
+.orch-list-cell-filler-tgt:selected { -fx-background-color: filler-tgt-selected }
+
+/* I guess there are a couple more ... */
+
+
+/* .list-cell:odd { */
+/*     -fx-background-color: -fx-control-inner-background; */
 /* } */
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+/* horizontal the two nodes are placed to the left/right of each other. */
+.split-pane:horizontal > * > .split-pane-divider {
+   -fx-border-color: transparent;
+   -fx-background-color: gainsboro;
+   -fx-background-insets: 0;
+}
+
+/* vertical the two nodes are placed on top of each other. */
+.split-pane:vertical > * > .split-pane-divider {
+   -fx-border-color:  transparent;
+   -fx-background-color: gainsboro;
+   -fx-background-insets: 0;
+}
 
 /* Orchard custom classes */
 
-.orch-menu {
-    -fx-background-color: gainsboro;
-    -fx-border-color: grey;
-    -fx-border-radius: 1pt;
-}
-
-.orch-menu-label {
-    -fx-background-color: gainsboro;
+.orch-menu-item {
+    -fx-background-color: -fx-background;
     -fx-padding: 5pt;
 }
 
-.orch-menu-label:hover {
-    -fx-background-color: white;
+.orch-menu-item:hover {
+    -fx-background-color: filler-base;
+    -fx-background-radius: 4pt;
+}
+
+.orch-menu-item-selected {
+    -fx-background-color: filler-base;
+    -fx-background-radius: 4pt;
+}
+
+.orch-menu {
+    -fx-background-color: -fx-background;
+    -fx-background-radius: 4pt;
+    -fx-padding: 2pt;
+    -fx-effect: dropshadow( one-pass-box , black , 7 , 0.0 , 0 , 0 );
+}
+
+.orch-menu-bar {
+    -fx-background-color: -fx-background;
+    -fx-padding: 2;
+    -fx-border-color:gainsboro;
+    -fx-border-width: 0 0 6 0;
 }
 
 .orchard-editor {
-    -fx-background-color: gainsboro;
+    -fx-background-color: -fx-background;
 }
 
 .orchard-dialog {
-    -fx-background-color: gainsboro;
+    -fx-background-color: -fx-background;
+}
+
+#orch-previewer-pane {
+    -fx-background-color: -fx-background;
+    -fx-padding: 10pt;
+}
+
+#orch-environment-pane {
+    -fx-background-color: -fx-background;
 }
 
 .javafx-panel {
@@ -92,38 +240,37 @@
 .javafx-cell {
     -fx-background-color: white;
     -fx-background-radius: 4pt;
-    -fx-border-style: solid;
     -fx-border-color: black;
     -fx-border-width: 2pt;
     -fx-border-radius: 4pt;
 }
 
 .javafx-gallery {
-    -fx-background-color: gainsboro;
+    -fx-background-color: -fx-background;
+    -fx-padding: 10;
 }
 
-.expr-cell-polarized { -fx-background-color: gainsboro; }
-
+.expr-cell-polarized { -fx-background-color: -fx-background; }
 .expr-cell-exposed-nook { -fx-background-color: red; }
 
-.expr-cell-empty { -fx-background-color: white }
-.expr-cell-var { -fx-background-color: white }
-.expr-cell-var-thin { -fx-background-color: secondary-a-5 }
-.expr-cell-filler { -fx-background-color: primary-5 }
-.expr-cell-filler-tgt { -fx-background-color: complement-5 }
-.expr-cell-filler-tgt-thin { -fx-background-color: secondary-b-5 }
+.expr-cell-empty { -fx-background-color: empty-base }
+.expr-cell-var { -fx-background-color: var-base }
+.expr-cell-var-thin { -fx-background-color: var-thin-base }
+.expr-cell-filler { -fx-background-color: filler-base }
+.expr-cell-filler-tgt { -fx-background-color: filler-tgt-base }
+.expr-cell-filler-tgt-thin { -fx-background-color: filler-tgt-base }
 
-.expr-cell-empty-hovered { -fx-background-color: lightgrey }
-.expr-cell-var-hovered { -fx-background-color:  lightgrey }
-.expr-cell-var-thin-hovered { -fx-background-color: secondary-a-4 }
-.expr-cell-filler-hovered { -fx-background-color: primary-4 }
-.expr-cell-filler-tgt-hovered { -fx-background-color: complement-4 }
-.expr-cell-filler-tgt-thin-hovered { -fx-background-color: secondary-b-4 }
+.expr-cell-empty-hovered { -fx-background-color: empty-hover }
+.expr-cell-var-hovered { -fx-background-color:  var-hover }
+.expr-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
+.expr-cell-filler-hovered { -fx-background-color: filler-hover }
+.expr-cell-filler-tgt-hovered { -fx-background-color: filler-tgt-hover }
+.expr-cell-filler-tgt-thin-hovered { -fx-background-color: filler-tgt-thin-hover }
 
-.expr-cell-empty-selected { -fx-background-color: grey }
-.expr-cell-var-selected { -fx-background-color: grey }
-.expr-cell-var-thin-selected { -fx-background-color: secondary-a-1 }
-.expr-cell-filler-selected { -fx-background-color: primary-1 }
-.expr-cell-filler-tgt-selected { -fx-background-color: complement-1 }
-.expr-cell-filler-tgt-thin-selected { -fx-background-color: secondary-b-1 }
+.expr-cell-empty-selected { -fx-background-color: empty-selected }
+.expr-cell-var-selected { -fx-background-color: var-selected }
+.expr-cell-var-thin-selected { -fx-background-color: var-thin-selected }
+.expr-cell-filler-selected { -fx-background-color: filler-selected }
+.expr-cell-filler-tgt-selected { -fx-background-color: filler-tgt-selected }
+.expr-cell-filler-tgt-thin-selected { -fx-background-color: filler-tgt-thin-selected }
 

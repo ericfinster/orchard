@@ -338,8 +338,6 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
             case HasPred(ev) => {
               implicit val srcHasPred : HasPred[SrcDim] = ev
 
-              myTarget.dumpInfo
-
               val mySrcRoseTree = mySrcTree map ((c => c.skeleton.cell.asInstanceOf[Cell[SrcDim, CellType]]),
                                                  (i => ((myTarget.sources.get)(i)).skeleton.cell.asInstanceOf[Cell[SrcDim#Pred, CellType]]))
 

@@ -37,6 +37,5 @@ class SimpleFramework(seed : NCell[Option[Expression]])
       extends AbstractMutableCell with ExpressionFrameworkCell {
 
     def exprItem = item
-
   }
 }

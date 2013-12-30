@@ -60,7 +60,6 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
         if (cell.owner.isNeutral)
           clearAndSelect(cell)
         else {
-          c.owner.dumpInfo
           deselectAll
         }
       }
@@ -83,32 +82,18 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
       }
 
       case complex.ChangeEvents.CompositeInsertionEvent(c, u) => {
-        println("Handling an insertion event ...")
-
         val dim = c.dimension
-
-        println("Composite is in dimension " ++ dim.toString)
 
         val compPanel = thisBuilder(dim)
         val univPanel = thisBuilder(dim + 1)
 
-        println("Found the panels")
-
         lastComposite = c.cellOnPanel(compPanel)
         lastFiller = u.cellOnPanel(univPanel)
 
-        println("Set the last guys ..")
-
         val affectedDimensions = Range(dim, complex.dimension + 1)
-
-        println("Going to refresh dimensions: " ++ affectedDimensions.toString)
 
         affectedDimensions foreach (i => panels(i).refresh)
       }
-
-      // This makes the inserted cells available for inspection later ...
-      // case Enclose(cell) => { lastComposite = cell.asInstanceOf[GalleryCell] }
-      // case Spawn(cell) => { lastFiller = cell.asInstanceOf[GalleryCell] }
 
       case _ => super.onEventEmitted(ev)
     }
