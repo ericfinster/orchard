@@ -146,7 +146,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
 
   addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler[MouseEvent] {
     def handle(ev : MouseEvent) = {
-      println("Panel clicked.")
+      emit(PanelClicked)
     }
   })
 

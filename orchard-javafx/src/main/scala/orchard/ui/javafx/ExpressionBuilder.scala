@@ -46,6 +46,10 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Java
   override def onEventEmitted(ev : CellEvent) = {
     ev match {
 
+      case PanelClicked => {
+        deselectAll
+      }
+
       case ComplexExtended => {
         this(complex.dimension - 1).refresh
         val extPanel = newPanel(complex.dimension)

@@ -102,9 +102,9 @@
     filler-tgt-hover: red-2;
     filler-tgt-selected: red-3;
 
-    filler-tgt-thin-base: violet-5;
-    filler-tgt-thin-hover: violet-2;
-    filler-tgt-thin-selected: violet-3;
+    filler-tgt-thin-base: blue-5;
+    filler-tgt-thin-hover: blue-2;
+    filler-tgt-thin-selected: blue-3;
 }
 
 /* JavaFX Control Customizations */
@@ -153,6 +153,10 @@
 .orch-list-cell-filler-tgt { -fx-background-color: filler-tgt-base; -fx-border-color: filler-tgt-selected; -fx-border-width: 1; }
 .orch-list-cell-filler-tgt:hover { -fx-background-color: filler-tgt-hover }
 .orch-list-cell-filler-tgt:selected { -fx-background-color: filler-tgt-selected }
+
+.orch-list-cell-filler-tgt-thin { -fx-background-color: filler-tgt-thin-base; -fx-border-color: filler-tgt-thin-selected; -fx-border-width: 1; }
+.orch-list-cell-filler-tgt-thin:hover { -fx-background-color: filler-tgt-thin-hover }
+.orch-list-cell-filler-tgt-thin:selected { -fx-background-color: filler-tgt-thin-selected }
 
 /* I guess there are a couple more ... */
 
@@ -258,7 +262,7 @@
 .expr-cell-var-thin { -fx-background-color: var-thin-base }
 .expr-cell-filler { -fx-background-color: filler-base }
 .expr-cell-filler-tgt { -fx-background-color: filler-tgt-base }
-.expr-cell-filler-tgt-thin { -fx-background-color: filler-tgt-base }
+.expr-cell-filler-tgt-thin { -fx-background-color: filler-tgt-thin-base }
 
 .expr-cell-empty-hovered { -fx-background-color: empty-hover }
 .expr-cell-var-hovered { -fx-background-color:  var-hover }

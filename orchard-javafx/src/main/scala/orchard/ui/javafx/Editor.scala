@@ -173,7 +173,13 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
         expr.value match {
           case Variable(_, _) => setStyleType("orch-list-cell-var")
           case Filler(_, _) => setStyleType("orch-list-cell-filler")
-          case FillerTarget(_, _, _) => setStyleType("orch-list-cell-filler-tgt")
+          case FillerTarget(_, _, isThin) => {
+            if (isThin) {
+              setStyleType("orch-list-cell-filler-tgt-thin")
+            } else {
+              setStyleType("orch-list-cell-filler-tgt")
+            }
+          }
         }
 
         setText(expr.toString)
