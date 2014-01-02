@@ -146,6 +146,10 @@
 .orch-list-cell-var:hover { -fx-background-color: var-hover; }
 .orch-list-cell-var:selected { -fx-background-color: var-selected; }
 
+.orch-list-cell-var-thin { -fx-background-color: var-thin-base; -fx-border-color: var-thin-selected; -fx-border-width: 1; }
+.orch-list-cell-var-thin:hover { -fx-background-color: var-thin-hover; }
+.orch-list-cell-var-thin:selected { -fx-background-color: var-thin-selected; }
+
 .orch-list-cell-filler { -fx-background-color: filler-base; -fx-border-color: filler-selected; -fx-border-width: 1; }
 .orch-list-cell-filler:hover { -fx-background-color: filler-hover }
 .orch-list-cell-filler:selected { -fx-background-color: filler-selected }
@@ -224,6 +228,10 @@
     -fx-background-color: -fx-background;
 }
 
+#orch-editor-pane {
+    -fx-background-color: -fx-background;
+}
+
 #orch-previewer-pane {
     -fx-background-color: -fx-background;
     -fx-padding: 10pt;
@@ -252,6 +260,14 @@
 .javafx-gallery {
     -fx-background-color: -fx-background;
     -fx-padding: 10;
+}
+
+.orch-plain-gallery {
+}
+
+.orch-plain-panel {
+    -fx-border-color: white;
+    -fx-padding: 0;
 }
 
 .expr-cell-polarized { -fx-background-color: -fx-background; }

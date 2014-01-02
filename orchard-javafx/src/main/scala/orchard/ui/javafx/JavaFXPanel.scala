@@ -185,7 +185,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
 
       // Set a minimum here???
       labelWidth = w
-      labelHeight = h
+      labelHeight = h + (if (isExternal) 0.0 else internalPadding)
     }
 
     //============================================================================================
@@ -233,8 +233,8 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
       pane.resizeRelocate(0, 0, getWidth, getHeight)
 
       if (label != null)
-        label.relocate(internalWidth + internalPadding + strokeWidth,
-                       internalHeight + internalPadding + strokeWidth)
+          label.relocate(width - labelWidth - internalPadding - strokeWidth,
+                         height - label.getLayoutBounds.getHeight - internalPadding - strokeWidth)
     }
 
     def setDimensions = {

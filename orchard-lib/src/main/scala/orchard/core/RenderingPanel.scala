@@ -313,8 +313,12 @@ trait RenderingPanel[A] extends Panel[A] {
           cell.internalWidth = rootMarker.width
           cell.internalHeight = rootMarker.height
 
+          // This is how much *extra space* must be added for the label, but it should
+          // have a minimum, which I guess is zero?
+          cell.labelPadding = Math.max(0.0, cell.labelWidth - rootMarker.rightMargin) + internalPadding
+
           cell.rootLeftMargin = strokeWidth + internalPadding + rootMarker.leftMargin
-          cell.rootRightMargin = rootMarker.rightMargin + cell.labelWidth + internalPadding + strokeWidth
+          cell.rootRightMargin = rootMarker.rightMargin + cell.labelPadding + internalPadding + strokeWidth
 
           // Setup and return an appropriate marker
           if (sourceMarkers.length == 0) {
@@ -414,6 +418,8 @@ trait RenderingPanel[A] extends Panel[A] {
     var labelWidth : Double = 0.0
     var labelHeight : Double = 0.0
 
+    var labelPadding : Double = 0.0
+
     val vertDeps = new ListBuffer[Rooted]
     val horzDeps = new ListBuffer[Rooted]
 
@@ -440,13 +446,11 @@ trait RenderingPanel[A] extends Panel[A] {
 
     // Derived visual data
 
+    def labelOffset : Double = 
+      rootLeftMargin + leafWidth + strokeWidth
+
     def width : Double =
-      strokeWidth +
-        internalPadding +
-        internalWidth +
-        labelWidth +
-        internalPadding +
-        strokeWidth
+      rootLeftMargin + rootRightMargin
 
     def height : Double =
       strokeWidth +
@@ -472,6 +476,7 @@ trait RenderingPanel[A] extends Panel[A] {
       rootY = 0.0
       labelWidth = 0.0
       labelHeight = 0.0
+      labelPadding = 0.0
       vertDeps.clear
       horzDeps.clear
     }

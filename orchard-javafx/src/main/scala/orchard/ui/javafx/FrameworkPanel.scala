@@ -16,6 +16,8 @@ import scalafx.scene.paint.Color
 
 import javafx.scene.Node
 
+// Note, this should be a trait which can be mixed in to create the correct highlighting,
+// and it should be shared by the ExpressionBuilderPanel class.
 class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends JavaFXPanel[Option[Expression]] { thisPanel =>
 
   type CellType = FrameworkCell
@@ -43,6 +45,8 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Jav
           case None => new Region { prefWidth = 10 ; prefHeight = 10 }
           case Some(expr) => new Text(expr.id)
         }
+
+      labelNode.layoutBounds onChange { thisPanel.refresh }
 
       pane.getChildren.setAll(labelNode)
       labelNode

@@ -28,17 +28,6 @@ class SimpleGallery[A](seed : NCell[A]) extends JavaFXGallery[A] {
 
   def newPanel(i : Int) = new SimplePanel(complex, i)
 
-  def onExtra = {
-    println("Running command.")
-
-    for {i <- Range(0, complex.dimension + 1)} {
-      println("Rigidifying cells in dimension " ++ i.toString)
-      panels(i).baseCell.owner.rigidify
-      panels(i).refreshPanelData
-      println("Completed dimension " ++ i.toString)
-    }
-  }
-
   initialize
 
 }

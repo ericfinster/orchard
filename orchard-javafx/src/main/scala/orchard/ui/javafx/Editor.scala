@@ -33,6 +33,8 @@ import scalafx.scene.control.RadioButton
 import scalafx.scene.control.ToggleGroup
 import scalafx.scene.control.CheckBox
 
+import scalafx.scene.image.WritableImage
+
 import scalafx.geometry.Side
 import scalafx.geometry.Insets
 import scalafx.geometry.Orientation
@@ -43,6 +45,9 @@ import scalafx.application.Platform
 import scalafx.collections.ObservableBuffer
 
 import scalafx.beans.value.ObservableValue
+
+import javafx.embed.swing.SwingFXUtils
+import javax.imageio.ImageIO
 
 import javafx.event.Event
 import javafx.event.EventHandler
@@ -70,6 +75,11 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
 
+  val newSheetItem = new MenuItem {
+    text = "New Sheet"
+    onAction = newBuilder
+  }
+
   val openItem = new MenuItem {
     text = "Open"
     onAction = onOpen
@@ -87,7 +97,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   val fileMenu = new Menu {
     text = "File"
-    items ++= List(openItem, saveItem, exitItem)
+    items ++= List(newSheetItem, openItem, saveItem, exitItem)
   }
 
   val assumeItem = new MenuItem {
@@ -142,6 +152,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   var tabCount = 1
 
   val editorPane = new TabPane {
+    id = "orch-editor-pane"
     side = Side.BOTTOM
     prefWidth = 1250
   }
@@ -171,7 +182,13 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
       if (! empty) {
         // Set the style based on the semantics ...
         expr.value match {
-          case Variable(_, _) => setStyleType("orch-list-cell-var")
+          case Variable(_, isThin) => {
+            if (isThin) {
+              setStyleType("orch-list-cell-var-thin")
+            } else {
+              setStyleType("orch-list-cell-var")
+            }
+          }
           case Filler(_, _) => setStyleType("orch-list-cell-filler")
           case FillerTarget(_, _, isThin) => {
             if (isThin) {
@@ -235,8 +252,6 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   VBox.setVgrow(horizontalSplit, Priority.ALWAYS)
   mainVBox.content.addAll(menuBar, horizontalSplit)
-
-  newBuilder
 
   //============================================================================================
   // DIALOG DEFINITIONS
@@ -392,6 +407,20 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   }
 
+  object ViewerDialog extends Dialog {
+
+    heading.text = "View Expression"
+
+    val viewerArea = new StackPane
+    borderPane.center = viewerArea
+
+    def onHide = ()
+    def onShow = ()
+
+    // setPrefSize(1000, 400)
+
+  }
+
   //============================================================================================
   // EVENTS
   //
@@ -426,6 +455,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
           case KeyCode.C => if (ev.isControlDown) onCompose
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
+          case KeyCode.V => if (ev.isControlDown) onView
           case KeyCode.I => if (ev.isControlDown) onInsertIdentity
           case KeyCode.O => if (ev.isControlDown) onOpen
           case KeyCode.S => if (ev.isControlDown) onSave
@@ -433,6 +463,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
           case KeyCode.L => if (ev.isControlDown) onLoadExpr
           case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           case KeyCode.X => if (ev.isControlDown) onExtra
+          case KeyCode.P => if (ev.isControlDown) onPrintScreen
           case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
           case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
           case _ => ()
@@ -444,6 +475,55 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     if (selectionIsShell) {
       VariableDialog.thinCheckBox.selected = thin
       VariableDialog.run
+    }
+  }
+
+  def onView = {
+    activeBuilder.selectionBase foreach (cell => {
+      val selectedExpr = cell.owner.getSimpleFramework.toCell
+      val gallery = new FrameworkGallery(selectedExpr)
+
+      // Set a plain style
+      gallery.getStyleClass add "orch-plain-gallery"
+
+      gallery.length = selectedExpr.dim.toInt + 1
+      gallery.spacing = 0
+
+      ViewerDialog.viewerArea.content = gallery
+      gallery.renderAll
+
+      var maxPanelWidth = 0.0
+      var maxPanelHeight = 0.0
+
+      gallery.panels foreach (panel => {
+        maxPanelWidth = Math.max(maxPanelWidth, panel.computePrefWidth(0.0))
+        maxPanelHeight = Math.max(maxPanelHeight, panel.computePrefHeight(0.0))
+        panel.getStyleClass add "orch-plain-panel"
+      })
+      
+      ViewerDialog.viewerArea.prefWidth = maxPanelWidth * gallery.panels.length + 20
+      ViewerDialog.viewerArea.prefHeight = maxPanelHeight + 20
+
+      ViewerDialog.run
+    })
+  }
+
+  def onPrintScreen = {
+    fileChooser.setTitle("Export Snapshot")
+
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+    if (file != null) {
+
+      val image = activeBuilder.snapshot(null, null)
+
+      try {
+        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+      } catch {
+        case e : java.io.IOException => {
+          println("There was an error writing to the file!.")
+        }
+      }
     }
   }
 

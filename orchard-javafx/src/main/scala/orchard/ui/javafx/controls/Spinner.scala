@@ -54,6 +54,9 @@ class Spinner extends Region {
   // PROPERTIES
   //
 
+  def spacing = hbox.getSpacing
+  def spacing_=(d : Double) = hbox.setSpacing(d)
+
   val lengthProperty : IntegerProperty = new SimpleIntegerProperty(this, "length", 5)
 
   def length = lengthProperty.getValue
