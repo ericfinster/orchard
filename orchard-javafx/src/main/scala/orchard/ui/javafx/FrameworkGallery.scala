@@ -9,7 +9,7 @@ package orchard.ui.javafx
 
 import orchard.core._
 
-class FrameworkGallery(seed : NCell[Option[Expression]]) extends JavaFXGallery[Option[Expression]] {
+class FrameworkGallery(seed : NCell[Option[Expression]]) extends SpinnerGallery[Option[Expression]] {
 
   //============================================================================================
   // INITIALIZATION

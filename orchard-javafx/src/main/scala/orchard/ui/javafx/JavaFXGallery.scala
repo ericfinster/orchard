@@ -8,38 +8,27 @@
 package orchard.ui.javafx
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
+
+import scalafx.Includes._
+import scalafx.collections.ObservableBuffer
 
 import orchard.core._
-import orchard.ui.javafx.controls.Spinner
 
-abstract class JavaFXGallery[A] extends Spinner with Gallery[A] {
+trait JavaFXGallery[A] extends Gallery[A] {
 
   override type PanelType <: JavaFXPanel[A]
 
-  //============================================================================================
-  // UI INITIALIZATION
-  //
-
-  getStyleClass().add("javafx-gallery")
-  
-  private val myPanels = new ListBuffer[PanelType]
+  protected val myPanels = new ObservableBuffer[PanelType]
 
   def panels : List[PanelType] = myPanels.toList
   def newPanel(i : Int) : PanelType
 
-  def appendPanel(panel : PanelType) = {
-    myPanels += panel
-    hbox.getChildren.add(panel)
-  }
-
-  def refreshAll = {
-    panels foreach (_.refresh)
-  }
+  def appendPanel(panel : PanelType) = myPanels += panel
+  def refreshAll = panels foreach (_.refresh)
 
   def initialize = {
     reactTo(complex)
     myPanels ++= { for { i <- Range(0, complex.baseCells.length) } yield { newPanel(i) } }
-    hbox.getChildren.addAll(panels)
   }
+
 }

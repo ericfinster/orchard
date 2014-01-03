@@ -18,7 +18,7 @@ import javafx.scene.Node
 
 // Note, this should be a trait which can be mixed in to create the correct highlighting,
 // and it should be shared by the ExpressionBuilderPanel class.
-class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends JavaFXPanel[Option[Expression]] { thisPanel =>
+class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends ZoomPanel[Option[Expression]] { thisPanel =>
 
   type CellType = FrameworkCell
   type EdgeType = FrameworkEdge

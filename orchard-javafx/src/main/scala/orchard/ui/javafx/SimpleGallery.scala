@@ -20,7 +20,7 @@ import orchard.core._
 
 import Util._
 
-class SimpleGallery[A](seed : NCell[A]) extends JavaFXGallery[A] {
+class SimpleGallery[A](seed : NCell[A]) extends SpinnerGallery[A] {
 
   type PanelType = SimplePanel[A]
 

@@ -253,6 +253,8 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   VBox.setVgrow(horizontalSplit, Priority.ALWAYS)
   mainVBox.content.addAll(menuBar, horizontalSplit)
 
+  newBuilder
+
   //============================================================================================
   // DIALOG DEFINITIONS
   //
@@ -279,8 +281,8 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   abstract class ComposeInfoDialog extends CancellableDialog {
 
-    val composeField = new TextField { promptText = "Composite" ; onAction = fillerField.requestFocus }
-    val fillerField = new TextField { promptText = "Filler" ; onAction = okBtn.fire }
+    val composeField = new TextField { promptText = "Composite" ; onAction = () => { fillerField.requestFocus } }
+    val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
 
     borderPane.center = 
       new VBox {
@@ -378,7 +380,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
     heading.text = "Assume Variable"
 
-    val idField = new TextField { promptText = "Identifier" ; onAction = okBtn.fire }
+    val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
     val thinCheckBox = new CheckBox("Thin") { allowIndeterminate = false }
 
     borderPane.center = 
@@ -416,8 +418,6 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
     def onHide = ()
     def onShow = ()
-
-    // setPrefSize(1000, 400)
 
   }
 
@@ -481,12 +481,12 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   def onView = {
     activeBuilder.selectionBase foreach (cell => {
       val selectedExpr = cell.owner.getSimpleFramework.toCell
-      val gallery = new FrameworkGallery(selectedExpr)
+      val gallery = new StaticGallery(selectedExpr)
 
       // Set a plain style
       gallery.getStyleClass add "orch-plain-gallery"
 
-      gallery.length = selectedExpr.dim.toInt + 1
+      // gallery.length = selectedExpr.dim.toInt + 1
       gallery.spacing = 0
 
       ViewerDialog.viewerArea.content = gallery

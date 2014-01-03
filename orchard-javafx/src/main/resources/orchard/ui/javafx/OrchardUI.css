@@ -226,6 +226,9 @@
 
 .orchard-dialog {
     -fx-background-color: -fx-background;
+    -fx-background-radius: 4pt;
+    -fx-padding: 2pt;
+    -fx-effect: dropshadow( one-pass-box , black , 7 , 0.0 , 0 , 0 );
 }
 
 #orch-editor-pane {
@@ -241,7 +244,7 @@
     -fx-background-color: -fx-background;
 }
 
-.javafx-panel {
+.orch-zoom-panel {
     -fx-background-color: white;
     -fx-padding: 10pt;
     -fx-border-style: solid;
@@ -257,17 +260,18 @@
     -fx-border-radius: 4pt;
 }
 
-.javafx-gallery {
+.orch-spinner-gallery {
     -fx-background-color: -fx-background;
     -fx-padding: 10;
 }
 
 .orch-plain-gallery {
+    -fx-padding: 10;
 }
 
 .orch-plain-panel {
     -fx-border-color: white;
-    -fx-padding: 0;
+    -fx-padding: 10;
 }
 
 .expr-cell-polarized { -fx-background-color: -fx-background; }

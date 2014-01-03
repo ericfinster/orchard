@@ -12,7 +12,7 @@ import javafx.scene.text.Text
 
 import orchard.core._
 
-class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends JavaFXPanel[A] { thisPanel =>
+class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends ZoomPanel[A] { thisPanel =>
 
   type CellType = SimpleCell
   type EdgeType = SimpleEdge

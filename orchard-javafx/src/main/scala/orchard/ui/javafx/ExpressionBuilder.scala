@@ -14,7 +14,7 @@ import orchard.core._
 
 import Util._
 
-class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends JavaFXGallery[Polarity[Option[Expression]]] { thisBuilder =>
+class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends SpinnerGallery[Polarity[Option[Expression]]] { thisBuilder =>
 
   def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
 

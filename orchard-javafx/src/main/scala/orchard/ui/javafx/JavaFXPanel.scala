@@ -25,17 +25,12 @@ import javafx.scene.shape.MoveTo
 import javafx.scene.shape.ArcTo
 
 import javafx.scene.paint.Color
-import javafx.scene.transform.Scale
 
 import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 
-trait JavaFXRenderer[A] {
-  def render(a : A) : Node
-}
-
-abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
+trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
 
   override type CellType <: JavaFXCell
   override type EdgeType <: JavaFXEdge
@@ -44,15 +39,7 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
   // UI INITIALIZATION
   //
 
-  getStyleClass().add("javafx-panel")
-
-  protected val childGroup = new Group
-  protected val childScaleTransform = new Scale(1.0, 1.0, 0.0, 0.0)
-
-  childGroup.setManaged(false)
-  childGroup.getTransforms.add(childScaleTransform)
-  getChildren.add(childGroup)
-
+  def childGroup : Group
   def baseCell : CellType
 
   def initializeChildren = {
@@ -87,57 +74,6 @@ abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] {
     initializeChildren
     render
     requestLayout
-  }
-
-  //============================================================================================
-  // LAYOUT AND RESIZING
-  //
-
-  override def resize(width : Double, height : Double) = {
-    val bounds = childGroup.getLayoutBounds
-
-    childScaleTransform.setPivotX(bounds.getMinX)
-    childScaleTransform.setPivotY(bounds.getMinY)
-
-    val xfactor = (width - getInsets.getLeft - getInsets.getRight) / bounds.getWidth
-    val yfactor = (height - getInsets.getTop - getInsets.getBottom) / bounds.getHeight 
-
-    if (xfactor < yfactor) {
-      if (xfactor <= 1.0) {
-        childScaleTransform.setX(xfactor)
-        childScaleTransform.setY(xfactor)
-      } else {
-        childScaleTransform.setX(1.0)
-        childScaleTransform.setY(1.0)
-      }
-    } else {
-      if (yfactor <= 1.0) {
-        childScaleTransform.setX(yfactor)
-        childScaleTransform.setY(yfactor)
-      } else {
-        childScaleTransform.setX(1.0)
-        childScaleTransform.setY(1.0)
-      }
-    }
-
-    super.resize(width, height)
-  }
-
-  override def layoutChildren : Unit = {
-    val bounds = childGroup.getBoundsInParent
-
-    val emptyX = getWidth() - getInsets.getLeft - getInsets.getRight - bounds.getWidth
-    val emptyY = getHeight() - getInsets.getTop - getInsets.getBottom - bounds.getHeight
-
-    childGroup.relocate(getInsets.getLeft + (emptyX / 2), getInsets.getTop + (emptyY / 2))
-  }
-
-  override def computePrefWidth(height : Double) : Double = {
-    getInsets.getLeft + childGroup.prefWidth(height) + getInsets.getRight
-  }
-
-  override def computePrefHeight(width : Double) : Double = {
-    getInsets.getTop + childGroup.prefHeight(width) + getInsets.getBottom
   }
 
   //============================================================================================

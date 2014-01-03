@@ -23,7 +23,7 @@ import javafx.{scene => jfxs}
 import orchard.core._
 
 class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex : Int)
-    extends JavaFXPanel[Polarity[Option[Expression]]] 
+    extends ZoomPanel[Polarity[Option[Expression]]] 
     with MutablePanel[Polarity[Option[Expression]]] { thisPanel =>
 
   type CellType = ExpressionBuilderCell

@@ -38,7 +38,7 @@ abstract class Dialog(implicit pm : PopupManager) extends PopupRegion {
 
   protected val okBtn =
     new Button("Ok") {
-      onAction = onOkAction
+      onAction = () => { onOkAction }
       defaultButton = true
     }
 
@@ -64,7 +64,7 @@ abstract class CancellableDialog(implicit pm : PopupManager) extends Dialog {
 
   protected val cancelBtn =
     new Button("Cancel") {
-      onAction = onCancelAction
+      onAction = () => { onCancelAction }
       cancelButton = true
     }
 
