@@ -52,6 +52,8 @@ import javax.imageio.ImageIO
 import javafx.event.Event
 import javafx.event.EventHandler
 
+import javafx.scene.SnapshotParameters
+
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
@@ -413,12 +415,40 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
     heading.text = "View Expression"
 
-    val viewerArea = new StackPane
+    val viewerArea = new StackPane { padding = Insets(10,10,10,10) }
     borderPane.center = viewerArea
 
     def onHide = ()
     def onShow = ()
 
+    addEventFilter(KeyEvent.KEY_PRESSED,
+      new EventHandler[KeyEvent] {
+        def handle(ev : KeyEvent) {
+          ev.getCode match {
+            case KeyCode.X => if (ev.isControlDown) onWrite
+            case _ => ()
+          }
+        }
+      })
+
+    def onWrite = {
+      fileChooser.setTitle("Export Snapshot")
+
+      val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+      if (file != null) {
+
+        val image = viewerArea.content.head.snapshot(new SnapshotParameters, null)
+
+        try {
+          ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+        } catch {
+          case e : java.io.IOException => {
+            println("There was an error writing to the file!.")
+          }
+        }
+      }
+    }
   }
 
   //============================================================================================
@@ -481,29 +511,9 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   def onView = {
     activeBuilder.selectionBase foreach (cell => {
       val selectedExpr = cell.owner.getSimpleFramework.toCell
-      val gallery = new StaticGallery(selectedExpr)
-
-      // Set a plain style
-      gallery.getStyleClass add "orch-plain-gallery"
-
-      // gallery.length = selectedExpr.dim.toInt + 1
-      gallery.spacing = 0
-
+      val gallery = new StaticFrameworkGallery(selectedExpr)
       ViewerDialog.viewerArea.content = gallery
       gallery.renderAll
-
-      var maxPanelWidth = 0.0
-      var maxPanelHeight = 0.0
-
-      gallery.panels foreach (panel => {
-        maxPanelWidth = Math.max(maxPanelWidth, panel.computePrefWidth(0.0))
-        maxPanelHeight = Math.max(maxPanelHeight, panel.computePrefHeight(0.0))
-        panel.getStyleClass add "orch-plain-panel"
-      })
-      
-      ViewerDialog.viewerArea.prefWidth = maxPanelWidth * gallery.panels.length + 20
-      ViewerDialog.viewerArea.prefHeight = maxPanelHeight + 20
-
       ViewerDialog.run
     })
   }
@@ -765,6 +775,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     tabCount = 1
     editorPane.tabs.clear
     environment.clear
+    previewerPane.content.clear
   }
 
   def environmentFromXML(node : xml.Node) = {

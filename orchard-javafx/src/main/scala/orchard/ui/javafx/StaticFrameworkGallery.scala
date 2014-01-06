@@ -1,5 +1,5 @@
 /**
-  * FrameworkGallery.scala - A Gallery for displaying frameworks
+  * StaticFrameworkGallery.scala - A static framework gallery
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -9,18 +9,18 @@ package orchard.ui.javafx
 
 import orchard.core._
 
-class FrameworkGallery(seed : NCell[Option[Expression]]) extends SpinnerGallery[Option[Expression]] {
+class StaticFrameworkGallery(seed : NCell[Option[Expression]]) extends StaticGallery[Option[Expression]] {
 
   //============================================================================================
   // INITIALIZATION
   //
 
-  type PanelType = FrameworkZoomPanel
+  type PanelType = StaticFrameworkPanel
 
   val complex = new SimpleFramework(seed)
 
-  def newPanel(i : Int) : FrameworkZoomPanel = {
-    val panel = new FrameworkZoomPanel(complex, i)
+  def newPanel(i : Int) : StaticFrameworkPanel = {
+    val panel = new StaticFrameworkPanel(complex, i)
     reactTo(panel) 
     panel 
   }

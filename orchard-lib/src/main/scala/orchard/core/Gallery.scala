@@ -39,7 +39,7 @@ trait Gallery[A] extends EventConduit[CellEvent] {
 
   def deselectAll = {
     selectedCells foreach
-    (cell => cell.owner.emitToFaces(RequestDeselected))
+    (cell => cell.owner.emitToFaces(RequestCellDeselected))
     selectedCells.clear
     selectionBase = None
   }
@@ -93,7 +93,7 @@ trait Gallery[A] extends EventConduit[CellEvent] {
   }
 
   def select(cell : GalleryCell) = {
-    cell.owner.emitToFaces(RequestSelected)
+    cell.owner.emitToFaces(RequestCellSelected)
     selectedCells add cell
   }
 

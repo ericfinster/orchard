@@ -540,12 +540,10 @@ trait RenderingPanel[A] extends Panel[A] {
 
     override def onEventEmitted(ev : CellEvent) =
       ev match {
-        // case CellEntered(cell) => owner.emitToFaces(RequestHovered)
-        // case CellExited(cell) => owner.emitToFaces(RequestUnhovered)
-        case RequestSelected => doSelect
-        case RequestDeselected => doDeselect
-        case RequestHovered => doHover
-        case RequestUnhovered => doUnhover
+        case RequestCellSelected => doSelect
+        case RequestCellDeselected => doDeselect
+        case RequestCellHovered => doHover
+        case RequestCellUnhovered => doUnhover
         case _ => super.onEventEmitted(ev)
       }
 
@@ -609,10 +607,10 @@ trait RenderingPanel[A] extends Panel[A] {
       // have been fucking up the event stream.  But seriously,
       // you need to fix it.
       ev match {
-        case RequestSelected => doSelect
-        case RequestDeselected => doDeselect
-        case RequestHovered => doHover
-        case RequestUnhovered => doUnhover
+        case RequestEdgeSelected => doSelect
+        case RequestEdgeDeselected => doDeselect
+        case RequestEdgeHovered => doHover
+        case RequestEdgeUnhovered => doUnhover
         case _ => ()
       }
     }

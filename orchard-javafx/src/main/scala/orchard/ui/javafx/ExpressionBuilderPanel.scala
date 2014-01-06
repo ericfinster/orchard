@@ -155,8 +155,8 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
       } else {
         ev match {
-          case CellEntered(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestHovered)
-          case CellExited(cell) => if (owner.isPolarized) () else owner.emitToFaces(RequestUnhovered)
+          case CellEntered(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
+          case CellExited(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
           case _ => super.onEventEmitted(ev)
         }
       }

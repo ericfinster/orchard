@@ -1,5 +1,5 @@
 /**
-  * FrameworkPanel.scala - A panel for displaying expression frameworks
+  * FrameworkPanel.scala - A Trait for panels which display expression information
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -15,29 +15,16 @@ import scalafx.scene.layout.Region
 import scalafx.scene.paint.Color
 
 import javafx.scene.Node
+import javafx.scene.{layout => jfxsl}
 
-// Note, this should be a trait which can be mixed in to create the correct highlighting,
-// and it should be shared by the ExpressionBuilderPanel class.
-class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends ZoomPanel[Option[Expression]] { thisPanel =>
+trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl.Region => 
 
-  type CellType = FrameworkCell
-  type EdgeType = FrameworkEdge
+  override type CellType <: FrameworkCell
+  override type EdgeType <: FrameworkEdge
 
-  type ComplexType = SimpleFramework
+  override type ComplexType <: SimpleFramework
 
-  def newCell(owner : complex.CellType) = { 
-    val frameworkCell = new FrameworkCell(owner)
-    owner.registerPanelCell(thisPanel)(frameworkCell)
-    frameworkCell
-  }
-
-  def newEdge(owner : complex.CellType) = {
-    val frameworkEdge = new FrameworkEdge(owner)
-    owner.registerPanelEdge(thisPanel)(frameworkEdge)
-    frameworkEdge
-  }
-
-  class FrameworkCell(owner : complex.CellType) extends JavaFXCell(owner) {
+  abstract class FrameworkCell(owner : complex.CellType) extends JavaFXCell(owner) { thisCell : CellType =>
 
     def renderLabel : Node = {
       val labelNode = 
@@ -112,9 +99,19 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Zoo
       }
     }
 
+    //============================================================================================
+    // EVENTS
+    //
+
+    override def onEventEmitted(ev : CellEvent) =
+      ev match {
+        case CellEntered(cell) => { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
+        case CellExited(cell) => { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
+        case _ => super.onEventEmitted(ev)
+      }
   }
 
-  class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner) {
+  abstract class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner) { thisEdge : EdgeType =>
 
     override def doHover : Unit = setStroke(Color.RED)
     override def doSelect : Unit = setStroke(Color.RED)
@@ -123,13 +120,5 @@ class FrameworkPanel(val complex : SimpleFramework, baseIndex : Int) extends Zoo
 
   }
 
-  //============================================================================================
-  // INITIALIZATION
-  //
-
-  var baseCell : FrameworkCell = newCell(complex.baseCells(baseIndex))
-
-  refreshPanelData
-  initializeChildren
-
 }
+

@@ -83,8 +83,8 @@
     /* Semantic Color Definitions */
 
     empty-base: white;
-    empty-hover: -fx-background;
-    empty-selected: gainsboro;
+    empty-hover: blue-2;
+    empty-selected: blue-3;
 
     var-base: peach-5;
     var-hover: peach-2;
@@ -265,13 +265,13 @@
     -fx-padding: 10;
 }
 
-.orch-plain-gallery {
-    -fx-padding: 10;
+.orch-static-gallery {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-spacing: 20;
 }
 
-.orch-plain-panel {
-    -fx-border-color: white;
-    -fx-padding: 10;
+.orch-static-panel {
 }
 
 .expr-cell-polarized { -fx-background-color: -fx-background; }

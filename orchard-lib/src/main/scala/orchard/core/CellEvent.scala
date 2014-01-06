@@ -9,10 +9,15 @@ package orchard.core
 
 trait CellEvent
 
-case object RequestSelected extends CellEvent
-case object RequestDeselected extends CellEvent
-case object RequestHovered extends CellEvent
-case object RequestUnhovered extends CellEvent
+case object RequestCellSelected extends CellEvent
+case object RequestCellDeselected extends CellEvent
+case object RequestCellHovered extends CellEvent
+case object RequestCellUnhovered extends CellEvent
+
+case object RequestEdgeSelected extends CellEvent
+case object RequestEdgeDeselected extends CellEvent
+case object RequestEdgeHovered extends CellEvent
+case object RequestEdgeUnhovered extends CellEvent
 
 case class CellEntered[A](cell : Panel[A]#CellType) extends CellEvent
 case class CellExited[A](cell : Panel[A]#CellType) extends CellEvent

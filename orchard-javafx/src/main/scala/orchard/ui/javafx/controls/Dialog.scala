@@ -34,7 +34,11 @@ abstract class Dialog(implicit pm : PopupManager) extends PopupRegion {
   setMaxSize(jfxsl.Region.USE_PREF_SIZE, jfxsl.Region.USE_PREF_SIZE)
   getChildren.add(borderPane)
 
-  override def layoutChildren = { borderPane.resizeRelocate(0, 0, getWidth, getHeight) }
+  override def layoutChildren = { 
+    super.layoutChildren
+    borderPane.relocate(getInsets.getLeft, getInsets.getTop)
+    // borderPane.resizeRelocate(0, 0, getWidth, getHeight) 
+  }
 
   protected val okBtn =
     new Button("Ok") {
