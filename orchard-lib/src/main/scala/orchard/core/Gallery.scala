@@ -28,9 +28,27 @@ trait Gallery[A] extends EventConduit[CellEvent] {
     panels foreach (panel => panel.render)
   }
 
+  def forallCells(action : PanelType#CellType => Unit) = {
+    panels foreach (panel => {
+      panel.baseCell foreachCell (cell => {
+        action(cell)
+      })
+    })
+  }
+
+  def forallEdges(action : PanelType#EdgeType => Unit) = {
+    panels foreach (panel => {
+      for { tgt <- panel.baseCell.target } {
+        tgt foreachEdge (edge => action(edge))
+      }
+    })
+  }
+
   //============================================================================================
   // SELECTION
   //
+
+  // This should be moved to a trait.  We simply don't need it here.
 
   type GalleryCell = PanelType#CellType
 

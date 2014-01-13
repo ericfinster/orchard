@@ -34,6 +34,20 @@ trait CellBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisCell : C =>
         }
     }
 
+  def isDrop : Boolean = 
+    sourceCount == 0
+
+  def hasChildren : Boolean = 
+    canopy match {
+      case None => false
+      case Some(tree) => {
+        tree.rootElement match {
+          case None => false
+          case Some(_) => true
+        }
+      }
+    }
+
   def sourceCount = 
     sources match {
       case None => 0

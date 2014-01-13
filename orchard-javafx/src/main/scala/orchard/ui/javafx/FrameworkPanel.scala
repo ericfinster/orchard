@@ -24,7 +24,32 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
   override type ComplexType <: SimpleFramework
 
+  override def refresh = {
+    super.refresh
+    baseCell foreachCell (cell => cell.assignStyle)
+  }
+
   abstract class FrameworkCell(owner : complex.CellType) extends JavaFXCell(owner) { thisCell : CellType =>
+
+    def isExposedStyle : Boolean = {
+      val outgoingIsNook =
+        owner.outgoing match {
+          case None => false
+          case Some(c) => {
+            c.isExposedNook
+          }
+        }
+
+      val incomingIsNook = 
+        owner.incoming match {
+          case None => false
+          case Some(c) => {
+            c.isExposedNook
+          }
+        }
+
+      owner.isExposedNook || outgoingIsNook || incomingIsNook
+    }
 
     def renderLabel : Node = {
       val labelNode = 
@@ -39,14 +64,28 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
       labelNode
     }
 
+    var lastStyle : Option[String] = None
+
+    def setCellStyle(style : String) = {
+      lastStyle foreach (s => getStyleClass.remove(s))
+      getStyleClass.add(style)
+      lastStyle = Some(style)
+    }
+
     def assignStyle = 
       item match {
-        case None => getStyleClass.add("expr-cell-empty")
-        case Some(Variable(_, false)) => getStyleClass.add("expr-cell-var")
-        case Some(Variable(_, true)) => getStyleClass.add("expr-cell-var-thin")
-        case Some(Filler(_, _)) => getStyleClass.add("expr-cell-filler")
-        case Some(FillerTarget(_, _, false)) => getStyleClass.add("expr-cell-filler-tgt")
-        case Some(FillerTarget(_, _, true)) => getStyleClass.add("expr-cell-filler-tgt-thin")
+        case None => {
+          if (isExposedStyle) {
+            setCellStyle("expr-cell-exposed")
+          } else {
+            setCellStyle("expr-cell-empty")
+          }
+        }
+        case Some(Variable(_, false)) => setCellStyle("expr-cell-var")
+        case Some(Variable(_, true)) => setCellStyle("expr-cell-var-thin")
+        case Some(Filler(_, _)) => setCellStyle("expr-cell-filler")
+        case Some(FillerTarget(_, _, false)) => setCellStyle("expr-cell-filler-tgt")
+        case Some(FillerTarget(_, _, true)) => setCellStyle("expr-cell-filler-tgt-thin")
       }
 
     assignStyle
@@ -57,7 +96,13 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
     override def doHover = {
       item match {
-        case None => getStyleClass.add("expr-cell-empty-hovered")
+        case None => {
+          if (isExposedStyle) {
+            getStyleClass.add("expr-cell-exposed-hovered")
+          } else {
+            getStyleClass.add("expr-cell-empty-hovered")
+          }
+        }
         case Some(Variable(_, false)) => getStyleClass.add("expr-cell-var-hovered")
         case Some(Variable(_, true)) => getStyleClass.add("expr-cell-var-thin-hovered")
         case Some(Filler(_, _)) => getStyleClass.add("expr-cell-filler-hovered")
@@ -68,7 +113,13 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
     override def doUnhover = {
       item match {
-        case None => getStyleClass.remove("expr-cell-empty-hovered")
+        case None => {
+          if (isExposedStyle) {
+            getStyleClass.remove("expr-cell-exposed-hovered")
+          } else {
+            getStyleClass.remove("expr-cell-empty-hovered")
+          }
+        }
         case Some(Variable(_, false)) => getStyleClass.remove("expr-cell-var-hovered")
         case Some(Variable(_, true)) => getStyleClass.remove("expr-cell-var-thin-hovered")
         case Some(Filler(_, _)) => getStyleClass.remove("expr-cell-filler-hovered")
@@ -79,7 +130,13 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
     override def doSelect = {
       item match {
-        case None => getStyleClass.add("expr-cell-empty-selected")
+        case None => {
+          if (isExposedStyle) {
+            getStyleClass.add("expr-cell-exposed-selected")
+          } else {
+            getStyleClass.add("expr-cell-empty-selected")
+          }
+        }
         case Some(Variable(_, false)) => getStyleClass.add("expr-cell-var-selected")
         case Some(Variable(_, true)) => getStyleClass.add("expr-cell-var-thin-selected")
         case Some(Filler(_, _)) => getStyleClass.add("expr-cell-filler-selected")
@@ -90,7 +147,13 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
     override def doDeselect = {
       item match {
-        case None => getStyleClass.remove("expr-cell-empty-selected")
+        case None => {
+          if (isExposedStyle) {
+            getStyleClass.remove("expr-cell-exposed-selected")
+          } else {
+            getStyleClass.remove("expr-cell-empty-selected")
+          }
+        }
         case Some(Variable(_, false)) => getStyleClass.remove("expr-cell-var-selected")
         case Some(Variable(_, true)) => getStyleClass.remove("expr-cell-var-thin-selected")
         case Some(Filler(_, _)) => getStyleClass.remove("expr-cell-filler-selected")

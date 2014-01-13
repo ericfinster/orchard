@@ -45,6 +45,8 @@ trait RenderingPanel[A] extends Panel[A] {
     }
   }
 
+  def setLabelSizes : Unit
+
   def render : Unit = {
     val baseMarker = baseCell.sources match {
         case None => render(baseCell, new Array(0))
@@ -66,13 +68,32 @@ trait RenderingPanel[A] extends Panel[A] {
     }
   }
   
+
+  def edgePadding = {
+    if (baseCell.isExternal) {
+      if (baseCell.sourceCount > 1) {
+        val numRightEdges : Int = baseCell.sourceCount / 2
+        // Ech.  This isn't very careful.  I think you can do better.
+        val padding = ((numRightEdges - 1) * (leafWidth + (2 * strokeWidth))) + halfLeafWidth + (2 * strokeWidth)
+        padding
+      } else {
+        0.0
+      }
+    } else {
+      0.0
+    }
+  }
+
+  def panelX = baseCell.x - edgePadding
+  def panelY = baseCell.y - (2 * externalPadding)
+  def panelHeight = baseCell.height + (4 * externalPadding)
+  def panelWidth = baseCell.width + (2 * edgePadding)
+
   //============================================================================================
   // MAIN RENDERING ALGORITHM
   //
 
   protected def render(cell : CellType, sourceMarkers : Array[LayoutMarker]) : LayoutMarker = {
-
-    cell.setLabelSize
 
     val cellMarker : LayoutMarker = 
       cell.canopy match {
@@ -422,8 +443,6 @@ trait RenderingPanel[A] extends Panel[A] {
 
     val vertDeps = new ListBuffer[Rooted]
     val horzDeps = new ListBuffer[Rooted]
-
-    def setLabelSize : Unit
 
     def addVerticalDependent(r : Rooted) = { vertDeps += r }
     def addHorizontalDependent(r : Rooted) = { horzDeps += r }

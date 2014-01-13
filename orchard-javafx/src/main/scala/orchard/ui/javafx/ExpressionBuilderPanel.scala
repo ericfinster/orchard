@@ -32,6 +32,11 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
   type ComplexType = ExpressionBuilderComplex
   type LabelType = Polarity[Option[Expression]]
 
+  override def refresh = {
+    super.refresh
+    baseCell foreachCell (cell => cell.assignStyle)
+  }
+
   class ExpressionBuilderCell(owner : complex.ExpressionBuilderCell) extends JavaFXCell(owner) with MutablePanelCell {
 
     //============================================================================================
@@ -43,6 +48,19 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     def renderCell = {
       assignStyle
       label = renderLabel
+    }
+
+    var lastStyle : Option[String] = None
+
+    def setCellStyle(style : String) = {
+      lastStyle foreach (s => getStyleClass.remove(s))
+      getStyleClass.add(style)
+      lastStyle = Some(style)
+    }
+
+    def removeCellStyle(style : String) = {
+      getStyleClass.remove(style)
+      lastStyle = None
     }
 
     def renderLabel : jfxs.Node = {
@@ -57,27 +75,51 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       labelNode.layoutBounds onChange { thisPanel.refresh }
 
       pane.getChildren.setAll(labelNode)
+
       labelNode
     }
  
-   def assignStyle = 
-      item match {
-        case Positive => getStyleClass.add("expr-cell-polarized")
-        case Negative => getStyleClass.add("expr-cell-polarized")
-        case Neutral(None) => {
-          getStyleClass.add("expr-cell-empty")
+    def isExposedStyle : Boolean = {
+      if (owner.isExposedNook) return { println("I'm exposed") ; true }
 
-          // if (owner.isExposedNook) {
-          //   getStyleClass.add("expr-cell-exposed-nook")
-          // } else {
-          //   getStyleClass.add("expr-cell-empty")
-          // }
+      val outgoingIsNook =
+        owner.outgoing match {
+          case None => false
+          case Some(c) => {
+            if (c.isPolarized) false else c.isExposedNook
+          }
         }
-        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var")
-        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin")
-        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler")
-        case Neutral(Some(FillerTarget(_, _, false))) => getStyleClass.add("expr-cell-filler-tgt")
-        case Neutral(Some(FillerTarget(_, _, true))) => getStyleClass.add("expr-cell-filler-tgt-thin")
+
+      val incomingIsNook = 
+        owner.incoming match {
+          case None => false
+          case Some(c) => {
+            if (c.isPolarized) false else c.isExposedNook
+          }
+        }
+
+      if (outgoingIsNook) println("Because of outgoing")
+      if (incomingIsNook) println("Because of incoming")
+
+      outgoingIsNook || incomingIsNook
+    }
+
+    def assignStyle =
+      item match {
+        case Positive => setCellStyle("expr-cell-polarized")
+        case Negative => setCellStyle("expr-cell-polarized")
+        case Neutral(None) => {
+          if (isExposedStyle) {
+            setCellStyle("expr-cell-exposed")
+          } else {
+            setCellStyle("expr-cell-empty")
+          }
+        }
+        case Neutral(Some(Variable(_, false))) => setCellStyle("expr-cell-var")
+        case Neutral(Some(Variable(_, true))) => setCellStyle("expr-cell-var-thin")
+        case Neutral(Some(Filler(_, _))) => setCellStyle("expr-cell-filler")
+        case Neutral(Some(FillerTarget(_, _, false))) => setCellStyle("expr-cell-filler-tgt")
+        case Neutral(Some(FillerTarget(_, _, true))) => setCellStyle("expr-cell-filler-tgt-thin")
       }
 
     assignStyle
@@ -90,7 +132,13 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       item match {
         case Positive => () 
         case Negative => () 
-        case Neutral(None) => getStyleClass.add("expr-cell-empty-hovered")
+        case Neutral(None) => {
+          if (isExposedStyle) {
+            getStyleClass.add("expr-cell-exposed-hovered")
+          } else {
+            getStyleClass.add("expr-cell-empty-hovered")
+          }
+        }
         case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-hovered")
         case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-hovered")
         case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-hovered")
@@ -103,7 +151,13 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       item match {
         case Positive => () 
         case Negative => () 
-        case Neutral(None) => getStyleClass.remove("expr-cell-empty-hovered")
+        case Neutral(None) => {
+          if (isExposedStyle) {
+            getStyleClass.remove("expr-cell-exposed-hovered")
+          } else {
+            getStyleClass.remove("expr-cell-empty-hovered")
+          }
+        }
         case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-hovered")
         case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-hovered")
         case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-hovered")
@@ -116,7 +170,13 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       item match {
         case Positive => ()
         case Negative => ()
-        case Neutral(None) => getStyleClass.add("expr-cell-empty-selected")
+        case Neutral(None) => {
+          if (isExposedStyle) {
+            getStyleClass.add("expr-cell-exposed-selected")
+          } else {
+            getStyleClass.add("expr-cell-empty-selected")
+          }
+        }
         case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-selected")
         case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-selected")
         case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-selected")
@@ -129,7 +189,13 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
       item match {
         case Positive => ()
         case Negative => ()
-        case Neutral(None) => getStyleClass.remove("expr-cell-empty-selected")
+        case Neutral(None) => {
+          if (isExposedStyle) {
+            getStyleClass.remove("expr-cell-exposed-selected")
+          } else {
+            getStyleClass.remove("expr-cell-empty-selected")
+          }
+        }
         case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-selected")
         case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-selected")
         case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-selected")

@@ -62,8 +62,12 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
       target match {
         case None => false
         case Some(tgt) => {
+          if (sourceCount == 0) {
+            return (isEmpty && tgt.isShell)
+          }
+
           sources match {
-            case None => isEmpty && tgt.isEmpty
+            case None => isEmpty && tgt.isShell
             case Some(srcs) => {
               isEmpty && tgt.isEmpty && (true /: (srcs map (_.isComplete))) (_ && _)
             }
@@ -78,6 +82,7 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
     def isExposedNook : Boolean = {
       if (isOutNook) true else {
         if (isInNook) {
+          println("It's an inNook")
 
           val framework : SimpleFramework = 
             if (thisFramework.isInstanceOf[SimpleFramework]) {
@@ -85,6 +90,12 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
             } else getSimpleFramework
 
           val frameworkTgt = framework.topCell.target.force
+
+          // if (framework.topCell.isDrop) {
+          //   println("Testing a drop")
+          //   return frameworkTgt.isShell
+          // }
+
           val emptyPtr = (new RoseZipper(frameworkTgt.canopy.force, Nil)).find(c => c.item == None).force
 
           var status : Boolean = true
@@ -146,7 +157,7 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
           }
 
           status && (true /: (fullSources map (_.isThin))) (_ && _)
-        } else false
+        } else { false }
       }
     }
 

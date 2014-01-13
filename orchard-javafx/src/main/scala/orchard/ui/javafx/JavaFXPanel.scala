@@ -52,6 +52,10 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
     }
   }
 
+  def setLabelSizes = {
+    baseCell foreachCell (cell => cell.setLabelSize)
+  }
+
   def addEdge(edge : EdgeType) = childGroup.getChildren.add(edge)
   def removeEdge(edge : EdgeType) = childGroup.getChildren.remove(edge)
 
@@ -60,8 +64,8 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
   //
 
   override def render = {
+    setLabelSizes
     super.render
-
     baseCell.relocate(baseCell.x, baseCell.y)
     baseCell foreachCell (cell => cell.setDimensions)
     childGroup.layout

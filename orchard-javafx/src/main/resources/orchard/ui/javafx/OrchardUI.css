@@ -86,6 +86,10 @@
     empty-hover: blue-2;
     empty-selected: blue-3;
 
+    exposed-base: lime-5;
+    exposed-hover: lime-2;
+    exposed-selected: lime-3;
+
     var-base: peach-5;
     var-hover: peach-2;
     var-selected: peach-3;
@@ -278,6 +282,7 @@
 .expr-cell-exposed-nook { -fx-background-color: red; }
 
 .expr-cell-empty { -fx-background-color: empty-base }
+.expr-cell-exposed { -fx-background-color: exposed-base }
 .expr-cell-var { -fx-background-color: var-base }
 .expr-cell-var-thin { -fx-background-color: var-thin-base }
 .expr-cell-filler { -fx-background-color: filler-base }
@@ -285,6 +290,7 @@
 .expr-cell-filler-tgt-thin { -fx-background-color: filler-tgt-thin-base }
 
 .expr-cell-empty-hovered { -fx-background-color: empty-hover }
+.expr-cell-exposed-hovered { -fx-background-color: exposed-hover }
 .expr-cell-var-hovered { -fx-background-color:  var-hover }
 .expr-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
 .expr-cell-filler-hovered { -fx-background-color: filler-hover }
@@ -292,6 +298,7 @@
 .expr-cell-filler-tgt-thin-hovered { -fx-background-color: filler-tgt-thin-hover }
 
 .expr-cell-empty-selected { -fx-background-color: empty-selected }
+.expr-cell-exposed-selected { -fx-background-color: exposed-selected }
 .expr-cell-var-selected { -fx-background-color: var-selected }
 .expr-cell-var-thin-selected { -fx-background-color: var-thin-selected }
 .expr-cell-filler-selected { -fx-background-color: filler-selected }

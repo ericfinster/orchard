@@ -10,7 +10,7 @@ import net.liftweb.sitemap.{Menu, SiteMap}
 class Boot {
   def boot {
     // where to search snippet
-    LiftRules.addToPackages("org.yourorganization.liftfromscratch")
+    LiftRules.addToPackages("orchard.ui.lift")
 
     // Build SiteMap
     def sitemap(): SiteMap = SiteMap(

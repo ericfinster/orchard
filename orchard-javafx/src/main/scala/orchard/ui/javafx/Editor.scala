@@ -35,6 +35,9 @@ import scalafx.scene.control.CheckBox
 
 import scalafx.scene.image.WritableImage
 
+import scalafx.scene.web.WebView
+import scalafx.scene.web.WebEngine
+
 import scalafx.geometry.Side
 import scalafx.geometry.Insets
 import scalafx.geometry.Orientation
@@ -451,6 +454,49 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     }
   }
 
+  object WebViewDialog extends Dialog {
+
+    heading.text = "Web Viewer"
+
+    val webView = new WebView
+    borderPane.center = webView
+
+    var labelEngine : WebEngine = null
+    var gallery : FrameworkSVGGallery = null
+
+    def renderAsSVG[A](seed : NCell[Option[Expression]]) = {
+      labelEngine = new WebEngine
+      gallery = new FrameworkSVGGallery(labelEngine, seed)
+      gallery.onRenderFinished = (_ => {
+        webView.engine.loadContent(gallery.toSVG.toString)
+      })
+      gallery.renderAll
+    }
+
+    def onHide = ()
+    def onShow = ()
+
+    addEventFilter(KeyEvent.KEY_PRESSED,
+      new EventHandler[KeyEvent] {
+        def handle(ev : KeyEvent) {
+          ev.getCode match {
+            case KeyCode.X => if (ev.isControlDown) onWrite
+            case _ => ()
+          }
+        }
+      })
+
+    def onWrite = {
+      fileChooser.setTitle("Export SVG")
+
+      val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+      if (file != null) {
+        xml.XML.save(file.getAbsolutePath, gallery.toSVG)
+      }
+    }
+  }
+
   //============================================================================================
   // EVENTS
   //
@@ -494,6 +540,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
           case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           case KeyCode.X => if (ev.isControlDown) onExtra
           case KeyCode.P => if (ev.isControlDown) onPrintScreen
+          case KeyCode.W => if (ev.isControlDown) onWebView
           case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
           case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
           case _ => ()
@@ -506,6 +553,14 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
       VariableDialog.thinCheckBox.selected = thin
       VariableDialog.run
     }
+  }
+
+  def onWebView = {
+    activeBuilder.selectionBase foreach (cell => {
+      val selectedExpr = cell.owner.getSimpleFramework.toCell
+      WebViewDialog.renderAsSVG(selectedExpr)
+      WebViewDialog.run
+    })
   }
 
   def onView = {
@@ -736,6 +791,9 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
         }
       }
     }
+
+    // Overkill!!!
+    activeBuilder.refreshAll
   }
 
   def newBuilder : Unit = newBuilder(Object(None))
@@ -764,6 +822,9 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   def assume(emptyCell : ExpressionBuilder#GalleryCell, id : String, isThin : Boolean) = {
     activeBuilder.deselectAll
     emptyCell.owner.item = Neutral(Some(Variable(id, isThin)))
+
+    // Slow, but done so that we recalculate exposed nooks
+    activeBuilder.refreshAll
 
     val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toCell map (_.force)
     environment += exprCell
