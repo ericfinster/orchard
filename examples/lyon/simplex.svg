@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="206" height="200" viewBox="-1 10 206 200" version="1.1" id="svg6886" inkscape:version="0.48.4 r9939" sodipodi:docname="simplex.svg">
+  <metadata id="metadata6934">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs id="defs6932" />
+  <sodipodi:namedview pagecolor="#ffffff" bordercolor="#666666" borderopacity="1" objecttolerance="10" gridtolerance="10" guidetolerance="10" inkscape:pageopacity="0" inkscape:pageshadow="2" inkscape:window-width="1920" inkscape:window-height="1014" id="namedview6930" showgrid="false" inkscape:zoom="8.4303604" inkscape:cx="94.638844" inkscape:cy="36.603238" inkscape:window-x="0" inkscape:window-y="27" inkscape:window-maximized="1" inkscape:current-layer="svg6886" />
+  <script type="text/javascript" id="script6888">
+        window.onload = function() { 
+          document.gallery = { };
+document.gallery['cell-1476843525'] = {
+cell : document.getElementById('cell-1476843525'),
+edge : document.getElementById('edge-1476843525'),
+extra : document.getElementById('extra-1476843525'),
+doAlert : function () { alert('You clicked: 1476843525'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-1476843525'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-1476843525'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-1476843525'].cell.onclick = function () { document.gallery['cell-1476843525'].doAlert(); };
+document.gallery['cell-1476843525'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-1476843525'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-1476843525'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-1476843525'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-1476843525'].faces[0] = document.gallery['cell-1476843525'];
+document.gallery['cell-648238343'] = {
+cell : document.getElementById('cell-648238343'),
+edge : document.getElementById('edge-648238343'),
+extra : document.getElementById('extra-648238343'),
+doAlert : function () { alert('You clicked: 648238343'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-648238343'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-648238343'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-648238343'].cell.onclick = function () { document.gallery['cell-648238343'].doAlert(); };
+document.gallery['cell-648238343'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-648238343'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-648238343'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-648238343'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-648238343'].faces[0] = document.gallery['cell-648238343'];
+document.gallery['cell-757289570'] = {
+cell : document.getElementById('cell-757289570'),
+edge : document.getElementById('edge-757289570'),
+extra : document.getElementById('extra-757289570'),
+doAlert : function () { alert('You clicked: 757289570'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-757289570'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-757289570'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-757289570'].cell.onclick = function () { document.gallery['cell-757289570'].doAlert(); };
+document.gallery['cell-757289570'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-757289570'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-757289570'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-757289570'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-757289570'].faces[0] = document.gallery['cell-757289570'];
+document.gallery['cell-279064516'] = {
+cell : document.getElementById('cell-279064516'),
+edge : document.getElementById('edge-279064516'),
+extra : document.getElementById('extra-279064516'),
+doAlert : function () { alert('You clicked: 279064516'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-279064516'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-279064516'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-279064516'].cell.onclick = function () { document.gallery['cell-279064516'].doAlert(); };
+document.gallery['cell-279064516'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-279064516'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-279064516'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-279064516'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-279064516'].faces[0] = document.gallery['cell-757289570'];
+document.gallery['cell-279064516'].faces[1] = document.gallery['cell-279064516'];
+document.gallery['cell-279064516'].faces[2] = document.gallery['cell-1476843525'];
+document.gallery['cell-133035364'] = {
+cell : document.getElementById('cell-133035364'),
+edge : document.getElementById('edge-133035364'),
+extra : document.getElementById('extra-133035364'),
+doAlert : function () { alert('You clicked: 133035364'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-133035364'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-133035364'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-133035364'].cell.onclick = function () { document.gallery['cell-133035364'].doAlert(); };
+document.gallery['cell-133035364'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-133035364'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-133035364'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-133035364'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-133035364'].faces[0] = document.gallery['cell-757289570'];
+document.gallery['cell-133035364'].faces[1] = document.gallery['cell-133035364'];
+document.gallery['cell-133035364'].faces[2] = document.gallery['cell-648238343'];
+document.gallery['cell-394886221'] = {
+cell : document.getElementById('cell-394886221'),
+edge : document.getElementById('edge-394886221'),
+extra : document.getElementById('extra-394886221'),
+doAlert : function () { alert('You clicked: 394886221'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-394886221'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-394886221'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-394886221'].cell.onclick = function () { document.gallery['cell-394886221'].doAlert(); };
+document.gallery['cell-394886221'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-394886221'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-394886221'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-394886221'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-394886221'].faces[0] = document.gallery['cell-648238343'];
+document.gallery['cell-394886221'].faces[1] = document.gallery['cell-394886221'];
+document.gallery['cell-394886221'].faces[2] = document.gallery['cell-1476843525'];
+document.gallery['cell-1128247117'] = {
+cell : document.getElementById('cell-1128247117'),
+edge : document.getElementById('edge-1128247117'),
+extra : document.getElementById('extra-1128247117'),
+doAlert : function () { alert('You clicked: 1128247117'); },
+doHover : function() {
+var cellInfo = document.gallery['cell-1128247117'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty-hover');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };
+},
+doUnhover : function() {
+var cellInfo = document.gallery['cell-1128247117'];
+cellInfo.cell.setAttribute('class', 'orch-rect expr-cell-empty');
+if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };
+},
+faces : []
+}
+document.gallery['cell-1128247117'].cell.onclick = function () { document.gallery['cell-1128247117'].doAlert(); };
+document.gallery['cell-1128247117'].cell.onmouseover = function () {
+var cellInfo = document.gallery['cell-1128247117'];
+foreachFace(cellInfo, function(fc) { fc.doHover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };
+};
+document.gallery['cell-1128247117'].cell.onmouseout = function () {
+var cellInfo = document.gallery['cell-1128247117'];
+foreachFace(cellInfo, function(fc) { fc.doUnhover() });
+if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };
+};
+document.gallery['cell-1128247117'].faces[0] = document.gallery['cell-757289570'];
+document.gallery['cell-1128247117'].faces[1] = document.gallery['cell-133035364'];
+document.gallery['cell-1128247117'].faces[2] = document.gallery['cell-648238343'];
+document.gallery['cell-1128247117'].faces[3] = document.gallery['cell-394886221'];
+document.gallery['cell-1128247117'].faces[4] = document.gallery['cell-1476843525'];
+document.gallery['cell-1128247117'].faces[5] = document.gallery['cell-1128247117'];
+document.gallery['cell-1128247117'].faces[6] = document.gallery['cell-279064516'];
+function foreachFace(c, f) {
+for (var i = 0; i &lt; c.faces.length; i++) {
+  f(c.faces[i])
+}
+}
+        }
+      </script>
+  <style id="style6890">
+        .root {
+          blue-2: #838EAF;
+          blue-5: #D3D9EC;
+
+          peach-2: #E4CFA3;
+          peach-5: #FFF5E0;
+
+          violet-2: #9D7FAE;
+          violet-5: #E2D1EC;
+
+          red-2: #E4A3A3;
+          red-5: #FFE0E0;
+
+          empty-base: white;
+          empty-hover: blue-2;
+
+          var-base: peach-5;
+          var-hover: peach-2;
+
+          var-thin-base: violet-5;
+          var-thin-hover: violet-2;
+
+          filler-base: blue-5;
+          filler-hover: blue-2;
+              
+          filler-tgt-base: red-5;
+          filler-tgt-hover: red-2;
+
+          filler-tgt-thin-base: blue-5;
+          filler-tgt-thin-hover: blue-2;
+        }
+
+        path {
+          stroke: black;
+          stroke-width: 2;
+        }
+
+        .orch-rect { 
+          stroke: black; 
+          stroke-width: 2; 
+          fill: white 
+        } 
+      
+        .orch-edge {
+          stroke: black;
+          stroke-width: 2;
+          fill: none;
+        }
+
+        .orch-edge-hover {
+          stroke: red;
+          stroke-width: 2;
+          fill: none;
+        }
+
+        .orch-extra text { fill: black; }
+        .orch-extra-hover text { fill: red; }
+        .orch-extra path { stroke: black; fill: black; }
+        .orch-extra-hover path { stroke: red; fill: red; }
+
+        .expr-cell-empty { fill: white; }
+        .expr-cell-var { fill: #FFF5E0; }
+        .expr-cell-var-thin { fill: #9D7FAE; }
+        .expr-cell-filler { fill: #D3D9EC; }
+        .expr-cell-filler-tgt { fill: #FFE0E0; }
+        .expr-cell-filler-tgt-thin { fill: #D3D9EC; }
+
+        .expr-cell-empty-hover { fill: red; }
+        .expr-cell-var-hover { fill: #E4CFA3; }
+        .expr-cell-var-thin-hover { fill: #9D7FAE; }
+        .expr-cell-filler-hover { fill: #838EAF; }
+        .expr-cell-filler-tgt-hover { fill: #E4A3A3; }
+        .expr-cell-filler-tgt-thin-hover { fill: #838EAF; }
+
+        .orch-label { 
+          pointer-events: none; 
+        }
+
+        .orch-label-filler {
+          pointer-events: none;
+          stroke: white;
+          fill white;
+        }
+      </style>
+  <g transform="translate(32.374593,117.31433)" id="g6892">
+    <g id="g6894">
+      <rect id="cell-1476843525" class="orch-rect expr-cell-empty" x="-26" y="-93" rx="4" ry="4" width="62" height="93" />
+      <text class="orch-label" id="cell-label-1476843525" x="20" y="-7">z</text>
+      <g id="g6898">
+        <rect id="cell-648238343" class="orch-rect expr-cell-empty" x="-19" y="-84" rx="4" ry="4" width="43" height="62" />
+        <text class="orch-label" id="cell-label-648238343" x="7" y="-29">y</text>
+        <g id="g6902">
+          <rect id="cell-757289570" class="orch-rect expr-cell-empty" x="-12" y="-75" rx="4" ry="4" width="24" height="31" />
+          <text class="orch-label" id="cell-label-757289570" x="-5" y="-54">x</text>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(107.8746,119.81433)" id="g6906">
+    <g id="g6908">
+      <rect id="cell-279064516" class="orch-rect expr-cell-empty" x="-19.5" y="-98" rx="4" ry="4" width="44" height="98" />
+      <text class="orch-label" id="cell-label-279064516" x="6.5" y="-7">h</text>
+      <g id="g6912">
+        <rect id="cell-133035364" class="orch-rect expr-cell-empty" x="-10" y="-89" rx="4" ry="4" width="20" height="31" />
+        <text class="orch-label" id="cell-label-133035364" x="-3" y="-68">f</text>
+        <rect id="cell-394886221" class="orch-rect expr-cell-empty" x="-12.5" y="-53" rx="4" ry="4" width="25" height="31" />
+        <text class="orch-label" id="cell-label-394886221" x="-5.5" y="-32">g</text>
+      </g>
+      <path id="edge-757289570" d="m 0,-108 v 19" class="orch-edge" inkscape:connector-curvature="0" />
+      <path id="edge-648238343" d="m 0,-58 v 5" class="orch-edge" inkscape:connector-curvature="0" />
+      <path id="edge-1476843525" d="M 0,-22 V 10" class="orch-edge" inkscape:connector-curvature="0" />
+    </g>
+  </g>
+  <g transform="translate(172.3746,86.31433)" id="g6921">
+    <g id="g6923">
+      <rect id="cell-1128247117" class="orch-rect expr-cell-empty" x="-12" y="-31" rx="4" ry="4" width="24" height="31" />
+      <text class="orch-label" id="cell-label-1128247117" x="-5" y="-10">a</text>
+      <path id="edge-133035364" d="m -21,-41 v 21.5 a 4,4 0 0 0 4,4 h 5" class="orch-edge" inkscape:connector-curvature="0" />
+      <path id="edge-394886221" d="m 21,-41 v 21.5 a 4,4 0 0 1 -4,4 h -5" class="orch-edge" inkscape:connector-curvature="0" />
+      <path id="edge-279064516" d="M 0,0 V 10" class="orch-edge" inkscape:connector-curvature="0" />
+    </g>
+  </g>
+  <g id="extra-757289570" transform="translate(23.566168,82.728814)" inkscape:label="#g6563">
+    <path transform="translate(12.377119,19.207627)" d="m 13.377119,89.091103 c 0,0.911503 -0.73892,1.650423 -1.650424,1.650423 -0.911504,0 -1.650424,-0.73892 -1.650424,-1.650423 0,-0.911504 0.73892,-1.650424 1.650424,-1.650424 0.911504,0 1.650424,0.73892 1.650424,1.650424 z" sodipodi:ry="1.6504238" sodipodi:rx="1.6504238" sodipodi:cy="89.091103" sodipodi:cx="11.726695" id="path5577" style="fill-opacity:1" sodipodi:type="arc" />
+    <text sodipodi:linespacing="125%" id="text6551" y="106.47458" x="14.98305" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" xml:space="preserve"><tspan y="106.47458" x="14.98305" id="tspan6553" sodipodi:role="line">x</tspan></text>
+  </g>
+  <g id="extra-648238343" transform="translate(16.148272,46.509327)" inkscape:label="#g6573">
+    <path d="m 13.377119,89.091103 c 0,0.911503 -0.73892,1.650423 -1.650424,1.650423 -0.911504,0 -1.650424,-0.73892 -1.650424,-1.650423 0,-0.911504 0.73892,-1.650424 1.650424,-1.650424 0.911504,0 1.650424,0.73892 1.650424,1.650424 z" sodipodi:ry="1.6504238" sodipodi:rx="1.6504238" sodipodi:cy="89.091103" sodipodi:cx="11.726695" id="path5577-1" style="fill-opacity:1" sodipodi:type="arc" transform="translate(63.366526,19.641948)" />
+    <text sodipodi:linespacing="125%" id="text6555" y="105.25848" x="77.872887" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" xml:space="preserve"><tspan y="105.25848" x="77.872887" id="tspan6557" sodipodi:role="line">y</tspan></text>
+  </g>
+  <g id="extra-133035364" transform="translate(16.455794,57.590196)" inkscape:label="#g6769">
+    <path inkscape:connector-curvature="0" id="path5597" d="M 34.265412,130.41728 68.289208,102.8977" style="marker-end:none;" sodipodi:nodetypes="cc" />
+    <text sodipodi:linespacing="125%" id="text6559" y="114.84357" x="45.678047" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" xml:space="preserve"><tspan y="114.84357" x="45.678047" id="tspan6561" sodipodi:role="line">f</tspan></text>
+    <path inkscape:transform-center-x="0.24546034" transform="matrix(0.71508751,-0.69903495,0.69903495,0.71508751,10.800658,135.54931)" d="m 66.597192,16.810349 -1.48561,0.857717 -1.48561,0.857717 0,-1.715435 0,-1.715434 1.48561,0.857717 z" inkscape:randomized="0" inkscape:rounded="0" inkscape:flatsided="false" sodipodi:arg2="1.0471976" sodipodi:arg1="0" sodipodi:r2="0.99040663" sodipodi:r1="1.9808131" sodipodi:cy="16.810349" sodipodi:cx="64.616379" sodipodi:sides="3" id="path6764" style="fill-opacity:1" sodipodi:type="star" inkscape:transform-center-y="0.26717713" />
+  </g>
+  <g id="extra-1476843525" transform="translate(60.361976,82.576271)" inkscape:label="#g6573">
+    <path d="m 13.377119,89.091103 c 0,0.911503 -0.73892,1.650423 -1.650424,1.650423 -0.911504,0 -1.650424,-0.73892 -1.650424,-1.650423 0,-0.911504 0.73892,-1.650424 1.650424,-1.650424 0.911504,0 1.650424,0.73892 1.650424,1.650424 z" sodipodi:ry="1.6504238" sodipodi:rx="1.6504238" sodipodi:cy="89.091103" sodipodi:cx="11.726695" id="path5577-1-3" style="fill-opacity:1" sodipodi:type="arc" transform="translate(63.366526,19.641948)" />
+    <text sodipodi:linespacing="125%" id="text6555-1" y="105.25848" x="77.872887" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" xml:space="preserve"><tspan y="105.25848" x="77.872887" id="tspan6557-9" sodipodi:role="line">z</tspan></text>
+  </g>
+  <g id="extra-394886221" transform="translate(5.1006123,12.746241)" inkscape:label="#g7623">
+    <path inkscape:transform-center-y="-0.386181" sodipodi:type="star" style="fill-opacity:1" id="path6764-2" sodipodi:sides="3" sodipodi:cx="64.616379" sodipodi:cy="16.810349" sodipodi:r1="1.9808131" sodipodi:r2="0.99040663" sodipodi:arg1="0" sodipodi:arg2="1.0471976" inkscape:flatsided="false" inkscape:rounded="0" inkscape:randomized="0" d="m 66.597192,16.810349 -1.48561,0.857717 -1.48561,0.857717 0,-1.715435 0,-1.715434 1.48561,0.857717 z" transform="matrix(0.79810462,0.6025189,-0.6025189,0.79810462,82.834932,120.91555)" inkscape:transform-center-x="0.12156681" />
+    <path sodipodi:nodetypes="cc" style="marker-end:none;" d="M 123.62509,172.77689 89.601295,145.25731" id="path5597-6" inkscape:connector-curvature="0" />
+    <text xml:space="preserve" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" x="109.04623" y="156.71315" id="text6559-7" sodipodi:linespacing="125%"><tspan sodipodi:role="line" id="tspan6561-5" x="109.04623" y="156.71315">g</tspan></text>
+  </g>
+  <g id="extra-279064516" transform="translate(0.94895112,15.237238)" inkscape:label="#g7617">
+    <path sodipodi:type="star" style="fill-opacity:1" id="path6764-2-0" sodipodi:sides="3" sodipodi:cx="64.616379" sodipodi:cy="16.810349" sodipodi:r1="1.9808131" sodipodi:r2="0.99040663" sodipodi:arg1="0" sodipodi:arg2="1.0471976" inkscape:flatsided="false" inkscape:rounded="0" inkscape:randomized="0" d="m 66.597192,16.810349 -1.48561,0.857717 -1.48561,0.857717 0,-1.715435 0,-1.715434 1.48561,0.857717 z" transform="translate(58.486288,159.28668)" inkscape:transform-center-x="-0.49520331" />
+    <path sodipodi:nodetypes="cc" style="marker-end:none;" d="m 122.11532,176.04806 -71.348717,-0.008" id="path5597-6-3" inkscape:connector-curvature="0" />
+    <text xml:space="preserve" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" x="83.187317" y="186.60512" id="text6559-9" sodipodi:linespacing="125%"><tspan sodipodi:role="line" id="tspan6561-0" x="83.187317" y="186.60512">h</tspan></text>
+  </g>
+  <g id="extra-1128247117" inkscape:label="#g7693">
+    <g transform="translate(-50.531647,31.552625)" id="g7667">
+      <path d="m 136.4793,138.71005 0,8.54056" id="path7629" inkscape:connector-curvature="0" />
+      <path d="m 139.20752,138.71004 0,8.54056" id="path7629-8" inkscape:connector-curvature="0" />
+      <path inkscape:transform-center-y="0.69990759" sodipodi:type="star" style="fill-opacity:1" id="path6764-2-6" sodipodi:sides="3" sodipodi:cx="64.616379" sodipodi:cy="16.810349" sodipodi:r1="1.9808131" sodipodi:r2="0.99040663" sodipodi:arg1="0" sodipodi:arg2="1.0471976" inkscape:flatsided="false" inkscape:rounded="0" inkscape:randomized="0" d="m 66.597192,16.810349 -1.48561,0.857717 -1.48561,0.857717 0,-1.715435 0,-1.715434 1.48561,0.857717 z" transform="matrix(0.01198221,1.4367378,-1.276548,0.01348581,158.59321,55.131538)" inkscape:transform-center-x="0.011859376" />
+    </g>
+    <text sodipodi:linespacing="125%" id="text6559-7-3" y="179.43471" x="93.921272" style="font-size:11px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;font-family:Sans" xml:space="preserve"><tspan y="179.43471" x="93.921272" id="tspan6561-5-6" sodipodi:role="line">a</tspan></text>
+  </g>
+</svg>
