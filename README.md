@@ -11,15 +11,24 @@ me for more information.  In the meantime, here is a list of keyboard shortcuts 
 you can play with:
 
 Ctrl-A  -  Assume variable
+
 Ctrl-E  -  Extrude selection (this will modify the current shape)
+
 Ctrl-D  -  Drop at selection (insert a "nullary" sorce cell)
+
 Ctrl-C  -  Compose a diagram
+
 Ctrl-I  -  Insert and identity
+
 Ctrl-F  -  Fill a fillable cell
+
 Ctrl-U  -  "Use" the cell currently selected in the environment
            and insert it into the currently selected cell
+
 Ctrl-N  -  Start a new environment, i.e. reset everythin
+
 Ctrl-S  -  Save
+
 Crtl-O  -  Open
 
 Left Arrow/Right Arrow  -  Scroll the viewer left and right
