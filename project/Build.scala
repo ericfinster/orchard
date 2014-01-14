@@ -11,6 +11,5 @@ object OrchardBuild extends Build {
 
   lazy val orchardLib = project.in(file("orchard-lib"))
   lazy val orchardJavafx = project.in(file("orchard-javafx")).dependsOn(orchardLib)
-  // lazy val orchardLift = project.in(file("orchard-lift")).dependsOn(orchardLib)
 
 }
