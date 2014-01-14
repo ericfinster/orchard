@@ -8,10 +8,6 @@ unmanagedJars in Compile := {
   customJars.classpath
 }
 
-mainClass := Some("orchard.ui.javafx.Editor")
-
-exportJars := true
-
 scalacOptions += "-feature"
 
 fork := true
