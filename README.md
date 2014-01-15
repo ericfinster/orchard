@@ -14,18 +14,18 @@ Ctrl-A  -  Assume variable
 
 Ctrl-E  -  Extrude selection (this will modify the current shape)
 
-Ctrl-D  -  Drop at selection (insert a "nullary" sorce cell)
+Ctrl-D  -  Drop at selection (insert a "nullary" source cell)
 
 Ctrl-C  -  Compose a diagram
 
-Ctrl-I  -  Insert and identity
+Ctrl-I  -  Insert an identity
 
 Ctrl-F  -  Fill a fillable cell
 
 Ctrl-U  -  "Use" the cell currently selected in the environment
            and insert it into the currently selected cell
 
-Ctrl-N  -  Start a new environment, i.e. reset everythin
+Ctrl-N  -  Start a new environment, i.e. reset everything
 
 Ctrl-S  -  Save
 
@@ -65,7 +65,7 @@ Hopefully this works. :)
 
 Orchard is written in Scala and uses ScalaFX/JavaFX for graphics.  As above, you will
 need to have a version of the JDK which includes JavaFX.  You will also need to install
-SBT, the Scala Build Tool.  Versions are available for Window/Mac and most Linux
+SBT, the Scala Build Tool.  Versions are available for Windows/Mac and most Linux
 distributions will have a binary package available.  See the website at:
 
 http://www.scala-sbt.org/
