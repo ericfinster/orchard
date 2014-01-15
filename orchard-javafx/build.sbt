@@ -8,6 +8,9 @@ unmanagedJars in Compile := {
   customJars.classpath
 }
 
+unmanagedJars in Compile += Attributed.blank(
+    file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar")
+
 scalacOptions += "-feature"
 
 fork := true
