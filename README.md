@@ -6,6 +6,10 @@ Orchard is a graphical user interface for manipulating opetopic cells.  It provi
 an implementation of a certain definition of opetopic higher category using pictorial
 representations of cells.
 
+You can watch some videos about Orchard here:
+
+https://www.youtube.com/playlist?list=PLWAw3zSOqFVKZ-LzAq4hQaKIVj8zjtfCs
+
 I'm afraid there is not much in the way of documentation yet, but feel free to contact
 me for more information.  In the meantime, here is a list of keyboard shortcuts which
 you can play with:

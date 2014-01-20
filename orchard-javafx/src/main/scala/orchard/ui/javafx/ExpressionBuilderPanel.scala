@@ -98,9 +98,6 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
           }
         }
 
-      if (outgoingIsNook) println("Because of outgoing")
-      if (incomingIsNook) println("Because of incoming")
-
       outgoingIsNook || incomingIsNook
     }
 
