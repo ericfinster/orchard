@@ -24,7 +24,8 @@ import orchard.core._
 
 class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex : Int)
     extends ZoomPanel[Polarity[Option[Expression]]] 
-    with MutablePanel[Polarity[Option[Expression]]] { thisPanel =>
+    with MutablePanel[Polarity[Option[Expression]]] 
+    with ExpressionPanel { thisPanel =>
 
   type CellType = ExpressionBuilderCell
   type EdgeType = ExpressionBuilderEdge
@@ -73,14 +74,12 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
 
       labelNode.layoutBounds onChange { thisPanel.refresh }
-
       pane.getChildren.setAll(labelNode)
-
       labelNode
     }
  
     def isExposedStyle : Boolean = {
-      if (owner.isExposedNook) return { println("I'm exposed") ; true }
+      if (owner.isExposedNook) return true
 
       val outgoingIsNook =
         owner.outgoing match {

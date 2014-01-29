@@ -59,7 +59,6 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         }
 
       labelNode.layoutBounds onChange { thisPanel.refresh }
-
       pane.getChildren.setAll(labelNode)
       labelNode
     }
@@ -176,8 +175,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
 
   abstract class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner) { thisEdge : EdgeType =>
 
-    override def doHover : Unit = setStroke(Color.RED)
-    override def doSelect : Unit = setStroke(Color.RED)
+    override def doHover : Unit = setStroke(Color.TOMATO)
+    override def doSelect : Unit = setStroke(Color.TOMATO)
     override def doUnhover : Unit = setStroke(Color.BLACK)
     override def doDeselect : Unit = setStroke(Color.BLACK)
 

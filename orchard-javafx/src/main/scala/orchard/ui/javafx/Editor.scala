@@ -72,6 +72,55 @@ import orchard.ui.javafx.controls._
 
 import Util._
 
+class NewEditor extends PopupManager(new VBox) { thisEditor =>
+
+  implicit val pm = thisEditor
+
+  val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
+
+  val newDefinitionItem = new MenuItem {
+    text = "New Definition"
+  }
+
+  val fileMenu = new Menu {
+    text = "File"
+    items ++= List(newDefinitionItem)
+  }
+
+  val menuBar = new MenuBar {
+    menus ++= List(fileMenu)
+  }
+
+  val definitionPane = new TabPane {
+    id = "orch-definition-pane"
+    side = Side.TOP
+  }
+
+  val definitionList = new ListView[Definition]
+
+  val definitionListPane = new AnchorPane {
+    id = "orch-definition-list-pane"
+  }
+
+  AnchorPane.setTopAnchor(definitionList, 10)
+  AnchorPane.setLeftAnchor(definitionList, 10)
+  AnchorPane.setBottomAnchor(definitionList, 10)
+  AnchorPane.setRightAnchor(definitionList, 10)
+
+  definitionListPane.content.addAll(definitionList)
+
+  val horizontalSplit = new SplitPane {
+    orientation = Orientation.HORIZONTAL
+    dividerPositions = 0.2f
+  }
+
+  horizontalSplit.items.addAll(definitionListPane, definitionPane)
+
+  VBox.setVgrow(horizontalSplit, Priority.ALWAYS)
+  mainVBox.content.addAll(menuBar, horizontalSplit)
+
+}
+
 class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisEditor =>
 
   implicit val pm = thisEditor
@@ -112,12 +161,12 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
 
   val extrudeItem = new MenuItem {
     text = "Extrude Selection"
-    onAction = extrudeSelection
+    onAction = onExtrude
   }
 
   val dropItem = new MenuItem {
     text = "Extrude Drop"
-    onAction = extrudeDrop
+    onAction = onDrop
   }
 
   val fillItem = new MenuItem {
@@ -337,7 +386,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     def onHide = 
       response match {
         case DialogOK => {
-          extrudeDrop
+          activeBuilder.extrudeDrop
 
           val compositeId = composeField.text()
           val fillerId = fillerField.text()
@@ -366,7 +415,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     def onHide = 
       response match {
         case DialogOK => {
-          extrudeSelection
+          activeBuilder.extrudeSelection
 
           val compositeId = composeField.text()
           val fillerId = fillerField.text()
@@ -526,8 +575,8 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
           case KeyCode.LEFT => activeBuilder.prev
           case KeyCode.RIGHT => activeBuilder.next
           case KeyCode.F => if (ev.isControlDown) onFill  
-          case KeyCode.E => if (ev.isControlDown) extrudeSelection
-          case KeyCode.D => if (ev.isControlDown) extrudeDrop
+          case KeyCode.E => if (ev.isControlDown) onExtrude
+          case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.C => if (ev.isControlDown) onCompose
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
@@ -549,7 +598,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     })
 
   def onAssume(thin : Boolean) = {
-    if (selectionIsShell) {
+    if (activeBuilder.selectionIsShell) {
       VariableDialog.thinCheckBox.selected = thin
       VariableDialog.run
     }
@@ -633,14 +682,11 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   }
 
   def onCompose = {
-    if (selectionIsComposable) ComposeDialog.run
+    if (activeBuilder.selectionIsComposable) ComposeDialog.run
   }
 
-  // The fact that these are multiplying means you need a routine for it.
-  // You should pass in a function that works on ? only if the thing satisfies
-  // this condition ...
   def onInsertIdentity = {
-    if (selectionIsComposable) {
+    if (activeBuilder.selectionIsComposable) {
       val cell = activeBuilder.selectionBase.force
       cell.item match {
         case Neutral(Some(expr)) => {
@@ -653,7 +699,7 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
   }
 
   def onUseEnvironment = {
-    if (selectionIsEmptyCell) {
+    if (activeBuilder.selectionIsEmptyCell) {
       val selectedExpr = envListView.getSelectionModel.getSelectedItem
 
       if (selectedExpr != null) {
@@ -674,64 +720,12 @@ class Editor extends PopupManager(new VBox) with EventReactor[CellEvent] { thisE
     }
   }
 
-  //============================================================================================
-  // EDITOR SEMANTICS
-  //
-
-  def selectionIsComposable : Boolean = {
-    val cellsAreComplete = (true /: (activeBuilder.selectedCells map (_.owner.isComplete))) (_&&_)
-    cellsAreComplete && selectionIsExtrudable
+  def onExtrude = {
+    activeBuilder.extrudeSelection
   }
 
-  def selectionIsShell : Boolean = {
-    activeBuilder.selectionBase match {
-      case None => false
-      case Some(cell) => cell.owner.isShell
-    }
-  }
-
-  def selectionIsEmptyCell : Boolean = {
-    activeBuilder.selectionBase match {
-      case None => false
-      case Some(cell) => cell.owner.isEmpty
-    }
-  }
-
-  def selectionIsExtrudable : Boolean = {
-    activeBuilder.selectionBase match {
-      case None => false
-      case Some(cell) => {
-        cell.container match {
-          case None => false
-          case Some(cont) => cont.owner.isPolarized
-        }
-      }
-    }
-  }
-
-  def extrudeSelection = {
-    // Add new empty cells based on the current selection
-    if (selectionIsExtrudable) {
-      activeBuilder.emptyComposition
-      activeBuilder.clearAndSelect(activeBuilder.lastComposite)
-    }
-  }
-
-  def extrudeDrop = {
-    activeBuilder.selectionBase match {
-      case None => ()
-      case Some(cell) => {
-        cell.container match {
-          case None => ()
-          case Some(cont) => {
-            if (cont.owner.isPolarized) {
-              activeBuilder.emptyDrop
-              activeBuilder.clearAndSelect(cell)
-            }
-          }
-        }
-      }
-    }
+  def onDrop = {
+    activeBuilder.extrudeDrop
   }
 
   def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetId : String, fillerId : String) = {

@@ -9,13 +9,80 @@ package orchard.core
 
 import Util._
 
-trait ExpressionGallery extends Gallery[Polarity[Option[Expression]]] { 
+trait ExpressionGallery extends SelectableGallery[Polarity[Option[Expression]]] { 
 
   override type PanelType <: ExpressionPanel
+
+  var lastComposite : GalleryCell
+  var lastFiller : GalleryCell
 
   //============================================================================================
   // SEMANTICS
   //
+
+  def selectionIsComposable : Boolean = {
+    val cellsAreComplete = (true /: (selectedCells map (_.owner.isComplete))) (_&&_)
+    cellsAreComplete && selectionIsExtrudable
+  }
+
+  def selectionIsShell : Boolean = {
+    selectionBase match {
+      case None => false
+      case Some(cell) => cell.owner.isShell
+    }
+  }
+
+  def selectionIsEmptyCell : Boolean = {
+    selectionBase match {
+      case None => false
+      case Some(cell) => cell.owner.isEmpty
+    }
+  }
+
+  def selectionIsExtrudable : Boolean = {
+    selectionBase match {
+      case None => false
+      case Some(cell) => {
+        cell.container match {
+          case None => false
+          case Some(cont) => cont.owner.isPolarized
+        }
+      }
+    }
+  }
+
+  def selectionIsDroppable : Boolean = {
+    selectionBase match {
+      case None => false
+      case Some(cell) => {
+        cell.owner.outgoing match {
+          case None => false  // This shouldn't happen
+          case Some(o) => {
+            if (o.isPolarized) true else {
+              o.container match {
+                case None => false
+                case Some(cont) => cont.isPolarized
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def extrudeSelection = {
+    if (selectionIsExtrudable) {
+      emptyComposition
+      clearAndSelect(lastComposite)
+    }
+  }
+
+  def extrudeDrop = {
+    if (selectionIsDroppable) {
+      emptyDrop
+      clearAndSelect(selectionBase.get)
+    }
+  }
 
   def emptyComposition = composeSelection(None, None)
 
@@ -57,24 +124,27 @@ trait ExpressionGallery extends Gallery[Polarity[Option[Expression]]] {
 
         val activePanel = panels(base.owner.dimension + 1)
         val positiveBase = activePanel.baseCell.owner
-        val zipper = new RoseZipper(positiveBase.canopy.force, Nil)
 
-        val basePtr = positiveBase.canopy.force match {
-          case Rose(_) => throw new IllegalArgumentException("Negative cell has no sources.")
-          case Branch(negCell, brs) => {
+        val outPtr = 
+          new RoseZipper(positiveBase.canopy.get, Nil).
+            lookup(base.owner.outgoing.get.asInstanceOf[activePanel.complex.CellType]).get
+
+        val basePtr = outPtr.focus match {
+          case Rose(_) => throw new IllegalArgumentException("Didn't find the outgoing cell!")
+          case Branch(outCell, brs) => {
             val i = brs indexWhere
               (branch =>
                 branch match {
                   case Rose(idx) => {
-                    val srcs = positiveBase.sources.force
+                    val srcs = positiveBase.sources.get
                     if (srcs(idx) == base.owner) true else false
                   }
                   case Branch(cell, _) => {
-                    if (cell.target.force == base.owner) true else false
+                    if (cell.target.get == base.owner) true else false
                   }
                 })
 
-            zipper.visitBranch(i).force
+            outPtr.visitBranch(i).get
           }
         }
 

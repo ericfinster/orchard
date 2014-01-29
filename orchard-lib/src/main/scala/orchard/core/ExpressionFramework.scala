@@ -82,19 +82,12 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
     def isExposedNook : Boolean = {
       if (isOutNook) true else {
         if (isInNook) {
-          println("It's an inNook")
-
           val framework : SimpleFramework = 
             if (thisFramework.isInstanceOf[SimpleFramework]) {
               if (isTopCell) thisFramework.asInstanceOf[SimpleFramework] else getSimpleFramework
             } else getSimpleFramework
 
           val frameworkTgt = framework.topCell.target.force
-
-          // if (framework.topCell.isDrop) {
-          //   println("Testing a drop")
-          //   return frameworkTgt.isShell
-          // }
 
           val emptyPtr = (new RoseZipper(frameworkTgt.canopy.force, Nil)).find(c => c.item == None).force
 
