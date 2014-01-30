@@ -11,6 +11,7 @@ import scalafx.Includes._
 
 import scalafx.scene.layout.HBox
 import scalafx.scene.layout.BorderPane
+import scalafx.scene.layout.AnchorPane
 
 import scalafx.scene.control.Button
 import scalafx.scene.control.Label
@@ -37,13 +38,13 @@ abstract class Dialog(implicit pm : PopupManager) extends PopupRegion {
   override def layoutChildren = { 
     super.layoutChildren
     borderPane.relocate(getInsets.getLeft, getInsets.getTop)
-    // borderPane.resizeRelocate(0, 0, getWidth, getHeight) 
   }
 
   protected val okBtn =
     new Button("Ok") {
       onAction = () => { onOkAction }
       defaultButton = true
+      styleClass += "orch-btn"
     }
 
   protected val btnBox =
@@ -52,8 +53,16 @@ abstract class Dialog(implicit pm : PopupManager) extends PopupRegion {
       content = okBtn
     }
 
+  protected val anchorPane = new AnchorPane {
+    content = btnBox
+  }
+
+  AnchorPane.setTopAnchor(btnBox, 0)
+  AnchorPane.setRightAnchor(btnBox, 0)
+  AnchorPane.setBottomAnchor(btnBox, 0)
+
   borderPane.top = heading
-  borderPane.bottom = btnBox
+  borderPane.bottom = anchorPane
 
   def run = pm.showModal(this)
 
@@ -70,6 +79,7 @@ abstract class CancellableDialog(implicit pm : PopupManager) extends Dialog {
     new Button("Cancel") {
       onAction = () => { onCancelAction }
       cancelButton = true
+      styleClass += "orch-btn"
     }
 
   btnBox.content += cancelBtn

@@ -113,11 +113,51 @@
 
 /* JavaFX Control Customizations */
 
+.titled-pane:focused {
+    -fx-text-fill: -fx-text-base-color;
+}
+
+.titled-pane > .title {
+    -fx-background-color: -fx-box-border, filler-base;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 2 2 2 2, 1 1 1 1;
+    /* -fx-padding: 0.166667em 0.833333em 0.25em 0.833333em; */ 
+}
+
+.titled-pane:focused > .title {
+    -fx-color: -fx-base;
+}
+
+.titled-pane > *.content {
+    -fx-background-color: -fx-box-border;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.titled-pane:focused > .title > .arrow-button .arrow {
+    -fx-background-color: -fx-mark-color;
+}
+
 .tab-pane *.tab-header-background {
     -fx-background-color: -fx-background;
     -fx-effect: null;
     -fx-border-color: -fx-box-border;
     -fx-border-width: 0 0 1 0;
+}
+
+.tab-pane:top .tab-content-area {
+    -fx-border-color: -fx-box-border;
+    -fx-border-width: 0 1 1 1;
+}
+
+.tab-pane:right .tab-content-area {
+    -fx-border-color: -fx-box-border;
+    -fx-border-width: 1 0 1 1;
+}
+
+.tab-pane:bottom .tab-content-area {
+    -fx-border-color: -fx-box-border;
+    -fx-border-width: 1 1 0 1;
 }
 
 .tab-pane .headers-region {
@@ -131,12 +171,15 @@
     -fx-border-radius: 4 4 0 0;
 }
 
-/* This will remove the focus highlighting from the table-view control,
- * which is yucky and doesn't go with our scheme ...  */
+
+.list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+
 .list-view:focused {
-    -fx-background-color: -fx-box-border, -fx-control-inner-background;
-    -fx-background-insets: 0, 1;
-    -fx-padding: 1; /* 0.083333em; */
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
 }
 
 .orch-list-cell { -fx-background-color: empty-base; }
@@ -195,6 +238,24 @@
 
 /* Orchard custom classes */
 
+.orch-pane {
+    -fx-background-color: -fx-background;
+}
+
+.orch-btn {
+    -fx-background-color: filler-base;
+    -fx-background-radius: 4pt;
+    -fx-text-fill: black;
+}
+
+.orch-btn:hover {
+    -fx-background-color: filler-hover;
+}
+
+.orch-btn:armed {
+    -fx-background-color: filler-selected;
+}
+
 .orch-menu-item {
     -fx-background-color: -fx-background;
     -fx-padding: 5pt;
@@ -233,19 +294,6 @@
     -fx-background-radius: 4pt;
     -fx-padding: 2pt;
     -fx-effect: dropshadow( one-pass-box , black , 7 , 0.0 , 0 , 0 );
-}
-
-#orch-editor-pane {
-    -fx-background-color: -fx-background;
-}
-
-#orch-previewer-pane {
-    -fx-background-color: -fx-background;
-    -fx-padding: 10pt;
-}
-
-#orch-environment-pane {
-    -fx-background-color: -fx-background;
 }
 
 .orch-zoom-panel {
