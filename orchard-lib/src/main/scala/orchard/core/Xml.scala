@@ -99,39 +99,43 @@ object XmlSerializable {
         }
     }
 
-  // You should probably look at this again.  It seems like there is a more
-  // efficient way ... Yeah, this is wildly inefficient.  Fix it!!
-  implicit val expressionSerializable : XmlSerializable[Expression] =
-    new XmlSerializable[Expression] {
-      def toXML(expr : Expression) = 
-        expr match {
-          case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
-          case Filler(id, nook) => 
-            <filler id={id}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(nook)}</filler>
-          case FillerTarget(id, nook, isThin) =>
-            <fillertgt id={id} isThin={isThin.toString}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(nook)}</fillertgt>
-        }
+  // implicit val expressionSerializable : XmlSerializable[Expression] =
+  //   new XmlSerializable[Expression] {
+  //     def toXML(expr : Expression) = 
+  //       expr match {
+  //         case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
+  //         case Filler(id, nook) => {
+  //           val idNook = new SimpleFramework(nook).getIdNook
+  //           <filler id={id}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(idNook)}</filler>
+  //         }
+  //         case FillerTarget(id, nook, isThin) => {
+  //           val idNook = new SimpleFramework(nook).getIdNook
+  //           <fillertgt id={id} isThin={isThin.toString}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(idNook)}</fillertgt>
+  //         }
+  //       }
 
-      def fromXML(node : xml.Node) =
-        node match {
-          case v @ <variable /> => {
-            val id = (v \ "@id").text
-            val isThin = (v \ "@isThin").text.toBoolean
-            Variable(id, isThin)
-          }
-          case f @ <filler>{content}</filler> => {
-            val id = (f \ "@id").text
-            val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
-            Filler(id, nook)
-          }
-          case ft @ <fillertgt>{content}</fillertgt> => {
-            val id = (ft \ "@id").text
-            val isThin = (ft \ "@isThin").text.toBoolean
-            val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
-            FillerTarget(id, nook, isThin)
-          }
-        }
-    }
+  //     def fromXML(node : xml.Node) =
+  //       node match {
+  //         case v @ <variable /> => {
+  //           val id = (v \ "@id").text
+  //           val isThin = (v \ "@isThin").text.toBoolean
+  //           Variable(id, isThin)
+  //         }
+  //         case f @ <filler>{content}</filler> => {
+  //           val id = (f \ "@id").text
+  //           val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
+  //           //Filler(id, nook)
+  //           ???
+  //         }
+  //         case ft @ <fillertgt>{content}</fillertgt> => {
+  //           val id = (ft \ "@id").text
+  //           val isThin = (ft \ "@isThin").text.toBoolean
+  //           val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
+  //           //FillerTarget(id, nook, isThin)
+  //           ???
+  //         }
+  //       }
+  //   }
 
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =
     new XmlSerializable[Cell[_ <: Nat, A]] {

@@ -53,7 +53,23 @@ class JavaFXDefinitionBuilder(implicit pm : PopupManager) extends jfxsc.Tab with
   val envListView = 
     new ListView[NCell[Expression]] {
       items = environment
-      cellFactory = (_ => new EnvironmentCell)
+      cellFactory = (_ => {
+        val newCell = new EnvironmentCell
+
+        newCell.setOnMouseClicked(new EventHandler[MouseEvent] {
+          def handle(ev : MouseEvent) {
+            if (! newCell.isEmpty) {
+              setPreview(newCell.getItem)
+
+              if (ev.getClickCount > 1) {
+                newSheet(newCell.getItem map (e => Some(e)))
+              }
+            }
+          }
+        })
+
+        newCell
+      })
     }
 
   val envPane = new TitledPane {
@@ -119,59 +135,6 @@ class JavaFXDefinitionBuilder(implicit pm : PopupManager) extends jfxsc.Tab with
 
   }
 
-  class EnvironmentCell extends jfxsc.ListCell[NCell[Expression]] {
-
-    getStyleClass add "orch-list-cell"
-
-    var lastStyle : Option[String] = None
-
-    def setStyleType(styleType : String) = {
-      lastStyle foreach (st => getStyleClass remove st)
-      getStyleClass add styleType
-      lastStyle = Some(styleType)
-    }
-
-    override def updateItem(expr : NCell[Expression], empty : Boolean) = {
-      super.updateItem(expr, empty)
-
-      if (! empty) {
-        // Set the style based on the semantics ...
-        expr.value match {
-          case Variable(_, isThin) => {
-            if (isThin) {
-              setStyleType("orch-list-cell-var-thin")
-            } else {
-              setStyleType("orch-list-cell-var")
-            }
-          }
-          case Filler(_, _) => setStyleType("orch-list-cell-filler")
-          case FillerTarget(_, _, isThin) => {
-            if (isThin) {
-              setStyleType("orch-list-cell-filler-tgt-thin")
-            } else {
-              setStyleType("orch-list-cell-filler-tgt")
-            }
-          }
-        }
-
-        setText(expr.toString)
-      }
-    }
-
-    setOnMouseClicked(new EventHandler[MouseEvent] {
-      def handle(ev : MouseEvent) {
-        if (! isEmpty) {
-          setPreview(getItem)
-
-          if (ev.getClickCount > 1) {
-            newSheet(getItem map (e => Some(e)))
-          }
-        }
-      }
-    })
-
-  }
-
   var sheetCount = 1
 
   def newSheet : Unit = newSheet(Object(None))
@@ -192,10 +155,6 @@ class JavaFXDefinitionBuilder(implicit pm : PopupManager) extends jfxsc.Tab with
   def activeBuilder : Option[ExpressionBuilder] = {
     val builder = sheetPane.content(0).asInstanceOf[ExpressionBuilder]
     if (builder != null) Some(builder) else None 
-  }
-
-  def envContains(id : String) : Boolean = {
-    environment exists (expr => expr.value.id == id)
   }
 
   def setPreview(expr : NCell[Expression]) = {
@@ -225,14 +184,14 @@ class JavaFXDefinitionBuilder(implicit pm : PopupManager) extends jfxsc.Tab with
     }
   }
 
-  def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetId : String, fillerId : String) = {
+  def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetId : List[IdentToken], fillerId : List[IdentToken]) = {
     for {
       exprBuilder <- activeBuilder
     } {
       if (nookCell.owner.isExposedNook) {
         exprBuilder.deselectAll
 
-        val nook = nookCell.owner.getSimpleFramework.getIdNook
+        val nook = nookCell.owner.getSimpleFramework.toCell
 
         val (targetIsThin, targetCell) =
           if (nookCell.owner.isOutNook) {

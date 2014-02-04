@@ -17,6 +17,10 @@ trait DefinitionBuilder {
     environment find (expr => expr.value.id == id)
   }
 
+  def envContains(id : String) : Boolean = {
+    environment exists (expr => expr.value.id == id)
+  }
+
   var truncationLevel : Int
   var contractibilityLevel : Int
 

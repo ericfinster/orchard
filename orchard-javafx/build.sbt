@@ -8,6 +8,8 @@ unmanagedJars in Compile := {
   customJars.classpath
 }
 
+excludeFilter in unmanagedSources ~= { _ || "SimpleEditor.scala" }
+
 unmanagedJars in Compile += Attributed.blank(
     file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar")
 

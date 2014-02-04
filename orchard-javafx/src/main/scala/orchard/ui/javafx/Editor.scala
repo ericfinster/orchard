@@ -24,6 +24,8 @@ import scalafx.scene.control.TabPane
 import scalafx.scene.control.TitledPane
 import scalafx.scene.control.CheckBox
 
+import scalafx.collections.ObservableBuffer
+
 import javafx.event.Event
 import javafx.event.EventHandler
 
@@ -33,6 +35,8 @@ import javafx.scene.input.MouseEvent
 
 import javafx.scene.{layout => jfxsl}
 import javafx.scene.{control => jfxsc}
+
+import scala.collection.mutable.HashMap
 
 import orchard.core._
 import orchard.ui.javafx.controls._
@@ -68,17 +72,11 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
   }
 
   val definitionList = new ListView[Definition] {
-    cellFactory = (_ => new DefinitionCell)
-  }
-
-  class DefinitionCell extends jfxsc.ListCell[Definition] {
-
-    getStyleClass add "orch-list-cell"
-
-    override def updateItem(defn : Definition, empty : Boolean) = {
-      super.updateItem(defn, empty)
-    }
-
+    cellFactory = (_ => {
+      val newCell = new jfxsc.ListCell[Definition]
+      newCell.getStyleClass add "orch-list-cell"
+      newCell
+    })
   }
 
   val definitionBuilderPane = new StackPane {
@@ -142,7 +140,15 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
 
   }
 
-  abstract class ComposeInfoDialog extends CancellableDialog {
+  abstract class FillingDialog(freeVars : Seq[NCell[Expression]]) extends CancellableDialog {
+
+    val freeVarList = new ListView[NCell[Expression]] {
+      items = ObservableBuffer(freeVars)
+      cellFactory = (_ => {
+        val newCell = new EnvironmentCell
+        newCell
+      })
+    }
 
     val composeField = new TextField { promptText = "Composite" ; onAction = () => { fillerField.requestFocus } }
     val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
@@ -151,14 +157,8 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       new VBox {
         padding = Insets(10,10,10,10)
         spacing = 10
-        content = List(composeField, fillerField)
+        content = List(freeVarList, composeField, fillerField)
       }
-
-  }
-
-  class FillNookDialog(nookCell : ExpressionBuilder#GalleryCell) extends ComposeInfoDialog {
-
-    heading.text = "Fill Nook"
 
     def onShow = {
       composeField.clear
@@ -166,91 +166,98 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       composeField.requestFocus
     }
 
+    def parseResults(defnBuilder : JavaFXDefinitionBuilder) : Option[(List[IdentToken], List[IdentToken])] = {
+
+      import IdentParser.Success
+      import IdentParser.NoSuccess
+
+      IdentParser(composeField.text()) match {
+        case Success(composeIdent, _) => {
+          IdentParser(fillerField.text()) match {
+            case Success(fillerIdent, _) => {
+
+              // ALSO : We need to check that all the variables are valid in the current environment ...
+              // and BUG: Does not check that the two are not given the *same* name ... and
+              // BUG: We shouldn't allow the empty string.
+
+              if (defnBuilder.envContains(IdentToken.getId(composeIdent)) ||
+                defnBuilder.envContains(IdentToken.getId(fillerIdent))) { println("Duplicate identifier.") ; None }
+              else Some(composeIdent, fillerIdent)
+              
+            }
+            case _ : NoSuccess => { println("Filler parse failed.") ; None }
+          }
+        }
+        case _ : NoSuccess => { println("Compose parse failed.") ; None }
+      }
+    }
+  }
+
+  class FillNookDialog(nookCell : ExpressionBuilder#GalleryCell) 
+      extends FillingDialog(nookCell.owner.getSimpleFramework.freeVariables.values.toSeq) {
+
+    heading.text = "Fill Nook"
+
     def onHide =
       response match {
-        case DialogOK => 
+        case DialogOK =>
           for {
             defnBuilder <- definitionBuilder
             exprBuilder <- expressionBuilder
+            (composeIdent, fillerIdent) <- parseResults(defnBuilder)
           } {
-            val compositeId = composeField.text()
-            val fillerId = fillerField.text()
-
-            if (defnBuilder.envContains(compositeId) || defnBuilder.envContains(fillerId)) {
-              println("Error: Duplicate Identifier")
-            } else {
-              defnBuilder.fillExposedNook(nookCell, composeField.text(), fillerField.text())
-            }
-        }
-        case DialogCancel => ()
-      }
-  }
-
-  class IdentityDialog(expr : Expression) extends ComposeInfoDialog {
-
-    heading.text = "Insert Identity"
-
-    composeField.text = "id-" ++ expr.id
-    fillerField.text = "def-id-" ++ expr.id
-
-    def onShow = composeField.requestFocus
-
-    def onHide =
-      response match {
-        case DialogOK => 
-          for { 
-            defnBuilder <- definitionBuilder
-            exprBuilder <- expressionBuilder 
-          } {
-            exprBuilder.extrudeDrop
-
-            val compositeId = composeField.text()
-            val fillerId = fillerField.text()
-
-            if (defnBuilder.envContains(compositeId) || defnBuilder.envContains(fillerId)) {
-              println("Error: Duplicate Identifier")
-            } else {
-              defnBuilder.fillExposedNook(exprBuilder.lastFiller, composeField.text(), fillerField.text())
-            }
+            defnBuilder.fillExposedNook(nookCell, composeIdent, fillerIdent)
           }
         case DialogCancel => ()
       }
 
   }
 
-  object ComposeDialog extends ComposeInfoDialog {
+  class IdentityDialog(freeVars : Seq[NCell[Expression]], expr : Expression) extends FillingDialog(freeVars) {
 
-    heading.text = "Insert Composite"
+    heading.text = "Insert Identity"
 
-    def onShow = {
-      composeField.clear()
-      fillerField.clear()
-      composeField.requestFocus
-    }
+    composeField.text = "id-" ++ expr.id
+    fillerField.text = "def-id-" ++ expr.id
 
-    def onHide = 
+    override def onShow = { composeField.requestFocus }
+
+    def onHide =
       response match {
         case DialogOK => 
           for {
             defnBuilder <- definitionBuilder
             exprBuilder <- expressionBuilder
+            (composeIdent, fillerIdent) <- parseResults(defnBuilder)
+          } {
+            exprBuilder.extrudeDrop
+            defnBuilder.fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
+          }
+        case DialogCancel => ()
+      }
+
+  }
+
+  class ComposeDialog(freeVars : Seq[NCell[Expression]]) extends FillingDialog(freeVars) {
+
+    heading.text = "Insert Composite"
+
+    def onHide = 
+      response match {
+        case DialogOK => ()
+          for {
+            defnBuilder <- definitionBuilder
+            exprBuilder <- expressionBuilder
+            (composeIdent, fillerIdent) <- parseResults(defnBuilder)
           } {
             exprBuilder.extrudeSelection
-
-            val compositeId = composeField.text()
-            val fillerId = fillerField.text()
-
-            if (defnBuilder.envContains(compositeId) || defnBuilder.envContains(fillerId)) {
-              println("Error: Duplicate Identifier")
-            } else {
-              defnBuilder.fillExposedNook(exprBuilder.lastFiller, composeField.text(), fillerField.text())
-            }
-        }
+            defnBuilder.fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
+          }
         case DialogCancel => ()
       }
   }
 
-  object VariableDialog extends Dialog {
+  object VariableDialog extends CancellableDialog {
 
     heading.text = "Assume Variable"
 
@@ -321,6 +328,18 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       }
     })
 
+  def onExtrude = {
+    for { exprBuilder <- expressionBuilder } {
+      exprBuilder.extrudeSelection
+    }
+  }
+
+  def onDrop = {
+    for { exprBuilder <- expressionBuilder } {
+      exprBuilder.extrudeDrop
+    }
+  }
+
   def onAssume(thin : Boolean) = {
     for { 
       exprBuilder <- expressionBuilder
@@ -335,21 +354,25 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
     }
   }
 
-  def onExtrude = {
-    for { exprBuilder <- expressionBuilder } {
-      exprBuilder.extrudeSelection
-    }
-  }
-
-  def onDrop = {
-    for { exprBuilder <- expressionBuilder } {
-      exprBuilder.extrudeDrop
-    }
-  }
-
   def onCompose = {
     for { exprBuilder <- expressionBuilder } {
-      if (exprBuilder.selectionIsComposable) ComposeDialog.run
+      if (exprBuilder.selectionIsComposable) {
+        val freeVars = HashMap.empty[String, NCell[Expression]]
+
+        exprBuilder.selectedCells foreach (cell => {
+          cell.owner.getSimpleFramework.collectDependencies(freeVars)
+        })
+
+        freeVars filter (pr => {
+          val (id, expr) = pr
+          expr.value match {
+            case Variable(_, _) => true
+            case _ => false
+          }
+        })
+        
+        new ComposeDialog(freeVars.values.toSeq).run
+      }
     }
   }
 
@@ -359,12 +382,23 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
         for { cell <- exprBuilder.selectionBase } {
           cell.item match {
             case Neutral(Some(expr)) => {
-              val idDialog = new IdentityDialog(expr)
-              idDialog.run
+              val freeVars = cell.owner.getSimpleFramework.freeVariables.values.toSeq
+              new IdentityDialog(freeVars, expr).run
             }
             case _ => ()
           }
         }
+      }
+    }
+  }
+
+  def onFill = {
+    for {
+      exprBuilder <- expressionBuilder
+      selectedCell <- exprBuilder.selectionBase
+    } {
+      if (selectedCell.owner.isExposedNook) {
+        new FillNookDialog(selectedCell).run
       }
     }
   }
@@ -384,18 +418,6 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       }
     }
   }
-
-  def onFill = {
-    for {
-      exprBuilder <- expressionBuilder
-      selectedCell <- exprBuilder.selectionBase
-    } {
-      if (selectedCell.owner.isExposedNook) {
-        val fillDialog = new FillNookDialog(selectedCell)
-        fillDialog.run
-      }
-    }
-  }
   
   def onNewDefinition = {
     NewDefinitionDialog.run
@@ -411,6 +433,7 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
     val builder = new JavaFXDefinitionBuilder
     builder.text = name
     definitionTabPane.tabs += builder
+    definitionTabPane.getSelectionModel.select(builder)
   }
 
   def definitionBuilder : Option[JavaFXDefinitionBuilder] = {

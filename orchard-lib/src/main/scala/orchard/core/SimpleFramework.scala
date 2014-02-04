@@ -7,6 +7,8 @@
 
 package orchard.core
 
+import scala.collection.mutable.Map
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.WeakHashMap
 
 class SimpleFramework(seed : NCell[Option[Expression]]) 
@@ -33,9 +35,41 @@ class SimpleFramework(seed : NCell[Option[Expression]])
       }
     }
 
+  def dependencies : Map[String, NCell[Expression]] = {
+    val deps = HashMap.empty[String, NCell[Expression]]
+    collectDependencies(deps)
+    deps
+  }
+   
+  def freeVariables : Map[String, NCell[Expression]] = {
+    dependencies filter (pr => {
+      val (id, expr) = pr
+      expr.value match {
+        case Variable(_, _) => true
+        case _ => false
+      }
+    })
+  }
+
+  def collectDependencies(deps : Map[String, NCell[Expression]]) : Unit = {
+    forAllCells(cell => {
+      cell.item match {
+        case None => ()
+        case Some(expr) => {
+          expr match {
+            case Filler(id, nook) => new SimpleFramework(nook).collectDependencies(deps)
+            case FillerTarget(id, nook, isThing) => new SimpleFramework(nook).collectDependencies(deps)
+            case _ => ()
+          }
+
+          deps(expr.id) = cell.getSimpleFramework.toCell map (_.get)
+        }
+      }
+    })
+  }
+
   class SimpleFrameworkCell(var item : Option[Expression])
       extends AbstractMutableCell with ExpressionFrameworkCell {
-
     def exprItem = item
   }
 }

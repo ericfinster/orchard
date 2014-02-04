@@ -682,21 +682,21 @@ class SimpleEditor extends PopupManager(new VBox) with EventReactor[CellEvent] {
 
     activeBuilder.deselectAll
 
-    val nook = nookCell.owner.getSimpleFramework.getIdNook
+    val nook = nookCell.owner.getSimpleFramework.toCell
 
     val (targetIsThin, targetCell) =
       if (nookCell.owner.isOutNook) {
-        ((true /: (nookCell.owner.sources.force map (_.isThin))) (_&&_), nookCell.owner.target.force)
+        ((true /: (nookCell.owner.sources.get map (_.isThin))) (_&&_), nookCell.owner.target.get)
       } else {
-        (nookCell.owner.target.force.isThin, nookCell.owner.emptySources.head)
+        (nookCell.owner.target.get.isThin, nookCell.owner.emptySources.head)
       }
 
     targetCell.item = Neutral(Some(FillerTarget(targetId, nook, targetIsThin)))
-    val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.force)
+    val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.get)
     environment += tgtExprCell
 
     nookCell.owner.item = Neutral(Some(Filler(fillerId, nook)))
-    val exprCell = nookCell.owner.getSimpleFramework.toCell map (_.force)
+    val exprCell = nookCell.owner.getSimpleFramework.toCell map (_.get)
     environment += exprCell
 
   }
