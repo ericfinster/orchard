@@ -102,13 +102,13 @@
     filler-hover: blue-2;
     filler-selected: blue-3;
     
-    filler-tgt-base: red-5;
-    filler-tgt-hover: red-2;
-    filler-tgt-selected: red-3;
+    filler-face-base: red-5;
+    filler-face-hover: red-2;
+    filler-face-selected: red-3;
 
-    filler-tgt-thin-base: blue-5;
-    filler-tgt-thin-hover: blue-2;
-    filler-tgt-thin-selected: blue-3;
+    filler-face-thin-base: blue-5;
+    filler-face-thin-hover: blue-2;
+    filler-face-thin-selected: blue-3;
 }
 
 /* JavaFX Control Customizations */
@@ -201,13 +201,13 @@
 .orch-list-cell-filler:hover { -fx-background-color: filler-hover }
 .orch-list-cell-filler:selected { -fx-background-color: filler-selected }
 
-.orch-list-cell-filler-tgt { -fx-background-color: filler-tgt-base; -fx-border-color: filler-tgt-selected; -fx-border-width: 1; }
-.orch-list-cell-filler-tgt:hover { -fx-background-color: filler-tgt-hover }
-.orch-list-cell-filler-tgt:selected { -fx-background-color: filler-tgt-selected }
+.orch-list-cell-filler-face { -fx-background-color: filler-face-base; -fx-border-color: filler-face-selected; -fx-border-width: 1; }
+.orch-list-cell-filler-face:hover { -fx-background-color: filler-face-hover }
+.orch-list-cell-filler-face:selected { -fx-background-color: filler-face-selected }
 
-.orch-list-cell-filler-tgt-thin { -fx-background-color: filler-tgt-thin-base; -fx-border-color: filler-tgt-thin-selected; -fx-border-width: 1; }
-.orch-list-cell-filler-tgt-thin:hover { -fx-background-color: filler-tgt-thin-hover }
-.orch-list-cell-filler-tgt-thin:selected { -fx-background-color: filler-tgt-thin-selected }
+.orch-list-cell-filler-face-thin { -fx-background-color: filler-face-thin-base; -fx-border-color: filler-face-thin-selected; -fx-border-width: 1; }
+.orch-list-cell-filler-face-thin:hover { -fx-background-color: filler-face-thin-hover }
+.orch-list-cell-filler-face-thin:selected { -fx-background-color: filler-face-thin-selected }
 
 /* I guess there are a couple more ... */
 
@@ -334,22 +334,22 @@
 .expr-cell-var { -fx-background-color: var-base }
 .expr-cell-var-thin { -fx-background-color: var-thin-base }
 .expr-cell-filler { -fx-background-color: filler-base }
-.expr-cell-filler-tgt { -fx-background-color: filler-tgt-base }
-.expr-cell-filler-tgt-thin { -fx-background-color: filler-tgt-thin-base }
+.expr-cell-filler-face { -fx-background-color: filler-face-base }
+.expr-cell-filler-face-thin { -fx-background-color: filler-face-thin-base }
 
 .expr-cell-empty-hovered { -fx-background-color: empty-hover }
 .expr-cell-exposed-hovered { -fx-background-color: exposed-hover }
 .expr-cell-var-hovered { -fx-background-color:  var-hover }
 .expr-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
 .expr-cell-filler-hovered { -fx-background-color: filler-hover }
-.expr-cell-filler-tgt-hovered { -fx-background-color: filler-tgt-hover }
-.expr-cell-filler-tgt-thin-hovered { -fx-background-color: filler-tgt-thin-hover }
+.expr-cell-filler-face-hovered { -fx-background-color: filler-face-hover }
+.expr-cell-filler-face-thin-hovered { -fx-background-color: filler-face-thin-hover }
 
 .expr-cell-empty-selected { -fx-background-color: empty-selected }
 .expr-cell-exposed-selected { -fx-background-color: exposed-selected }
 .expr-cell-var-selected { -fx-background-color: var-selected }
 .expr-cell-var-thin-selected { -fx-background-color: var-thin-selected }
 .expr-cell-filler-selected { -fx-background-color: filler-selected }
-.expr-cell-filler-tgt-selected { -fx-background-color: filler-tgt-selected }
-.expr-cell-filler-tgt-thin-selected { -fx-background-color: filler-tgt-thin-selected }
+.expr-cell-filler-face-selected { -fx-background-color: filler-face-selected }
+.expr-cell-filler-face-thin-selected { -fx-background-color: filler-face-thin-selected }
 

@@ -20,15 +20,15 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
   // If this is an exposed nook, return a minimal amount of information to
   // reconstruct it in a given environment
-  def getIdNook : (RoseTree[Option[String], Option[String]], Option[String]) =
+  def getShallowNook : ShallowNook = // (RoseTree[Option[String], Option[String]], Option[String]) =
     topCell.skeleton.cell match {
       case Composite(_, srcTree, tgtExpr, _) => {
         srcTree.dimension match {
           case IsZero(ev) => {
-            (CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (_ => None)), tgtExpr.item map (_.id))
+            ShallowNook(CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (_ => None)), tgtExpr.item map (_.id))
           }
           case HasPred(ev) => {
-            (CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (leaf => leaf.value.item map (_.id))),
+            ShallowNook(CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (leaf => leaf.value.item map (_.id))),
               tgtExpr.item map (_.id))
           }
         }
@@ -58,7 +58,7 @@ class SimpleFramework(seed : NCell[Option[Expression]])
         case Some(expr) => {
           expr match {
             case Filler(id, nook) => new SimpleFramework(nook).collectDependencies(deps)
-            case FillerTarget(id, nook, isThing) => new SimpleFramework(nook).collectDependencies(deps)
+            case FillerFace(id, nook, isThin) => new SimpleFramework(nook).collectDependencies(deps)
             case _ => ()
           }
 

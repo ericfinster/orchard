@@ -38,8 +38,8 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
         case Some(Variable(_, false)) => "orch-rect expr-cell-var"
         case Some(Variable(_, true)) => "orch-rect expr-cell-var-thin"
         case Some(Filler(_, _)) => "orch-rect expr-cell-filler"
-        case Some(FillerTarget(_, _, false)) => "orch-rect expr-cell-filler-tgt"
-        case Some(FillerTarget(_, _, true)) => "orch-rect expr-cell-filler-tgt-thin"
+        case Some(FillerFace(_, _, false)) => "orch-rect expr-cell-filler-face"
+        case Some(FillerFace(_, _, true)) => "orch-rect expr-cell-filler-face-thin"
       }
 
     def hoverClassStr : String = 
@@ -48,8 +48,8 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
         case Some(Variable(_, false)) => "orch-rect expr-cell-var-hover"
         case Some(Variable(_, true)) => "orch-rect expr-cell-var-thin-hover"
         case Some(Filler(_, _)) => "orch-rect expr-cell-filler-hover"
-        case Some(FillerTarget(_, _, false)) => "orch-rect expr-cell-filler-tgt-hover"
-        case Some(FillerTarget(_, _, true)) => "orch-rect expr-cell-filler-tgt-thin-hover"
+        case Some(FillerFace(_, _, false)) => "orch-rect expr-cell-filler-face-hover"
+        case Some(FillerFace(_, _, true)) => "orch-rect expr-cell-filler-face-thin-hover"
       }
 
     def toSVG : NodeSeq = {

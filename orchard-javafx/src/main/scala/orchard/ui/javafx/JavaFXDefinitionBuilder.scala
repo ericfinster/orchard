@@ -200,7 +200,7 @@ class JavaFXDefinitionBuilder(implicit pm : PopupManager) extends jfxsc.Tab with
             (nookCell.owner.target.get.isThin, nookCell.owner.emptySources.head)
           }
 
-        targetCell.item = Neutral(Some(FillerTarget(targetId, nook, targetIsThin)))
+        targetCell.item = Neutral(Some(FillerFace(targetId, nook, targetIsThin)))
         val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.get)
         environment += tgtExprCell
 

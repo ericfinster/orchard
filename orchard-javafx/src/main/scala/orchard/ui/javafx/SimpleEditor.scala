@@ -194,7 +194,7 @@ class SimpleEditor extends PopupManager(new VBox) with EventReactor[CellEvent] {
             }
           }
           case Filler(_, _) => setStyleType("orch-list-cell-filler")
-          case FillerTarget(_, _, isThin) => {
+          case FillerFace(_, _, isThin) => {
             if (isThin) {
               setStyleType("orch-list-cell-filler-tgt-thin")
             } else {
@@ -691,7 +691,7 @@ class SimpleEditor extends PopupManager(new VBox) with EventReactor[CellEvent] {
         (nookCell.owner.target.get.isThin, nookCell.owner.emptySources.head)
       }
 
-    targetCell.item = Neutral(Some(FillerTarget(targetId, nook, targetIsThin)))
+    targetCell.item = Neutral(Some(FillerFace(targetId, nook, targetIsThin)))
     val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.get)
     environment += tgtExprCell
 

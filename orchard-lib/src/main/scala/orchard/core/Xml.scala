@@ -46,6 +46,21 @@ object XmlSerializable {
         }
     }
 
+  implicit val tokenSerializable : XmlSerializable[IdentToken] =
+    new XmlSerializable[IdentToken] {
+      def toXML(ident : IdentToken) =
+        ident match {
+          case LiteralToken(lit) => <literal>{xml.Text(lit)}</literal>
+          case ReferenceToken(id) => <reference>{xml.Text(id)}</reference>
+        }
+
+      def fromXML(node : xml.Node) : IdentToken = 
+        node match {
+          case <literal>{content}</literal> => LiteralToken(content.text)
+          case <reference>{content}</reference> => ReferenceToken(content.text)
+        }
+    }
+
   implicit def optionSerializable[A : XmlSerializable] : XmlSerializable[Option[A]] =
     new XmlSerializable[Option[A]] {
       val ev = implicitly[XmlSerializable[A]]
@@ -99,43 +114,69 @@ object XmlSerializable {
         }
     }
 
-  // implicit val expressionSerializable : XmlSerializable[Expression] =
-  //   new XmlSerializable[Expression] {
-  //     def toXML(expr : Expression) = 
-  //       expr match {
-  //         case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
-  //         case Filler(id, nook) => {
-  //           val idNook = new SimpleFramework(nook).getIdNook
-  //           <filler id={id}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(idNook)}</filler>
-  //         }
-  //         case FillerTarget(id, nook, isThin) => {
-  //           val idNook = new SimpleFramework(nook).getIdNook
-  //           <fillertgt id={id} isThin={isThin.toString}>{pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].toXML(idNook)}</fillertgt>
-  //         }
-  //       }
+  implicit val shallowNookSerializable : XmlSerializable[ShallowNook] = 
+    new XmlSerializable[ShallowNook] {
+      val roseSerializer = implicitly[XmlSerializable[RoseTree[Option[String], Option[String]]]]
+      val optionSerializer = implicitly[XmlSerializable[Option[String]]]
 
-  //     def fromXML(node : xml.Node) =
-  //       node match {
-  //         case v @ <variable /> => {
-  //           val id = (v \ "@id").text
-  //           val isThin = (v \ "@isThin").text.toBoolean
-  //           Variable(id, isThin)
-  //         }
-  //         case f @ <filler>{content}</filler> => {
-  //           val id = (f \ "@id").text
-  //           val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
-  //           //Filler(id, nook)
-  //           ???
-  //         }
-  //         case ft @ <fillertgt>{content}</fillertgt> => {
-  //           val id = (ft \ "@id").text
-  //           val isThin = (ft \ "@isThin").text.toBoolean
-  //           val nook = pairSerializable[RoseTree[Option[String], Option[String]], Option[String]].fromXML(content)
-  //           //FillerTarget(id, nook, isThin)
-  //           ???
-  //         }
-  //       }
-  //   }
+      def toXML(nook : ShallowNook) =
+        nook match {
+          case ShallowNook(srcs, tgt) =>
+            <nook><srcs>{roseSerializer.toXML(srcs)}</srcs><tgt>{optionSerializer.toXML(tgt)}</tgt></nook>
+        }
+
+      def fromXML(node : xml.Node) =
+        node match {
+          case <nook><srcs>{srcContent}</srcs><tgt>{tgtContent}</tgt></nook> => {
+            val srcTree = roseSerializer.fromXML(srcContent)
+            val target = optionSerializer.fromXML(tgtContent)
+            ShallowNook(srcTree, target)
+          }
+        }
+
+    }
+
+  implicit val shallowExprSerializable : XmlSerializable[ShallowExpression] =
+    new XmlSerializable[ShallowExpression] {
+      def toXML(expr : ShallowExpression) =
+        expr match {
+          case ShallowVar(id, isThin) => <variable id={id} isThin={isThin.toString} />
+          case ShallowFace(toks, nook, isThin) => {
+            <fillerface isThin={isThin.toString}><ident>{
+              toks map (t => tokenSerializable.toXML(t))
+            }</ident>{
+              shallowNookSerializable.toXML(nook)
+            }</fillerface>
+          }
+          case ShallowFiller(toks, nook) => {
+            <filler><ident>{
+              toks map (t => tokenSerializable.toXML(t))
+            }</ident>{
+              shallowNookSerializable.toXML(nook)
+            }</filler>
+          }
+        }
+
+      def fromXML(node : xml.Node) =
+        node match {
+          case v @ <variable /> => {
+            val id = (v \ "@id").text
+            val isThin = (v \ "@isThin").text.toBoolean
+            ShallowVar(id, isThin)
+          }
+          case ff @ <fillerface><ident>{idContent}</ident>{nookContent}</fillerface> => {
+            val ident = (idContent map (n => tokenSerializable.fromXML(n))).toList
+            val isThin = (ff \ "@isThin").text.toBoolean
+            val nook = shallowNookSerializable.fromXML(nookContent)
+            ShallowFace(ident, nook, isThin)
+          }
+          case f @ <filler><ident>{idContent}</ident>{nookContent}</filler> => {
+            val ident = (idContent map (n => tokenSerializable.fromXML(n))).toList
+            val nook = shallowNookSerializable.fromXML(nookContent)
+            ShallowFiller(ident, nook)
+          }
+        }
+    }
 
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =
     new XmlSerializable[Cell[_ <: Nat, A]] {

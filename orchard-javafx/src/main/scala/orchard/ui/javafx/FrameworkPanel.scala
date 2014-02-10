@@ -83,8 +83,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(Variable(_, false)) => setCellStyle("expr-cell-var")
         case Some(Variable(_, true)) => setCellStyle("expr-cell-var-thin")
         case Some(Filler(_, _)) => setCellStyle("expr-cell-filler")
-        case Some(FillerTarget(_, _, false)) => setCellStyle("expr-cell-filler-tgt")
-        case Some(FillerTarget(_, _, true)) => setCellStyle("expr-cell-filler-tgt-thin")
+        case Some(FillerFace(_, _, false)) => setCellStyle("expr-cell-filler-face")
+        case Some(FillerFace(_, _, true)) => setCellStyle("expr-cell-filler-face-thin")
       }
 
     assignStyle
@@ -105,8 +105,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(Variable(_, false)) => getStyleClass.add("expr-cell-var-hovered")
         case Some(Variable(_, true)) => getStyleClass.add("expr-cell-var-thin-hovered")
         case Some(Filler(_, _)) => getStyleClass.add("expr-cell-filler-hovered")
-        case Some(FillerTarget(_, _, false)) => getStyleClass.add("expr-cell-filler-tgt-hovered")
-        case Some(FillerTarget(_, _, true)) => getStyleClass.add("expr-cell-filler-tgt-thin-hovered")
+        case Some(FillerFace(_, _, false)) => getStyleClass.add("expr-cell-filler-face-hovered")
+        case Some(FillerFace(_, _, true)) => getStyleClass.add("expr-cell-filler-face-thin-hovered")
       }
     }
 
@@ -122,8 +122,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(Variable(_, false)) => getStyleClass.remove("expr-cell-var-hovered")
         case Some(Variable(_, true)) => getStyleClass.remove("expr-cell-var-thin-hovered")
         case Some(Filler(_, _)) => getStyleClass.remove("expr-cell-filler-hovered")
-        case Some(FillerTarget(_, _, false)) => getStyleClass.remove("expr-cell-filler-tgt-hovered")
-        case Some(FillerTarget(_, _, true)) => getStyleClass.remove("expr-cell-filler-tgt-thin-hovered")
+        case Some(FillerFace(_, _, false)) => getStyleClass.remove("expr-cell-filler-face-hovered")
+        case Some(FillerFace(_, _, true)) => getStyleClass.remove("expr-cell-filler-face-thin-hovered")
       }
     }
 
@@ -139,8 +139,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(Variable(_, false)) => getStyleClass.add("expr-cell-var-selected")
         case Some(Variable(_, true)) => getStyleClass.add("expr-cell-var-thin-selected")
         case Some(Filler(_, _)) => getStyleClass.add("expr-cell-filler-selected")
-        case Some(FillerTarget(_, _, false)) => getStyleClass.add("expr-cell-filler-tgt-selected")
-        case Some(FillerTarget(_, _, true)) => getStyleClass.add("expr-cell-filler-tgt-thin-selected")
+        case Some(FillerFace(_, _, false)) => getStyleClass.add("expr-cell-filler-face-selected")
+        case Some(FillerFace(_, _, true)) => getStyleClass.add("expr-cell-filler-face-thin-selected")
       }
     }
 
@@ -156,8 +156,8 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(Variable(_, false)) => getStyleClass.remove("expr-cell-var-selected")
         case Some(Variable(_, true)) => getStyleClass.remove("expr-cell-var-thin-selected")
         case Some(Filler(_, _)) => getStyleClass.remove("expr-cell-filler-selected")
-        case Some(FillerTarget(_, _, false)) => getStyleClass.remove("expr-cell-filler-tgt-selected")
-        case Some(FillerTarget(_, _, true)) => getStyleClass.remove("expr-cell-filler-tgt-thin-selected")
+        case Some(FillerFace(_, _, false)) => getStyleClass.remove("expr-cell-filler-face-selected")
+        case Some(FillerFace(_, _, true)) => getStyleClass.remove("expr-cell-filler-face-thin-selected")
       }
     }
 
