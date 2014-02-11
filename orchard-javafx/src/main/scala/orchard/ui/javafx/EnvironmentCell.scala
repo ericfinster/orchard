@@ -36,7 +36,7 @@ class EnvironmentCell extends jfxsc.ListCell[NCell[Expression]] {
             setStyleType("orch-list-cell-var")
           }
         }
-        case Filler(_, _) => setStyleType("orch-list-cell-filler")
+        case Filler(_) => setStyleType("orch-list-cell-filler")
         case FillerFace(_, _, isThin) => {
           if (isThin) {
             setStyleType("orch-list-cell-filler-face-thin")

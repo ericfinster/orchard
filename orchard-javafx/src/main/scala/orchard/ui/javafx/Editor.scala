@@ -42,6 +42,7 @@ import javafx.scene.{control => jfxsc}
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.Map
 
 import orchard.core._
 import orchard.ui.javafx.controls._
@@ -51,6 +52,17 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
   implicit val pm = thisEditor
 
   val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
+  val fileChooser = new FileChooser
+
+  val openItem = new MenuItem {
+    text = "Open"
+    onAction = onOpen
+  }
+
+  val saveItem = new MenuItem {
+    text = "Save"
+    onAction = onSave
+  }
 
   val exitItem = new MenuItem {
     text = "Exit"
@@ -59,7 +71,7 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
 
   val fileMenu = new Menu {
     text = "File"
-    items ++= List(exitItem)
+    items ++= List(openItem, saveItem, exitItem)
   }
 
   val fromCell = new MenuItem {
@@ -161,10 +173,10 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
   }
 
   sealed trait DefinitionTreeItem
-  case class DefinitionItem(defn : Definition) extends DefinitionTreeItem { override def toString = defn.toString }
+  case class DefinitionItem(val defn : Definition) extends DefinitionTreeItem { override def toString = defn.toString }
   case object HypothesesItem extends DefinitionTreeItem { override def toString = "Hypotheses" }
   case object ConclusionItem extends DefinitionTreeItem { override def toString = "Conclusions" }
-  case class ExpressionItem(expr : NCell[Expression]) extends DefinitionTreeItem { override def toString = expr.value.id }
+  case class ExpressionItem(val expr : NCell[Expression]) extends DefinitionTreeItem { override def toString = expr.value.id }
 
   class DefinitionTreeCell extends jfxsc.TreeCell[DefinitionTreeItem] {
 
@@ -198,7 +210,7 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
                   setStyleType("orch-list-cell-var")
                 }
               }
-              case Filler(_, _) => setStyleType("orch-list-cell-filler")
+              case Filler(_) => setStyleType("orch-list-cell-filler")
               case FillerFace(_, _, isThin) => {
                 if (isThin) {
                   setStyleType("orch-list-cell-filler-face-thin")
@@ -310,7 +322,7 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       composeField.requestFocus
     }
 
-    def parseResults : Option[(List[IdentToken], List[IdentToken])] = {
+    def parseResults : Option[(Identifier, Identifier)] = {
 
       import IdentParser.Success
       import IdentParser.NoSuccess
@@ -326,14 +338,14 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
                   case ReferenceToken(id) => freeVars exists (expr => expr.value.id == id)
                 }
 
-              val validRefs = (true /: ((composeIdent ++ fillerIdent) map (validRef(_)))) (_&&_)
+              val validRefs = (true /: ((composeIdent.tokens ++ fillerIdent.tokens) map (validRef(_)))) (_&&_)
 
               if (validRefs) {
                 // BUG: Does not check that the two are not given the *same* name ... and
                 // BUG: We shouldn't allow the empty string.
 
-                if (environmentContains(IdentToken.getId(composeIdent)) ||
-                    environmentContains(IdentToken.getId(fillerIdent))) { println("Duplicate identifier.") ; None }
+                if (environmentContains(composeIdent.toString) ||
+                    environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
                 else Some(composeIdent, fillerIdent)
               } else { println("Missing a variable.") ; None }
             }
@@ -346,7 +358,7 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
   }
 
   class FillNookDialog(nookCell : ExpressionBuilder#GalleryCell) 
-      extends FillingDialog(nookCell.owner.getSimpleFramework.freeVariables.values.toSeq) {
+      extends FillingDialog(freeVariables(nookCell.owner.getSimpleFramework.toCell).values.toSeq) {
 
     heading.text = "Fill Nook"
 
@@ -481,9 +493,9 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
           case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
           case KeyCode.T => if (ev.isControlDown) newSheet
+          case KeyCode.O => if (ev.isControlDown) onOpen
+          case KeyCode.S => if (ev.isControlDown) onSave
           // case KeyCode.V => if (ev.isControlDown) onView
-          // case KeyCode.O => if (ev.isControlDown) onOpen
-          // case KeyCode.S => if (ev.isControlDown) onSave
           // case KeyCode.N => if (ev.isControlDown) onNewSheet
           // case KeyCode.L => if (ev.isControlDown) onLoadExpr
           // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
@@ -529,17 +541,9 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
         val freeVars = HashMap.empty[String, NCell[Expression]]
 
         exprBuilder.selectedCells foreach (cell => {
-          cell.owner.getSimpleFramework.collectDependencies(freeVars)
+          collectFreeVars(cell.owner.getSimpleFramework.toCell, freeVars)
         })
 
-        freeVars filter (pr => {
-          val (id, expr) = pr
-          expr.value match {
-            case Variable(_, _) => true
-            case _ => false
-          }
-        })
-        
         new ComposeDialog(freeVars.values.toSeq).run
       }
     }
@@ -551,8 +555,8 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
         for { cell <- exprBuilder.selectionBase } {
           cell.item match {
             case Neutral(Some(expr)) => {
-              val freeVars = cell.owner.getSimpleFramework.freeVariables.values.toSeq
-              new IdentityDialog(freeVars, expr).run
+              val freeVars = freeVariables(cell.owner.getSimpleFramework.toCell)
+              new IdentityDialog(freeVars.values.toSeq, expr).run
             }
             case _ => ()
           }
@@ -591,12 +595,88 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
     DefinitionDialog.run
   }
 
+  def onSave = {
+    fileChooser.setTitle("Save")
+
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+    if (file != null) {
+      saveDefinitions(file)
+    }
+  }
+
+  def onOpen = {
+    fileChooser.setTitle("Open")
+
+    val file = fileChooser.showOpenDialog(getScene.getWindow)
+
+    if (file != null) {
+      loadDefinitions(file)
+    }
+  }
+
   //============================================================================================
   // SEMANTIC ROUTINES
   //
 
+  def freeVariables(expr : NCell[Option[Expression]]) : Map[String, NCell[Expression]] = {
+    val freeVars = HashMap.empty[String, NCell[Expression]]
+    collectFreeVars(expr, freeVars)
+    freeVars
+  }
+
+  def collectFreeVars(expr : NCell[Option[Expression]], freeVars : HashMap[String, NCell[Expression]]) : Unit = {
+    expr.value match {
+      case Some(Variable(id, _)) => {
+        if (! freeVars.isDefinedAt(id)) { freeVars(id) = expr map (_.get)}
+
+        if (expr.dimension.toInt > 0) {
+          // Now we need to recurse
+          val framework = new SimpleFramework(expr)
+
+          framework.topCell.target.get.foreachCell (cell => {
+            collectFreeVars(cell.skeleton map (_.item), freeVars)
+          })
+        }
+      }
+      case Some(FillerFace(ident, filler, _)) => {
+        collectFreeVars(getFromEnvironment(filler).get map (Some(_)), freeVars)
+      }
+      case Some(Filler(ident)) => {
+
+        // I don't like this because above, we generate the simple framework, then delete it.  Then
+        // here we generate the simple framework again.  It's a bit sloppy ...
+
+        val framework = new SimpleFramework(expr)
+
+        // Delete the filling face
+        framework.topCell.target.get.foreachCell (cell =>
+          cell.item match {
+            case Some(FillerFace(_, filler, _)) => {
+              if (filler != ident.toString) {
+                collectFreeVars(cell.skeleton map (_.item), freeVars)
+              }
+            }
+            case _ => collectFreeVars(cell.skeleton map (_.item), freeVars)
+          })
+      }
+      case None => {
+        // Just recurse
+        val framework = new SimpleFramework(expr)
+
+        framework.topCell.target.get.foreachCell (cell => {
+          collectFreeVars(cell.skeleton map (_.item), freeVars)
+        })
+      }
+    }
+  }
+
   def environmentContains(id : String) : Boolean = {
     environment exists (expr => expr.value.id == id)
+  }
+
+  def getFromEnvironment(id : String) : Option[NCell[Expression]] = {
+    environment find (expr => expr.value.id == id)
   }
 
   def assume(id : String, isThin : Boolean) = {
@@ -619,14 +699,12 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
     }
   }
 
-  def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetId : List[IdentToken], fillerId : List[IdentToken]) = {
+  def fillExposedNook(nookCell : ExpressionBuilder#GalleryCell, targetIdent : Identifier, fillerIdent : Identifier) = {
     for {
       exprBuilder <- expressionBuilder
     } {
       if (nookCell.owner.isExposedNook) {
         exprBuilder.deselectAll
-
-        val nook = nookCell.owner.getSimpleFramework.toCell
 
         val (targetIsThin, targetCell) =
           if (nookCell.owner.isOutNook) {
@@ -635,13 +713,12 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
             (nookCell.owner.target.get.isThin, nookCell.owner.emptySources.head)
           }
 
-        targetCell.item = Neutral(Some(FillerFace(targetId, nook, targetIsThin)))
-        val tgtExprCell = targetCell.getSimpleFramework.toCell map (_.get)
-        environment += tgtExprCell
+        val filler = Filler(fillerIdent)
+        nookCell.owner.item = Neutral(Some(filler))
+        targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
 
-        nookCell.owner.item = Neutral(Some(Filler(fillerId, nook)))
-        val exprCell = nookCell.owner.getSimpleFramework.toCell map (_.get)
-        environment += exprCell
+        environment += targetCell.getSimpleFramework.toCell map (_.get)
+        environment += nookCell.owner.getSimpleFramework.toCell map (_.get)
       }
     }
   }
@@ -694,28 +771,8 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
       val defnEnv = new ListBuffer[NCell[Expression]]
       environment.copyToBuffer(defnEnv)
       val defn = new Definition(id, defnEnv)
-
-      // Make the necessary tree cells to represent this definition in the viewer
-      val defnHyposItem = new TreeItem[DefinitionTreeItem] {
-        value = HypothesesItem
-        children ++= defn.freeVariables map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
-      }
-
-      val defnConclusionItem = new TreeItem[DefinitionTreeItem] {
-        value = ConclusionItem
-        children ++= defn.derivedCells map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
-      }
-
-      val defnTreeItem = new TreeItem[DefinitionTreeItem] {
-        value = DefinitionItem(defn)
-        children ++= List(defnHyposItem, defnConclusionItem)
-      }
-
-      definitionTreeRoot.children += defnTreeItem
-
+      addDefinition(defn)
       clearEnvironment
-
-      println("After clear, defn has " ++ defn.environment.length.toString ++ "cells.")
     }
   }
 
@@ -754,6 +811,68 @@ class Editor extends PopupManager(new VBox) { thisEditor =>
     environment.clear
     sheetCount = 1
     newSheet
+  }
+
+  def addDefinition(defn : Definition) = {
+    // Make the necessary tree cells to represent this definition in the viewer
+    val defnHyposItem = new TreeItem[DefinitionTreeItem] {
+      value = HypothesesItem
+      children ++= defn.freeVariables map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
+    }
+
+    val defnConclusionItem = new TreeItem[DefinitionTreeItem] {
+      value = ConclusionItem
+      children ++= defn.derivedCells map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
+    }
+
+    val defnTreeItem = new TreeItem[DefinitionTreeItem] {
+      value = DefinitionItem(defn)
+      children ++= List(defnHyposItem, defnConclusionItem)
+    }
+
+    definitionTreeRoot.children += defnTreeItem
+  }
+
+  def clearDefinitions = {
+    definitionTreeRoot.children.clear
+  }
+
+  def definitions : Seq[Definition] = {
+    definitionTreeRoot.children map (child => {
+      child.value().asInstanceOf[DefinitionItem].defn
+    })
+  }
+
+  def environmentToXML : xml.Node = {
+    import XmlSerializable._
+
+    <environment>{
+      environment map (expr => cellSerializable[Expression].toXML(expr))
+    }</environment>
+  }
+
+  def saveDefinitions(file : java.io.File) = {
+    import XmlSerializable._
+
+    val moduleXML = <module>{definitions map (defn => definitionSerializable.toXML(defn))}</module>
+    xml.XML.save(file.getAbsolutePath, moduleXML)
+  }
+
+  def loadDefinitions(file : java.io.File) = {
+    import XmlSerializable._
+
+    clearDefinitions
+
+    val elem = xml.XML.loadFile(file.getAbsolutePath)
+
+    elem match {
+      case <module>{defns @ _*}</module> => {
+        trimText(defns) foreach (defXml => {
+          val defn = definitionSerializable.fromXML(defXml)
+          addDefinition(defn)
+        })        
+      }
+    }
   }
 
   newSheet

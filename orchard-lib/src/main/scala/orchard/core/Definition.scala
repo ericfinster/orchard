@@ -28,10 +28,3 @@ class Definition(val id : String, val environment : Seq[NCell[Expression]]) {
   override def toString = id
 }
 
-object Definition {
-
-  def toXML(defn : Definition) : xml.Node = ???
-
-  def fromXML(node : xml.Node) : Definition = ???
-
-}

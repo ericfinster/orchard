@@ -113,7 +113,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
         case Neutral(Some(Variable(_, false))) => setCellStyle("expr-cell-var")
         case Neutral(Some(Variable(_, true))) => setCellStyle("expr-cell-var-thin")
-        case Neutral(Some(Filler(_, _))) => setCellStyle("expr-cell-filler")
+        case Neutral(Some(Filler(_))) => setCellStyle("expr-cell-filler")
         case Neutral(Some(FillerFace(_, _, false))) => setCellStyle("expr-cell-filler-face")
         case Neutral(Some(FillerFace(_, _, true))) => setCellStyle("expr-cell-filler-face-thin")
       }
@@ -137,7 +137,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
         case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-hovered")
         case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-hovered")
-        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-hovered")
+        case Neutral(Some(Filler(_))) => getStyleClass.add("expr-cell-filler-hovered")
         case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.add("expr-cell-filler-face-hovered")
         case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.add("expr-cell-filler-face-thin-hovered")
       }
@@ -156,7 +156,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
         case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-hovered")
         case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-hovered")
-        case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-hovered")
+        case Neutral(Some(Filler(_))) => getStyleClass.remove("expr-cell-filler-hovered")
         case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.remove("expr-cell-filler-face-hovered")
         case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.remove("expr-cell-filler-face-thin-hovered")
       }
@@ -175,7 +175,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
         case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-selected")
         case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-selected")
-        case Neutral(Some(Filler(_, _))) => getStyleClass.add("expr-cell-filler-selected")
+        case Neutral(Some(Filler(_))) => getStyleClass.add("expr-cell-filler-selected")
         case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.add("expr-cell-filler-face-selected")
         case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.add("expr-cell-filler-face-thin-selected")
       }
@@ -194,7 +194,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
         }
         case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-selected")
         case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-selected")
-        case Neutral(Some(Filler(_, _))) => getStyleClass.remove("expr-cell-filler-selected")
+        case Neutral(Some(Filler(_))) => getStyleClass.remove("expr-cell-filler-selected")
         case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.remove("expr-cell-filler-face-selected")
         case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.remove("expr-cell-filler-face-thin-selected")
       }

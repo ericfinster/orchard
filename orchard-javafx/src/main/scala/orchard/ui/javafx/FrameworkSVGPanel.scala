@@ -37,7 +37,7 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
         case None => "orch-rect expr-cell-empty"
         case Some(Variable(_, false)) => "orch-rect expr-cell-var"
         case Some(Variable(_, true)) => "orch-rect expr-cell-var-thin"
-        case Some(Filler(_, _)) => "orch-rect expr-cell-filler"
+        case Some(Filler(_)) => "orch-rect expr-cell-filler"
         case Some(FillerFace(_, _, false)) => "orch-rect expr-cell-filler-face"
         case Some(FillerFace(_, _, true)) => "orch-rect expr-cell-filler-face-thin"
       }
@@ -47,7 +47,7 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
         case None => "orch-rect expr-cell-empty-hover"
         case Some(Variable(_, false)) => "orch-rect expr-cell-var-hover"
         case Some(Variable(_, true)) => "orch-rect expr-cell-var-thin-hover"
-        case Some(Filler(_, _)) => "orch-rect expr-cell-filler-hover"
+        case Some(Filler(_)) => "orch-rect expr-cell-filler-hover"
         case Some(FillerFace(_, _, false)) => "orch-rect expr-cell-filler-face-hover"
         case Some(FillerFace(_, _, true)) => "orch-rect expr-cell-filler-face-thin-hover"
       }
