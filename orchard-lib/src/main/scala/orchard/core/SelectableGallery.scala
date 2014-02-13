@@ -41,6 +41,9 @@ trait SelectableGallery[A] extends Gallery[A] {
   def isSelected(cell : GalleryCell) =
     selectedCells contains cell
 
+  def selectionIsUnique : Boolean = 
+    selectedCells.size == 1
+
   def trySelect(cell : GalleryCell) : Boolean = {
     // This should be guaranteed by the cardinal structure
     val base = selectionBase.force

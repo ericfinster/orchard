@@ -31,6 +31,7 @@ class MenuBar(implicit pm : PopupManager) extends jfxsl.Region {
   private val hbox = new HBox
   getChildren add hbox
 
+  setMinHeight(jfxsl.Region.USE_PREF_SIZE)
   setMaxHeight(jfxsl.Region.USE_PREF_SIZE)
 
   def onMenusChange : Unit = {

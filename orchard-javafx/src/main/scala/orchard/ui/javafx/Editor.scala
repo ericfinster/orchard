@@ -13,20 +13,10 @@ import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import scalafx.stage.FileChooser
 
-import scalafx.scene.layout._
 import scalafx.geometry._
 
-import scalafx.scene.control.TextField
-import scalafx.scene.control.Button
-import scalafx.scene.control.SplitPane
-import scalafx.scene.control.ListView
-import scalafx.scene.control.TabPane
-import scalafx.scene.control.TitledPane
-import scalafx.scene.control.CheckBox
-import scalafx.scene.control.TreeView
-import scalafx.scene.control.TreeItem
-import scalafx.scene.control.Accordion
-import scalafx.scene.control.Tab
+import scalafx.scene.layout._
+import scalafx.scene.control._
 
 import scalafx.collections.ObservableBuffer
 
@@ -47,13 +37,12 @@ import scala.collection.mutable.Map
 import orchard.core._
 import orchard.ui.javafx.controls._
 
-class Editor 
-    extends PopupManager(new VBox)
-    with OrchardMenus { thisEditor =>
+class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
 
-  implicit val pm = thisEditor
+  override implicit def pm = thisEditor
 
   val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
+
   val fileChooser = new FileChooser
 
   val sheetTabPane = new TabPane {
@@ -66,11 +55,11 @@ class Editor
     styleClass += "orch-pane"
   }
 
-  val environment = ObservableBuffer.empty[NCell[Expression]]
-
+  // Probably should change to the selection onChange method used
+  // below in the navigation tree
   val environmentListView = 
     new ListView[NCell[Expression]] {
-      items = environment
+      items = ObservableBuffer.empty[NCell[Expression]]
       cellFactory = (_ =>
         new EnvironmentCell {
           setOnMouseClicked(new EventHandler[MouseEvent] {
@@ -90,16 +79,70 @@ class Editor
   val environmentPane = new TitledPane {
     text = "Environment"
     content = environmentListView
+    collapsible = false
   }
 
-  val substitutionsPane = new TitledPane {
-    text = "Substitutions"
+  sealed trait NavigationTreeItem
+  case class DefnWorkspaceItem(val wksp : DefinitionWorkspace) extends NavigationTreeItem
+  case class SubstWorkspaceItem(val wksp : SubstitutionWorkspace) extends NavigationTreeItem
+
+  val navigationTreeRoot = new TreeItem[NavigationTreeItem]
+  val navigationTreeView = 
+    new TreeView[NavigationTreeItem] {
+      root = navigationTreeRoot
+      showRoot = false
+      cellFactory = (_ => new NavigationTreeCell)
+    }
+
+  navigationTreeView.selectionModel().selectedItem onChange {
+    val item = navigationTreeView.selectionModel().getSelectedItem
+    
+    if (item != null) {
+      item.value() match {
+        case DefnWorkspaceItem(wksp) => selectWorkspace(wksp)
+        case _ => println("Don't know what to do with this.")
+      }
+    }
+  }
+
+  val navigationPane = new TitledPane {
+    text = "Navigation"
+    content = navigationTreeView
+  }
+
+  class NavigationTreeCell extends jfxsc.TreeCell[NavigationTreeItem] {
+
+    getStyleClass add "orch-list-cell"
+
+    var lastStyle : Option[String] = None
+
+    def setStyleType(styleType : String) = {
+      lastStyle foreach (st => getStyleClass remove st)
+      getStyleClass add styleType
+      lastStyle = Some(styleType)
+    }
+
+    def clearStyleType = {
+      lastStyle foreach (st => getStyleClass remove st)
+      lastStyle = None
+    }
+
+    override def updateItem(navTreeItem : NavigationTreeItem, empty : Boolean) = {
+      super.updateItem(navTreeItem, empty)
+
+      if (! empty) {
+        navTreeItem match {
+          case DefnWorkspaceItem(wksp) => { clearStyleType ; setText(wksp.name) }
+          case item @ _ => { clearStyleType ; setText(item.toString) }
+        }
+      }
+    }
   }
 
   sealed trait DefinitionTreeItem
   case class DefinitionItem(val defn : Definition) extends DefinitionTreeItem { override def toString = defn.toString }
-  case object HypothesesItem extends DefinitionTreeItem { override def toString = "Hypotheses" }
-  case object ConclusionItem extends DefinitionTreeItem { override def toString = "Conclusions" }
+  case object VariablesItem extends DefinitionTreeItem { override def toString = "Free Variables" }
+  case object ResultItem extends DefinitionTreeItem { override def toString = "Resulting Cell" }
   case class ExpressionItem(val expr : NCell[Expression]) extends DefinitionTreeItem { override def toString = expr.value.id }
 
   class DefinitionTreeCell extends jfxsc.TreeCell[DefinitionTreeItem] {
@@ -182,8 +225,8 @@ class Editor
   }
 
   val accordion = new Accordion {
-    panes = List(environmentPane, definitionsPane)
-    expandedPane = environmentPane
+    panes = List(navigationPane, definitionsPane)
+    expandedPane = navigationPane
   }
 
   val accordionPane = new AnchorPane {
@@ -195,6 +238,21 @@ class Editor
   AnchorPane.setRightAnchor(accordion, 10)
   AnchorPane.setBottomAnchor(accordion, 10)
   AnchorPane.setLeftAnchor(accordion, 10)
+
+  val environmentAnchorPane = new AnchorPane {
+    content = environmentPane
+    styleClass += "orch-pane"
+  }
+
+  AnchorPane.setTopAnchor(environmentPane, 10)
+  AnchorPane.setRightAnchor(environmentPane, 10)
+  AnchorPane.setBottomAnchor(environmentPane, 10)
+  AnchorPane.setLeftAnchor(environmentPane, 10)
+
+  val navigationSplit = new SplitPane {
+    orientation = Orientation.VERTICAL
+    items.addAll(accordionPane, environmentAnchorPane)
+  }
 
   val previewPane = new StackPane {
     styleClass += "orch-pane"
@@ -209,7 +267,7 @@ class Editor
 
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    items.addAll(accordionPane, verticalSplit)
+    items.addAll(navigationSplit, verticalSplit)
     dividerPositions = 0.1f
   }
 
@@ -220,7 +278,9 @@ class Editor
   // DIALOG DEFINITIONS
   //
 
-  abstract class FillingDialog(freeVars : Seq[NCell[Expression]]) extends CancellableDialog {
+  abstract class FillingDialog extends CancellableDialog {
+
+    val freeVars = selectionFreeVariables.get
 
     val freeVarList = new ListView[NCell[Expression]] {
       items = ObservableBuffer(freeVars)
@@ -246,7 +306,7 @@ class Editor
       composeField.requestFocus
     }
 
-    def parseResults : Option[(Identifier, Identifier)] = {
+    def parseResults(wksp : Workspace) : Option[(Identifier, Identifier)] = {
 
       import IdentParser.Success
       import IdentParser.NoSuccess
@@ -256,7 +316,7 @@ class Editor
           IdentParser(fillerField.text()) match {
             case Success(fillerIdent, _) => {
 
-              def validRef(ident : IdentToken) : Boolean = 
+              def validRef(ident : IdentToken) : Boolean =
                 ident match {
                   case LiteralToken(_) => true
                   case ReferenceToken(id) => freeVars exists (expr => expr.value.id == id)
@@ -268,8 +328,8 @@ class Editor
                 // BUG: Does not check that the two are not given the *same* name ... and
                 // BUG: We shouldn't allow the empty string.
 
-                if (environmentContains(composeIdent.toString) ||
-                    environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
+                if (wksp.environmentContains(composeIdent.toString) ||
+                  wksp.environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
                 else Some(composeIdent, fillerIdent)
               } else { println("Missing a variable.") ; None }
             }
@@ -281,8 +341,7 @@ class Editor
     }
   }
 
-  class FillNookDialog(nookCell : ExpressionBuilder#GalleryCell) 
-      extends FillingDialog(freeVariables(nookCell.owner.getSimpleFramework.toCell).values.toSeq) {
+  class FillNookDialog extends FillingDialog {
 
     heading.text = "Fill Nook"
 
@@ -290,8 +349,10 @@ class Editor
       response match {
         case DialogOK =>
           for {
+            wksp <- activeWorkspace
             exprBuilder <- expressionBuilder
-            (composeIdent, fillerIdent) <- parseResults
+            nookCell <- exprBuilder.selectionBase
+            (composeIdent, fillerIdent) <- parseResults(wksp)
           } {
             fillExposedNook(nookCell, composeIdent, fillerIdent)
           }
@@ -300,7 +361,7 @@ class Editor
 
   }
 
-  class IdentityDialog(freeVars : Seq[NCell[Expression]], expr : Expression) extends FillingDialog(freeVars) {
+  class IdentityDialog(expr : Expression) extends FillingDialog {
 
     heading.text = "Insert Identity"
 
@@ -313,8 +374,9 @@ class Editor
       response match {
         case DialogOK => 
           for {
+            wksp <- activeWorkspace
             exprBuilder <- expressionBuilder
-            (composeIdent, fillerIdent) <- parseResults
+            (composeIdent, fillerIdent) <- parseResults(wksp)
           } {
             exprBuilder.extrudeDrop
             fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
@@ -324,7 +386,7 @@ class Editor
 
   }
 
-  class ComposeDialog(freeVars : Seq[NCell[Expression]]) extends FillingDialog(freeVars) {
+  class ComposeDialog extends FillingDialog {
 
     heading.text = "Insert Composite"
 
@@ -332,8 +394,9 @@ class Editor
       response match {
         case DialogOK => ()
           for {
+            wksp <- activeWorkspace
             exprBuilder <- expressionBuilder
-            (composeIdent, fillerIdent) <- parseResults
+            (composeIdent, fillerIdent) <- parseResults(wksp)
           } {
             exprBuilder.extrudeSelection
             fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
@@ -364,10 +427,14 @@ class Editor
     def onHide =
       response match {
         case DialogOK => {
-          if (environmentContains(idField.text())) {
-            println("Error: Duplicate Identifier")
-          } else {
-            assume(idField.text(), thinCheckBox.selected())
+          for {
+            wksp <- activeWorkspace
+          } {
+            if (wksp.environmentContains(idField.text())) {
+              println("Error: Duplicate Identifier")
+            } else {
+              assume(idField.text(), thinCheckBox.selected())
+            }
           }
         }
         case DialogCancel => ()
@@ -375,27 +442,192 @@ class Editor
 
   }
 
-  object DefinitionDialog extends Dialog {
+  object NewDefinitionDialog extends CancellableDialog {
 
     heading.text = "New Definition"
 
+    val nameLabel = new Label("Name: ")
     val nameField = new TextField { promptText = "Definition name" }
+    val nameHBox = new HBox { 
+      content = List(nameLabel, nameField) 
+      alignment = Pos.CENTER
+      spacing = 5
+      padding = Insets(0, 10, 10, 10)
+    }
 
-    borderPane.center = 
-      new VBox {
-        padding = Insets(10,10,10,10)
-        spacing = 10
-        content = List(nameField)
+    GridPane.setColumnSpan(nameHBox, 2)
+
+    val stableButton = new RadioButton("Stable") {
+      onAction = { () => 
+        stabilityField.text = "infty" 
+        stabilitySlider.disable = true
+        stabilityField.disable = true
       }
+    }
+
+    val unstableButton = new RadioButton("Unstable") {
+      onAction = { () => 
+        stabilityField.disable = false
+        stabilitySlider.disable = false
+        stabilityField.text = stabilitySlider.value().toInt.toString 
+      }
+    }
+
+    val stabilityToggle = new ToggleGroup {
+      toggles = List(stableButton, unstableButton)
+    }
+
+    val stabilitySlider = new Slider { 
+      min = 0
+      max = 10
+      majorTickUnit = 1
+      minorTickCount = 0
+      snapToTicks = true
+      showTickMarks = false
+    }
+
+    stabilitySlider.value onChange {
+      stabilityField.text = stabilitySlider.value().toInt.toString
+    }
+
+    val stabilityField = new TextField { editable = false }
+
+    val noInvertibilityButton = new RadioButton("No Invertibility") {
+      onAction = { () =>  ()
+        invertibilityField.text = "infty" 
+        invertibilitySlider.disable = true
+        invertibilityField.disable = true
+      }
+    }
+
+    val finiteInvertibilityButton = new RadioButton("Finite Invertibility") {
+      onAction = { () => ()
+        invertibilityField.disable = false
+        invertibilitySlider.disable = false
+        invertibilityField.text = invertibilitySlider.value().toInt.toString 
+      }
+    }
+
+    val invertibilityToggle = new ToggleGroup {
+      toggles = List(noInvertibilityButton, finiteInvertibilityButton)
+    }
+
+    val invertibilitySlider = new Slider {
+      min = 0
+      max = 10
+      majorTickUnit = 1
+      minorTickCount = 0
+      snapToTicks = true
+      showTickMarks = false
+    }
+
+    invertibilitySlider.value onChange {
+      invertibilityField.text = invertibilitySlider.value().toInt.toString
+    }
+
+    val invertibilityField = new TextField { editable = false }
+
+    val noUnicityButton = new RadioButton("No Unicity") {
+      onAction = { () =>  ()
+        unicityField.text = "infty" 
+        unicitySlider.disable = true
+        unicityField.disable = true
+      }
+    }
+
+    val finiteUnicityButton = new RadioButton("Finite Unicity") {
+      onAction = { () => ()
+        unicityField.disable = false
+        unicitySlider.disable = false
+        unicityField.text = unicitySlider.value().toInt.toString 
+      }
+    }
+
+    val unicityToggle = new ToggleGroup {
+      toggles = List(noUnicityButton, finiteUnicityButton)
+    }
+
+    val unicitySlider = new Slider {
+      min = 0
+      max = 10
+      majorTickUnit = 1
+      minorTickCount = 0
+      snapToTicks = true
+      showTickMarks = false
+    }
+
+    unicitySlider.value onChange {
+      unicityField.text = unicitySlider.value().toInt.toString
+    }
+
+    val unicityField = new TextField { editable = false }
+
+    val gridPane = new GridPane {
+      padding = Insets(10, 10, 10, 10)
+      styleClass += "orch-pane"
+      hgap = 5
+      vgap = 5
+    }
+
+    gridPane.add(nameHBox, 1, 1)
+    gridPane.add(stableButton, 1, 2)
+    gridPane.add(unstableButton, 2, 2)
+    gridPane.add(stabilitySlider, 1, 3)
+    gridPane.add(stabilityField, 2, 3)
+    gridPane.add(noInvertibilityButton, 1, 4)
+    gridPane.add(finiteInvertibilityButton, 2, 4)
+    gridPane.add(invertibilitySlider, 1, 5)
+    gridPane.add(invertibilityField, 2, 5)
+    gridPane.add(noUnicityButton, 1, 6)
+    gridPane.add(finiteUnicityButton, 2, 6)
+    gridPane.add(unicitySlider, 1, 7)
+    gridPane.add(unicityField, 2, 7)
+
+    borderPane.center = gridPane
 
     def onShow = {
+      unstableButton.fire
+      stabilitySlider.value = 0
+      noInvertibilityButton.fire
+      noUnicityButton.fire
       nameField.requestFocus
     }
 
-    def onHide = {
-      newDefnFromEnv(nameField.text())
-      nameField.clear
-    }
+    def onHide = 
+      response match {
+        case DialogOK => {
+          val id : String = nameField.text()
+
+          val stabilityLevel : Option[Int] = 
+            if (unstableButton.selected()) {
+              Some(stabilityField.text().toInt)
+            } else None
+
+          val invertibilityLevel : Option[Int] = 
+            if (finiteInvertibilityButton.selected()) {
+              Some(invertibilityField.text().toInt)
+            } else None
+
+          val unicityLevel : Option[Int] = 
+            if (finiteUnicityButton.selected()) {
+              Some(unicityField.text().toInt)
+            } else None
+
+          val wksp = new DefinitionWorkspace(id, stabilityLevel, invertibilityLevel, unicityLevel)
+          wksp.sheets += new ExpressionBuilder(CardinalComplex(Object(None)))
+
+          val navTreeItem = new TreeItem[NavigationTreeItem] {
+            value = DefnWorkspaceItem(wksp)
+          }
+
+          // I guess what you could do here is allow the use to view
+          // the environment ... but not sure if it's necessary
+
+          navigationTreeRoot.children += navTreeItem
+          navigationTreeView.getSelectionModel.select(navTreeItem)
+        }
+        case DialogCancel => ()
+      }
 
   }
 
@@ -459,28 +691,18 @@ class Editor
     }
   }
 
-  def onCompose = {
-    for { exprBuilder <- expressionBuilder } {
-      if (exprBuilder.selectionIsComposable) {
-        val freeVars = HashMap.empty[String, NCell[Expression]]
-
-        exprBuilder.selectedCells foreach (cell => {
-          collectFreeVars(cell.owner.getSimpleFramework.toCell, freeVars)
-        })
-
-        new ComposeDialog(freeVars.values.toSeq).run
-      }
-    }
-  }
+  def onCompose = (new ComposeDialog).run
 
   def onInsertIdentity = {
-    for { exprBuilder <- expressionBuilder } {
-      if (exprBuilder.selectionIsComposable) {
+    for { 
+      wksp <- activeWorkspace
+      exprBuilder <- expressionBuilder 
+    } {
+      if (exprBuilder.selectionIsComposable && exprBuilder.selectionIsUnique) {
         for { cell <- exprBuilder.selectionBase } {
           cell.item match {
             case Neutral(Some(expr)) => {
-              val freeVars = freeVariables(cell.owner.getSimpleFramework.toCell)
-              new IdentityDialog(freeVars.values.toSeq, expr).run
+              (new IdentityDialog(expr)).run
             }
             case _ => ()
           }
@@ -495,7 +717,7 @@ class Editor
       selectedCell <- exprBuilder.selectionBase
     } {
       if (selectedCell.owner.isExposedNook) {
-        new FillNookDialog(selectedCell).run
+        (new FillNookDialog).run
       }
     }
   }
@@ -515,8 +737,72 @@ class Editor
     }
   }
 
-  def onDefnFromEnv = {
-    DefinitionDialog.run
+  def onNewDefinition = {
+    NewDefinitionDialog.run
+  }
+
+  def onCompleteDefinition = {
+    for {
+      wksp <- activeWorkspace
+    } {
+      if (wksp.isInstanceOf[DefinitionWorkspace]) {
+        val defnWksp = wksp.asInstanceOf[DefinitionWorkspace]
+
+        val selectedExpression : NCell[Expression] = 
+          environmentListView.getSelectionModel.selectedItem()
+
+        if (selectedExpression != null) {
+          val defnExpression = 
+            selectedExpression.value match {
+              case Variable(_, _) => selectedExpression
+              case Filler(_) => selectedExpression
+              case FillerFace(_, filler, _) => wksp.getFromEnvironment(filler).get
+            }
+
+          val deps = wksp.dependencies(SimpleFramework(defnExpression)).values.toSeq
+
+          // Great, so this I think should trim the definition environment down to
+          // exactly the cells which are used ...
+
+          val defn =
+            new Definition(defnWksp.name,
+              defnWksp.stabilityLevel,
+              defnWksp.invertibilityLevel,
+              defnWksp.unicityLevel,
+              defnExpression,
+              wksp.environment filter (expr => deps exists (e => e.value.id == expr.value.id)))
+
+          // Left to do: add this to the list of available definitions (possibly select the definition pane)
+          // and then remove the workspace.
+
+          val defnVariablesItem = new TreeItem[DefinitionTreeItem] {
+            value = VariablesItem
+            children ++= defn.environmentVariables map (expr => {
+              new TreeItem[DefinitionTreeItem] {
+                value = ExpressionItem(expr)
+              }.delegate
+            })
+          }
+
+          val defnResultItem = new TreeItem[DefinitionTreeItem] {
+            value = ResultItem
+            children += new TreeItem[DefinitionTreeItem] {
+              value = ExpressionItem(defn.result)
+            }.delegate
+          }
+
+          val defnTreeItem = new TreeItem[DefinitionTreeItem] {
+            value = DefinitionItem(defn)
+            children ++= List(defnVariablesItem, defnResultItem)
+          }
+
+          definitionTreeRoot.children += defnTreeItem
+
+          closeActiveWorkspace
+          accordion.expandedPane = definitionsPane
+        }
+      }
+    }
   }
 
   def onSave = {
@@ -545,66 +831,6 @@ class Editor
   // SEMANTIC ROUTINES
   //
 
-  def freeVariables(expr : NCell[Option[Expression]]) : Map[String, NCell[Expression]] = {
-    val freeVars = HashMap.empty[String, NCell[Expression]]
-    collectFreeVars(expr, freeVars)
-    freeVars
-  }
-
-  def collectFreeVars(expr : NCell[Option[Expression]], freeVars : HashMap[String, NCell[Expression]]) : Unit = {
-    expr.value match {
-      case Some(Variable(id, _)) => {
-        if (! freeVars.isDefinedAt(id)) { freeVars(id) = expr map (_.get)}
-
-        if (expr.dimension.toInt > 0) {
-          // Now we need to recurse
-          val framework = new SimpleFramework(expr)
-
-          framework.topCell.target.get.foreachCell (cell => {
-            collectFreeVars(cell.skeleton map (_.item), freeVars)
-          })
-        }
-      }
-      case Some(FillerFace(ident, filler, _)) => {
-        collectFreeVars(getFromEnvironment(filler).get map (Some(_)), freeVars)
-      }
-      case Some(Filler(ident)) => {
-
-        // I don't like this because above, we generate the simple framework, then delete it.  Then
-        // here we generate the simple framework again.  It's a bit sloppy ...
-
-        val framework = new SimpleFramework(expr)
-
-        // Delete the filling face
-        framework.topCell.target.get.foreachCell (cell =>
-          cell.item match {
-            case Some(FillerFace(_, filler, _)) => {
-              if (filler != ident.toString) {
-                collectFreeVars(cell.skeleton map (_.item), freeVars)
-              }
-            }
-            case _ => collectFreeVars(cell.skeleton map (_.item), freeVars)
-          })
-      }
-      case None => {
-        // Just recurse
-        val framework = new SimpleFramework(expr)
-
-        framework.topCell.target.get.foreachCell (cell => {
-          collectFreeVars(cell.skeleton map (_.item), freeVars)
-        })
-      }
-    }
-  }
-
-  def environmentContains(id : String) : Boolean = {
-    environment exists (expr => expr.value.id == id)
-  }
-
-  def getFromEnvironment(id : String) : Option[NCell[Expression]] = {
-    environment find (expr => expr.value.id == id)
-  }
-
   def assume(id : String, isThin : Boolean) = {
     for { 
       exprBuilder <- expressionBuilder
@@ -617,8 +843,8 @@ class Editor
         // To update the highlighting ...
         exprBuilder.refreshAll
 
-        val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toCell map (_.get)
-        environment += exprCell
+        val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toExpressionCell
+        addToActiveEnvironment(exprCell)
 
         exprBuilder.selectAsBase(emptyCell)
       }
@@ -643,8 +869,8 @@ class Editor
         nookCell.owner.item = Neutral(Some(filler))
         targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
 
-        environment += targetCell.getSimpleFramework.toCell map (_.get)
-        environment += nookCell.owner.getSimpleFramework.toCell map (_.get)
+        addToActiveEnvironment(targetCell.getSimpleFramework.toExpressionCell)
+        addToActiveEnvironment(nookCell.owner.getSimpleFramework.toExpressionCell)
       }
     }
   }
@@ -692,33 +918,94 @@ class Editor
     }
   }
 
-  def newDefnFromEnv(id : String) = {
-    if (environment.length > 0) {
-      val defnEnv = new ListBuffer[NCell[Expression]]
-      environment.copyToBuffer(defnEnv)
-      val defn = new Definition(id, defnEnv)
-      addDefinition(defn)
-      clearEnvironment
-    }
-  }
-
   //============================================================================================
   // EDITOR HELPER ROUTINES
   //
+
+  var activeWorkspace : Option[Workspace] = None
+
+  def selectWorkspace(wksp : Workspace) = {
+    sheetTabPane.tabs.clear
+    sheetCount = 1
+
+    wksp.sheets foreach (sheet => {
+      val builder = sheet.asInstanceOf[ExpressionBuilder]
+
+      val tab = new Tab {
+        text = "Sheet " ++ sheetCount.toString
+        content = builder
+      }
+
+      sheetTabPane += tab
+      sheetCount += 1
+      builder.refreshAll
+    })
+
+    environmentListView.items = ObservableBuffer(wksp.environment)
+    activeWorkspace = Some(wksp)
+  }
+
+  def closeActiveWorkspace =
+    for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
+
+  def closeWorkspace(wksp : Workspace) = {
+    var wkspItem : Option[TreeItem[NavigationTreeItem]] = None
+
+    navigationTreeRoot.children foreach (child => {
+      if (child.value().asInstanceOf[DefnWorkspaceItem].wksp.name == wksp.name)
+        wkspItem = Some(child)
+    })
+
+    wkspItem foreach (item => navigationTreeRoot.children remove item)
+
+    environmentListView.items = ObservableBuffer.empty[NCell[Expression]]
+    sheetTabPane.tabs.clear
+    activeWorkspace = None
+  }
+
+  def selectionFreeVariables : Option[Seq[NCell[Expression]]] =
+    for {
+      wksp <- activeWorkspace
+      exprBuilder <- expressionBuilder
+    } yield {
+      val freeVars = HashMap.empty[String, NCell[Expression]]
+
+      exprBuilder.selectedCells foreach (cell => {
+        wksp.collectFreeVars(cell.owner.getSimpleFramework, freeVars)
+      })
+
+      freeVars.values.toSeq
+    }
+
+  def selectionDependencies : Option[Seq[NCell[Expression]]] = None
+
+  def addToActiveEnvironment(expr : NCell[Expression]) = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      wksp.addToEnvironment(expr)
+      environmentListView.items() += expr
+    }
 
   var sheetCount = 1
 
   def newSheet : Unit = newSheet(Object(None))
 
-  def newSheet(seed : NCell[Option[Expression]]) = {
-    val builder = new ExpressionBuilder(CardinalComplex(seed))
-    val sheet = new Tab { text = "Sheet " ++ sheetCount.toString ; content = builder }
-    sheetCount += 1
-    sheetTabPane += sheet
-    sheetTabPane.selectionModel().select(sheet)
-    //reactTo(builder)
-    builder.renderAll
-  }
+  def newSheet(seed : NCell[Option[Expression]]) = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      val builder = new ExpressionBuilder(CardinalComplex(seed))
+      val sheet = new Tab { text = "Sheet " ++ sheetCount.toString ; content = builder }
+      sheetCount += 1
+      sheetTabPane += sheet
+      sheetTabPane.selectionModel().select(sheet)
+      // BUG! - When I close a sheet, it should get deleted from the workspace
+      // More generally, it seems like there should be a tighter sheet integration
+      // with the workspace somehow.
+      wksp.sheets += builder
+      builder.renderAll
+    }
 
   def setPreview(expr : NCell[Expression]) = {
     val gallery = new FrameworkGallery(expr map (e => Some(e)))
@@ -732,31 +1019,14 @@ class Editor
     if (builder != null) Some(builder) else None
   }
 
-  def clearEnvironment = {
-    sheetTabPane.tabs.clear
-    environment.clear
-    sheetCount = 1
-    newSheet
-  }
+  def environmentToXML : xml.Node = {
+    import XmlSerializable._
 
-  def addDefinition(defn : Definition) = {
-    // Make the necessary tree cells to represent this definition in the viewer
-    val defnHyposItem = new TreeItem[DefinitionTreeItem] {
-      value = HypothesesItem
-      children ++= defn.freeVariables map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
-    }
+    // <environment>{
+    //   environment map (expr => cellSerializable[Expression].toXML(expr))
+    // }</environment>
 
-    val defnConclusionItem = new TreeItem[DefinitionTreeItem] {
-      value = ConclusionItem
-      children ++= defn.derivedCells map (expr => new TreeItem[DefinitionTreeItem] { value = ExpressionItem(expr) }.delegate)
-    }
-
-    val defnTreeItem = new TreeItem[DefinitionTreeItem] {
-      value = DefinitionItem(defn)
-      children ++= List(defnHyposItem, defnConclusionItem)
-    }
-
-    definitionTreeRoot.children += defnTreeItem
+    ???
   }
 
   def clearDefinitions = {
@@ -767,14 +1037,6 @@ class Editor
     definitionTreeRoot.children map (child => {
       child.value().asInstanceOf[DefinitionItem].defn
     })
-  }
-
-  def environmentToXML : xml.Node = {
-    import XmlSerializable._
-
-    <environment>{
-      environment map (expr => cellSerializable[Expression].toXML(expr))
-    }</environment>
   }
 
   def saveDefinitions(file : java.io.File) = {
@@ -795,13 +1057,11 @@ class Editor
       case <module>{defns @ _*}</module> => {
         trimText(defns) foreach (defXml => {
           val defn = definitionSerializable.fromXML(defXml)
-          addDefinition(defn)
+          //addDefinition(defn)
         })        
       }
     }
   }
-
-  newSheet
 }
 
 object Editor extends JFXApp {

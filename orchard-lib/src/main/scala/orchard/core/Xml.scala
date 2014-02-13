@@ -190,26 +190,27 @@ object XmlSerializable {
   implicit val definitionSerializable : XmlSerializable[Definition] = 
     new XmlSerializable[Definition] {
 
-      def toXML(defn : Definition) = {
-        <definition id={defn.id}>{
-          defn.environment map (cell => {
-            cellSerializable[Expression].toXML(cell)
-          })
-        }</definition>
-      }
+      def toXML(defn : Definition) = ???
+      // {
+      //   <definition id={defn.id}>{
+      //     defn.environment map (cell => {
+      //       cellSerializable[Expression].toXML(cell)
+      //     })
+      //   }</definition>
+      // }
 
-      def fromXML(node : xml.Node) = 
-        node match {
-          case defXml @ <definition>{envCells @ _*}</definition> => {
-            val id : String = (defXml \ "@id").text
-            val env : Seq[NCell[Expression]] = 
-              trimText(envCells) map (n => {
-                NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
-              })
+      def fromXML(node : xml.Node) = ???
+        // node match {
+        //   case defXml @ <definition>{envCells @ _*}</definition> => {
+        //     val id : String = (defXml \ "@id").text
+        //     val env : Seq[NCell[Expression]] = 
+        //       trimText(envCells) map (n => {
+        //         NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
+        //       })
 
-            new Definition(id, env)
-          }
-        }
+        //     new Definition(id, env)
+        //   }
+        // }
     }
 
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =

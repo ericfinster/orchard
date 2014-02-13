@@ -7,6 +7,8 @@
 
 package orchard.core
 
+import scala.collection.mutable.Buffer
+
 import Util._
 
 trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
@@ -36,6 +38,12 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
       sources match {
         case None => Vector.empty
         case Some(srcs) => srcs filter (_.isFull)
+      }
+
+    def fullFaces : Vector[CellType] = 
+      target match {
+        case None => Vector.empty
+        case Some(tgt) => if (tgt.isEmpty) fullSources else (tgt +: fullSources)
       }
 
     def completeSources : Vector[CellType] =

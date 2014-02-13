@@ -10,6 +10,7 @@ package orchard.core
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.WeakHashMap
+import scala.collection.mutable.Buffer
 
 class SimpleFramework(seed : NCell[Option[Expression]]) 
     extends AbstractMutableComplex[Option[Expression]](seed) 
@@ -19,58 +20,57 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
   def newCell(item : Option[Expression]) = new SimpleFrameworkCell(item)
 
-  // If this is an exposed nook, return a minimal amount of information to
-  // reconstruct it in a given environment
-  // def getShallowNook : ShallowNook = // (RoseTree[Option[String], Option[String]], Option[String]) =
-  //   topCell.skeleton.cell match {
-  //     case Composite(_, srcTree, tgtExpr, _) => {
-  //       srcTree.dimension match {
-  //         case IsZero(ev) => {
-  //           ShallowNook(CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (_ => None)), tgtExpr.item map (_.id))
-  //         }
-  //         case HasPred(ev) => {
-  //           ShallowNook(CellTree.toRoseTree(srcTree, ev) map ((cell => cell.value.item map (_.id)), (leaf => leaf.value.item map (_.id))),
-  //             tgtExpr.item map (_.id))
-  //         }
-  //       }
-  //     }
-  //   }
+  def toExpressionCell = topCell.toExpressionCell
 
-  // def dependencies : Map[String, NCell[Expression]] = {
-  //   val deps = HashMap.empty[String, NCell[Expression]]
-  //   collectDependencies(deps)
-  //   deps
-  // }
-   
-  // def freeVariables : Map[String, NCell[Expression]] = {
-  //   dependencies filter (pr => {
-  //     val (id, expr) = pr
-  //     expr.value match {
-  //       case Variable(_, _) => true
-  //       case _ => false
-  //     }
-  //   })
-  // }
+  def variables : Seq[NCell[Expression]] = {
+    val buf = Buffer.empty[NCell[Expression]]
+    forAllCells (cell => if (cell.isVariable) { buf += cell.toExpressionCell })
+    buf
+  }
 
-  // def collectDependencies(deps : Map[String, NCell[Expression]]) : Unit = {
-  //   forAllCells(cell => {
-  //     cell.item match {
-  //       case None => ()
-  //       case Some(expr) => {
-  //         expr match {
-  //           case Filler(id, nook) => new SimpleFramework(nook).collectDependencies(deps)
-  //           case FillerFace(id, nook, isThin) => new SimpleFramework(nook).collectDependencies(deps)
-  //           case _ => ()
-  //         }
+  def fillers : Seq[NCell[Expression]] = {
+    val buf = Buffer.empty[NCell[Expression]]
+    forAllCells (cell => if (cell.isFiller) { buf += cell.toExpressionCell })
+    buf
+  }
 
-  //         deps(expr.id) = cell.getSimpleFramework.toCell map (_.get)
-  //       }
-  //     }
-  //   })
-  // }
+  def fillerFaces : Seq[NCell[Expression]] = {
+    val buf = Buffer.empty[NCell[Expression]]
+    forAllCells (cell => if (cell.isFillerFace) { buf += cell.toExpressionCell })
+    buf
+  }
 
   class SimpleFrameworkCell(var item : Option[Expression])
       extends AbstractMutableCell with ExpressionFrameworkCell {
+
     def exprItem = item
+
+    def toExpressionCell : NCell[Expression] = skeleton map (_.item.get)
+
+    def isVariable : Boolean = 
+      item match {
+        case Some(Variable(_, _)) => true
+        case _ => false
+      }
+
+    def isFiller : Boolean = 
+      item match {
+        case Some(Filler(_)) => true
+        case _ => false
+      }
+
+    def isFillerFace : Boolean =
+      item match {
+        case Some(FillerFace(_, _, _)) => true
+        case _ => false
+      }
   }
+
+}
+
+object SimpleFramework {
+
+  def apply(seed : NCell[Expression]) : SimpleFramework = 
+    new SimpleFramework(seed map (Some(_)))
+
 }

@@ -9,22 +9,15 @@ package orchard.core
 
 import scala.collection.mutable.Buffer
 
-class Definition(val id : String, val environment : Seq[NCell[Expression]]) {
+class Definition(
+  val name : String,
+  val stabilityLevel : Option[Int],
+  val invertibilityLevel : Option[Int],
+  val unicityLevel : Option[Int], 
+  val result : NCell[Expression],
+  val environment : Seq[NCell[Expression]]
+) extends Environment {
 
-  def exprIsVariable(expr : Expression) : Boolean = 
-    expr match {
-      case Variable(_, _) => true
-      case _ => false
-    }
+  override def toString = name
 
-  def freeVariables : Seq[NCell[Expression]] = {
-    environment filter (exprCell => exprIsVariable(exprCell.value))
-  }
-
-  def derivedCells : Seq[NCell[Expression]] = {
-    environment filter (exprCell => ! exprIsVariable(exprCell.value))
-  }
-
-  override def toString = id
 }
-
