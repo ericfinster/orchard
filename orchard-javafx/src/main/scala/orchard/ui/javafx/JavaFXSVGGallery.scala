@@ -58,7 +58,6 @@ abstract class JavaFXSVGGallery[A](labelEngine : WebEngine) extends Gallery[A] {
   def newPanel(i : Int) : PanelType
 
   def appendPanel(panel : PanelType) = myPanels += panel
-  def refreshAll = panels foreach (_.refresh)
 
   override def renderAll = {
 

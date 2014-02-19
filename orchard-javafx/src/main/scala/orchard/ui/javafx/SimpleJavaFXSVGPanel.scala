@@ -19,7 +19,7 @@ class SimpleJavaFXSVGPanel[A](engine : WebEngine, val complex : SimpleMutableCom
 
   type ComplexType = SimpleMutableComplex[A]
 
-  def refresh = ()
+  override def refresh = ()
 
   def panelSVG : NodeSeq = {
     val viewBoxStr = (baseCell.x - 10).toString ++ " " ++ (baseCell.y - 10).toString ++ " " ++ 

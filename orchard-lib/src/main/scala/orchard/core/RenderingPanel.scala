@@ -36,6 +36,11 @@ trait RenderingPanel[A] extends Panel[A] {
   // RENDERING SETUP AND CLEANUP
   //
 
+  def refresh = {
+    clearRenderState
+    render
+  }
+
   def clearRenderState =
   {
     baseCell foreachCell (cell => cell.clearRenderState)

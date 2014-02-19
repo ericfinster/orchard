@@ -7,6 +7,7 @@
 
 package orchard.core
 
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.WeakHashMap
 
@@ -79,6 +80,58 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
     emit(ComplexExtended)
 
     newGlob
+  }
+
+  def stablyAppend(complex : CellComplex[A]) = {
+
+    val cellMap = HashMap.empty[complex.CellType, CellType]
+
+    // Okay, we generate all the new cells at once and we will
+    // then go on to set the semantic data
+    complex forAllCells (cell => {
+      cellMap(cell) = newCell(cell.item)
+    })
+
+    def cloneFromCell(srcCell : complex.CellType, tgtCell : CellType) = {
+      tgtCell.canopy = for { tree <- srcCell.canopy } yield {
+        tree.map((c => cellMap(c)), (i => i))
+      }
+
+      tgtCell.target = for { tgt <- srcCell.target } yield { cellMap(tgt) }
+      tgtCell.sources = for { srcs <- srcCell.sources } yield { srcs map (src => cellMap(src)) }
+      tgtCell.container = for { cntnr <- srcCell.container } yield { cellMap(cntnr) }
+
+      tgtCell.loops = srcCell.loops map (loop => cellMap(loop))
+
+      tgtCell.incoming = for { inc <- srcCell.incoming } yield { cellMap(inc) }
+      tgtCell.outgoing = for { out <- srcCell.outgoing } yield { cellMap(out) }
+    }
+
+    // Now copy all the data into this complex
+    complex forAllCells (cell => { cloneFromCell(cell, cellMap(cell)) })
+
+    // Fix up the objects to have the correct sources and targets
+    complex(0) foreachCell (cell => {
+      val theCell = cellMap(cell)
+      theCell.sources = topCell.sources
+      theCell.target = topCell.target
+    })
+
+    // First set the correct base cell for the objects
+    myBaseCells(myBaseCells.length - 1) = cellMap(complex(0))
+
+    // Now finish off the rest 
+    complex.baseCells.tail foreach (base => appendBaseCell(cellMap(base)))
+
+    // Finally, we need to rebuild all the skeletons ...
+    // Annoyingly, I have the rigidify and skeleton update functions tied to
+    // each other, even though they are really logically indepdendent.
+    // We don't really want to rigidify, since this rebuilds the entire canopy,
+    // and we already know that its state is just fine.  So I think we need to
+    // split that part out so that we can be more efficient.
+
+    // The above makes the following extremely silly, but nonetheless, I think correct:
+    complex forAllCells (cell => cellMap(cell).rigidify)
   }
 
   //============================================================================================

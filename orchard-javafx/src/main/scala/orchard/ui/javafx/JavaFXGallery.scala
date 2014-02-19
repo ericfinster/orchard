@@ -24,7 +24,6 @@ trait JavaFXGallery[A] extends Gallery[A] {
   def newPanel(i : Int) : PanelType
 
   def appendPanel(panel : PanelType) = myPanels += panel
-  def refreshAll = panels foreach (_.refresh)
 
   def initialize = {
     reactTo(complex)

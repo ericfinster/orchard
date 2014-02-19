@@ -190,27 +190,45 @@ object XmlSerializable {
   implicit val definitionSerializable : XmlSerializable[Definition] = 
     new XmlSerializable[Definition] {
 
-      def toXML(defn : Definition) = ???
-      // {
-      //   <definition id={defn.id}>{
-      //     defn.environment map (cell => {
-      //       cellSerializable[Expression].toXML(cell)
-      //     })
-      //   }</definition>
-      // }
+      def toXML(defn : Definition) = {
+        def optToInt(opt : Option[Int]) : Int = 
+          opt getOrElse -1
 
-      def fromXML(node : xml.Node) = ???
-        // node match {
-        //   case defXml @ <definition>{envCells @ _*}</definition> => {
-        //     val id : String = (defXml \ "@id").text
-        //     val env : Seq[NCell[Expression]] = 
-        //       trimText(envCells) map (n => {
-        //         NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
-        //       })
+        <definition 
+          name={defn.name}
+          slevel={optToInt(defn.stabilityLevel).toString}
+          ilevel={optToInt(defn.invertibilityLevel).toString}
+          ulevel={optToInt(defn.unicityLevel).toString}
+          result={defn.result.value.id}
+        >{
+          defn.environment map (cell => {
+            cellSerializable[Expression].toXML(cell)
+          })
+        }</definition>
+      }
 
-        //     new Definition(id, env)
-        //   }
-        // }
+      def fromXML(node : xml.Node) = {
+        def intToOpt(i : Int) : Option[Int] = if (i < 0) None else Some(i)
+
+        node match {
+          case defXml @ <definition>{envCells @ _*}</definition> => {
+            val env : Seq[NCell[Expression]] = 
+              trimText(envCells) map (n => {
+                NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
+              })
+
+            val name : String = (defXml \ "@name").text
+            val stabilityLevel : Option[Int] = intToOpt((defXml \ "@slevel").text.toInt)
+            val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
+            val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
+            val resultName : String = (defXml \ "@result").text
+            val result : NCell[Expression] = 
+              (env find (expr => expr.value.id == resultName)).get
+
+            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, result, env)
+          }
+        }
+      }
     }
 
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =

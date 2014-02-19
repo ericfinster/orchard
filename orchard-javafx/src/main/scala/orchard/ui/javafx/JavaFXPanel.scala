@@ -71,7 +71,7 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
     childGroup.layout
   }
 
-  def refresh = {
+  override def refresh = {
     // It would be better to understand exactly how the child relationships
     // have changed and modify accordingly, but for now, brute force ...
     clearRenderState

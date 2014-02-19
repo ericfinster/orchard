@@ -79,12 +79,40 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
   val environmentPane = new TitledPane {
     text = "Environment"
     content = environmentListView
-    collapsible = false
+  }
+
+  val goalsListView = 
+    new ListView[NCell[Expression]] {
+      items = ObservableBuffer.empty[NCell[Expression]]
+      cellFactory = (_ =>
+        new EnvironmentCell {
+          setOnMouseClicked(new EventHandler[MouseEvent] {
+            def handle(ev : MouseEvent) {
+              if (! isEmpty) {
+                setPreview(getItem)
+
+                // if (ev.getClickCount > 1) {
+                //   newSheet(getItem map (e => Some(e)))
+                // }
+              }
+            }
+          })
+        })
+    }
+
+  val goalsPane = new TitledPane {
+    text = "Goals"
+    content = goalsListView
+  }
+
+  val localAccordion = new Accordion {
+    panes = List(environmentPane, goalsPane)
+    expandedPane = environmentPane
   }
 
   sealed trait NavigationTreeItem
-  case class DefnWorkspaceItem(val wksp : DefinitionWorkspace) extends NavigationTreeItem
-  case class SubstWorkspaceItem(val wksp : SubstitutionWorkspace) extends NavigationTreeItem
+  case class DefnWorkspaceItem(val wksp : JavaFXDefinitionWorkspace) extends NavigationTreeItem
+  case class SubstWorkspaceItem(val wksp : JavaFXSubstitutionWorkspace) extends NavigationTreeItem
 
   val navigationTreeRoot = new TreeItem[NavigationTreeItem]
   val navigationTreeView = 
@@ -100,6 +128,7 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     if (item != null) {
       item.value() match {
         case DefnWorkspaceItem(wksp) => selectWorkspace(wksp)
+        case SubstWorkspaceItem(wksp) => selectWorkspace(wksp)
         case _ => println("Don't know what to do with this.")
       }
     }
@@ -133,6 +162,7 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
       if (! empty) {
         navTreeItem match {
           case DefnWorkspaceItem(wksp) => { clearStyleType ; setText(wksp.name) }
+          case SubstWorkspaceItem(wksp) => { clearStyleType ; setText(wksp.name) }
           case item @ _ => { clearStyleType ; setText(item.toString) }
         }
       }
@@ -220,7 +250,7 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     }
 
   val definitionsPane = new TitledPane {
-    text = "Definitions"
+    text = "Local Definitions"
     content = definitionTreeView
   }
 
@@ -239,19 +269,19 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
   AnchorPane.setBottomAnchor(accordion, 10)
   AnchorPane.setLeftAnchor(accordion, 10)
 
-  val environmentAnchorPane = new AnchorPane {
-    content = environmentPane
+  val localAnchorPane = new AnchorPane {
+    content = localAccordion
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(environmentPane, 10)
-  AnchorPane.setRightAnchor(environmentPane, 10)
-  AnchorPane.setBottomAnchor(environmentPane, 10)
-  AnchorPane.setLeftAnchor(environmentPane, 10)
+  AnchorPane.setTopAnchor(localAccordion, 10)
+  AnchorPane.setRightAnchor(localAccordion, 10)
+  AnchorPane.setBottomAnchor(localAccordion, 10)
+  AnchorPane.setLeftAnchor(localAccordion, 10)
 
   val navigationSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items.addAll(accordionPane, environmentAnchorPane)
+    items.addAll(accordionPane, localAnchorPane)
   }
 
   val previewPane = new StackPane {
@@ -613,7 +643,7 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
               Some(unicityField.text().toInt)
             } else None
 
-          val wksp = new DefinitionWorkspace(id, stabilityLevel, invertibilityLevel, unicityLevel)
+          val wksp = new JavaFXDefinitionWorkspace(id, stabilityLevel, invertibilityLevel, unicityLevel)
           wksp.sheets += new ExpressionBuilder(CardinalComplex(Object(None)))
 
           val navTreeItem = new TreeItem[NavigationTreeItem] {
@@ -763,6 +793,10 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
 
           // Great, so this I think should trim the definition environment down to
           // exactly the cells which are used ...
+          val defnEnvironment = 
+            wksp.environment filter (expr => deps exists (e => e.value.id == expr.value.id))
+
+          defnEnvironment += defnExpression
 
           val defn =
             new Definition(defnWksp.name,
@@ -770,40 +804,58 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
               defnWksp.invertibilityLevel,
               defnWksp.unicityLevel,
               defnExpression,
-              wksp.environment filter (expr => deps exists (e => e.value.id == expr.value.id)))
+              defnEnvironment)
 
-          // Left to do: add this to the list of available definitions (possibly select the definition pane)
-          // and then remove the workspace.
-
-          val defnVariablesItem = new TreeItem[DefinitionTreeItem] {
-            value = VariablesItem
-            children ++= defn.environmentVariables map (expr => {
-              new TreeItem[DefinitionTreeItem] {
-                value = ExpressionItem(expr)
-              }.delegate
-            })
-          }
-
-          val defnResultItem = new TreeItem[DefinitionTreeItem] {
-            value = ResultItem
-            children += new TreeItem[DefinitionTreeItem] {
-              value = ExpressionItem(defn.result)
-            }.delegate
-          }
-
-          val defnTreeItem = new TreeItem[DefinitionTreeItem] {
-            value = DefinitionItem(defn)
-            children ++= List(defnVariablesItem, defnResultItem)
-          }
-
-          definitionTreeRoot.children += defnTreeItem
-
+          addLocalDefinition(defn)
           closeActiveWorkspace
           accordion.expandedPane = definitionsPane
         }
       }
     }
   }
+
+  def onSpawnInShell = 
+    for { 
+      wksp <- activeWorkspace
+      exprBuilder <- expressionBuilder
+      cell <- exprBuilder.selectionBase
+    } {
+      if (cell.owner.hasCompleteShell) {
+        // Now we need to find the definition we are spawning.
+
+        val selectedWkspItem = navigationTreeView.getSelectionModel.selectedItem()
+        val selectedDefnItem = definitionTreeView.getSelectionModel.selectedItem()
+
+        if (selectedDefnItem != null && selectedWkspItem != null) {
+          val selectedDefn = findParentDefinition(selectedDefnItem)
+          val selectedShell = cell.owner.getSimpleFramework
+
+          val substWksp = 
+            new JavaFXSubstitutionWorkspace(selectedDefn.name, 
+                                            wksp,
+                                            selectedDefn,
+                                            selectedShell)
+
+          // Import the current environment and create a blank sheet
+          substWksp.environment ++= wksp.environment
+          substWksp.sheets += new ExpressionBuilder(CardinalComplex(Object(None)))
+
+          val navTreeItem = new TreeItem[NavigationTreeItem] {
+            value = SubstWorkspaceItem(substWksp)
+          }
+
+          // We should generate more tree items for the goals now
+
+          selectedWkspItem.children += navTreeItem
+          navigationTreeView.getSelectionModel.select(navTreeItem)
+
+        } else {
+          println("No definition selected.")
+        }
+      } else {
+        println("Cannot spawn substitution in incomplete shell.")
+      }
+    }
 
   def onSave = {
     fileChooser.setTitle("Save")
@@ -922,14 +974,14 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
   // EDITOR HELPER ROUTINES
   //
 
-  var activeWorkspace : Option[Workspace] = None
+  var activeWorkspace : Option[JavaFXWorkspace] = None
 
-  def selectWorkspace(wksp : Workspace) = {
+  def selectWorkspace(wksp : JavaFXWorkspace) = {
     sheetTabPane.tabs.clear
     sheetCount = 1
 
     wksp.sheets foreach (sheet => {
-      val builder = sheet.asInstanceOf[ExpressionBuilder]
+      val builder = sheet
 
       val tab = new Tab {
         text = "Sheet " ++ sheetCount.toString
@@ -942,12 +994,20 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     })
 
     environmentListView.items = ObservableBuffer(wksp.environment)
+    goalsListView.items = 
+      if (wksp.isInstanceOf[SubstitutionWorkspace]) {
+        ObservableBuffer(wksp.asInstanceOf[SubstitutionWorkspace].goals)
+      } else
+        ObservableBuffer.empty[NCell[Expression]]
+
     activeWorkspace = Some(wksp)
   }
 
   def closeActiveWorkspace =
     for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
 
+  // This only works for definition workspaces.  What we should really do
+  // is have this work more generally
   def closeWorkspace(wksp : Workspace) = {
     var wkspItem : Option[TreeItem[NavigationTreeItem]] = None
 
@@ -1019,16 +1079,6 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     if (builder != null) Some(builder) else None
   }
 
-  def environmentToXML : xml.Node = {
-    import XmlSerializable._
-
-    // <environment>{
-    //   environment map (expr => cellSerializable[Expression].toXML(expr))
-    // }</environment>
-
-    ???
-  }
-
   def clearDefinitions = {
     definitionTreeRoot.children.clear
   }
@@ -1037,6 +1087,39 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     definitionTreeRoot.children map (child => {
       child.value().asInstanceOf[DefinitionItem].defn
     })
+  }
+
+  def findParentDefinition(treeItem : TreeItem[DefinitionTreeItem]) : Definition = {
+    treeItem.value() match {
+      case DefinitionItem(defn) => defn
+      case _ => findParentDefinition(treeItem.parent())
+    }
+  }
+
+  def addLocalDefinition(defn : Definition) = {
+
+    val defnVariablesItem = new TreeItem[DefinitionTreeItem] {
+      value = VariablesItem
+      children ++= defn.environmentVariables map (expr => {
+        new TreeItem[DefinitionTreeItem] {
+          value = ExpressionItem(expr)
+        }.delegate
+      })
+    }
+
+    val defnResultItem = new TreeItem[DefinitionTreeItem] {
+      value = ResultItem
+      children += new TreeItem[DefinitionTreeItem] {
+        value = ExpressionItem(defn.result)
+      }.delegate
+    }
+
+    val defnTreeItem = new TreeItem[DefinitionTreeItem] {
+      value = DefinitionItem(defn)
+      children ++= List(defnVariablesItem, defnResultItem)
+    }
+
+    definitionTreeRoot.children += defnTreeItem
   }
 
   def saveDefinitions(file : java.io.File) = {
@@ -1057,7 +1140,7 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
       case <module>{defns @ _*}</module> => {
         trimText(defns) foreach (defXml => {
           val defn = definitionSerializable.fromXML(defXml)
-          //addDefinition(defn)
+          addLocalDefinition(defn)
         })        
       }
     }

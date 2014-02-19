@@ -17,9 +17,8 @@ trait Gallery[A] extends EventConduit[CellEvent] {
   def apply(idx : Int) : PanelType = panels(idx)
   def dimension : Int = panels.length - 1
 
-  def renderAll : Unit = {
-    panels foreach (panel => panel.render)
-  }
+  def renderAll = panels foreach (_.render)
+  def refreshAll = panels foreach (_.refresh)
 
   def forallCells(action : PanelType#CellType => Unit) = {
     panels foreach (panel => {

@@ -9,6 +9,18 @@ package orchard.core
 
 import scala.collection.mutable.Buffer
 
-class SubstitutionWorkspace(val name : String) extends Workspace {
+abstract class SubstitutionWorkspace extends Workspace {
+
+  def shell : SimpleFramework
+  def defn : Definition
+
+  val goals = Buffer.empty[NCell[Expression]]
+
+  // Initialize all the goals ....
+  defn.environmentVariables foreach (v => {
+    val shellClone = shell.clone
+    shellClone.stablyAppend(new SimpleFramework(v map (Some(_))))
+    goals += shellClone.toExpressionCell
+  })
 
 }

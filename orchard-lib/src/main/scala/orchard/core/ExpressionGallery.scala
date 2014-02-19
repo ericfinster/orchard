@@ -26,17 +26,19 @@ trait ExpressionGallery extends SelectableGallery[Polarity[Option[Expression]]] 
   }
 
   def selectionIsShell : Boolean = {
-    selectionBase match {
-      case None => false
-      case Some(cell) => cell.owner.isShell
-    }
+    if (! selectionIsUnique) false else
+      selectionBase match {
+        case None => false
+        case Some(cell) => cell.owner.isShell
+      }
   }
 
   def selectionIsEmptyCell : Boolean = {
-    selectionBase match {
-      case None => false
-      case Some(cell) => cell.owner.isEmpty
-    }
+    if (! selectionIsUnique) false else 
+      selectionBase match {
+        case None => false
+        case Some(cell) => cell.owner.isEmpty
+      }
   }
 
   def selectionIsExtrudable : Boolean = {

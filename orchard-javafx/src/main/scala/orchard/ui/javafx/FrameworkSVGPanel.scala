@@ -20,7 +20,7 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
 
   override type ComplexType = SimpleFramework
 
-  def refresh = ()
+  override def refresh = ()
 
   class FrameworkSVGCell(val owner : complex.CellType) extends JavaFXSVGCell {
 

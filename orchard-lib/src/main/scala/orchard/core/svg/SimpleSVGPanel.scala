@@ -37,7 +37,7 @@ class SimpleSVGPanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) 
   // a better way.  Come back and clean it up later
   def setLabelSizes = ()
 
-  def refresh = ()
+  override def refresh = ()
 
   class SimpleSVGCell(val owner : complex.SimpleMutableCell) extends SVGCell {
     def labelSVG : NodeSeq = <text class="orch-label" id={hashCode.toString}>{item.toString}</text>

@@ -52,6 +52,16 @@ trait OrchardMenus {
     items ++= List(newDefnItem, completeItem)
   }
 
+  val spawnInShellItem = new MenuItem {
+    text = "Spawn in Shell"
+    onAction = onSpawnInShell
+  }
+
+  val substitutionMenu = new Menu {
+    text = "Substitution"
+    items ++= List(spawnInShellItem)
+  }
+
   val extrudeItem = new MenuItem {
     text = "Extrude Selection"
     onAction = onExtrude
@@ -93,7 +103,7 @@ trait OrchardMenus {
   }
 
   val menuBar = new MenuBar {
-    menus ++= List(fileMenu, definitionMenu, expressionMenu)
+    menus ++= List(fileMenu, definitionMenu, substitutionMenu, expressionMenu)
   }
 
   def onOpen : Unit
@@ -102,6 +112,8 @@ trait OrchardMenus {
 
   def onNewDefinition : Unit
   def onCompleteDefinition : Unit
+
+  def onSpawnInShell : Unit
 
   def onExtrude : Unit 
   def onDrop : Unit

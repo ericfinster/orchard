@@ -20,7 +20,7 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
   def newCell(item : Option[Expression]) = new SimpleFrameworkCell(item)
 
-  def toExpressionCell = topCell.toExpressionCell
+  def toExpressionCell : NCell[Expression] = topCell.toExpressionCell
 
   def variables : Seq[NCell[Expression]] = {
     val buf = Buffer.empty[NCell[Expression]]
@@ -39,6 +39,8 @@ class SimpleFramework(seed : NCell[Option[Expression]])
     forAllCells (cell => if (cell.isFillerFace) { buf += cell.toExpressionCell })
     buf
   }
+
+  override def clone : SimpleFramework = new SimpleFramework(this.toCell)
 
   class SimpleFrameworkCell(var item : Option[Expression])
       extends AbstractMutableCell with ExpressionFrameworkCell {
