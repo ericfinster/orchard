@@ -102,15 +102,15 @@ class ExpressionWorksheet(seed : NCell[Polarity[Option[Expression]]])
     }
   }
 
-  def extrudeSelection = {
+  def extrude = {
     if (selectionIsExtrudable) {
-      emptyComposition
+      emptyExtrusion
     } else {
       println("Selection is not extrudable.")
     }
   }
 
-  def extrudeDrop = {
+  def drop = {
     if (selectionIsDroppable) {
       emptyDrop
     } else {
@@ -118,9 +118,9 @@ class ExpressionWorksheet(seed : NCell[Polarity[Option[Expression]]])
     }
   }
 
-  def emptyComposition = composeSelection(None, None)
+  def emptyExtrusion = extrudeAtSelection(None, None)
 
-  def composeSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) = 
+  def extrudeAtSelection(targetExpr : Option[Expression], fillerExpr : Option[Expression]) = 
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -137,7 +137,7 @@ class ExpressionWorksheet(seed : NCell[Polarity[Option[Expression]]])
           .lookup(base).force("Lookup failed for selection base")
 
         val (targetCell, fillerCell) = 
-          baseContainer.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (cell => selectedCells contains cell))
+          baseContainer.insertComposite(Neutral(targetExpr), Neutral(fillerExpr), basePtr, (cell => selectedCells contains cell))
 
         clearAndSelect(targetCell)
       }

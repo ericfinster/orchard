@@ -50,13 +50,24 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     styleClass += "orch-pane"
   }
 
-  // Probably should change to the selection onChange method used
-  // below in the navigation tree
   val environmentListView = 
     new ListView[NCell[Expression]] {
       items = ObservableBuffer.empty[NCell[Expression]]
       cellFactory = (_ => new EnvironmentCell)
     }
+
+  environmentListView.getSelectionModel.selectedItem onChange {
+    val item = environmentListView.getSelectionModel.selectedItem()
+
+    for { wksp <- activeWorkspace } {
+      if (item != null) {
+        wksp.activeExpression = Some(item)
+        setPreview(item)
+      } else {
+        wksp.activeExpression = None
+      }
+    }
+  }
 
   val environmentPane = new TitledPane {
     text = "Environment"
@@ -292,6 +303,11 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
     var activeGallery : Option[JavaFXWorksheetGallery] = None
     var activeExpression : Option[NCell[Expression]] = None
 
+    def activeSheet : Option[ExpressionWorksheet] =
+      for {
+        gallery <- activeGallery
+      } yield gallery.complex
+
     def newSheet : Unit = {
       val gallery = new JavaFXWorksheetGallery
 
@@ -316,11 +332,6 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
       gallery.refreshAll
     }
 
-    def activeSheet : Option[ExpressionWorksheet] =
-      for {
-        gallery <- activeGallery
-      } yield gallery.complex
-
     def withAssumptionInfo(deps : Seq[NCell[Expression]], 
                            thinHint : Boolean, 
                            forceThin : Boolean, 
@@ -335,8 +346,19 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
       varDialog.run
     }
 
-    def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit = ()
-    def withFillerIdentifier(handler : String => Unit) : Unit = ()
+    def withFillerIdentifiers(deps : Seq[NCell[Expression]], 
+                              handler : (String, String) => Unit) : Unit = {
+      val fillingDialog = new FillingDialog(handler)
+      fillingDialog.dependenciesList.items = ObservableBuffer(deps)
+      fillingDialog.run
+    }
+
+
+    def withFillerIdentifier(deps : Seq[NCell[Expression]], handler : String => Unit) : Unit = {
+      val uniqueFillingDialog = new UniqueFillingDialog(handler)
+      uniqueFillingDialog.dependenciesList.items = ObservableBuffer(deps)
+      uniqueFillingDialog.run
+    }
 
   }
 
@@ -374,90 +396,6 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
 
   }
 
-  abstract class FillingDialog extends DependencyDialog {
-
-    val composeField = new TextField { promptText = "Composite" ; onAction = () => { fillerField.requestFocus } }
-    val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
-
-    borderPane.center = 
-      new VBox {
-        padding = Insets(10,10,10,10)
-        spacing = 10
-        content = List(dependenciesList, composeField, fillerField)
-      }
-
-    def onShow = {
-      composeField.clear
-      fillerField.clear
-      composeField.requestFocus
-    }
-
-  }
-
-  // class FillNookDialog extends FillingDialog {
-
-  //   heading.text = "Fill Nook"
-
-  //   def onHide =
-  //     response match {
-  //       case DialogOK =>
-  //         for {
-  //           wksp <- activeWorkspace
-  //           exprBuilder <- expressionBuilder
-  //           nookCell <- exprBuilder.selectionBase
-  //           (composeIdent, fillerIdent) <- parseResults(wksp)
-  //         } {
-  //           fillExposedNook(nookCell, composeIdent, fillerIdent)
-  //         }
-  //       case DialogCancel => ()
-  //     }
-
-  // }
-
-  // class IdentityDialog(expr : Expression) extends FillingDialog {
-
-  //   heading.text = "Insert Identity"
-
-  //   composeField.text = "id-${" ++ expr.id ++ "}"
-  //   fillerField.text = "def-id-${" ++ expr.id ++ "}"
-
-  //   override def onShow = { composeField.requestFocus }
-
-  //   def onHide =
-  //     response match {
-  //       case DialogOK => 
-  //         for {
-  //           wksp <- activeWorkspace
-  //           exprBuilder <- expressionBuilder
-  //           (composeIdent, fillerIdent) <- parseResults(wksp)
-  //         } {
-  //           exprBuilder.extrudeDrop
-  //           fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
-  //         }
-  //       case DialogCancel => ()
-  //     }
-
-  // }
-
-  // class ComposeDialog extends FillingDialog {
-
-  //   heading.text = "Insert Composite"
-
-  //   def onHide = 
-  //     response match {
-  //       case DialogOK => ()
-  //         for {
-  //           wksp <- activeWorkspace
-  //           exprBuilder <- expressionBuilder
-  //           (composeIdent, fillerIdent) <- parseResults(wksp)
-  //         } {
-  //           exprBuilder.extrudeSelection
-  //           fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
-  //         }
-  //       case DialogCancel => ()
-  //     }
-  // }
-
   class VariableDialog(handler : (String, Boolean) => Unit) extends DependencyDialog {
 
     heading.text = "Assume Variable"
@@ -484,6 +422,81 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
       }
 
   }
+
+  class FillingDialog(handler : (String, String) => Unit) extends DependencyDialog {
+
+    val composeField = new TextField { promptText = "Composite" ; onAction = () => { fillerField.requestFocus } }
+    val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center = 
+      new VBox {
+        padding = Insets(10,10,10,10)
+        spacing = 10
+        content = List(dependenciesList, composeField, fillerField)
+      }
+
+    def onShow = {
+      composeField.clear
+      fillerField.clear
+      composeField.requestFocus
+    }
+
+    def onHide = 
+      response match {
+        case DialogOK => handler(composeField.text(), fillerField.text())
+        case DialogCancel => ()
+      }
+
+  }
+
+  class UniqueFillingDialog(handler : String => Unit) extends DependencyDialog {
+
+    val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center = 
+      new VBox {
+        padding = Insets(10,10,10,10)
+        spacing = 10
+        content = List(dependenciesList, fillerField)
+      }
+
+    def onShow = {
+      fillerField.clear
+      fillerField.requestFocus
+    }
+
+    def onHide = 
+      response match {
+        case DialogOK => handler(fillerField.text())
+        case DialogCancel => ()
+      }
+
+  }
+
+  // class IdentityDialog(expr : Expression) extends FillingDialog {
+
+  //   heading.text = "Insert Identity"
+
+  //   composeField.text = "id-${" ++ expr.id ++ "}"
+  //   fillerField.text = "def-id-${" ++ expr.id ++ "}"
+
+  //   override def onShow = { composeField.requestFocus }
+
+  //   def onHide =
+  //     response match {
+  //       case DialogOK => 
+  //         for {
+  //           wksp <- activeWorkspace
+  //           exprBuilder <- expressionBuilder
+  //           (composeIdent, fillerIdent) <- parseResults(wksp)
+  //         } {
+  //           exprBuilder.extrudeDrop
+  //           fillExposedNook(exprBuilder.lastFiller, composeIdent, fillerIdent)
+  //         }
+  //       case DialogCancel => ()
+  //     }
+
+  // }
 
   object NewDefinitionDialog extends CancellableDialog {
 
@@ -689,15 +702,15 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
-  //         case KeyCode.C => if (ev.isControlDown) onCompose
-  //         case KeyCode.I => if (ev.isControlDown) onInsertIdentity
-  //         case KeyCode.F => if (ev.isControlDown) onFill  
-  //         case KeyCode.U => if (ev.isControlDown) onUseEnvironment
+          case KeyCode.C => if (ev.isControlDown) onCompose
+          case KeyCode.I => if (ev.isControlDown) onInsertIdentity
+          case KeyCode.F => if (ev.isControlDown) onFill  
+          case KeyCode.U => if (ev.isControlDown) onUseEnvironment
           case KeyCode.T => if (ev.isControlDown) onNewSheet
   //         case KeyCode.O => if (ev.isControlDown) onOpen
   //         case KeyCode.S => if (ev.isControlDown) onSave
   //         // case KeyCode.V => if (ev.isControlDown) onView
-  //         // case KeyCode.N => if (ev.isControlDown) onNewSheet
+          case KeyCode.N => if (ev.isControlDown) onNewDefinition
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
   //         // case KeyCode.X => if (ev.isControlDown) onExtra
@@ -720,14 +733,14 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
 
   def onSpawnInShell : Unit = ()
 
-  def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrudeSelection }
-  def onDrop : Unit = for { wksht <- activeSheet } { wksht.extrudeDrop }
+  def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrude }
+  def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
 
   def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
-  def onCompose : Unit = ()
-  def onInsertIdentity : Unit = ()
-  def onFill : Unit = ()
-  def onUseEnvironment : Unit = ()
+  def onCompose : Unit = for { wksp <- activeWorkspace } { wksp.composeAtSelection }
+  def onInsertIdentity : Unit = for { wksp <- activeWorkspace } { wksp.identityAtSelection }
+  def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
+  def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
 
   // def onCompose = (new ComposeDialog).run
 
@@ -937,12 +950,12 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
   //     environmentListView.items() += expr
   //   }
 
-  // def setPreview(expr : NCell[Expression]) = {
-  //   val gallery = new FrameworkGallery(expr map (e => Some(e)))
-  //   gallery.renderAll
-  //   previewPane.content = gallery
-  //   previewPane.requestLayout
-  // }
+  def setPreview(expr : NCell[Expression]) = {
+    val gallery = new FrameworkGallery(expr map (e => Some(e)))
+    gallery.renderAll
+    previewPane.content = gallery
+    previewPane.requestLayout
+  }
 
   // def expressionBuilder : Option[ExpressionBuilder] = {
   //   val builder = sheetTabPane.getSelectionModel.selectedItem().content().asInstanceOf[ExpressionBuilder]

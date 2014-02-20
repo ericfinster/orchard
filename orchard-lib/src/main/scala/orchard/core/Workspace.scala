@@ -18,11 +18,6 @@ trait Workspace extends Environment {
 
   override type EnvironmentSeqType <: Buffer[NCell[Expression]]
 
-  // Okay. I think at the workspace level, we just want to have a collection of
-  // *complexes* interacting with an *environment*.
-
-  // The visual part of this setup should be on the user interface side.
-
   def name : String
 
   def stabilityLevel : Option[Int]
@@ -39,6 +34,9 @@ trait Workspace extends Environment {
                          thinHint : Boolean,
                          forceThin : Boolean,
                          handler : (String, Boolean) => Unit) : Unit 
+
+  def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit
+  def withFillerIdentifier(deps : Seq[NCell[Expression]], handler : String => Unit) : Unit
 
   def assumeAtSelection(thinHint : Boolean) = 
     for {
@@ -59,7 +57,8 @@ trait Workspace extends Environment {
             IdentParser(identString) match {
               case Success(ident, _) => {
 
-                // TODO : Check if identifier is valid
+                // TODO : Check if identifier is valid (including whether they
+                //        are empty or equal!)
 
                 if (! environmentContains(ident.toString)) {
                   sheet.deselectAll
@@ -79,72 +78,189 @@ trait Workspace extends Environment {
       }
     }
 
-  def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit
-  def withFillerIdentifier(handler : String => Unit) : Unit
+  def composeAtSelection = 
+    for {
+      sheet <- activeSheet
+      base <- sheet.selectionBase
+    } {
+      if (sheet.selectionIsComposable) {
+        val dependencies = selectionDependencies(sheet)
+
+        withFillerIdentifiers(dependencies,
+          (targetString, fillerString) => {
+
+            IdentParser(targetString) match {
+              case Success(targetIdent, _) => {
+                IdentParser(fillerString) match {
+                  case Success(fillerIdent, _) => {
+
+                    // TODO : Check that the identifiers are valid.
+
+                    val targetIsThin = 
+                      ((true /: (sheet.selectedCells map (_.isThin))) (_&&_)) || (
+                        invertibilityLevel match {
+                          case None => false
+                          case Some(l) => base.dimension > l
+                        })
+
+                    val fillerExpr = Filler(fillerIdent)
+                    val targetExpr = FillerFace(targetIdent, fillerExpr.id, targetIsThin)
+
+                    // Extrude and fill in the results
+                    sheet.extrudeAtSelection(Some(targetExpr), Some(fillerExpr))
+
+                    val targetCell = sheet.selectionBase.get
+                    val fillerCell = targetCell.incoming.get
+
+                    environment += targetCell.getSimpleFramework.toExpressionCell
+                    environment += fillerCell.getSimpleFramework.toExpressionCell
+
+                  }
+                  case _ : NoSuccess => println("Filler parse failed.")
+                }
+              }
+              case _ : NoSuccess => println("Compose parse failed.")
+            }
+          })
+      }
+    }
 
   def fillAtSelection = 
     for {
       sheet <- activeSheet
       fillerCell <- sheet.selectionBase
     } {
-      val dependencies = selectionDependencies(sheet)
-
-      withFillerIdentifiers(dependencies,
-        (targetString, fillerString) => {
-
-          IdentParser(targetString) match {
-            case Success(targetIdent, _) => {
-              IdentParser(fillerString) match {
-                case Success(fillerIdent, _) => {
-
-                  // TODO : Check if identifiers are valid in the current context
-
-                  //             def validRef(ident : IdentToken) : Boolean =
-                  //               ident match {
-                  //                 case LiteralToken(_) => true
-                  //                 case ReferenceToken(id) => freeVars exists (expr => expr.value.id == id)
-                  //               }
-
-                  //             val validRefs = (true /: ((composeIdent.tokens ++ fillerIdent.tokens) map (validRef(_)))) (_&&_)
-
-                  //             if (validRefs) {
-                  //               // BUG: Does not check that the two are not given the *same* name ... and
-                  //               // BUG: We shouldn't allow the empty string.
-
-                  //               if (wksp.environmentContains(composeIdent.toString) ||
-                  //                 wksp.environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
-                  //               else Some(composeIdent, fillerIdent)
-                  //             } else { println("Missing a variable.") ; None }
-                  //           }
-
-                  sheet.deselectAll
-
-                  val filler = Filler(fillerIdent)
-                  fillerCell.item = Neutral(Some(filler))
-
-                  if (fillerCell.isOutNook) {
-                    val targetCell = fillerCell.target.get
-                    val targetIsThin = (true /: (fillerCell.sources.get map (_.isThin))) (_&&_)
-
-                    targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
-                    environment += targetCell.getSimpleFramework.toExpressionCell
-                  } else {
-                    val targetCell = fillerCell.emptySources.head
-                    val targetIsThin = fillerCell.target.get.isThin
-                    
-                    targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
-                    environment += targetCell.getSimpleFramework.toExpressionCell
-                  }
-
-                  environment += fillerCell.getSimpleFramework.toExpressionCell
-
-                }
-                case _ : NoSuccess => println("Filler parse failed.")
-              }
-            }
-            case _ : NoSuccess => println("Compose parse failed.")
-          }
+      val isUnicityFillable = fillerCell.isShell && (
+        unicityLevel match {
+          case None => false
+          case Some(l) => fillerCell.dimension > l
         })
+
+      if (isUnicityFillable) {
+        val dependencies = selectionDependencies(sheet)
+
+        withFillerIdentifier(dependencies,
+          (fillerString => {
+            IdentParser(fillerString) match {
+              case Success(fillerIdent, _) => {
+
+                // TODO : Check identifier is valid
+
+                if (! environmentContains(fillerIdent.toString)) {
+                  sheet.deselectAll
+                  fillerCell.item = Neutral(Some(Variable(fillerIdent, true)))  // Uh ... need a new expression type here
+                  environment += fillerCell.getSimpleFramework.toExpressionCell
+                  sheet.selectAsBase(fillerCell)
+                } else {
+                  println("Duplicate identifier.")
+                }
+
+              }
+              case _ : NoSuccess => println("Filler parse failed.")
+            }
+          }))
+
+      } else if (fillerCell.isExposedNook) {
+        val dependencies = selectionDependencies(sheet)
+
+        withFillerIdentifiers(dependencies,
+          (targetString, fillerString) => {
+
+            IdentParser(targetString) match {
+              case Success(targetIdent, _) => {
+                IdentParser(fillerString) match {
+                  case Success(fillerIdent, _) => {
+
+                    // TODO : Check if identifiers are valid in the current context
+
+                    //             def validRef(ident : IdentToken) : Boolean =
+                    //               ident match {
+                    //                 case LiteralToken(_) => true
+                    //                 case ReferenceToken(id) => freeVars exists (expr => expr.value.id == id)
+                    //               }
+
+                    //             val validRefs = (true /: ((composeIdent.tokens ++ fillerIdent.tokens) map (validRef(_)))) (_&&_)
+
+                    //             if (validRefs) {
+                    //               // BUG: Does not check that the two are not given the *same* name ... and
+                    //               // BUG: We shouldn't allow the empty string.
+
+                    //               if (wksp.environmentContains(composeIdent.toString) ||
+                    //                 wksp.environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
+                    //               else Some(composeIdent, fillerIdent)
+                    //             } else { println("Missing a variable.") ; None }
+                    //           }
+
+                    val filler = Filler(fillerIdent)
+                    val thinByInvertibility = 
+                      invertibilityLevel match {
+                        case None => false
+                        case Some(l) => (fillerCell.dimension - 1) > l
+                      }
+
+                    val (targetCell, targetIsThin) = 
+                      if (fillerCell.isOutNook) {
+                        (fillerCell.target.get, (true /: (fillerCell.sources.get map (_.isThin))) (_&&_) || thinByInvertibility)
+                      } else {
+                        (fillerCell.emptySources.head, fillerCell.target.get.isThin || thinByInvertibility)
+                      }
+
+                    fillerCell.item = Neutral(Some(filler))
+                    targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
+
+                    environment += targetCell.getSimpleFramework.toExpressionCell
+                    environment += fillerCell.getSimpleFramework.toExpressionCell
+
+                    sheet.clearAndSelect(fillerCell)
+                  }
+                  case _ : NoSuccess => println("Filler parse failed.")
+                }
+              }
+              case _ : NoSuccess => println("Compose parse failed.")
+            }
+          })
+      } else {
+        println("Selection is not fillable.")
+      }
+    }
+
+  def identityAtSelection = 
+    for {
+      sheet <- activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+      if (sheet.selectionIsDroppable) {
+        val dependencies = selectionDependencies(sheet)
+
+        withFillerIdentifiers(dependencies,
+          (targetString, fillerString) => {
+
+            IdentParser(targetString) match {
+              case Success(targetIdent, _) => {
+                IdentParser(fillerString) match {
+                  case Success(fillerIdent, _) => {
+
+                    val fillerExpr = Filler(fillerIdent)
+                    val targetExpr = FillerFace(targetIdent, fillerExpr.id, true) 
+
+                    // Extrude and fill in the results
+                    sheet.dropAtSelection(Some(targetExpr), Some(fillerExpr))
+
+                    val targetCell = sheet.selectionBase.get
+                    val fillerCell = targetCell.incoming.get
+
+                    environment += targetCell.getSimpleFramework.toExpressionCell
+                    environment += fillerCell.getSimpleFramework.toExpressionCell
+                  }
+                  case _ : NoSuccess => println("Filler parse failed.")
+                }
+              }
+              case _ : NoSuccess => println("Compose parse failed.")
+            }
+          })
+      } else {
+        println("Cannot insert identity here.")
+      }
     }
 
   def expressionToSelection = 

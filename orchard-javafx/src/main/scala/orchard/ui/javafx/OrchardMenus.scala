@@ -54,7 +54,7 @@ trait OrchardMenus {
 
   val definitionMenu = new Menu {
     text = "Definition"
-    items ++= List(newDefnItem, completeItem)
+    items ++= List(newDefnItem, newSheetItem, completeItem)
   }
 
   val spawnInShellItem = new MenuItem {
