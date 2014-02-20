@@ -40,25 +40,31 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
     // INITIALIZATION
     //
 
-    getStyleClass().add("expression-cell")
+    val cellStyleIndex = getStyleClass.length
+    val cellSelectedStyleIndex = cellStyleIndex + 1
+    val cellHoveredStyleIndex = cellStyleIndex + 2
+
+    getStyleClass add "expr-null"
+    getStyleClass add "expr-selected-null"
+    getStyleClass add "expr-hovered-null"
+
+    def dumpStyle = {
+      val styleClass = getStyleClass
+      println("Dumpting style info: " ++ styleClass.toString)
+    }
 
     def renderCell = {
       assignStyle
       label = renderLabel
     }
 
-    var lastStyle : Option[String] = None
+    def setCellStyle(style : String) = getStyleClass(cellStyleIndex) = style
+    def setCellSelectedStyle(style : String) = getStyleClass(cellSelectedStyleIndex) = style
+    def setCellHoveredStyle(style : String) = getStyleClass(cellHoveredStyleIndex) = style
 
-    def setCellStyle(style : String) = {
-      lastStyle foreach (s => getStyleClass.remove(s))
-      getStyleClass.add(style)
-      lastStyle = Some(style)
-    }
-
-    def removeCellStyle(style : String) = {
-      getStyleClass.remove(style)
-      lastStyle = None
-    }
+    def removeCellStyle = setCellStyle("expr-null")
+    def removeCellSelectedStyle = setCellSelectedStyle("expr-selected-null")
+    def removeCellHoveredStyle = setCellHoveredStyle("expr-hovered-null")
 
     def renderLabel : jfxs.Node = {
       val labelNode = 
@@ -126,35 +132,16 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
         case Negative => () 
         case Neutral(None) => {
           if (isExposedStyle) {
-            getStyleClass.add("expr-cell-exposed-hovered")
+            setCellHoveredStyle("expr-cell-exposed-hovered")
           } else {
-            getStyleClass.add("expr-cell-empty-hovered")
+            setCellHoveredStyle("expr-cell-empty-hovered")
           }
         }
-        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-hovered")
-        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-hovered")
-        case Neutral(Some(Filler(_))) => getStyleClass.add("expr-cell-filler-hovered")
-        case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.add("expr-cell-filler-face-hovered")
-        case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.add("expr-cell-filler-face-thin-hovered")
-      }
-    }
-
-    override def doUnhover = {
-      item match {
-        case Positive => () 
-        case Negative => () 
-        case Neutral(None) => {
-          if (isExposedStyle) {
-            getStyleClass.remove("expr-cell-exposed-hovered")
-          } else {
-            getStyleClass.remove("expr-cell-empty-hovered")
-          }
-        }
-        case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-hovered")
-        case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-hovered")
-        case Neutral(Some(Filler(_))) => getStyleClass.remove("expr-cell-filler-hovered")
-        case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.remove("expr-cell-filler-face-hovered")
-        case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.remove("expr-cell-filler-face-thin-hovered")
+        case Neutral(Some(Variable(_, false))) => setCellHoveredStyle("expr-cell-var-hovered")
+        case Neutral(Some(Variable(_, true))) => setCellHoveredStyle("expr-cell-var-thin-hovered")
+        case Neutral(Some(Filler(_))) => setCellHoveredStyle("expr-cell-filler-hovered")
+        case Neutral(Some(FillerFace(_, _, false))) => setCellHoveredStyle("expr-cell-filler-face-hovered")
+        case Neutral(Some(FillerFace(_, _, true))) => setCellHoveredStyle("expr-cell-filler-face-thin-hovered")
       }
     }
 
@@ -164,37 +151,21 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
         case Negative => ()
         case Neutral(None) => {
           if (isExposedStyle) {
-            getStyleClass.add("expr-cell-exposed-selected")
+            setCellSelectedStyle("expr-cell-exposed-selected")
           } else {
-            getStyleClass.add("expr-cell-empty-selected")
+            setCellSelectedStyle("expr-cell-empty-selected")
           }
         }
-        case Neutral(Some(Variable(_, false))) => getStyleClass.add("expr-cell-var-selected")
-        case Neutral(Some(Variable(_, true))) => getStyleClass.add("expr-cell-var-thin-selected")
-        case Neutral(Some(Filler(_))) => getStyleClass.add("expr-cell-filler-selected")
-        case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.add("expr-cell-filler-face-selected")
-        case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.add("expr-cell-filler-face-thin-selected")
+        case Neutral(Some(Variable(_, false))) => setCellSelectedStyle("expr-cell-var-selected")
+        case Neutral(Some(Variable(_, true))) => setCellSelectedStyle("expr-cell-var-thin-selected")
+        case Neutral(Some(Filler(_))) => setCellSelectedStyle("expr-cell-filler-selected")
+        case Neutral(Some(FillerFace(_, _, false))) => setCellSelectedStyle("expr-cell-filler-face-selected")
+        case Neutral(Some(FillerFace(_, _, true))) => setCellSelectedStyle("expr-cell-filler-face-thin-selected")
       }
     }
 
-    override def doDeselect = {
-      item match {
-        case Positive => ()
-        case Negative => ()
-        case Neutral(None) => {
-          if (isExposedStyle) {
-            getStyleClass.remove("expr-cell-exposed-selected")
-          } else {
-            getStyleClass.remove("expr-cell-empty-selected")
-          }
-        }
-        case Neutral(Some(Variable(_, false))) => getStyleClass.remove("expr-cell-var-selected")
-        case Neutral(Some(Variable(_, true))) => getStyleClass.remove("expr-cell-var-thin-selected")
-        case Neutral(Some(Filler(_))) => getStyleClass.remove("expr-cell-filler-selected")
-        case Neutral(Some(FillerFace(_, _, false))) => getStyleClass.remove("expr-cell-filler-face-selected")
-        case Neutral(Some(FillerFace(_, _, true))) => getStyleClass.remove("expr-cell-filler-face-thin-selected")
-      }
-    }
+    override def doUnhover = removeCellHoveredStyle
+    override def doDeselect = removeCellSelectedStyle
 
     //============================================================================================
     // EVENTS

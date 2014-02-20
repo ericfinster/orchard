@@ -742,52 +742,6 @@ class Editor extends PopupManager(new VBox) with OrchardMenus { thisEditor =>
   def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
   def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
 
-  // def onCompose = (new ComposeDialog).run
-
-  // def onInsertIdentity = {
-  //   for { 
-  //     wksp <- activeWorkspace
-  //     exprBuilder <- expressionBuilder 
-  //   } {
-  //     if (exprBuilder.selectionIsComposable && exprBuilder.selectionIsUnique) {
-  //       for { cell <- exprBuilder.selectionBase } {
-  //         cell.item match {
-  //           case Neutral(Some(expr)) => {
-  //             (new IdentityDialog(expr)).run
-  //           }
-  //           case _ => ()
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-
-  // def onFill = {
-  //   for {
-  //     exprBuilder <- expressionBuilder
-  //     selectedCell <- exprBuilder.selectionBase
-  //   } {
-  //     if (selectedCell.owner.isExposedNook) {
-  //       (new FillNookDialog).run
-  //     }
-  //   }
-  // }
-
-  // def onUseEnvironment = {
-  //   for { 
-  //     exprBuilder <- expressionBuilder
-  //     selectedCell <- exprBuilder.selectionBase
-  //   } {
-  //     if (selectedCell.owner.isEmpty) {
-  //       val selectedExpr = environmentListView.getSelectionModel.getSelectedItem
-
-  //       if (selectedExpr != null) {
-  //         fillFromEnvironment(selectedCell, selectedExpr)
-  //       }
-  //     }
-  //   }
-  // }
-
   // def onCompleteDefinition = {
   //   for {
   //     wksp <- activeWorkspace
