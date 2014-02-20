@@ -18,6 +18,8 @@ class Definition(
   val environment : Seq[NCell[Expression]]
 ) extends Environment {
 
+  type EnvironmentSeqType = Seq[NCell[Expression]]
+
   override def toString = name
 
 }

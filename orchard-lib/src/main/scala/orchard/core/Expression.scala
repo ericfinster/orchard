@@ -14,8 +14,10 @@ import scala.util.parsing.combinator.RegexParsers
 
 sealed trait Expression { def id : String ; def isThin : Boolean }
 
-case class Variable(val id : String, val isThin : Boolean) extends Expression { 
-  override def toString = id 
+case class Variable(val ident : Identifier, val isThin : Boolean) extends Expression { 
+  override def toString = id
+
+  def id : String = ident.toString
 }
 
 case class FillerFace(val ident : Identifier, val filler : String, val isThin : Boolean) extends Expression {

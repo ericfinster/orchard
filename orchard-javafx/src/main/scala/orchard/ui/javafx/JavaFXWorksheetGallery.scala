@@ -1,5 +1,5 @@
 /**
-  * ExpressionBuilder.scala
+  * JavaFXWorksheetGallery.scala - JavaFXImplementation of an expression gallery
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -7,37 +7,28 @@
 
 package orchard.ui.javafx
 
-import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
-
 import orchard.core._
 
-import Util._
+class JavaFXWorksheetGallery(cmplx : ExpressionWorksheet) extends SpinnerGallery[Polarity[Option[Expression]]] { thisGallery =>
 
-class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends SpinnerGallery[Polarity[Option[Expression]]] with ExpressionGallery { thisBuilder =>
-
+  def this(seed : NCell[Polarity[Option[Expression]]]) = this(new ExpressionWorksheet(seed))
   def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
 
   //============================================================================================
   // INITIALIZATION
   //
 
-  type PanelType = ExpressionBuilderPanel
+  type PanelType = JavaFXWorksheetPanel
+  
+  val complex = cmplx
 
-  val complex = new ExpressionBuilderComplex(seed)
-
-  reactTo(complex)
-
-  def newPanel(i : Int) : ExpressionBuilderPanel = {
-    val panel = new ExpressionBuilderPanel(complex, i)
+  def newPanel(i : Int) : JavaFXWorksheetPanel = {
+    val panel = new JavaFXWorksheetPanel(complex, i)
     reactTo(panel) 
     panel 
   }
 
   initialize
-
-  var lastComposite : GalleryCell = null
-  var lastFiller : GalleryCell = null
 
   //============================================================================================
   // EVENTS
@@ -47,7 +38,7 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Spin
     ev match {
 
       case PanelClicked => {
-        deselectAll
+        complex.deselectAll
       }
 
       case ComplexExtended => {
@@ -59,40 +50,41 @@ class ExpressionBuilder(seed : NCell[Polarity[Option[Expression]]]) extends Spin
       }
 
       case CellClicked(c) => {
-        val cell = c.asInstanceOf[GalleryCell]
+        val cell = c.owner.asInstanceOf[complex.ExpressionWorksheetCell]
 
-        if (cell.owner.isNeutral)
-          clearAndSelect(cell)
-        else {
-          deselectAll
+        if (cell.isNeutral) {
+          complex.clearAndSelect(cell)
+        } else {
+          complex.deselectAll
         }
       }
 
       case CellCtrlClicked(c) => {
-        val cell = c.asInstanceOf[GalleryCell]
+        val cell = c.owner.asInstanceOf[complex.ExpressionWorksheetCell]
 
-        selectionBase match {
-          case None => if (cell.owner.isNeutral) selectAsBase(cell)
+        complex.selectionBase match {
+          case None => if (cell.isNeutral) complex.selectAsBase(cell)
           case Some(base) => {
             if (cell != base) {
-              if (cell.owner.isPolarized) {
-                deselectAll
+              if (cell.isPolarized) {
+                complex.deselectAll
               } else {
-                if (!trySelect(cell)) clearAndSelect(cell)
+                if (! complex.trySelect(cell)) complex.clearAndSelect(cell)
               }
             }
           }
         }
       }
 
+      case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
+        refreshAll  // Probably don't need all ...
+      }
+
       case complex.ChangeEvents.CompositeInsertionEvent(c, u) => {
         val dim = c.dimension
 
-        val compPanel = thisBuilder(dim)
-        val univPanel = thisBuilder(dim + 1)
-
-        lastComposite = c.cellOnPanel(compPanel)
-        lastFiller = u.cellOnPanel(univPanel)
+        val compPanel = thisGallery(dim)
+        val univPanel = thisGallery(dim + 1)
 
         val affectedDimensions = Range(dim, complex.dimension + 1)
 

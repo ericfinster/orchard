@@ -1,5 +1,5 @@
 /**
-  * ExpressionBuilderPanel.scala - A panel and visual cell type for editing expressions
+  * JavaFXWorksheetPanel.scala - A worksheet panel in JavaFX
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -12,25 +12,21 @@ import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.text.Text
 import scalafx.scene.layout.Region
-import scalafx.scene.effect.ColorAdjust
-
 import scalafx.scene.paint.Color
-
-import scalafx.geometry.Bounds
 
 import javafx.{scene => jfxs}
 
 import orchard.core._
 
-class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex : Int)
+class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
     extends ZoomPanel[Polarity[Option[Expression]]] 
     with MutablePanel[Polarity[Option[Expression]]] 
     with ExpressionPanel { thisPanel =>
 
-  type CellType = ExpressionBuilderCell
-  type EdgeType = ExpressionBuilderEdge
+  type CellType = JavaFXWorksheetCell
+  type EdgeType = JavaFXWorksheetEdge
 
-  type ComplexType = ExpressionBuilderComplex
+  type ComplexType = ExpressionWorksheet
   type LabelType = Polarity[Option[Expression]]
 
   override def refresh = {
@@ -38,7 +34,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     baseCell foreachCell (cell => cell.assignStyle)
   }
 
-  class ExpressionBuilderCell(owner : complex.ExpressionBuilderCell) extends JavaFXCell(owner) with MutablePanelCell {
+  class JavaFXWorksheetCell(owner : complex.ExpressionWorksheetCell) extends JavaFXCell(owner) with MutablePanelCell {
 
     //============================================================================================
     // INITIALIZATION
@@ -207,25 +203,23 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     // Dispatch mutability events ... I think this event system
     // needs to be entirely reworked.  It's getting pretty messy ...
     override def onEventEmitted(ev : CellEvent) = {
-      if (ev.isInstanceOf[complex.ChangeEvents.ChangeEvent]) {
-        ev match {
-          case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
-            renderCell
-            refresh
-          }
-          case _ => () // onCellChangeEvent(ev.asInstanceOf[complex.ChangeEvents.ChangeEvent])
+      ev match {
+
+        case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
+          // This fixes the label, but we pass the even on to refresh the gallery
+          // since we will need to recalculate the nook highlighting
+          renderCell
+          super.onEventEmitted(ev)
         }
-      } else {
-        ev match {
-          case CellEntered(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
-          case CellExited(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
-          case _ => super.onEventEmitted(ev)
-        }
+
+        case CellEntered(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
+        case CellExited(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
+        case _ => super.onEventEmitted(ev)
       }
     }
   }
 
-  class ExpressionBuilderEdge(owner : complex.ExpressionBuilderCell) extends JavaFXEdge(owner) with MutablePanelEdge {
+  class JavaFXWorksheetEdge(owner : complex.ExpressionWorksheetCell) extends JavaFXEdge(owner) with MutablePanelEdge {
 
     override def doHover : Unit = setStroke(Color.TOMATO)
     override def doSelect : Unit = setStroke(Color.TOMATO)
@@ -234,15 +228,15 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
     
   }
 
-  def newCell(owner : complex.ExpressionBuilderCell) : ExpressionBuilderCell = { 
-    val cell = new ExpressionBuilderCell(owner)
+  def newCell(owner : complex.ExpressionWorksheetCell) : JavaFXWorksheetCell = { 
+    val cell = new JavaFXWorksheetCell(owner)
     owner.registerPanelCell(thisPanel)(cell)
     reactTo(cell) 
     cell 
   }
   
-  def newEdge(owner : complex.ExpressionBuilderCell) : ExpressionBuilderEdge = { 
-    val edge = new ExpressionBuilderEdge(owner) 
+  def newEdge(owner : complex.ExpressionWorksheetCell) : JavaFXWorksheetEdge = { 
+    val edge = new JavaFXWorksheetEdge(owner) 
     owner.registerPanelEdge(thisPanel)(edge)
     reactTo(edge) 
     edge 
@@ -252,7 +246,7 @@ class ExpressionBuilderPanel(val complex : ExpressionBuilderComplex, baseIndex :
   // INITIALIZATION
   //
 
-  var baseCell : ExpressionBuilderCell = newCell(complex.baseCells(baseIndex))
+  var baseCell : JavaFXWorksheetCell = newCell(complex.baseCells(baseIndex))
 
   refreshPanelData
   initializeChildren

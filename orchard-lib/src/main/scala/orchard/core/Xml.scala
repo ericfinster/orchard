@@ -114,28 +114,6 @@ object XmlSerializable {
         }
     }
 
-  // implicit val shallowNookSerializable : XmlSerializable[ShallowNook] = 
-  //   new XmlSerializable[ShallowNook] {
-  //     val roseSerializer = implicitly[XmlSerializable[RoseTree[Option[String], Option[String]]]]
-  //     val optionSerializer = implicitly[XmlSerializable[Option[String]]]
-
-  //     def toXML(nook : ShallowNook) =
-  //       nook match {
-  //         case ShallowNook(srcs, tgt) =>
-  //           <nook><srcs>{roseSerializer.toXML(srcs)}</srcs><tgt>{optionSerializer.toXML(tgt)}</tgt></nook>
-  //       }
-
-  //     def fromXML(node : xml.Node) =
-  //       node match {
-  //         case <nook><srcs>{srcContent}</srcs><tgt>{tgtContent}</tgt></nook> => {
-  //           val srcTree = roseSerializer.fromXML(srcContent)
-  //           val target = optionSerializer.fromXML(tgtContent)
-  //           ShallowNook(srcTree, target)
-  //         }
-  //       }
-
-  //   }
-
   implicit val identifierSerializable : XmlSerializable[Identifier] = 
     new XmlSerializable[Identifier] {
       def toXML(ident : Identifier) =
@@ -156,7 +134,11 @@ object XmlSerializable {
     new XmlSerializable[Expression] {
       def toXML(expr : Expression) =
         expr match {
-          case Variable(id, isThin) => <variable id={id} isThin={isThin.toString} />
+          case Variable(ident, isThin) => {
+            <variable isThin={isThin.toString}>{
+              identifierSerializable.toXML(ident)
+            }</variable>
+          }
           case FillerFace(ident, filler, isThin) => {
             <fillerface isThin={isThin.toString} filler={filler}>{
               identifierSerializable.toXML(ident)
@@ -169,10 +151,10 @@ object XmlSerializable {
 
       def fromXML(node : xml.Node) =
         node match {
-          case v @ <variable /> => {
-            val id = (v \ "@id").text
+          case v @ <variable>{identContent}</variable> => {
+            val ident = identifierSerializable.fromXML(identContent)
             val isThin = (v \ "@isThin").text.toBoolean
-            Variable(id, isThin)
+            Variable(ident, isThin)
           }
           case ff @ <fillerface>{identContent}</fillerface> => {
             val ident = identifierSerializable.fromXML(identContent)

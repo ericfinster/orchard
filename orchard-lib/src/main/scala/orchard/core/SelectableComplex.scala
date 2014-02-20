@@ -1,5 +1,5 @@
 /**
-  * SelectableGallery.scala - A Gallery which can select cells
+  * SelectableComplex.scala - A cell complex whose cells are selectable
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -14,35 +14,35 @@ import scala.collection.mutable.HashSet
 
 import Util._
 
-trait SelectableGallery[A] extends Gallery[A] {
+trait SelectableComplex[A] extends CellComplex[A] {
 
-  var selectionBase : Option[GalleryCell] = None
-  val selectedCells : Set[GalleryCell] = new HashSet
+  var selectionBase : Option[CellType] = None
+  val selectedCells : Set[CellType] = new HashSet
 
   def deselectAll = {
     selectedCells foreach
-    (cell => cell.owner.emitToFaces(RequestCellDeselected))
+    (cell => cell.emitToFaces(RequestCellDeselected))
     selectedCells.clear
     selectionBase = None
   }
 
-  def clearAndSelect(cell : GalleryCell) = {
+  def clearAndSelect(cell : CellType) = {
     deselectAll
     selectAsBase(cell)
   }
 
-  def selectAsBase(cell : GalleryCell) = {
+  def selectAsBase(cell : CellType) = {
     select(cell)
     selectionBase = Some(cell)
   }
 
-  def isSelected(cell : GalleryCell) =
+  def isSelected(cell : CellType) =
     selectedCells contains cell
 
   def selectionIsUnique : Boolean = 
     selectedCells.size == 1
 
-  def trySelect(cell : GalleryCell) : Boolean = {
+  def trySelect(cell : CellType) : Boolean = {
     // This should be guaranteed by the cardinal structure
     val base = selectionBase.force
     val baseContainer = base.container.force
@@ -50,11 +50,11 @@ trait SelectableGallery[A] extends Gallery[A] {
     if (cell.container.force != baseContainer)
       return false
 
-    val candidates : Set[GalleryCell] = new HashSet
+    val candidates : Set[CellType] = new HashSet
     candidates add cell
 
     // Now look up a zipper to this guy
-    val zipper : RoseZipper[GalleryCell, Int] =
+    val zipper : RoseZipper[CellType, Int] =
       new RoseZipper(baseContainer.canopy.force, Nil)
     var ptrOpt = zipper.lookup(cell)
       .force("Lookup failed for selected cell.").zipOnce
@@ -77,11 +77,10 @@ trait SelectableGallery[A] extends Gallery[A] {
     return false
   }
 
-  def select(cell : GalleryCell) = {
-    cell.owner.emitToFaces(RequestCellSelected)
+  def select(cell : CellType) = {
+    cell.emitToFaces(RequestCellSelected)
     selectedCells add cell
   }
 
 }
-
 

@@ -42,6 +42,11 @@ trait OrchardMenus {
     onAction = onNewDefinition
   }
 
+  val newSheetItem = new MenuItem {
+    text = "New Sheet"
+    onAction = onNewSheet
+  }
+
   val completeItem = new MenuItem {
     text = "Complete Using Cell"
     onAction = onCompleteDefinition
@@ -111,6 +116,7 @@ trait OrchardMenus {
   def onExit : Unit
 
   def onNewDefinition : Unit
+  def onNewSheet : Unit
   def onCompleteDefinition : Unit
 
   def onSpawnInShell : Unit

@@ -11,9 +11,17 @@ import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
 
+import IdentParser.Success
+import IdentParser.NoSuccess
+
 trait Workspace extends Environment {
 
-  type GalleryType <: ExpressionGallery
+  override type EnvironmentSeqType <: Buffer[NCell[Expression]]
+
+  // Okay. I think at the workspace level, we just want to have a collection of
+  // *complexes* interacting with an *environment*.
+
+  // The visual part of this setup should be on the user interface side.
 
   def name : String
 
@@ -21,103 +29,186 @@ trait Workspace extends Environment {
   def invertibilityLevel : Option[Int]
   def unicityLevel : Option[Int]
 
-  var activeSheet : Option[GalleryType] = None
+  val sheets = Buffer.empty[ExpressionWorksheet]
 
-  val sheets = Buffer.empty[GalleryType]
-  val environment = Buffer.empty[NCell[Expression]]
+  def newSheet : Unit 
+  def activeSheet : Option[ExpressionWorksheet]
+  def activeExpression : Option[NCell[Expression]]
 
-  def addToEnvironment(expr : NCell[Expression]) = environment += expr
+  def withAssumptionInfo(deps : Seq[NCell[Expression]],
+                         thinHint : Boolean,
+                         forceThin : Boolean,
+                         handler : (String, Boolean) => Unit) : Unit 
 
-  def assume(id : String, isThin : Boolean) = {
+  def assumeAtSelection(thinHint : Boolean) = 
     for {
       sheet <- activeSheet
-      emptyCell <- sheet.selectionBase
+      selectedCell <- sheet.selectionBase
     } {
-      if (emptyCell.owner.isShell) {
-        sheet.deselectAll
-        emptyCell.owner.item = Neutral(Some(Variable(id, isThin)))
+      if (sheet.selectionIsShell) {
+        val dependencies = selectionDependencies(sheet)
 
-        // To update the highlighting ...
-        sheet.refreshAll
+        val forceThin = 
+          invertibilityLevel match {
+            case None => false
+            case Some(l) => selectedCell.dimension > l
+          }
 
-        val exprCell : NCell[Expression] = emptyCell.owner.getSimpleFramework.toExpressionCell
-        addToEnvironment(exprCell)
+        withAssumptionInfo(dependencies, thinHint, forceThin,
+          (identString, isThin) => {
+            IdentParser(identString) match {
+              case Success(ident, _) => {
 
-        sheet.selectAsBase(emptyCell)
-      }
-    }
-  }
+                // TODO : Check if identifier is valid
 
-  def fillExposedNook(targetIdent : Identifier, fillerIdent : Identifier) = {
-    for {
-      sheet <- activeSheet
-      nookCell <- sheet.selectionBase
-    } {
-      val complex = sheet.complex
+                if (! environmentContains(ident.toString)) {
+                  sheet.deselectAll
+                  selectedCell.item = Neutral(Some(Variable(ident, isThin)))
+                  environment += selectedCell.getSimpleFramework.toExpressionCell
+                  sheet.selectAsBase(selectedCell)
+                } else {
+                  println("Duplicate identifier.")
+                }
+              }
 
-      sheet.deselectAll
-
-      val filler = Filler(fillerIdent)
-      nookCell.owner.item = Neutral(Some(filler))
-
-      if (nookCell.owner.isOutNook) {
-        val targetCell = nookCell.owner.target.get
-        val targetIsThin = (true /: (nookCell.owner.sources.get map (_.isThin))) (_&&_)
-
-        targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
-      } else {
-        val targetCell = nookCell.owner.emptySources.head
-        val targetIsThin = nookCell.owner.target.get.isThin
-        
-        targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
-        addToEnvironment(targetCell.getSimpleFramework.toExpressionCell)
-      }
-
-      addToEnvironment(nookCell.owner.getSimpleFramework.toExpressionCell)
-    }
-  }
-
-  def fillFromEnvironment(emptyCell : GalleryType#GalleryCell, expr : NCell[Expression]) = {
-    for {
-      sheet <- activeSheet
-    } {
-      val complex = sheet.complex
-
-      emptyCell.owner.skeleton.asInstanceOf[NCell[complex.ExpressionBuilderCell]]
-        .zip(expr) match {
-        case None => println("Not compatible. Zip failed.")
-        case Some(zippedTree) => {
-
-          var itFits = true
-
-          zippedTree map (pr => {
-            val (eCell, e) = pr
-
-            eCell.item match {
-              case Neutral(None) => ()
-              case Neutral(Some(f)) => if (itFits) { itFits &&= (e == f) } else ()
-              case _ => itFits = false
+              case _ : NoSuccess => println("Identifier parse failed.")
             }
           })
+      } else {
+        println("Cannot assume here: selection is not a shell.")
+      }
+    }
 
-          if (itFits) {
-            sheet.deselectAll
+  def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit
+  def withFillerIdentifier(handler : String => Unit) : Unit
+
+  def fillAtSelection = 
+    for {
+      sheet <- activeSheet
+      fillerCell <- sheet.selectionBase
+    } {
+      val dependencies = selectionDependencies(sheet)
+
+      withFillerIdentifiers(dependencies,
+        (targetString, fillerString) => {
+
+          IdentParser(targetString) match {
+            case Success(targetIdent, _) => {
+              IdentParser(fillerString) match {
+                case Success(fillerIdent, _) => {
+
+                  // TODO : Check if identifiers are valid in the current context
+
+                  //             def validRef(ident : IdentToken) : Boolean =
+                  //               ident match {
+                  //                 case LiteralToken(_) => true
+                  //                 case ReferenceToken(id) => freeVars exists (expr => expr.value.id == id)
+                  //               }
+
+                  //             val validRefs = (true /: ((composeIdent.tokens ++ fillerIdent.tokens) map (validRef(_)))) (_&&_)
+
+                  //             if (validRefs) {
+                  //               // BUG: Does not check that the two are not given the *same* name ... and
+                  //               // BUG: We shouldn't allow the empty string.
+
+                  //               if (wksp.environmentContains(composeIdent.toString) ||
+                  //                 wksp.environmentContains(fillerIdent.toString)) { println("Duplicate identifier.") ; None }
+                  //               else Some(composeIdent, fillerIdent)
+                  //             } else { println("Missing a variable.") ; None }
+                  //           }
+
+                  sheet.deselectAll
+
+                  val filler = Filler(fillerIdent)
+                  fillerCell.item = Neutral(Some(filler))
+
+                  if (fillerCell.isOutNook) {
+                    val targetCell = fillerCell.target.get
+                    val targetIsThin = (true /: (fillerCell.sources.get map (_.isThin))) (_&&_)
+
+                    targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
+                    environment += targetCell.getSimpleFramework.toExpressionCell
+                  } else {
+                    val targetCell = fillerCell.emptySources.head
+                    val targetIsThin = fillerCell.target.get.isThin
+                    
+                    targetCell.item = Neutral(Some(FillerFace(targetIdent, filler.id, targetIsThin)))
+                    environment += targetCell.getSimpleFramework.toExpressionCell
+                  }
+
+                  environment += fillerCell.getSimpleFramework.toExpressionCell
+
+                }
+                case _ : NoSuccess => println("Filler parse failed.")
+              }
+            }
+            case _ : NoSuccess => println("Compose parse failed.")
+          }
+        })
+    }
+
+  def expressionToSelection = 
+    for {
+      sheet <- activeSheet
+      selectedCell <- sheet.selectionBase
+      selectedExpr <- activeExpression
+    } {
+      if (sheet.selectionIsUnique) {
+        selectedCell.skeleton.zip(selectedExpr) match {
+          case None => println("Not compatible. Zip failed.")
+          case Some(zippedTree) => {
+
+            var itFits = true
 
             zippedTree map (pr => {
               val (eCell, e) = pr
 
-              // This is overkill
-              eCell.item = Neutral(Some(e))
+              eCell.item match {
+                case Neutral(None) => ()
+                case Neutral(Some(f)) => if (itFits) { itFits &&= (e == f) } else ()
+                case _ => itFits = false
+              }
             })
-          } else {
-            println("Cell does not fit.")
+
+            if (itFits) {
+              sheet.deselectAll
+
+              zippedTree map (pr => {
+                val (eCell, e) = pr
+
+                // This is overkill
+                eCell.item = Neutral(Some(e))
+              })
+            } else {
+              println("Cell does not fit.")
+            }
           }
         }
       }
-
-      // Overkill!!!
-      sheet.refreshAll
     }
+
+  def selectionFreeVariables(sheet : ExpressionWorksheet) : Seq[NCell[Expression]] = {
+    val freeVars = HashMap.empty[String, NCell[Expression]]
+
+    sheet.selectedCells foreach (cell => {
+      collectFreeVars(cell.getSimpleFramework, freeVars)
+    })
+
+    val values = freeVars.values
+
+    environment filter (expr => values exists (e => e.value.id == expr.value.id))
+  }
+
+  def selectionDependencies(sheet : ExpressionWorksheet) : Seq[NCell[Expression]] = {
+    val deps = HashMap.empty[String, NCell[Expression]]
+
+    sheet.selectedCells foreach (cell => {
+      collectFreeVars(cell.getSimpleFramework, deps)
+    })
+
+    val values = deps.values
+
+    environment filter (expr => values exists (e => e.value.id == expr.value.id))
   }
 
 }

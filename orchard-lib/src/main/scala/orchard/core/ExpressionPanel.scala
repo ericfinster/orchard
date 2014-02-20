@@ -9,6 +9,6 @@ package orchard.core
 
 trait ExpressionPanel extends RenderingPanel[Polarity[Option[Expression]]] {
 
-  override type ComplexType <: ExpressionBuilderComplex
+  override type ComplexType <: ExpressionWorksheet
 
 }

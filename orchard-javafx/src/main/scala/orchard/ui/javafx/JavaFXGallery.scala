@@ -22,7 +22,6 @@ trait JavaFXGallery[A] extends Gallery[A] {
 
   def panels : List[PanelType] = myPanels.toList
   def newPanel(i : Int) : PanelType
-
   def appendPanel(panel : PanelType) = myPanels += panel
 
   def initialize = {

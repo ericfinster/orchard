@@ -13,7 +13,9 @@ import scala.collection.mutable.Buffer
 
 trait Environment {
 
-  def environment : Seq[NCell[Expression]]
+  type EnvironmentSeqType <: Seq[NCell[Expression]]
+
+  def environment : EnvironmentSeqType
 
   def environmentContains(id : String) : Boolean = {
     environment exists (expr => expr.value.id == id)

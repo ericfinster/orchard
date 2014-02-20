@@ -10,6 +10,7 @@ package orchard.core
 trait Gallery[A] extends EventConduit[CellEvent] {
 
   type PanelType <: RenderingPanel[A]
+  type GalleryCell = PanelType#CellType
 
   def complex : PanelType#ComplexType
   def panels : List[PanelType]

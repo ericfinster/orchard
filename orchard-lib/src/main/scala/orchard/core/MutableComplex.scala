@@ -174,7 +174,7 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
 
     def insertComposite(compositeValue : A, universalValue : A,
                         location : RoseZipper[CellType, Int],
-                        selector : CellType => Boolean) : Unit = {
+                        selector : CellType => Boolean) : (CellType, CellType) = {
 
       // This is the main routine for modifying a mutable cell by inserting
       // a composite and its universal cell.
@@ -294,6 +294,8 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
       })
 
       thisComplex.emit(ChangeEvents.CompositeInsertionEvent(compositeCell, universalCell))
+
+      (compositeCell, universalCell)
     }
 
     // After insertion of a new cell, the cell state variables are left in a dirty state. This

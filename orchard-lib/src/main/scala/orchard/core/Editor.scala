@@ -8,5 +8,7 @@
 package orchard.core
 
 trait Editor {
+
+
 }
 
