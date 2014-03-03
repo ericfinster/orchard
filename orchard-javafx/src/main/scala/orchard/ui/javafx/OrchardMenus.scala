@@ -13,9 +13,7 @@ import orchard.ui.javafx.controls.MenuItem
 
 import orchard.ui.javafx.controls.PopupManager
 
-trait OrchardMenus { 
-
-  implicit def pm : PopupManager
+trait OrchardMenus { self : JavaFXEditor =>
 
   val openItem = new MenuItem {
     text = "Open"
@@ -62,9 +60,14 @@ trait OrchardMenus {
     onAction = onSpawnInShell
   }
 
+  val satisfyGoalItem = new MenuItem {
+    text = "Satisfy Goal"
+    onAction = onSatisfyGoal
+  }
+
   val substitutionMenu = new Menu {
     text = "Substitution"
-    items ++= List(spawnInShellItem)
+    items ++= List(spawnInShellItem, satisfyGoalItem)
   }
 
   val extrudeItem = new MenuItem {
@@ -120,6 +123,7 @@ trait OrchardMenus {
   def onCompleteDefinition : Unit
 
   def onSpawnInShell : Unit
+  def onSatisfyGoal : Unit
 
   def onExtrude : Unit 
   def onDrop : Unit

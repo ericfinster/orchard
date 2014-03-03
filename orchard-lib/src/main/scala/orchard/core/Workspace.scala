@@ -14,11 +14,17 @@ import scala.collection.mutable.Buffer
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait Workspace extends Environment {
+import Environment._
 
-  override type EnvironmentSeqType <: Buffer[NCell[Expression]]
+trait Workspace {
+
+  type EnvironmentSeqType <: Buffer[NCell[Expression]]
 
   def name : String
+
+  def environment : EnvironmentSeqType
+
+  def editor : Editor
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]
@@ -29,14 +35,6 @@ trait Workspace extends Environment {
   def newSheet : Unit 
   def activeSheet : Option[ExpressionWorksheet]
   def activeExpression : Option[NCell[Expression]]
-
-  def withAssumptionInfo(deps : Seq[NCell[Expression]],
-                         thinHint : Boolean,
-                         forceThin : Boolean,
-                         handler : (String, Boolean) => Unit) : Unit 
-
-  def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit
-  def withFillerIdentifier(deps : Seq[NCell[Expression]], handler : String => Unit) : Unit
 
   def assumeAtSelection(thinHint : Boolean) = 
     for {
@@ -52,7 +50,7 @@ trait Workspace extends Environment {
             case Some(l) => selectedCell.dimension > l
           }
 
-        withAssumptionInfo(dependencies, thinHint, forceThin,
+        editor.withAssumptionInfo(dependencies, thinHint, forceThin,
           (identString, isThin) => {
             IdentParser(identString) match {
               case Success(ident, _) => {
@@ -60,7 +58,7 @@ trait Workspace extends Environment {
                 // TODO : Check if identifier is valid (including whether they
                 //        are empty or equal!)
 
-                if (! environmentContains(ident.toString)) {
+                if (! environment.contains(ident.toString)) {
                   sheet.deselectAll
                   selectedCell.item = Neutral(Some(Variable(ident, isThin)))
                   environment += selectedCell.getSimpleFramework.toExpressionCell
@@ -86,7 +84,7 @@ trait Workspace extends Environment {
       if (sheet.selectionIsComposable) {
         val dependencies = selectionDependencies(sheet)
 
-        withFillerIdentifiers(dependencies,
+        editor.withFillerIdentifiers(dependencies,
           (targetString, fillerString) => {
 
             IdentParser(targetString) match {
@@ -139,14 +137,14 @@ trait Workspace extends Environment {
       if (isUnicityFillable) {
         val dependencies = selectionDependencies(sheet)
 
-        withFillerIdentifier(dependencies,
+        editor.withFillerIdentifier(dependencies,
           (fillerString => {
             IdentParser(fillerString) match {
               case Success(fillerIdent, _) => {
 
                 // TODO : Check identifier is valid
 
-                if (! environmentContains(fillerIdent.toString)) {
+                if (! environment.contains(fillerIdent.toString)) {
                   sheet.deselectAll
                   fillerCell.item = Neutral(Some(Variable(fillerIdent, true)))  // Uh ... need a new expression type here
                   environment += fillerCell.getSimpleFramework.toExpressionCell
@@ -163,7 +161,7 @@ trait Workspace extends Environment {
       } else if (fillerCell.isExposedNook) {
         val dependencies = selectionDependencies(sheet)
 
-        withFillerIdentifiers(dependencies,
+        editor.withFillerIdentifiers(dependencies,
           (targetString, fillerString) => {
 
             IdentParser(targetString) match {
@@ -232,7 +230,7 @@ trait Workspace extends Environment {
       if (sheet.selectionIsDroppable) {
         val dependencies = selectionDependencies(sheet)
 
-        withFillerIdentifiers(dependencies,
+        editor.withFillerIdentifiers(dependencies,
           (targetString, fillerString) => {
 
             IdentParser(targetString) match {
@@ -303,28 +301,114 @@ trait Workspace extends Environment {
       }
     }
 
-  def selectionFreeVariables(sheet : ExpressionWorksheet) : Seq[NCell[Expression]] = {
-    val freeVars = HashMap.empty[String, NCell[Expression]]
-
-    sheet.selectedCells foreach (cell => {
-      collectFreeVars(cell.getSimpleFramework, freeVars)
-    })
-
-    val values = freeVars.values
-
-    environment filter (expr => values exists (e => e.value.id == expr.value.id))
-  }
-
   def selectionDependencies(sheet : ExpressionWorksheet) : Seq[NCell[Expression]] = {
-    val deps = HashMap.empty[String, NCell[Expression]]
+    val ds = Buffer.empty[NCell[Expression]]
 
     sheet.selectedCells foreach (cell => {
-      collectFreeVars(cell.getSimpleFramework, deps)
+      cell.item match {
+        case Neutral(Some(ex @ _)) => 
+          environment.deps(ex.id, ds)
+        case Neutral(None) => {
+          val framework = cell.getSimpleFramework
+
+          framework.topCell.fullFaces foreach (
+            _.item match {
+              case Some(e) => {
+                environment.deps(e.id, ds)
+                if (! ds.contains(e.id)) { ds += environment.lookup(e.id).get }
+              }
+              case None => ()
+            }
+          )
+        }
+        case _ => ()
+      }
     })
 
-    val values = deps.values
-
-    environment filter (expr => values exists (e => e.value.id == expr.value.id))
+    ds
   }
 
+  def selectionFreeVariables(sheet : ExpressionWorksheet) : Seq[NCell[Expression]] = {
+    selectionDependencies(sheet) filter (expr =>
+      expr.value match {
+        case Variable(_, _) => true
+        case _ => false
+      }
+    )
+  }
+
+  trait CheckableFramework[A] extends ExpressionFramework[A] {
+
+    type CellType <: CheckableFrameworkCell
+
+    trait CheckableFrameworkCell extends ExpressionFrameworkCell { thisCell : CellType =>
+
+      def isUnicityFillable : Boolean = 
+        unicityLevel match {
+          case None => false
+          case Some(l) => dimension > l
+        }
+
+      def isFillable : Boolean = 
+        if (isUnicityFillable) true else isExposedNook
+
+      // For an exposed nook, determine if the filler face is thin
+      def isThinFillerFace : Boolean = {
+        val thinByInvertibility =
+          invertibilityLevel match {
+            case None => false
+            case Some(l) => (dimension - 1) > l
+          }
+
+        if (isOutNook) {
+          (true /: (sources.get map (_.isThin))) (_&&_) || thinByInvertibility
+        } else {
+          target.get.isThin || thinByInvertibility
+        }
+      }
+
+      def getFramework : Framework = 
+        new Framework(skeleton map (_.exprItem))
+    }
+
+  }
+
+  class Framework(seed : NCell[Option[Expression]]) 
+      extends AbstractFramework(seed) 
+      with CheckableFramework[Option[Expression]] {
+
+    type CellType = FrameworkCell
+
+    def newCell(item : Option[Expression]) = new FrameworkCell(item)
+
+    class FrameworkCell(item : Option[Expression]) 
+        extends AbstractFrameworkCell(item) 
+        with CheckableFrameworkCell {
+
+      // From here we can implement methods which check whether or not a given cell is fillable!!
+
+      // And secondly, we should be able to implement much better dependency tracking, since now
+      // the cells themselves have access to both the environment and the filling settings.
+
+    }
+  }
+
+  class Worksheet(seed : NCell[Polarity[Option[Expression]]]) 
+      extends AbstractExpressionWorksheet(seed) 
+      with CheckableFramework[Polarity[Option[Expression]]] {
+
+    type CellType = WorksheetCell
+
+    def newCell(item : Polarity[Option[Expression]]) = new WorksheetCell(item)
+
+    def selectionDependencies : Seq[NCell[Expression]] = ???
+    def selectionFreeVariables : Seq[NCell[Expression]] = ???
+
+    class WorksheetCell(item : Polarity[Option[Expression]]) 
+        extends AbstractExpressionWorksheetCell(item) 
+        with CheckableFrameworkCell {
+
+    }
+
+  }
 }

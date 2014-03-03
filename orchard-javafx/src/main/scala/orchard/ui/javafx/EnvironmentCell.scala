@@ -44,6 +44,7 @@ class EnvironmentCell extends jfxsc.ListCell[NCell[Expression]] {
             setStyleType("orch-list-cell-filler-face")
           }
         }
+        case UnicityFiller(_) => setStyleType("orch-list-cell-ufiller")
       }
 
       setText(expr.toString)

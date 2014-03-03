@@ -11,97 +11,77 @@ import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
 
-trait Environment {
+object Environment {
 
-  type EnvironmentSeqType <: Seq[NCell[Expression]]
+  implicit class EnvironmentOps(env : Seq[NCell[Expression]]) {
 
-  def environment : EnvironmentSeqType
+    def contains(id : String) : Boolean = 
+      env exists (expr => expr.value.id == id)
 
-  def environmentContains(id : String) : Boolean = {
-    environment exists (expr => expr.value.id == id)
-  }
+    def lookup(id : String) : Option[NCell[Expression]] = 
+      env find (expr => expr.value.id == id)
 
-  def getFromEnvironment(id : String) : Option[NCell[Expression]] = {
-    environment find (expr => expr.value.id == id)
-  }
+    def vars : Seq[NCell[Expression]] = 
+      env filter (expr => {
+        expr.value match {
+          case Variable(_, _) => true
+          case _ => false
+        }
+      })
 
-  def environmentVariables : Seq[NCell[Expression]] = 
-    environment filter (expr => {
-      expr.value match {
-        case Variable(_, _) => true
-        case _ => false
+    def fills : Seq[NCell[Expression]] = 
+      env filter (expr => {
+        expr.value match {
+          case Filler(_) => true
+          case UnicityFiller(_) => true
+          case _ => false
+        }
+      })
+
+    def deps(id : String) : Option[Seq[NCell[Expression]]] = 
+      for {
+        expr <- lookup(id)
+      } yield {
+        val ds = Buffer.empty[NCell[Expression]]
+        deps(id, ds)
+        env filter (expr => ds.contains(expr.value.id))
       }
-    })
 
-  // Please look at these routines again ... I know they could be done much better ...
+    def deps(id : String, ds : Buffer[NCell[Expression]]) : Unit = 
+      for {
+        expr <- lookup(id)
+      } {
+        expr.value match {
+          case FillerFace(_, filler, _) => deps(filler, ds)
+          case _ => {
 
-  def dependencies(framework : SimpleFramework) : Map[String, NCell[Expression]] = {
-    val deps = HashMap.empty[String, NCell[Expression]]
-    collectDependencies(framework, deps)
-    deps
+            // As it stands, objects cannot have dependencies.  Is this okay?
+            // You may run into problems later with stability ....
+            if (expr.dimension.toInt > 0) {
+              val framework = SimpleFramework(expr)
+              val base = framework(expr.dimension.toInt - 1)
+
+              base foreachCell (cell => {
+                cell.item match {
+                  case Some(FillerFace(ident, filler, _)) => {
+                    if (filler != id) {
+                      env.deps(ident.toString, ds)
+                      if (! ds.contains(ident.toString)) { ds += env.lookup(ident.toString).get }
+                    } 
+                  }
+                  case Some(ex @ _) => {
+                    env.deps(ex.id, ds)
+                    if (! ds.contains(ex.id)) { ds += env.lookup(ex.id).get }
+                  }
+                }
+              })
+            }
+          }
+        }
+      }
+
+    def depVars(id : String) : Option[Seq[NCell[Expression]]] = 
+      for { ds <- deps(id) } yield ds.vars
   }
 
-  def freeVariables(framework : SimpleFramework) : Map[String, NCell[Expression]] = {
-    val freeVars = HashMap.empty[String, NCell[Expression]]
-    collectFreeVars(framework, freeVars)
-    freeVars
-  }
-
-  def collectDependencies(framework : SimpleFramework, deps : Map[String, NCell[Expression]]) : Unit = {
-    // Save the top item so that the top cell does not appear as a dependency
-    val topItem = framework.topCell.item
-    framework.topCell.item = None
-
-    framework.variables foreach (v => {
-      if (! deps.isDefinedAt(v.value.id)) { deps(v.value.id) = v }
-    })
-
-    framework.fillers foreach (f => {
-      if (! deps.isDefinedAt(f.value.id)) { deps(f.value.id) = f }
-    })
-
-    // This is the complicated step
-    framework.fillerFaces foreach (ff => {
-      val face = ff.value.asInstanceOf[FillerFace]
-      val fillerExpr = getFromEnvironment(face.filler).get
-      val fillerFramework = SimpleFramework(fillerExpr)
-
-      if (! deps.isDefinedAt(ff.value.id)) { deps(ff.value.id) = ff }
-
-      fillerFramework.topCell.target.get.foreachCell (cell => {
-        cell.item foreach (e => {
-          if (e.id == face.id) { cell.item = None }
-        })
-      })
-
-      collectDependencies(fillerFramework, deps)
-    })
-
-    framework.topCell.item = topItem
-  }
-
-  def collectFreeVars(framework : SimpleFramework, freeVars : HashMap[String, NCell[Expression]]) : Unit = {
-    // Grab the obvious free variables from the framework
-    framework.variables foreach (v => {
-      if (! freeVars.isDefinedAt(v.value.id)) { freeVars(v.value.id) = v }
-    })
-
-    // Hmm. We need to avoid hitting the same filler face again.  We can do this
-    // as we did before by blanking out the top cell and it's filler
-
-    // We don't care about the fillers, only the faces
-    framework.fillerFaces foreach (ff => {
-      val face = ff.value.asInstanceOf[FillerFace]
-      val fillerExpr = getFromEnvironment(face.filler).get
-      val fillerFramework = SimpleFramework(fillerExpr)
-
-      fillerFramework.topCell.target.get.foreachCell (cell => {
-        cell.item foreach (e => {
-          if (e.id == face.id) { cell.item = None }
-        })
-      })
-
-      collectFreeVars(fillerFramework, freeVars)
-    })
-  }
 }

@@ -33,6 +33,13 @@ case class Filler(val ident : Identifier) extends Expression {
   def id : String = ident.toString
 }
 
+case class UnicityFiller(val ident : Identifier) extends Expression {
+  override def toString = id
+
+  def isThin = true
+  def id : String = ident.toString
+}
+
 case class Identifier(val tokens : List[IdentToken]) {
   override def toString = (tokens map (_.value)).mkString
 }

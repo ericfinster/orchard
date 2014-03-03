@@ -147,6 +147,9 @@ object XmlSerializable {
           case Filler(ident) => {
             <filler>{identifierSerializable.toXML(ident)}</filler>
           }
+          case UnicityFiller(ident) => {
+            <ufiller>{identifierSerializable.toXML(ident)}</ufiller>
+          }
         }
 
       def fromXML(node : xml.Node) =
@@ -166,6 +169,10 @@ object XmlSerializable {
             val ident = identifierSerializable.fromXML(identContent)
             Filler(ident)
           }
+          case uf @ <ufiller>{identContent}</ufiller> => {
+            val ident = identifierSerializable.fromXML(identContent)
+            UnicityFiller(ident)
+          }
         }
     }
 
@@ -181,7 +188,6 @@ object XmlSerializable {
           slevel={optToInt(defn.stabilityLevel).toString}
           ilevel={optToInt(defn.invertibilityLevel).toString}
           ulevel={optToInt(defn.unicityLevel).toString}
-          result={defn.result.value.id}
         >{
           defn.environment map (cell => {
             cellSerializable[Expression].toXML(cell)
@@ -203,11 +209,8 @@ object XmlSerializable {
             val stabilityLevel : Option[Int] = intToOpt((defXml \ "@slevel").text.toInt)
             val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
             val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
-            val resultName : String = (defXml \ "@result").text
-            val result : NCell[Expression] = 
-              (env find (expr => expr.value.id == resultName)).get
 
-            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, result, env)
+            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, env)
           }
         }
       }

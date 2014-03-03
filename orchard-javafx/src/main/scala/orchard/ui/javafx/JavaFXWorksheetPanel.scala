@@ -118,6 +118,7 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
         case Neutral(Some(Filler(_))) => setCellStyle("expr-cell-filler")
         case Neutral(Some(FillerFace(_, _, false))) => setCellStyle("expr-cell-filler-face")
         case Neutral(Some(FillerFace(_, _, true))) => setCellStyle("expr-cell-filler-face-thin")
+        case Neutral(Some(UnicityFiller(_))) => setCellStyle("expr-cell-ufiller")
       }
 
     assignStyle
@@ -142,6 +143,7 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
         case Neutral(Some(Filler(_))) => setCellHoveredStyle("expr-cell-filler-hovered")
         case Neutral(Some(FillerFace(_, _, false))) => setCellHoveredStyle("expr-cell-filler-face-hovered")
         case Neutral(Some(FillerFace(_, _, true))) => setCellHoveredStyle("expr-cell-filler-face-thin-hovered")
+        case Neutral(Some(UnicityFiller(_))) => setCellHoveredStyle("expr-cell-ufiller-hovered")
       }
     }
 
@@ -161,6 +163,7 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
         case Neutral(Some(Filler(_))) => setCellSelectedStyle("expr-cell-filler-selected")
         case Neutral(Some(FillerFace(_, _, false))) => setCellSelectedStyle("expr-cell-filler-face-selected")
         case Neutral(Some(FillerFace(_, _, true))) => setCellSelectedStyle("expr-cell-filler-face-thin-selected")
+        case Neutral(Some(UnicityFiller(_))) => setCellSelectedStyle("expr-cell-ufiller-selected")
       }
     }
 
