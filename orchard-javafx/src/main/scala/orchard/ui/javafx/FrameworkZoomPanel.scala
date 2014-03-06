@@ -16,8 +16,8 @@ class FrameworkZoomPanel(val complex : SimpleFramework, baseIndex : Int) extends
 
   override type ComplexType = SimpleFramework
 
-  class FrameworkZoomCell(owner : complex.CellType) extends FrameworkCell(owner)
-  class FrameworkZoomEdge(owner : complex.CellType) extends FrameworkEdge(owner)
+  class FrameworkZoomCell(val owner : complex.CellType) extends FrameworkCell
+  class FrameworkZoomEdge(val owner : complex.CellType) extends FrameworkEdge
 
   def newCell(owner : complex.CellType) = { 
     val frameworkCell = new FrameworkZoomCell(owner)

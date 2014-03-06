@@ -94,7 +94,7 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
   // CELL AND EDGE IMPLEMENTATION
   //
 
-  abstract class JavaFXCell(val owner : complex.CellType) extends Region with VisualCell { thisCell : CellType =>
+  abstract class JavaFXCell extends Region with VisualCell { thisCell : CellType =>
 
     //============================================================================================
     // UI INITIALIZATION
@@ -185,7 +185,7 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
     override def toString = "Cell(" ++ item.toString ++ ")@" ++ hashCode.toString
   }
 
-  abstract class JavaFXEdge(val owner : complex.CellType) extends Path with VisualEdge { thisEdge : EdgeType =>
+  abstract class JavaFXEdge extends Path with VisualEdge { thisEdge : EdgeType =>
 
     //============================================================================================
     // UI INITIALIZATION

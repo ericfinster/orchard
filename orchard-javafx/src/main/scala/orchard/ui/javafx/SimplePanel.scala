@@ -19,7 +19,7 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
 
   type ComplexType = SimpleMutableComplex[A]
 
-  class SimpleCell(owner : complex.SimpleMutableCell) extends JavaFXCell(owner) {
+  class SimpleCell(val owner : complex.SimpleMutableCell) extends JavaFXCell {
 
     def renderLabel : Node = { 
       val lbl = new Text(item.toString)
@@ -41,7 +41,7 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
     override def toString = "Cell(" ++ item.toString ++ ")@" ++ hashCode.toString
   }
 
-  class SimpleEdge(owner : complex.SimpleMutableCell) extends JavaFXEdge(owner)
+  class SimpleEdge(val owner : complex.SimpleMutableCell) extends JavaFXEdge
 
   def newCell(owner : complex.SimpleMutableCell) : SimpleCell = {
     val simpleCell = new SimpleCell(owner)

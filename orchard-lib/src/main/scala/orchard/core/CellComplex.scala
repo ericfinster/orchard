@@ -28,6 +28,10 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     baseCells foreach (base => base foreachCell action)
   }
 
+  def forAllCells(startDim : Int, endDim : Int, action : CellType => Unit) = {
+    baseCells.slice(startDim, endDim) foreach (base => base foreachCell action)
+  }
+
   def foreachProperFace(action : CellType => Unit) : Unit = {
     baseCells.slice(0, baseCells.length - 1) foreach (base => base foreachCell action)
   }

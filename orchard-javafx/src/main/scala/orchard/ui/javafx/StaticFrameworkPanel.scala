@@ -16,8 +16,8 @@ class StaticFrameworkPanel(val complex : SimpleFramework, baseIndex : Int) exten
 
   override type ComplexType = SimpleFramework
 
-  class StaticFrameworkCell(owner : complex.CellType) extends FrameworkCell(owner)
-  class StaticFrameworkEdge(owner : complex.CellType) extends FrameworkEdge(owner)
+  class StaticFrameworkCell(val owner : complex.CellType) extends FrameworkCell
+  class StaticFrameworkEdge(val owner : complex.CellType) extends FrameworkEdge
 
   def newCell(owner : complex.CellType) = { 
     val frameworkCell = new StaticFrameworkCell(owner)

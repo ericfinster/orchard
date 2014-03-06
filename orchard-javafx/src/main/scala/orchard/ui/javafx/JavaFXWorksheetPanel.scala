@@ -18,15 +18,14 @@ import javafx.{scene => jfxs}
 
 import orchard.core._
 
-class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
+abstract class JavaFXWorksheetPanel
     extends ZoomPanel[Polarity[Option[Expression]]] 
-    with MutablePanel[Polarity[Option[Expression]]] 
-    with ExpressionPanel { thisPanel =>
+    with MutablePanel[Polarity[Option[Expression]]] { thisPanel =>
 
-  type CellType = JavaFXWorksheetCell
-  type EdgeType = JavaFXWorksheetEdge
+  type CellType <: JavaFXWorksheetCell
+  type EdgeType <: JavaFXWorksheetEdge
 
-  type ComplexType = ExpressionWorksheet
+  type ComplexType <: Workspace#Worksheet
   type LabelType = Polarity[Option[Expression]]
 
   override def refresh = {
@@ -34,7 +33,7 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
     baseCell foreachCell (cell => cell.assignStyle)
   }
 
-  class JavaFXWorksheetCell(owner : complex.ExpressionWorksheetCell) extends JavaFXCell(owner) with MutablePanelCell {
+  abstract class JavaFXWorksheetCell extends JavaFXCell with MutablePanelCell { thisCell : CellType =>
 
     //============================================================================================
     // INITIALIZATION
@@ -180,9 +179,10 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
       ev match {
 
         case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
-          // This fixes the label, but we pass the even on to refresh the gallery
-          // since we will need to recalculate the nook highlighting
           renderCell
+
+          // The rest of the gallery may need to be updated as well, so pass
+          // this even along ...
           super.onEventEmitted(ev)
         }
 
@@ -193,7 +193,7 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
     }
   }
 
-  class JavaFXWorksheetEdge(owner : complex.ExpressionWorksheetCell) extends JavaFXEdge(owner) with MutablePanelEdge {
+  abstract class JavaFXWorksheetEdge extends JavaFXEdge with MutablePanelEdge { thisEdge : EdgeType => 
 
     override def doHover : Unit = setStroke(Color.TOMATO)
     override def doSelect : Unit = setStroke(Color.TOMATO)
@@ -201,28 +201,5 @@ class JavaFXWorksheetPanel(val complex : ExpressionWorksheet, baseIndex : Int)
     override def doDeselect : Unit = setStroke(Color.BLACK)
     
   }
-
-  def newCell(owner : complex.ExpressionWorksheetCell) : JavaFXWorksheetCell = { 
-    val cell = new JavaFXWorksheetCell(owner)
-    owner.registerPanelCell(thisPanel)(cell)
-    reactTo(cell) 
-    cell 
-  }
-  
-  def newEdge(owner : complex.ExpressionWorksheetCell) : JavaFXWorksheetEdge = { 
-    val edge = new JavaFXWorksheetEdge(owner) 
-    owner.registerPanelEdge(thisPanel)(edge)
-    reactTo(edge) 
-    edge 
-  }
-
-  //============================================================================================
-  // INITIALIZATION
-  //
-
-  var baseCell : JavaFXWorksheetCell = newCell(complex.baseCells(baseIndex))
-
-  refreshPanelData
-  initializeChildren
 
 }

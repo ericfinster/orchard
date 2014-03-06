@@ -107,7 +107,17 @@ object OrchardEditor extends PopupManager(new VBox)
     val item = goalsListView.getSelectionModel.selectedItem()
 
     if (item != null) {
-      // setPreview(item)
+      for {
+        wksp <- activeWorkspace
+      } {
+        if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+          val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
+          val gallery = new substWksp.GoalGallery(item)
+          gallery.renderAll
+          previewPane.content = gallery
+          previewPane.requestLayout
+        }
+      }
     }
   }
 
@@ -120,10 +130,6 @@ object OrchardEditor extends PopupManager(new VBox)
     panes = List(environmentPane, goalsPane)
     expandedPane = environmentPane
   }
-
-  sealed trait NavigationTreeItem
-  case class DefnWorkspaceItem(val wksp : JavaFXDefinitionWorkspace) extends NavigationTreeItem
-  case class SubstWorkspaceItem(val wksp : JavaFXSubstitutionWorkspace) extends NavigationTreeItem
 
   val navigationTreeRoot = new TreeItem[NavigationTreeItem]
   val navigationTreeView = 
@@ -310,91 +316,6 @@ object OrchardEditor extends PopupManager(new VBox)
   mainVBox.content.addAll(menuBar, horizontalSplit)
 
   //============================================================================================
-  // WORKSPACE DEFINITIONS
-  //
-
-  trait JavaFXWorkspace extends Workspace {
-
-    type EnvironmentSeqType = ObservableBuffer[NCell[Expression]]
-
-    def editor = thisEditor
-
-    def treeItem : TreeItem[NavigationTreeItem]
-
-    var sheetCount : Int = 1
-
-    val sheetTabPane = new TabPane {
-      side = Side.TOP
-    }
-
-    val environment = ObservableBuffer.empty[NCell[Expression]]
-
-    var activeGallery : Option[JavaFXWorksheetGallery] = None
-    var activeExpression : Option[NCell[Expression]] = None
-
-    def activeSheet : Option[ExpressionWorksheet] =
-      for {
-        gallery <- activeGallery
-      } yield gallery.complex
-
-    def newSheet = newSheet(Object(None))
-
-    def newSheet(seed : NCell[Option[Expression]]) : Unit = {
-      val gallery = new JavaFXWorksheetGallery(CardinalComplex(seed))
-
-      val tab = new Tab {
-        text = "Sheet " ++ sheetCount.toString
-        content = gallery
-
-        onClosed = () => { 
-          sheets -= gallery.complex
-        }
-
-        onSelectionChanged = () => { 
-          if (selected())
-            activeGallery = Some(gallery)
-        }
-      }
-
-      sheetTabPane += tab
-      sheetTabPane.getSelectionModel.select(tab)
-      sheets += gallery.complex
-      sheetCount += 1
-      gallery.refreshAll
-    }
-  }
-
-  class JavaFXDefinitionWorkspace(
-    val name : String,
-    val stabilityLevel : Option[Int],
-    val invertibilityLevel : Option[Int],
-    val unicityLevel : Option[Int]
-  ) extends DefinitionWorkspace with JavaFXWorkspace { thisWksp =>
-
-    val treeItem = new TreeItem[NavigationTreeItem] {
-      value = DefnWorkspaceItem(thisWksp)
-    }
-
-  }
-
-  class JavaFXSubstitutionWorkspace(
-    val name : String,
-    val parentWorkspace : Workspace,
-    val defn : Definition,
-    val shell : SimpleFramework
-  ) extends SubstitutionWorkspace with JavaFXWorkspace { thisWksp =>
-
-    val treeItem = new TreeItem[NavigationTreeItem] {
-      value = SubstWorkspaceItem(thisWksp)
-    }
-
-    def stabilityLevel : Option[Int] = parentWorkspace.stabilityLevel
-    def invertibilityLevel : Option[Int] = parentWorkspace.invertibilityLevel
-    def unicityLevel : Option[Int] = parentWorkspace.unicityLevel
-
-  }
-
-  //============================================================================================
   // EVENTS
   //
 
@@ -457,7 +378,6 @@ object OrchardEditor extends PopupManager(new VBox)
   def onCompleteDefinition = {
     for {
       wksp <- activeWorkspace
-      expr <- wksp.activeExpression
     } {
       if (wksp.isInstanceOf[DefinitionWorkspace]) {
         val defnWksp = wksp.asInstanceOf[DefinitionWorkspace]
@@ -467,7 +387,7 @@ object OrchardEditor extends PopupManager(new VBox)
             defnWksp.stabilityLevel,
             defnWksp.invertibilityLevel,
             defnWksp.unicityLevel,
-            wksp.environment)
+            ListBuffer.empty ++ wksp.environment)
 
         addLocalDefinition(defn)
         closeActiveWorkspace
@@ -490,10 +410,15 @@ object OrchardEditor extends PopupManager(new VBox)
 
         if (selectedDefnItem != null && selectedWkspItem != null) {
           val selectedDefn = findParentDefinition(selectedDefnItem)
-          val selectedShell = cell.getSimpleFramework
+          val selectedShell = {
+            val frmwk = cell.getSimpleFramework
+            frmwk.topCell.item = None
+            frmwk.toCell
+          }
 
           val substWksp = 
-            new JavaFXSubstitutionWorkspace(selectedDefn.name, 
+            new JavaFXSubstitutionWorkspace(thisEditor,
+                                            selectedDefn.name,
                                             wksp,
                                             selectedDefn,
                                             selectedShell)
@@ -515,8 +440,24 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     }
 
-  def onSatisfyGoal = {
-  }
+  def onSatisfyGoal = 
+    for {
+      wksp <- activeWorkspace
+      gallery <- wksp.activeGallery
+      selectedCell <- gallery.complex.selectionBase
+    } {
+      if (gallery.complex.selectionIsUnique) {
+        if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+          if (selectedCell.isComplete) {
+            val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
+            val selectedGoal = goalsListView.getSelectionModel.selectedItem()
+            val selectedExpr = selectedCell.toExpressionCell
+
+            substWksp.satisfyGoal(selectedGoal, selectedExpr)
+          }
+        }
+      }
+    }
 
   def onOpen = {
     fileChooser.setTitle("Open")
@@ -577,14 +518,14 @@ object OrchardEditor extends PopupManager(new VBox)
   def activeGallery : Option[JavaFXWorksheetGallery] = 
     for { wksp <- activeWorkspace ; gallery <- wksp.activeGallery } yield gallery
 
-  def activeSheet : Option[ExpressionWorksheet] = 
+  def activeSheet : Option[Workspace#Worksheet] = 
     for { 
       wksp <- activeWorkspace 
       sheet <- wksp.activeSheet
     } yield sheet
 
   def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
-    val wksp = new JavaFXDefinitionWorkspace(name, stabilityLevel, invertibilityLevel, unicityLevel)
+    val wksp = new JavaFXDefinitionWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
 
     navigationTreeRoot.children += wksp.treeItem
     navigationTreeView.getSelectionModel.select(wksp.treeItem)
@@ -597,8 +538,9 @@ object OrchardEditor extends PopupManager(new VBox)
     environmentListView.items = wksp.environment
 
     goalsListView.items = 
-      if (wksp.isInstanceOf[SubstitutionWorkspace]) {
-        ObservableBuffer(wksp.asInstanceOf[SubstitutionWorkspace].goals)
+      if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+        val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
+        substWksp.goals
       } else
         ObservableBuffer.empty[GoalComplex]
 

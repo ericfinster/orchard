@@ -115,6 +115,18 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
       val theCell = cellMap(cell)
       theCell.sources = topCell.sources
       theCell.target = topCell.target
+
+      // BUG!!! The previous dimensions cells must all have their incoming and outgoing set????
+      if (theCell.isExternal) {
+        for { srcs <- theCell.sources } {
+          srcs foreach (src => src.outgoing = Some(theCell))
+        }
+
+        for { tgt <- theCell.target } {
+          tgt.incoming = Some(theCell)
+        }
+      }
+
     })
 
     // First set the correct base cell for the objects

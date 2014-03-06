@@ -29,7 +29,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
     baseCell foreachCell (cell => cell.assignStyle)
   }
 
-  abstract class FrameworkCell(owner : complex.CellType) extends JavaFXCell(owner) { thisCell : CellType =>
+  abstract class FrameworkCell extends JavaFXCell { thisCell : CellType =>
 
     def isExposedStyle : Boolean = {
       val outgoingIsNook =
@@ -178,7 +178,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
       }
   }
 
-  abstract class FrameworkEdge(owner : complex.CellType) extends JavaFXEdge(owner) { thisEdge : EdgeType =>
+  abstract class FrameworkEdge extends JavaFXEdge { thisEdge : EdgeType =>
 
     override def doHover : Unit = setStroke(Color.TOMATO)
     override def doSelect : Unit = setStroke(Color.TOMATO)

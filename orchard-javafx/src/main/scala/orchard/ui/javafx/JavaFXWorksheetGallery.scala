@@ -9,84 +9,69 @@ package orchard.ui.javafx
 
 import orchard.core._
 
-class JavaFXWorksheetGallery(cmplx : ExpressionWorksheet) extends SpinnerGallery[Polarity[Option[Expression]]] { thisGallery =>
+abstract class JavaFXWorksheetGallery extends SpinnerGallery[Polarity[Option[Expression]]] { thisGallery =>
 
-  def this(seed : NCell[Polarity[Option[Expression]]]) = this(new ExpressionWorksheet(seed))
-  def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
-
-  //============================================================================================
-  // INITIALIZATION
-  //
-
-  type PanelType = JavaFXWorksheetPanel
+  type PanelType <: JavaFXWorksheetPanel
   
-  val complex = cmplx
-
-  def newPanel(i : Int) : JavaFXWorksheetPanel = {
-    val panel = new JavaFXWorksheetPanel(complex, i)
-    reactTo(panel) 
-    panel 
-  }
-
-  initialize
-
   //============================================================================================
   // EVENTS
   //
 
   override def onEventEmitted(ev : CellEvent) = {
+    val cmplx = complex
+
     ev match {
 
       case PanelClicked => {
-        complex.deselectAll
+        cmplx.deselectAll
       }
 
       case ComplexExtended => {
-        this(complex.dimension - 1).refresh
-        val extPanel = newPanel(complex.dimension)
+        this(cmplx.dimension - 1).refresh
+        val extPanel = newPanel(cmplx.dimension)
         appendPanel(extPanel)
         extPanel.render
         fastForward
       }
 
       case CellClicked(c) => {
-        val cell = c.owner.asInstanceOf[complex.ExpressionWorksheetCell]
+        val cell = c.owner.asInstanceOf[cmplx.WorksheetCell]
 
         if (cell.isNeutral) {
-          complex.clearAndSelect(cell)
+          cmplx.clearAndSelect(cell)
         } else {
-          complex.deselectAll
+          cmplx.deselectAll
         }
       }
 
       case CellCtrlClicked(c) => {
-        val cell = c.owner.asInstanceOf[complex.ExpressionWorksheetCell]
+        val cell = c.owner.asInstanceOf[cmplx.WorksheetCell]
 
-        complex.selectionBase match {
-          case None => if (cell.isNeutral) complex.selectAsBase(cell)
+        cmplx.selectionBase match {
+          case None => if (cell.isNeutral) cmplx.selectAsBase(cell)
           case Some(base) => {
             if (cell != base) {
               if (cell.isPolarized) {
-                complex.deselectAll
+                cmplx.deselectAll
               } else {
-                if (! complex.trySelect(cell)) complex.clearAndSelect(cell)
+                if (! cmplx.trySelect(cell)) cmplx.clearAndSelect(cell)
               }
             }
           }
         }
       }
 
-      case complex.ChangeEvents.ItemChangedEvent(oldItem) => {
+      case cmplx.ChangeEvents.ItemChangedEvent(oldItem) => {
         refreshAll  // Probably don't need all ...
       }
 
-      case complex.ChangeEvents.CompositeInsertionEvent(c, u) => {
+      case cmplx.ChangeEvents.CompositeInsertionEvent(c, u) => {
         val dim = c.dimension
 
         val compPanel = thisGallery(dim)
         val univPanel = thisGallery(dim + 1)
 
-        val affectedDimensions = Range(dim, complex.dimension + 1)
+        val affectedDimensions = Range(dim, cmplx.dimension + 1)
 
         affectedDimensions foreach (i => panels(i).refresh)
       }

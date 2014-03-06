@@ -15,9 +15,13 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
 
   type CellType <: ExpressionFrameworkCell
 
+  def toExpressionCell : NCell[Expression] = topCell.toExpressionCell
+
   trait ExpressionFrameworkCell extends ComplexCell { thisCell : CellType =>
 
     def exprItem : Option[Expression]
+
+    def toExpressionCell : NCell[Expression] = skeleton map (_.exprItem.get)
 
     def isThin =
       exprItem match {

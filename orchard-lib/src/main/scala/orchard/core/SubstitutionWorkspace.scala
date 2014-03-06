@@ -14,14 +14,11 @@ import scala.collection.mutable.Buffer
 import Environment._
 
 sealed trait GoalMarker
-case class StableAssumption(expr : Expression) extends GoalMarker
-case class DependentCell(expr : Expression) extends GoalMarker
-case class FreeVariable(variable : Variable) extends GoalMarker
-case class BoundVariable(variable : Variable, expr : Expression) extends GoalMarker
+case class StableAssumption(expr : Expression) extends GoalMarker { override def toString = expr.toString }
+case class DependentCell(expr : Expression) extends GoalMarker { override def toString = expr.toString }
+case class FreeVariable(variable : Variable) extends GoalMarker { override def toString = variable.toString }
+case class BoundVariable(variable : Variable, expr : Expression) extends GoalMarker { override def toString = expr.toString }
 
-// Maybe we need a notion of complete and incomplete dependent cell?
-
-// Just use the simple version?  Don't seem to have anything specific here yet ...
 class GoalComplex(seed : NCell[GoalMarker]) extends AbstractMutableComplex[GoalMarker](seed) {
 
   type CellType = GoalComplexCell
@@ -36,44 +33,50 @@ class GoalComplex(seed : NCell[GoalMarker]) extends AbstractMutableComplex[GoalM
 
 abstract class SubstitutionWorkspace extends Workspace {
 
-  def shell : SimpleFramework
+  type GoalSeqType <: Buffer[GoalComplex]
+
+  // This should be changed to a framework in the current workspace.
   def defn : Definition
+  def goals : GoalSeqType
+  def shell : NCell[Option[Expression]]
 
-  def goals = openGoals.values.toSeq
-
-  val openGoals = HashMap.empty[String, GoalComplex]
   val openDependents = HashMap.empty[String, Seq[String]]
 
   val bindings = HashMap.empty[String, Expression]
 
-  // Set up the initial substitution state
-  defn.environment foreach (expr => {
-    expr.value match {
-      case Variable(ident, _) => {
+  implicit class GoalOps(gls : Seq[GoalComplex]) {
 
-        val goalComplex = new GoalComplex(
-          shell.toCell map (exprOpt => 
-            exprOpt match {
-              case None => null
-              case Some(e) => StableAssumption(e)
-            }
+    def lookup(str : String) : Option[GoalComplex] = 
+      gls find (g => g.topCell.item.toString == str)
+
+  }
+
+  def initialize = {
+    // Set up the initial substitution state
+    defn.environment foreach (expr => {
+      expr.value match {
+        case Variable(ident, _) => {
+
+          val goalComplex = new GoalComplex(
+            shell map (exprOpt =>
+              exprOpt match {
+                case None => null
+                case Some(e) => StableAssumption(e)
+              }
+            )
           )
-        )
 
-        goalComplex.stablyAppend(new GoalComplex(addMarkers(expr)))
-        openGoals(ident.toString) = goalComplex
+          goalComplex.stablyAppend(new GoalComplex(addMarkers(expr)))
+          goals += goalComplex
+        }
+
+        // Only fillers will count as dependents, and we'll use them as if they were lifts ...
+        case f @ Filler(_) => openDependents(f.id) = Framework(expr).dependencies(defn.environment) map (_.value.id)
+        case f @ UnicityFiller(_) => openDependents(f.id) = Framework(expr).dependencies(defn.environment) map (_.value.id)
+        case _ => ()
       }
-
-      case Filler(ident) => ()
-        //openDependents(ident.toString) = Seq.empty ++ defn.dependencies(SimpleFramework(expr)).keys
-
-      case UnicityFiller(ident) => ()
-        //openDependents(ident.toString) = Seq.empty ++ defn.dependencies(SimpleFramework(expr)).keys
-
-      // We do not keep the filler faces, as we will import them simultaneously with their fillers
-      case FillerFace(_, _, _) => ()
-    }
-  })
+    })
+  }
 
   def addMarkers(exprCell : NCell[Expression]) : NCell[GoalMarker] = {
     exprCell map (expr =>
@@ -105,60 +108,107 @@ abstract class SubstitutionWorkspace extends Workspace {
     openDependents foreach { case (depId, depSeq) => {
       if (depSeq forall (bindings.isDefinedAt(_))) {
 
-        // Now.  Since we know *all* of its dependencies are satisfied,
-        // we should be able to look up any proper face in the bindings
-        // list, and all we need to do is generate the top and possible
-        // filler face.
+        println("Completed dependent: " ++ depId)
 
-        // So what we need then is simply to map over it and grab the
-        // expressions from the binding list, stopping to insert a special
-        // expression when we cross the top and possible face filler.
+        // First we build a framework for the new dependent
+        val dependentFramework = new Framework(shell)
+        val startDim = dependentFramework.dimension  
+        dependentFramework.stablyAppend(Framework(defn.environment.lookup(depId).get))
+        val endDim = dependentFramework.dimension + 1
 
-        val dependent : NCell[Expression] =
-          defn.environment.lookup(depId).get map {
-            case Variable(ident, isThin) => bindings(ident.toString)
-            case FillerFace(ident, filler, isThin) => {
-              if (filler == depId) {
-                //
-                // BUG!!! - We need to recheck the value of isThin somehow ....
-                //
-                val newExpr = FillerFace(translateIdent(ident), filler, isThin)
-                bindings(ident.toString) = newExpr
-                newExpr
-              } else {
-                bindings(ident.toString)
-              }
-            }
-            case Filler(ident) => {
-              if (ident.toString == depId) {
-                val newExpr = Filler(translateIdent(ident))
-                bindings(ident.toString) = newExpr
-                newExpr
-              } else {
-                bindings(ident.toString)
-              }
-            }
-            case UnicityFiller(ident) => {
-              if (ident.toString == depId) {
-                val newExpr = Filler(translateIdent(ident))
-                bindings(ident.toString) = newExpr
-                newExpr
-              } else {
-                bindings(ident.toString)
-              }
-            }
+        def translateIds = 
+          dependentFramework forAllCells(startDim, endDim, 
+            (cell => {
+              cell.item foreach (e => {
+                if (bindings.isDefinedAt(e.id)) {
+                  cell.item = Some(bindings(e.id))
+                } else {
+                  println("Missing identifier " ++ e.id ++ " in translation.")
+                }
+              })
+            })
+          )
+
+        if (dependentFramework.topCell.isFiller) {
+          // A filler which as a face
+          val filler = dependentFramework.topCell
+          val ff = dependentFramework.topCell.getFillerFace.get
+
+          // Save the items for use later
+          val fillerItem = filler.item.get.asInstanceOf[Filler]
+          val ffItem = ff.item.get.asInstanceOf[FillerFace]
+
+          // Clear the parts which will be replaced
+          filler.item = None
+          ff.item = None
+
+          // Translate the rest via the bindings
+          translateIds
+
+          // At this point, we should have an exposed nook corresponding to the
+          // lift which this depenedent represents
+          if (filler.isExposedNook) {
+            val newFillerItem = Filler(translateIdent(fillerItem.ident))
+
+            println("New filler name: " ++ newFillerItem.id)
+
+            val newFfItem = FillerFace(translateIdent(ffItem.ident), newFillerItem.id, filler.isThinFillerFace)
+
+            filler.item = Some(newFillerItem)
+            ff.item = Some(newFfItem)
+
+            // Now we need to set the bindings ...
+            bindings(fillerItem.id) = newFillerItem
+            bindings(ffItem.id) = newFfItem
+
+          } else {
+            throw new IllegalArgumentException("After translation, we don't have a nook!")
           }
+        } else {
+          // A unicity filler
+          val filler = dependentFramework.topCell
+          val fillerItem = filler.item.get.asInstanceOf[UnicityFiller]
+          filler.item = None
 
-        // Now generate a framework and stick it in the shell
-        val exprFramework = shell.clone
-        exprFramework.stablyAppend(SimpleFramework(dependent))
+          translateIds
+
+          if (filler.isUnicityFillable) {
+            val newFillerItem = UnicityFiller(translateIdent(fillerItem.ident))
+            filler.item = Some(newFillerItem)
+            bindings(fillerItem.id) = newFillerItem
+          } else {
+            throw new IllegalArgumentException("After translate, we are not unicity fillable!")
+          }
+        }
+
+        println("After update, topCell is: " ++ dependentFramework.topCell.item.toString)
 
         // Tag this guys as completed and add the new cell to the environment ...
         completedDependents += depId
-        environment += exprFramework.toExpressionCell
+        openDependents -= depId
 
-        // BUG!!! - Before importing, we should check if there is a name clash, and
-        //          if so, whether the associated cell is compatible ...
+        // Add the face to the environment if appropriate
+        if (dependentFramework.topCell.isFiller) {
+          val ff = dependentFramework.topCell.getFillerFace.get
+
+          ff.item foreach (e =>
+            if (environment.contains(e.id)) {
+              throw new IllegalArgumentException("Identifier clash.")
+            }
+          )
+
+          environment += ff.toExpressionCell
+        }
+
+
+        // Now add the filler
+        dependentFramework.topCell.item foreach (e => 
+          if (environment.contains(e.id)) {
+            throw new IllegalArgumentException("Identifier clash.")
+          }
+        )
+
+        environment += dependentFramework.toExpressionCell
       }
     }
     }
@@ -188,20 +238,25 @@ abstract class SubstitutionWorkspace extends Workspace {
 
         if (isValid) {
 
-          openGoals.values foreach (og => {
-            og forAllCells (cell => 
+          newBindings foreach { 
+            case (str, expr) => {
+              goals.lookup(str) foreach (g => goals -= g)
+              bindings(str) = expr
+            }
+          }
+
+          // Update the goal complexes ...
+          goals foreach (g => {
+            g forAllCells (cell => 
               cell.item match {
                 case FreeVariable(v) => {
-                  if (newBindings.isDefinedAt(v.id)) {
-                    cell.item = BoundVariable(v, newBindings(v.id))
+                  if (bindings.isDefinedAt(v.id)) {
+                    cell.item = BoundVariable(v, bindings(v.id))
                   }
                 }
                 case _ => ()
               })
           })
-
-          // Do something here for each of the bindings ..
-          bindings ++= newBindings
 
           // Loop on the open dependents until no more are
           var completedDependents = importDependents
@@ -209,10 +264,8 @@ abstract class SubstitutionWorkspace extends Workspace {
           while (completedDependents.length > 0)
             completedDependents = importDependents
 
-          // Now remove the associated goals
-          openGoals --= newBindings.keys
         } else {
-          println("Expression did not satisfy the goal.")
+          println("Expression was not valid.")
         }
       }
     }

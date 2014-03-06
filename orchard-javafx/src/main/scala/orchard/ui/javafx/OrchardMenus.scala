@@ -46,7 +46,7 @@ trait OrchardMenus { self : JavaFXEditor =>
   }
 
   val completeItem = new MenuItem {
-    text = "Complete Using Cell"
+    text = "Complete Definition"
     onAction = onCompleteDefinition
   }
 

@@ -18,8 +18,6 @@ abstract class AbstractFramework(seed : NCell[Option[Expression]])
 
   type CellType <: AbstractFrameworkCell
 
-  def toExpressionCell : NCell[Expression] = topCell.toExpressionCell
-
   def variables : Seq[NCell[Expression]] = {
     val buf = Buffer.empty[NCell[Expression]]
     forAllCells (cell => if (cell.isVariable) { buf += cell.toExpressionCell })
@@ -43,8 +41,6 @@ abstract class AbstractFramework(seed : NCell[Option[Expression]])
 
     def exprItem = item
 
-    def toExpressionCell : NCell[Expression] = skeleton map (_.item.get)
-
     def isVariable : Boolean = 
       item match {
         case Some(Variable(_, _)) => true
@@ -60,6 +56,12 @@ abstract class AbstractFramework(seed : NCell[Option[Expression]])
     def isFillerFace : Boolean =
       item match {
         case Some(FillerFace(_, _, _)) => true
+        case _ => false
+      }
+
+    def isUnicityFiller : Boolean = 
+      item match {
+        case Some(UnicityFiller(_)) => true
         case _ => false
       }
   }
