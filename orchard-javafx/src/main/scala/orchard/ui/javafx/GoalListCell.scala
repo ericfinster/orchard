@@ -25,8 +25,15 @@ class GoalListCell extends jfxsc.ListCell[GoalComplex] {
     super.updateItem(gm, empty)
 
     if (! empty) {
-      setCellStyle("orch-list-cell-var")
-      setText(gm.topCell.item.toString)
+      val v = gm.topCell.item.asInstanceOf[FreeVariable]
+
+      if (v.variable.isThin) {
+        setCellStyle("orch-list-cell-var-thin")
+      } else {
+        setCellStyle("orch-list-cell-var")
+      }
+
+      setText(v.toString)
     } else {
       setCellStyle("orch-list-cell")
     }

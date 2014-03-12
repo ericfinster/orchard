@@ -150,6 +150,21 @@ object XmlSerializable {
           case UnicityFiller(ident) => {
             <ufiller>{identifierSerializable.toXML(ident)}</ufiller>
           }
+          // Look at this one again, I think we can do better with an environment around ...
+          case Application(defn, args, shell) => {
+            <application><defn>{
+              definitionSerializable.toXML(defn)
+            }</defn><args>{
+              args map (cell => {
+                cellSerializable[Expression].toXML(cell)
+              })
+            }</args><shell>{
+              cellSerializable[Option[Expression]].toXML(shell)
+            }</shell></application>
+          }
+          case Projection(addr) => {
+            <projection>{addr map (i => <dot>{i.toString}</dot>)}</projection>
+          }
         }
 
       def fromXML(node : xml.Node) =
@@ -173,6 +188,26 @@ object XmlSerializable {
             val ident = identifierSerializable.fromXML(identContent)
             UnicityFiller(ident)
           }
+          case ap @ <application><defn>{defnContent}</defn><args>{argContent @ _*}</args><shell>{shellContent}</shell></application> => {
+            val defn = definitionSerializable.fromXML(defnContent)
+            val shell : NCell[Option[Expression]] = 
+              NCell.cellIsNCell(cellSerializable[Option[Expression]].fromXML(shellContent))
+
+            val args : Seq[NCell[Expression]] = 
+              trimText(argContent) map (n => {
+                NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
+              })
+
+            Application(defn, args, shell)
+          }
+          case proj @ <projection>{addrContent @ _*}</projection> => {
+            val addr : Seq[Int] = 
+              trimText(addrContent) map {
+                case <dot>{txt}</dot> => txt.text.toInt
+              }
+
+            Projection(addr)
+          }
         }
     }
 
@@ -188,18 +223,24 @@ object XmlSerializable {
           slevel={optToInt(defn.stabilityLevel).toString}
           ilevel={optToInt(defn.invertibilityLevel).toString}
           ulevel={optToInt(defn.unicityLevel).toString}
-        >{
+        ><output>{
+          expressionSerializable.toXML(defn.output)
+        }</output><environment>{
           defn.environment map (cell => {
             cellSerializable[Expression].toXML(cell)
           })
-        }</definition>
+        }</environment></definition>
       }
 
       def fromXML(node : xml.Node) = {
         def intToOpt(i : Int) : Option[Int] = if (i < 0) None else Some(i)
 
         node match {
-          case defXml @ <definition>{envCells @ _*}</definition> => {
+          case defXml @ <definition><output>{outputContent}</output><environment>{envCells @ _*}</environment></definition> => {
+
+            val output : Expression = 
+              expressionSerializable.fromXML(outputContent)
+
             val env : Seq[NCell[Expression]] = 
               trimText(envCells) map (n => {
                 NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
@@ -210,7 +251,7 @@ object XmlSerializable {
             val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
             val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
 
-            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, env)
+            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, env, output)
           }
         }
       }

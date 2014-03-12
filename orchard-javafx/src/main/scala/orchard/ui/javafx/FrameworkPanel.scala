@@ -86,6 +86,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(FillerFace(_, _, false)) => setCellStyle("expr-cell-filler-face")
         case Some(FillerFace(_, _, true)) => setCellStyle("expr-cell-filler-face-thin")
         case Some(UnicityFiller(_)) => setCellStyle("expr-cell-ufiller")
+        case Some(Application(_, _, _)) => setCellStyle("expr-cell-app")
       }
 
     assignStyle
@@ -109,6 +110,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(FillerFace(_, _, false)) => getStyleClass.add("expr-cell-filler-face-hovered")
         case Some(FillerFace(_, _, true)) => getStyleClass.add("expr-cell-filler-face-thin-hovered")
         case Some(UnicityFiller(_)) => getStyleClass.add("expr-cell-ufiller-hovered")
+        case Some(Application(_, _, _)) => getStyleClass.add("expr-cell-app-hovered")
       }
     }
 
@@ -127,6 +129,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(FillerFace(_, _, false)) => getStyleClass.remove("expr-cell-filler-face-hovered")
         case Some(FillerFace(_, _, true)) => getStyleClass.remove("expr-cell-filler-face-thin-hovered")
         case Some(UnicityFiller(_)) => getStyleClass.remove("expr-cell-ufiller-hovered")
+        case Some(Application(_, _, _)) => getStyleClass.remove("expr-cell-app-hovered")
       }
     }
 
@@ -145,6 +148,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(FillerFace(_, _, false)) => getStyleClass.add("expr-cell-filler-face-selected")
         case Some(FillerFace(_, _, true)) => getStyleClass.add("expr-cell-filler-face-thin-selected")
         case Some(UnicityFiller(_)) => getStyleClass.add("expr-cell-ufiller-selected")
+        case Some(Application(_, _, _)) => getStyleClass.add("expr-cell-app-selected")
       }
     }
 
@@ -163,6 +167,7 @@ trait FrameworkPanel extends JavaFXPanel[Option[Expression]] { thisPanel : jfxsl
         case Some(FillerFace(_, _, false)) => getStyleClass.remove("expr-cell-filler-face-selected")
         case Some(FillerFace(_, _, true)) => getStyleClass.remove("expr-cell-filler-face-thin-selected")
         case Some(UnicityFiller(_)) => getStyleClass.remove("expr-cell-ufiller-selected")
+        case Some(Application(_, _, _)) => getStyleClass.remove("expr-cell-app-selected")
       }
     }
 

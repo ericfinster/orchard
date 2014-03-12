@@ -50,14 +50,24 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onCompleteDefinition
   }
 
-  val definitionMenu = new Menu {
-    text = "Definition"
-    items ++= List(newDefnItem, newSheetItem, completeItem)
+  val deleteItem = new MenuItem {
+    text = "Delete Definition"
+    onAction = onDeleteDefinition
   }
 
-  val spawnInShellItem = new MenuItem {
-    text = "Spawn in Shell"
-    onAction = onSpawnInShell
+  val definitionMenu = new Menu {
+    text = "Definition"
+    items ++= List(newDefnItem, newSheetItem, completeItem, deleteItem)
+  }
+
+  val applyItem = new MenuItem {
+    text = "Apply"
+    onAction = onApply
+  }
+
+  val applyInShellItem = new MenuItem {
+    text = "Apply in Shell"
+    onAction = onApplyInShell
   }
 
   val satisfyGoalItem = new MenuItem {
@@ -65,9 +75,14 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onSatisfyGoal
   }
 
+  val unfoldItem = new MenuItem {
+    text = "Unfold Expression"
+    onAction = onUnfold
+  }
+
   val substitutionMenu = new Menu {
     text = "Substitution"
-    items ++= List(spawnInShellItem, satisfyGoalItem)
+    items ++= List(applyItem, applyInShellItem, satisfyGoalItem, unfoldItem)
   }
 
   val extrudeItem = new MenuItem {
@@ -121,9 +136,12 @@ trait OrchardMenus { self : JavaFXEditor =>
   def onNewDefinition : Unit
   def onNewSheet : Unit
   def onCompleteDefinition : Unit
+  def onDeleteDefinition : Unit
 
-  def onSpawnInShell : Unit
+  def onApply : Unit
+  def onApplyInShell : Unit
   def onSatisfyGoal : Unit
+  def onUnfold : Unit
 
   def onExtrude : Unit 
   def onDrop : Unit

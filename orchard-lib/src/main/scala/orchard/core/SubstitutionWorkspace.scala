@@ -12,11 +12,12 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
 
 import Environment._
+import Identifier._
 
 sealed trait GoalMarker
 case class StableAssumption(expr : Expression) extends GoalMarker { override def toString = expr.toString }
 case class DependentCell(expr : Expression) extends GoalMarker { override def toString = expr.toString }
-case class FreeVariable(variable : Variable) extends GoalMarker { override def toString = variable.toString }
+case class FreeVariable(val variable : Variable) extends GoalMarker { override def toString = variable.toString }
 case class BoundVariable(variable : Variable, expr : Expression) extends GoalMarker { override def toString = expr.toString }
 
 class GoalComplex(seed : NCell[GoalMarker]) extends AbstractMutableComplex[GoalMarker](seed) {
@@ -40,9 +41,8 @@ abstract class SubstitutionWorkspace extends Workspace {
   def goals : GoalSeqType
   def shell : NCell[Option[Expression]]
 
-  val openDependents = HashMap.empty[String, Seq[String]]
-
   val bindings = HashMap.empty[String, Expression]
+  val openDependents = HashMap.empty[String, Seq[String]]
 
   implicit class GoalOps(gls : Seq[GoalComplex]) {
 
@@ -87,19 +87,38 @@ abstract class SubstitutionWorkspace extends Workspace {
     )
   }
 
+  def renameExpression(expr : Expression) = 
+    expr match {
+      case Variable(ident, isThin) => Variable(translateIdent(ident), isThin)
+      // Bug! - Will this be right anymore?  Do we care?
+      case FillerFace(ident, filler, isThin) => FillerFace(translateIdent(ident), filler, isThin)
+      case Filler(ident) => Filler(translateIdent(ident))
+      case UnicityFiller(ident) => UnicityFiller(translateIdent(ident))
+      case Application(_, _, _) => ???
+      case Projection(_) => ???
+    }
+
   def translateIdent(ident : Identifier) : Identifier = {
-    Identifier(
+    println("Translating identifier: " ++ ident.toString)
+
+    val idnt = Identifier(
       ident.tokens map {
         case ReferenceToken(ref) => {
           if (bindings.isDefinedAt(ref)) {
+            println(ref ++ " -> " ++ bindings(ref).id)
             ReferenceToken(bindings(ref).id)
           } else {
-            throw new IllegalArgumentException("Undefined reference in identifier translation.")
+            // throw new IllegalArgumentException("Undefined reference in identifier translation: " ++ ref)
+            println("Skipping unknown identifier: " ++ ref)
+            ReferenceToken(ref)
           }
         }
         case tok @ _ => tok
       }
     )
+
+    println("Result of translation: " ++ idnt.toString)
+    idnt
   }
 
   def importDependents : Seq[String] = {
@@ -149,9 +168,6 @@ abstract class SubstitutionWorkspace extends Workspace {
           // lift which this depenedent represents
           if (filler.isExposedNook) {
             val newFillerItem = Filler(translateIdent(fillerItem.ident))
-
-            println("New filler name: " ++ newFillerItem.id)
-
             val newFfItem = FillerFace(translateIdent(ffItem.ident), newFillerItem.id, filler.isThinFillerFace)
 
             filler.item = Some(newFillerItem)
@@ -181,8 +197,6 @@ abstract class SubstitutionWorkspace extends Workspace {
           }
         }
 
-        println("After update, topCell is: " ++ dependentFramework.topCell.item.toString)
-
         // Tag this guys as completed and add the new cell to the environment ...
         completedDependents += depId
         openDependents -= depId
@@ -192,7 +206,7 @@ abstract class SubstitutionWorkspace extends Workspace {
           val ff = dependentFramework.topCell.getFillerFace.get
 
           ff.item foreach (e =>
-            if (environment.contains(e.id)) {
+            if (environment.containsId(e.id)) {
               throw new IllegalArgumentException("Identifier clash.")
             }
           )
@@ -203,7 +217,7 @@ abstract class SubstitutionWorkspace extends Workspace {
 
         // Now add the filler
         dependentFramework.topCell.item foreach (e => 
-          if (environment.contains(e.id)) {
+          if (environment.containsId(e.id)) {
             throw new IllegalArgumentException("Identifier clash.")
           }
         )
@@ -214,6 +228,56 @@ abstract class SubstitutionWorkspace extends Workspace {
     }
 
     completedDependents
+  }
+
+  def isComplete : Boolean = goals.length == 0
+
+  // There's still some unification of variables which I don't quite understand ..
+  def getImports : Seq[NCell[Expression]] = {
+    val imports = Buffer.empty[NCell[Expression]]
+
+    if (isComplete) {
+
+      val args = defn.environment.vars map (v => {
+        environment.lookup(bindings(v.value.id).id).get
+      })
+
+      val framework = new Framework(shell)
+      val startDim = framework.dimension
+      framework.stablyAppend(Framework(defn.outputExpr))
+      val endDim = framework.dimension
+
+      val appExpr = Application(defn, args, shell)
+      framework.topCell.item = Some(appExpr)
+
+      framework forAllCells(startDim, endDim, (cell => {
+        // In the middle, we need to translate the results so that they use the correct bindings
+        cell.item match {
+          case Some(Variable(ident, isThin)) => {
+            cell.item = Some(appExpr.bindings(ident.toString))
+            imports += cell.toExpressionCell
+          }
+          case Some(Filler(ident)) => {
+            cell.item = Some(Filler(ident.translateWithBindings(appExpr.bindings)))
+            imports += cell.toExpressionCell
+          }
+          case Some(UnicityFiller(ident)) => {
+            cell.item = Some(UnicityFiller(ident.translateWithBindings(appExpr.bindings)))
+            imports += cell.toExpressionCell
+          }
+          case Some(FillerFace(ident, filler, isThin)) => {
+            // BUG! Oops, the name of the filler may be wrong now ....
+            cell.item = Some(FillerFace(ident.translateWithBindings(appExpr.bindings), filler, isThin))
+            imports += cell.toExpressionCell
+          }
+          case _ => println("Skipping here because I don't know what to do.")
+        }
+      }))
+
+      imports += framework.toExpressionCell
+    }
+
+    imports
   }
 
   def satisfyGoal(goal : GoalComplex, expr : NCell[Expression]) : Unit = {
@@ -231,7 +295,14 @@ abstract class SubstitutionWorkspace extends Workspace {
           goalMarker match {
             case StableAssumption(e) => isValid &&= (e.id == testExpr.id)
             case DependentCell(e) => isValid &&= (e.id == testExpr.id)
-            case FreeVariable(v) => newBindings(v.id) = testExpr
+            case FreeVariable(v) => {
+              // Make sure we only bind thin things to thin variables ...
+              if (v.isThin) {
+                isValid &&= testExpr.isThin
+              }
+                
+              newBindings(v.id) = testExpr  
+            }
             case BoundVariable(v, e) => isValid &&= (e.id == testExpr.id)
           }
         })
@@ -246,6 +317,8 @@ abstract class SubstitutionWorkspace extends Workspace {
           }
 
           // Update the goal complexes ...
+          // Oh.  This needs to be more.  We should also go look at the dependent cells
+          // and translate their identifiers ...
           goals foreach (g => {
             g forAllCells (cell => 
               cell.item match {
@@ -254,15 +327,19 @@ abstract class SubstitutionWorkspace extends Workspace {
                     cell.item = BoundVariable(v, bindings(v.id))
                   }
                 }
+                case DependentCell(e) => {
+                  println("Renaming expression: " ++ e.toString)
+                  cell.item = DependentCell(renameExpression(e))
+                }
                 case _ => ()
               })
           })
 
           // Loop on the open dependents until no more are
-          var completedDependents = importDependents
+          // var completedDependents = importDependents
 
-          while (completedDependents.length > 0)
-            completedDependents = importDependents
+          // while (completedDependents.length > 0)
+          //   completedDependents = importDependents
 
         } else {
           println("Expression was not valid.")

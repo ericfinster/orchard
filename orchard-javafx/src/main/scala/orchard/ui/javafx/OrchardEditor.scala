@@ -37,6 +37,8 @@ import scala.collection.mutable.Map
 import orchard.core._
 import orchard.ui.javafx.controls._
 
+import Environment._
+
 trait JavaFXEditor extends Editor {
 
   implicit def pm : PopupManager
@@ -61,40 +63,11 @@ object OrchardEditor extends PopupManager(new VBox)
     styleClass += "orch-pane"
   }
 
-  val environmentListView = 
-    new ListView[NCell[Expression]] {
-      items = ObservableBuffer.empty[NCell[Expression]]
-      cellFactory = (_ => new EnvironmentCell { envCell =>
-        setOnMouseClicked(new EventHandler[MouseEvent] {
-          def handle(ev : MouseEvent) {
-            val item = envCell.item()
-
-            if (item != null) {
-              if (ev.getClickCount > 1) {
-                for { wksp <- activeWorkspace } { wksp.newSheet(item map (Some(_))) }
-              }
-            }
-          }
-        })
-      })
-    }
-
-  environmentListView.getSelectionModel.selectedItem onChange {
-    val item = environmentListView.getSelectionModel.selectedItem()
-
-    for { wksp <- activeWorkspace } {
-      if (item != null) {
-        wksp.activeExpression = Some(item)
-        setPreview(item)
-      } else {
-        wksp.activeExpression = None
-      }
-    }
-  }
+  val noEnvironmentLabel = new Label("No Environment")
 
   val environmentPane = new TitledPane {
     text = "Environment"
-    content = environmentListView
+    content = noEnvironmentLabel
   }
 
   val goalsListView = 
@@ -231,6 +204,8 @@ object OrchardEditor extends PopupManager(new VBox)
                 }
               }
               case UnicityFiller(_) => setStyleType("orch-list-cell-ufiller")
+              case Application(_, _, _) => setStyleType("orch-list-cell-app")
+              case Projection(_) => setStyleType("orch-list-cell-filler")
             }
 
             setText(expr.toString)
@@ -379,64 +354,68 @@ object OrchardEditor extends PopupManager(new VBox)
     for {
       wksp <- activeWorkspace
     } {
-      if (wksp.isInstanceOf[DefinitionWorkspace]) {
-        val defnWksp = wksp.asInstanceOf[DefinitionWorkspace]
+      if (wksp.isInstanceOf[JavaFXDefinitionWorkspace]) {
+        val defnWksp = wksp.asInstanceOf[JavaFXDefinitionWorkspace]
 
-        val defn =
-          new Definition(defnWksp.name,
-            defnWksp.stabilityLevel,
-            defnWksp.invertibilityLevel,
-            defnWksp.unicityLevel,
-            ListBuffer.empty ++ wksp.environment)
+        for {
+          expr <- defnWksp.activeExpression
+          defn <- defnWksp.createDefinition(expr)
+        } {
 
-        addLocalDefinition(defn)
-        closeActiveWorkspace
-        accordion.expandedPane = definitionsPane
+          addLocalDefinition(defn)
+          closeActiveWorkspace
+          accordion.expandedPane = definitionsPane
+
+        }
       }
     }
   }
 
-  def onSpawnInShell = 
+  def onDeleteDefinition = {
+    val defnItem = definitionTreeView.getSelectionModel.selectedItem()
+
+    if (defnItem != null) {
+      definitionTreeRoot.children -= defnItem
+    }
+  }
+
+  def onApply = 
+    for {
+      wksp <- activeWorkspace
+      defn <- activeDefinition
+    } {
+      val workspace = wksp.asInstanceOf[JavaFXWorkspace]
+
+      for {
+        substWksp <- workspace.apply(defn)
+      } {
+        navigationTreeView.getSelectionModel.select(substWksp.treeItem)
+      }
+    }
+
+  def onApplyInShell = 
     for { 
       wksp <- activeWorkspace
       gallery <- wksp.activeGallery
       cell <- gallery.complex.selectionBase
+      defn <- activeDefinition
     } {
-      if (cell.hasCompleteShell) {
-        // Now we need to find the definition we are spawning.
+      if (gallery.complex.selectionIsUnique && cell.hasCompleteShell) {
+        val workspace = wksp.asInstanceOf[JavaFXWorkspace]
 
-        val selectedWkspItem = navigationTreeView.getSelectionModel.selectedItem()
-        val selectedDefnItem = definitionTreeView.getSelectionModel.selectedItem()
+        val shell = {
+          val frmwk = cell.getSimpleFramework
+          frmwk.topCell.item = None
+          frmwk.toCell
+        }
 
-        if (selectedDefnItem != null && selectedWkspItem != null) {
-          val selectedDefn = findParentDefinition(selectedDefnItem)
-          val selectedShell = {
-            val frmwk = cell.getSimpleFramework
-            frmwk.topCell.item = None
-            frmwk.toCell
-          }
-
-          val substWksp = 
-            new JavaFXSubstitutionWorkspace(thisEditor,
-                                            selectedDefn.name,
-                                            wksp,
-                                            selectedDefn,
-                                            selectedShell)
-
-          // Import the current environment and create a blank sheet
-          substWksp.environment ++= wksp.environment
-
-          // We should generate more tree items for the goals now
-
-          selectedWkspItem.children += substWksp.treeItem
+        for {
+          substWksp <- workspace.applyInShell(shell, defn)
+        } {
           navigationTreeView.getSelectionModel.select(substWksp.treeItem)
-
-          substWksp.newSheet
-        } else {
-          println("No definition selected.")
         }
       } else {
-        println("Cannot spawn substitution in incomplete shell.")
+        println("Cannot spawn application here.")
       }
     }
 
@@ -454,9 +433,38 @@ object OrchardEditor extends PopupManager(new VBox)
             val selectedExpr = selectedCell.toExpressionCell
 
             substWksp.satisfyGoal(selectedGoal, selectedExpr)
+
+            // If the remaining number of goals is zero, delete the workspace
+            // and reselect the parent ...
+
+            if (substWksp.isComplete) {
+              println("Substitution finished ... importing results")
+
+              substWksp.environment.dump
+
+              substWksp.getImports foreach (expr => {
+                if (! substWksp.parentWorkspace.environment.containsId(expr.value.id)) {
+                  println("Importing required cell " ++ expr.value.id)
+                  substWksp.parentWorkspace.environment += expr
+                } else {
+                  println("Skipping import of " ++ expr.value.id ++ " because of name clash.")
+                }
+              })
+
+              val parentItem = substWksp.treeItem.parent()
+              parentItem.children -= substWksp.treeItem
+              navigationTreeView.getSelectionModel.select(parentItem)
+            }
           }
         }
       }
+    }
+
+  def onUnfold = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      wksp.unfoldSelectedApplication
     }
 
   def onOpen = {
@@ -524,6 +532,14 @@ object OrchardEditor extends PopupManager(new VBox)
       sheet <- wksp.activeSheet
     } yield sheet
 
+  def activeDefinition : Option[Definition] = {
+    val selectedDefnItem = definitionTreeView.getSelectionModel.selectedItem()
+
+    if (selectedDefnItem != null) {
+      Some(findParentDefinition(selectedDefnItem))
+    } else None
+  }
+
   def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
     val wksp = new JavaFXDefinitionWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
 
@@ -535,7 +551,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def selectWorkspace(wksp : JavaFXWorkspace) = {
     sheetPane.content = wksp.sheetTabPane
-    environmentListView.items = wksp.environment
+    environmentPane.content = wksp.environmentView
 
     goalsListView.items = 
       if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
@@ -557,7 +573,7 @@ object OrchardEditor extends PopupManager(new VBox)
       parent.children.remove(wksp.treeItem)
     }
 
-    environmentListView.items().clear
+    environmentPane.content = noEnvironmentLabel
     sheetPane.content.clear
     activeWorkspace = None
   }

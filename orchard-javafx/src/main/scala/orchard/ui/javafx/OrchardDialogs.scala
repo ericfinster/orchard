@@ -66,6 +66,10 @@ trait OrchardDialogs { self : JavaFXEditor =>
     val composeField = new TextField { promptText = "Composite" ; onAction = () => { fillerField.requestFocus } }
     val fillerField = new TextField { promptText = "Filler" ; onAction = () => { okBtn.fire } }
 
+    composeField.text onChange {
+      fillerField.text = "def-" ++ composeField.text()
+    }
+
     borderPane.center =
       new VBox {
         padding = Insets(10,10,10,10)

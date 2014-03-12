@@ -33,7 +33,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
   }
 
   def foreachProperFace(action : CellType => Unit) : Unit = {
-    baseCells.slice(0, baseCells.length - 1) foreach (base => base foreachCell action)
+    forAllCells(0, dimension, action)
   }
 
   //============================================================================================

@@ -36,11 +36,16 @@ trait Workspace {
   def activeSheet : Option[Worksheet]
   def activeExpression : Option[NCell[Expression]]
 
-  def assumeAtSelection(thinHint : Boolean) = 
+  def assumeAtSelection(thinHint : Boolean) : Unit = 
     for {
       sheet <- activeSheet
       selectedCell <- sheet.selectionBase
     } {
+      if (this.isInstanceOf[SubstitutionWorkspace]) {
+        println("Cannot make new assumptions during a substitution.")
+        return
+      }
+
       if (sheet.selectionIsShell) {
         val dependencies = sheet.selectionDependencies
 
@@ -58,7 +63,7 @@ trait Workspace {
                 // TODO : Check if identifier is valid (including whether they
                 //        are empty or equal!)
 
-                if (! environment.contains(ident.toString)) {
+                if (! environment.containsId(ident.toString)) {
                   sheet.deselectAll
                   selectedCell.item = Neutral(Some(Variable(ident, isThin)))
                   environment += selectedCell.getSimpleFramework.toExpressionCell
@@ -144,7 +149,7 @@ trait Workspace {
 
                 // TODO : Check identifier is valid
 
-                if (! environment.contains(fillerIdent.toString)) {
+                if (! environment.containsId(fillerIdent.toString)) {
                   sheet.deselectAll
                   fillerCell.item = Neutral(Some(Variable(fillerIdent, true)))  // Uh ... need a new expression type here
                   environment += fillerCell.getSimpleFramework.toExpressionCell
@@ -301,6 +306,193 @@ trait Workspace {
       }
     }
 
+  def unfold(app : Application) : Seq[NCell[Expression]] = {
+
+    val imports = Buffer.empty[NCell[Expression]]
+
+    // It would be nice to have the dependencies around so that we can
+    // make multiple passes through the environment until we have finished...
+
+    val openDependents = HashMap.empty[String, Seq[String]]
+    
+    app.defn.environment foreach (expr => {
+      expr.value match {
+        case Variable(_, _) => ()
+        case FillerFace(_, _, _) => ()
+        case e @ _ =>
+          openDependents(e.id) = Framework(expr).dependencies(app.defn.environment) map (_.value.id)
+      }
+    })
+
+    // Create a set of bindings to work from
+    val bindings = HashMap.empty[String, Expression] ++ app.bindings
+
+    def importPass : Seq[NCell[Expression]] = {
+
+      val completedDependents = Buffer.empty[NCell[Expression]]
+
+      openDependents foreach { case (depId, depSeq) => {
+        if (depSeq forall (bindings.isDefinedAt(_))) {
+
+          println("Completed dependent: " ++ depId)
+
+          // First we build a framework for the new dependent
+          val dependentFramework = new Framework(app.shell)
+          val startDim = dependentFramework.dimension
+          dependentFramework.stablyAppend(Framework(app.defn.environment.lookup(depId).get))
+          val endDim = dependentFramework.dimension + 1
+
+          def translateIds =
+            dependentFramework forAllCells(startDim, endDim,
+              (cell => {
+                cell.item foreach (e => {
+                  if (bindings.isDefinedAt(e.id)) {
+                    cell.item = Some(bindings(e.id))
+                  } else {
+                    println("Missing identifier " ++ e.id ++ " in translation.")
+                  }
+                })
+              })
+            )
+
+          dependentFramework.topCell.item match {
+            case Some(Filler(_)) => {
+              // A filler which as a face
+              val filler = dependentFramework.topCell
+              val ff = dependentFramework.topCell.getFillerFace.get
+
+              // Save the items for use later
+              val fillerItem = filler.item.get.asInstanceOf[Filler]
+              val ffItem = ff.item.get.asInstanceOf[FillerFace]
+
+              // Clear the parts which will be replaced
+              filler.item = None
+              ff.item = None
+
+              // Translate the rest via the bindings
+              translateIds
+
+              // At this point, we should have an exposed nook corresponding to the
+              // lift which this depenedent represents
+              if (filler.isExposedNook) {
+                val newFillerItem = Filler(fillerItem.ident.translateWithBindings(bindings))
+                val newFfItem = FillerFace(ffItem.ident.translateWithBindings(bindings), newFillerItem.id, filler.isThinFillerFace)
+
+                filler.item = Some(newFillerItem)
+                ff.item = Some(newFfItem)
+
+                // Now we need to set the bindings ...
+                bindings(fillerItem.id) = newFillerItem
+                bindings(ffItem.id) = newFfItem
+
+                // And tag them as completed
+                completedDependents += ff.toExpressionCell
+                completedDependents += filler.toExpressionCell
+              } else {
+                throw new IllegalArgumentException("After translation, we don't have a nook!")
+              }
+            }
+            case Some(UnicityFiller(_)) => {
+              val filler = dependentFramework.topCell
+              val fillerItem = filler.item.get.asInstanceOf[UnicityFiller]
+              filler.item = None
+
+              translateIds
+
+              if (filler.isUnicityFillable) {
+                val newFillerItem = UnicityFiller(fillerItem.ident.translateWithBindings(bindings))
+                filler.item = Some(newFillerItem)
+                bindings(fillerItem.id) = newFillerItem
+                completedDependents += filler.toExpressionCell
+              } else {
+                throw new IllegalArgumentException("After translate, we are not unicity fillable!")
+              }
+            }
+            case Some(appItem @ Application(_, _, _)) => {
+              // Hmmm ... perhaps we are overwriting a binding here ....
+              bindings(appItem.id) = appItem
+              translateIds
+
+              // Any kind of sanity check or rebinding necessary here???
+
+              completedDependents += dependentFramework.toExpressionCell
+            }
+            case _ => println("Unexpected topCell in expansion.")
+          }
+
+          // Remove this guy from the list of opens ...
+          openDependents -= depId
+        }
+      }}
+
+      completedDependents
+    }
+
+    var lastLength : Int = imports.length
+
+    do {
+      println("Entering import pass ...")
+      lastLength = imports.length
+      imports ++= importPass
+      println("Imported " ++ lastLength.toString ++ " dependents")
+    } while (lastLength != imports.length)
+
+    if (openDependents.size > 0) {
+      println("There were unresolved dependents ...")
+    }
+
+    // // Remove this application from the current environment
+    // environment -= environment.lookup(app.id).get
+
+    // // Now add the new imports
+    // imports foreach (expr => {
+    //   if (! environment.containsId(expr.value.id)) {
+    //     environment += expr
+
+    //     if (expr.value.id == app.id) {
+    //       // Go throught all the sheets and update the cells so that the expanded expression 
+    //       // is changed to it's output value
+    //       val appDim : Int = expr.dimension.toInt
+
+    //       sheets foreach (sheet => {
+    //         sheet(appDim) foreachCell (cell => {
+    //           cell.item match {
+    //             case Neutral(Some(e)) => if (e.id == expr.value.id) { cell.item = Neutral(Some(expr.value)) }
+    //             case _ => ()
+    //           }
+    //         })
+    //       })
+
+    //       // BUG!!! - We also have to go through the environment, since there might be cells which also
+    //       //          have this guy as a face ....
+    //       val changedExprs = Buffer.empty[NCell[Expression]]
+
+    //       environment foreach (expr => {
+    //         if (expr.dimension.toInt >= appDim) {
+    //           val framework = Framework(expr)
+
+    //           framework(appDim) foreachCell (cell => {
+    //             cell.item match {
+    //               case Some(e) => if (e.id == expr.value.id) { cell.item = Some(expr.value) ; changedExprs += expr }
+    //               case _ => ()
+    //             }
+    //           })
+    //         }
+    //       })
+
+    //       changedExprs foreach (expr => {
+    //         val idx = environment.indexWhere(e => e.value.id == expr.value.id)
+    //         environment(idx) = expr
+    //       })
+    //     }
+    //   } else {
+    //     println("Skipping import due to name clash for: " ++ expr.value.id)
+    //   }
+    // })
+
+    imports
+  }
+
   trait CheckableFramework[A] extends ExpressionFramework[A] {
 
     type CellType <: CheckableFrameworkCell
@@ -389,7 +581,10 @@ trait Workspace {
             Framework(env.lookup(filler).get).collectDependencies(env, deps)
           }
           case Some(Filler(ident)) => {
-            baseCells(dimension - 1) foreachCell (cell => {
+            val startDim = 
+              if (topCell.isDrop) (dimension - 2) else (dimension - 1)
+
+            baseCells(startDim) foreachCell (cell => {
               cell.item foreach (e => {
                 e match {
                   case FillerFace(_, filler, _) => 

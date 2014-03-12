@@ -15,7 +15,7 @@ object Environment {
 
   implicit class EnvironmentOps(env : Seq[NCell[Expression]]) {
 
-    def contains(id : String) : Boolean = 
+    def containsId(id : String) : Boolean = 
       env exists (expr => expr.value.id == id)
 
     def lookup(id : String) : Option[NCell[Expression]] = 
@@ -29,15 +29,18 @@ object Environment {
         }
       })
 
-    def fills : Seq[NCell[Expression]] = 
+    def nonVars : Seq[NCell[Expression]] = 
       env filter (expr => {
         expr.value match {
-          case Filler(_) => true
-          case UnicityFiller(_) => true
-          case _ => false
+          case Variable(_, _) => false
+          case _ => true
         }
       })
 
+    def dump : Unit = {
+      println("Dumping current environment: ")
+      env foreach (expr => println(expr.value.id))
+    }
   }
 
 }

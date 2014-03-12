@@ -109,6 +109,10 @@
     filler-face-thin-base: blue-5;
     filler-face-thin-hover: blue-2;
     filler-face-thin-selected: blue-3;
+
+    app-base: rose-5;
+    app-hover: rose-2;
+    app-selected: rose-3;
 }
 
 /* JavaFX Control Customizations */
@@ -129,7 +133,7 @@
 }
 
 .titled-pane > *.content {
-    -fx-background-color: -fx-box-border;
+    -fx-background-color: -fx-background;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
@@ -208,6 +212,10 @@
 .orch-list-cell-filler-face-thin { -fx-background-color: filler-face-thin-base; -fx-border-color: filler-face-thin-selected; -fx-border-width: 1; }
 .orch-list-cell-filler-face-thin:hover { -fx-background-color: filler-face-thin-hover }
 .orch-list-cell-filler-face-thin:selected { -fx-background-color: filler-face-thin-selected }
+
+.orch-list-cell-app { -fx-background-color: app-base; -fx-border-color: app-selected; -fx-border-width: 1; }
+.orch-list-cell-app:hover { -fx-background-color: app-hover }
+.orch-list-cell-app:selected { -fx-background-color: app-selected }
 
 /* I guess there are a couple more ... */
 
@@ -336,6 +344,7 @@
 .expr-cell-filler { -fx-background-color: filler-base }
 .expr-cell-filler-face { -fx-background-color: filler-face-base }
 .expr-cell-filler-face-thin { -fx-background-color: filler-face-thin-base }
+.expr-cell-app { -fx-background-color: app-base }
 
 .expr-cell-empty-hovered { -fx-background-color: empty-hover }
 .expr-cell-exposed-hovered { -fx-background-color: exposed-hover }
@@ -344,6 +353,7 @@
 .expr-cell-filler-hovered { -fx-background-color: filler-hover }
 .expr-cell-filler-face-hovered { -fx-background-color: filler-face-hover }
 .expr-cell-filler-face-thin-hovered { -fx-background-color: filler-face-thin-hover }
+.expr-cell-app-hovered { -fx-background-color: app-hover }
 
 .expr-cell-empty-selected { -fx-background-color: empty-selected }
 .expr-cell-exposed-selected { -fx-background-color: exposed-selected }
@@ -352,4 +362,6 @@
 .expr-cell-filler-selected { -fx-background-color: filler-selected }
 .expr-cell-filler-face-selected { -fx-background-color: filler-face-selected }
 .expr-cell-filler-face-thin-selected { -fx-background-color: filler-face-thin-selected }
+.expr-cell-app-selected { -fx-background-color: app-selected }
+
 

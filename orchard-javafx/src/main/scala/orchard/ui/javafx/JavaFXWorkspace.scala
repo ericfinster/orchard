@@ -7,6 +7,8 @@
 
 package orchard.ui.javafx
 
+import scala.collection.JavaConversions._
+
 import scalafx.Includes._
 
 import scalafx.geometry._
@@ -15,8 +17,10 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 
 import scalafx.collections.ObservableBuffer
+import scalafx.collections.ObservableBuffer._
 
 import javafx.{scene => jfxs}
+import javafx.scene.{control => jfxsc}
 import javafx.scene.text.Text
 
 import orchard.core._
@@ -29,6 +33,81 @@ trait JavaFXWorkspace extends Workspace {
 
   type EnvironmentSeqType = ObservableBuffer[NCell[Expression]]
 
+  val environment = ObservableBuffer.empty[NCell[Expression]]
+
+  // I think I'm going to move the environment here into the workspace definition.
+  val environmentRoot = new TreeItem[NCell[Expression]]
+  val environmentView =
+    new TreeView[NCell[Expression]] {
+      root = environmentRoot
+      showRoot = false
+      cellFactory = (_ => new EnvironmentTreeCell)
+    }
+
+  environmentView.getSelectionModel.selectedItem onChange {
+    activeExpression = Some(environmentView.getSelectionModel.selectedItem().value())
+  }
+
+  // Use the actual changes, smart guy ...
+  environment onChange { (_, chgs) =>  
+    chgs foreach {
+      case Add(pos, added) => {
+        val items =
+          added.asInstanceOf[Traversable[NCell[Expression]]] map 
+            (expr => new TreeItem[NCell[Expression]] { value = expr }.delegate)
+
+        environmentRoot.children.insertAll(pos, items)
+      }
+      case Remove(pos, removed) => ???
+      case Reorder(_, _, _) => ???
+    }
+  }
+
+  class EnvironmentTreeCell extends jfxsc.TreeCell[NCell[Expression]] {
+
+    getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-null"
+
+    def setCellStyleType(str : String) = {
+      getStyleClass(cellStyleIndex) = str
+    }
+
+    override def updateItem(expr : NCell[Expression], empty : Boolean) = {
+      super.updateItem(expr, empty)
+
+      if (! empty) {
+        // Set the style based on the semantics ...
+        expr.value match {
+          case Variable(_, isThin) => {
+            if (isThin) {
+              setCellStyleType("orch-list-cell-var-thin")
+            } else {
+              setCellStyleType("orch-list-cell-var")
+            }
+          }
+          case Filler(_) => setCellStyleType("orch-list-cell-filler")
+          case FillerFace(_, _, isThin) => {
+            if (isThin) {
+              setCellStyleType("orch-list-cell-filler-face-thin")
+            } else {
+              setCellStyleType("orch-list-cell-filler-face")
+            }
+          }
+          case UnicityFiller(_) => setCellStyleType("orch-list-cell-ufiller")
+          case Application(_, _, _) => setCellStyleType("orch-list-cell-app")
+          // Should look up the cell and use that style type ...
+          case Projection(_) => setCellStyleType("orch-list-cell-filler")
+        }
+
+        setText(expr.toString)
+      } else {
+        setCellStyleType("orch-list-null")
+        setText("")
+      }
+    } 
+  }
+
   def treeItem : TreeItem[NavigationTreeItem]
 
   var sheetCount : Int = 1
@@ -36,8 +115,6 @@ trait JavaFXWorkspace extends Workspace {
   val sheetTabPane = new TabPane {
     side = Side.TOP
   }
-
-  val environment = ObservableBuffer.empty[NCell[Expression]]
 
   var activeGallery : Option[WorksheetGallery] = None 
   var activeExpression : Option[NCell[Expression]] = None
@@ -49,8 +126,11 @@ trait JavaFXWorkspace extends Workspace {
 
   def newSheet = newSheet(Object(None))
 
-  def newSheet(seed : NCell[Option[Expression]]) : Unit = {
-    val gallery = new WorksheetGallery(CardinalComplex(seed))
+  def newSheet(seed : NCell[Option[Expression]]) : Unit =
+    newCardinalSheet(CardinalComplex(seed))
+
+  def newCardinalSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
+    val gallery = new WorksheetGallery(seed)
 
     val tab = new Tab {
       text = "Sheet " ++ sheetCount.toString
@@ -71,6 +151,61 @@ trait JavaFXWorkspace extends Workspace {
     sheets += gallery.complex
     sheetCount += 1
     gallery.refreshAll
+  }
+
+  def apply(defn : Definition) = applyInShell(Object(None), defn)
+
+  def applyInShell(shell : NCell[Option[Expression]], defn : Definition) : Option[JavaFXSubstitutionWorkspace] = {
+    val substWksp =
+      new JavaFXSubstitutionWorkspace(
+        editor.asInstanceOf[JavaFXEditor],
+        defn.name,
+        this,
+        defn,
+        shell
+      )
+
+    // Import the current environment
+    substWksp.environment ++= environment
+
+    // Copy the sheets
+    sheets foreach (sheet => {
+      substWksp.newCardinalSheet(sheet.toCell)
+    })
+
+    // Add the new workspace as a child
+    treeItem.children += substWksp.treeItem
+
+    Some(substWksp)
+  }
+
+  def unfoldSelectedApplication : Unit = {
+    val selectedItem = environmentView.getSelectionModel.selectedItem()
+
+    if (selectedItem != null) {
+      val selectedExpr = selectedItem.value()
+
+      selectedExpr.value match {
+        case a @ Application(_, _, _) => {
+          println("About to unfold...")
+
+          val exprs = unfold(a)
+
+          exprs foreach (expr => {
+            println("Found resulting expression: " ++ expr.value.id)
+            selectedItem.children += new TreeItem[NCell[Expression]] { value = expr }.delegate
+          })
+
+        }
+        case _ => println("Not an application!")
+      }
+    }
+  }
+
+  override def unfold(app : Application) : Seq[NCell[Expression]] = {
+    val exprs = super.unfold(app)
+
+    exprs
   }
 
   class WorksheetPanel(val complex : Worksheet, val baseIndex : Int) extends JavaFXWorksheetPanel { thisPanel =>
