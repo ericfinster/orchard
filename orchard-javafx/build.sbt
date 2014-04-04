@@ -8,7 +8,7 @@ unmanagedJars in Compile := {
   customJars.classpath
 }
 
-excludeFilter in unmanagedSources ~= { _ || "ExpressionBuilderPanel.scala" || "ExpressionBuilder.scala" }
+excludeFilter in unmanagedSources ~= { _ || "JavaFXWorksheetPanel.scala" || "JavaFXWorksheetGallery.scala" || "FrameworkSVGPanel.scala" || "FrameworkPanel.scala" || "StaticFrameworkPanel.scala" || "EnvironmentCell.scala" || "FrameworkZoomPanel.scala" || "FrameworkSVGGallery.scala" || "StaticFrameworkGallery.scala" }
 
 unmanagedJars in Compile += Attributed.blank(
     file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar")

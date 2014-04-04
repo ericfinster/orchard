@@ -11,7 +11,7 @@ import javafx.scene.Group
 import javafx.scene.layout.Region
 import javafx.scene.transform.Scale
 
-abstract class ZoomPanel[A] extends Region with JavaFXPanel[A] {
+abstract class ZoomPanel[A] extends JavaFXPanel[A] {
 
   getStyleClass add "orch-zoom-panel"
 

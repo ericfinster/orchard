@@ -8,6 +8,7 @@
 package orchard.ui.javafx
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Buffer
 
 import scalafx.Includes._
 
@@ -25,90 +26,38 @@ import javafx.scene.text.Text
 
 import orchard.core._
 
+// import Environment._
+
 sealed trait NavigationTreeItem
 case class DefnWorkspaceItem(val wksp : JavaFXDefinitionWorkspace) extends NavigationTreeItem
 case class SubstWorkspaceItem(val wksp : JavaFXSubstitutionWorkspace) extends NavigationTreeItem
 
-trait JavaFXWorkspace extends Workspace {
+trait JavaFXWorkspace extends Workspace 
+    with WorksheetEnvironment 
+    with ShapeEnvironment { thisWksp =>
 
-  type EnvironmentSeqType = ObservableBuffer[NCell[Expression]]
+  type EditorType = JavaFXEditor
 
-  val environment = ObservableBuffer.empty[NCell[Expression]]
+  var activeExpression : Option[Expression[IndexType]] = None
 
-  // I think I'm going to move the environment here into the workspace definition.
-  val environmentRoot = new TreeItem[NCell[Expression]]
-  val environmentView =
-    new TreeView[NCell[Expression]] {
-      root = environmentRoot
-      showRoot = false
-      cellFactory = (_ => new EnvironmentTreeCell)
+  def getItemSeq(rootItem : TreeItem[Expression[IndexType]], treeItem : TreeItem[Expression[IndexType]]) : Seq[Int] = {
+    var currentItem = treeItem
+    val addr = Buffer.empty[Int]
+
+    while (currentItem != rootItem) {
+      val parentItem = currentItem.parent()
+      parentItem.children.indexOf(currentItem) +=: addr
+      currentItem = parentItem
     }
 
-  environmentView.getSelectionModel.selectedItem onChange {
-    activeExpression = Some(environmentView.getSelectionModel.selectedItem().value())
+    addr
   }
 
-  // Use the actual changes, smart guy ...
-  environment onChange { (_, chgs) =>  
-    chgs foreach {
-      case Add(pos, added) => {
-        val items =
-          added.asInstanceOf[Traversable[NCell[Expression]]] map 
-            (expr => new TreeItem[NCell[Expression]] { value = expr }.delegate)
-
-        environmentRoot.children.insertAll(pos, items)
-      }
-      case Remove(pos, removed) => ???
-      case Reorder(_, _, _) => ???
-    }
+  val treeItem = new TreeItem[JavaFXWorkspace] {
+    value = thisWksp
   }
 
-  class EnvironmentTreeCell extends jfxsc.TreeCell[NCell[Expression]] {
-
-    getStyleClass add "orch-list-cell"
-    val cellStyleIndex = getStyleClass.length
-    getStyleClass add "orch-list-null"
-
-    def setCellStyleType(str : String) = {
-      getStyleClass(cellStyleIndex) = str
-    }
-
-    override def updateItem(expr : NCell[Expression], empty : Boolean) = {
-      super.updateItem(expr, empty)
-
-      if (! empty) {
-        // Set the style based on the semantics ...
-        expr.value match {
-          case Variable(_, isThin) => {
-            if (isThin) {
-              setCellStyleType("orch-list-cell-var-thin")
-            } else {
-              setCellStyleType("orch-list-cell-var")
-            }
-          }
-          case Filler(_) => setCellStyleType("orch-list-cell-filler")
-          case FillerFace(_, _, isThin) => {
-            if (isThin) {
-              setCellStyleType("orch-list-cell-filler-face-thin")
-            } else {
-              setCellStyleType("orch-list-cell-filler-face")
-            }
-          }
-          case UnicityFiller(_) => setCellStyleType("orch-list-cell-ufiller")
-          case Application(_, _, _) => setCellStyleType("orch-list-cell-app")
-          // Should look up the cell and use that style type ...
-          case Projection(_) => setCellStyleType("orch-list-cell-filler")
-        }
-
-        setText(expr.toString)
-      } else {
-        setCellStyleType("orch-list-null")
-        setText("")
-      }
-    } 
-  }
-
-  def treeItem : TreeItem[NavigationTreeItem]
+  def contextView : TreeView[Expression[DefinitionWorkspace#IndexType]]
 
   var sheetCount : Int = 1
 
@@ -117,20 +66,21 @@ trait JavaFXWorkspace extends Workspace {
   }
 
   var activeGallery : Option[WorksheetGallery] = None 
-  var activeExpression : Option[NCell[Expression]] = None
 
   def activeSheet : Option[Worksheet] =
     for {
       gallery <- activeGallery
     } yield gallery.complex
 
-  def newSheet = newSheet(Object(None))
+  def newSheet = newSheet(Object(implicitly[HasEmpty[IndexType]].empty))
 
-  def newSheet(seed : NCell[Option[Expression]]) : Unit =
+  def newSheet(seed : NCell[IndexType]) : Unit =
     newCardinalSheet(CardinalComplex(seed))
 
-  def newCardinalSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
-    val gallery = new WorksheetGallery(seed)
+  def newGallery(seed : NCell[Polarity[IndexType]]) : WorksheetGallery
+
+  def newCardinalSheet(seed : NCell[Polarity[IndexType]]) : Unit = {
+    val gallery = newGallery(seed)
 
     val tab = new Tab {
       text = "Sheet " ++ sheetCount.toString
@@ -153,9 +103,9 @@ trait JavaFXWorkspace extends Workspace {
     gallery.refreshAll
   }
 
-  def apply(defn : Definition) = applyInShell(Object(None), defn)
+  def apply(defn : Definition) = applyInShell(Object(Seq.empty), defn)
 
-  def applyInShell(shell : NCell[Option[Expression]], defn : Definition) : Option[JavaFXSubstitutionWorkspace] = {
+  def applyInShell(shell : NCell[Seq[Int]], defn : Definition) : Option[JavaFXSubstitutionWorkspace] = {
     val substWksp =
       new JavaFXSubstitutionWorkspace(
         editor.asInstanceOf[JavaFXEditor],
@@ -165,100 +115,20 @@ trait JavaFXWorkspace extends Workspace {
         shell
       )
 
-    // Import the current environment
-    substWksp.environment ++= environment
-
     // Copy the sheets
     sheets foreach (sheet => {
-      substWksp.newCardinalSheet(sheet.toCell)
+      val newSubstSheet = 
+        sheet.toCell map (p => p map (substWksp.convertIndex(_)))
+
+      substWksp.newCardinalSheet(newSubstSheet)
     })
+
 
     // Add the new workspace as a child
     treeItem.children += substWksp.treeItem
 
     Some(substWksp)
   }
-
-  def unfoldSelectedApplication : Unit = {
-    val selectedItem = environmentView.getSelectionModel.selectedItem()
-
-    if (selectedItem != null) {
-      val selectedExpr = selectedItem.value()
-
-      selectedExpr.value match {
-        case a @ Application(_, _, _) => {
-          println("About to unfold...")
-
-          val exprs = unfold(a)
-
-          exprs foreach (expr => {
-            println("Found resulting expression: " ++ expr.value.id)
-            selectedItem.children += new TreeItem[NCell[Expression]] { value = expr }.delegate
-          })
-
-        }
-        case _ => println("Not an application!")
-      }
-    }
-  }
-
-  override def unfold(app : Application) : Seq[NCell[Expression]] = {
-    val exprs = super.unfold(app)
-
-    exprs
-  }
-
-  class WorksheetPanel(val complex : Worksheet, val baseIndex : Int) extends JavaFXWorksheetPanel { thisPanel =>
-
-    type CellType = WorksheetCell
-    type EdgeType = WorksheetEdge
-
-    type ComplexType = Worksheet
-
-    class WorksheetCell(val owner : complex.WorksheetCell) extends JavaFXWorksheetCell
-    class WorksheetEdge(val owner : complex.WorksheetCell) extends JavaFXWorksheetEdge
-
-    def newCell(owner : complex.WorksheetCell) : WorksheetCell = {
-      val cell = new WorksheetCell(owner)
-      owner.registerPanelCell(thisPanel)(cell)
-      reactTo(cell)
-      cell
-    }
-    
-    def newEdge(owner : complex.WorksheetCell) : WorksheetEdge = {
-      val edge = new WorksheetEdge(owner)
-      owner.registerPanelEdge(thisPanel)(edge)
-      reactTo(edge)
-      edge
-    }
-
-    //============================================================================================
-    // INITIALIZATION
-    //
-
-    var baseCell : WorksheetCell = newCell(complex.baseCells(baseIndex))
-
-    refreshPanelData
-    initializeChildren
-
-  }
-
-  class WorksheetGallery(val complex : Worksheet) extends JavaFXWorksheetGallery {
-
-    def this(seed : NCell[Polarity[Option[Expression]]]) = this(new Worksheet(seed))
-    def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
-
-    type PanelType = WorksheetPanel
-
-    def newPanel(i : Int) : WorksheetPanel = {
-      val panel = new WorksheetPanel(complex, i)
-      reactTo(panel)
-      panel
-    }
-
-    initialize
-  }
-
 }
 
 class JavaFXDefinitionWorkspace(
@@ -269,8 +139,158 @@ class JavaFXDefinitionWorkspace(
   val unicityLevel : Option[Int]
 ) extends DefinitionWorkspace with JavaFXWorkspace { thisWksp =>
 
-  val treeItem = new TreeItem[NavigationTreeItem] {
-    value = DefnWorkspaceItem(thisWksp)
+  var activeExpressionIndex : Seq[Int] = Seq.empty
+
+  val contextBuffer = ObservableBuffer.empty[Expression[IndexType]]
+
+  val contextRoot = new TreeItem[Expression[IndexType]]
+  val contextView =
+    new TreeView[Expression[IndexType]] {
+      root = contextRoot
+      showRoot = false
+      cellFactory = (_ => new ContextTreeCell)
+    }
+
+  contextView.getSelectionModel.selectedItem onChange {
+    val exprItem = contextView.getSelectionModel.selectedItem()
+
+    if (exprItem != null) {
+      val expr = exprItem.value()
+      activeExpression = Some(expr)
+      activeExpressionIndex = getItemSeq(contextRoot, exprItem)
+
+      // Now make a gallery and show it in the preview pane
+      val gallery = new ShapeGallery(ShapeFramework(activeExpressionIndex))
+      editor.setPreviewGallery(gallery)
+    } else {
+      activeExpression = None
+      activeExpressionIndex = Seq.empty
+    }
+
+    for {
+      wksp <- editor.activeWorkspace
+    } {
+      if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+        wksp.asInstanceOf[JavaFXSubstitutionWorkspace].
+          substContextView.getSelectionModel.clearSelection
+      }
+    }
+  }
+
+  // Use the actual changes, smart guy ...
+  contextBuffer onChange { (_, chgs) =>
+    chgs foreach {
+      case Add(pos, added) => {
+        val items =
+          added.asInstanceOf[Traversable[Expression[Seq[Int]]]] map 
+            (expr => buildExpressionTreeItem(expr).delegate)
+
+        contextRoot.children.insertAll(pos, items)
+      }
+      case Remove(pos, removed) => ???
+      case Reorder(_, _, _) => ???
+    }
+  }
+
+  class ContextTreeCell extends jfxsc.TreeCell[Expression[IndexType]] {
+
+    getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-null"
+
+    def setCellStyleType(str : String) = {
+      getStyleClass(cellStyleIndex) = str
+    }
+
+    override def updateItem(expr : Expression[IndexType], empty : Boolean) = {
+      super.updateItem(expr, empty)
+
+      if (! empty) {
+        setCellStyleType("orch-list-cell-" ++ expr.styleString)
+        setText(context.expandIdentifier(expr.ident))
+      } else {
+        setCellStyleType("orch-list-null")
+        setText("")
+      }
+    } 
+  }
+
+  def buildExpressionTreeItem(expr : Expression[IndexType]) : TreeItem[Expression[IndexType]] = 
+    expr match {
+      case app @ Application(defn, _, _) => {
+        val appItem = new TreeItem[Expression[IndexType]] { value = app }
+
+        defn.contextBuffer foreach (e => {
+          appItem.children += buildExpressionTreeItem(e).delegate
+        })
+
+        appItem
+      }
+      case other @ _ => new TreeItem[Expression[IndexType]] { value = other }
+    }
+
+  def completeDefinition : Option[Definition] =
+    if (activeExpressionIndex.length == 1) {
+      val defn = new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, contextBuffer, activeExpressionIndex.head)
+      Some(defn)
+    } else {
+      println("Definition cannot be completed with the cell.")
+      None
+    }
+
+
+  def newGallery(seed : NCell[Polarity[IndexType]]) : WorksheetGallery = 
+    new DefinitionWorksheetGallery(seed)
+
+  class DefinitionWorksheetPanel(val complex : DefinitionWorksheet, val baseIndex : Int) extends WorksheetPanel { thisPanel =>
+
+    type CellType = DefinitionWorksheetPanelCell
+    type EdgeType = DefinitionWorksheetPanelEdge
+
+    type ComplexType = DefinitionWorksheet
+
+    def newCell(owner : complex.DefinitionWorksheetCell) : DefinitionWorksheetPanelCell = {
+      val cell = new DefinitionWorksheetPanelCell(owner)
+      owner.registerPanelCell(thisPanel)(cell)
+      reactTo(cell)
+      cell
+    }
+    
+    def newEdge(owner : complex.DefinitionWorksheetCell) : DefinitionWorksheetPanelEdge = {
+      val edge = new DefinitionWorksheetPanelEdge(owner)
+      owner.registerPanelEdge(thisPanel)(edge)
+      reactTo(edge)
+      edge
+    }
+    
+    class DefinitionWorksheetPanelCell(val owner : complex.DefinitionWorksheetCell) extends WorksheetPanelCell
+    class DefinitionWorksheetPanelEdge(val owner : complex.DefinitionWorksheetCell) extends WorksheetPanelEdge
+
+    //============================================================================================
+    // INITIALIZATION
+    //
+
+    var baseCell : DefinitionWorksheetPanelCell = newCell(complex.baseCells(baseIndex))
+
+    refreshPanelData
+    initializeChildren
+
+  }
+
+  class DefinitionWorksheetGallery(val complex : DefinitionWorksheet) extends WorksheetGallery {
+
+    type PanelType = DefinitionWorksheetPanel
+
+    def this(seed : NCell[Polarity[IndexType]]) = this(new DefinitionWorksheet(seed))
+
+    def newPanel(i : Int) : DefinitionWorksheetPanel = {
+      val panel = new DefinitionWorksheetPanel(complex, i)
+      reactTo(panel)
+      panel
+    }
+
+    initialize
+
   }
 
 }
@@ -278,93 +298,154 @@ class JavaFXDefinitionWorkspace(
 class JavaFXSubstitutionWorkspace(
   val editor : JavaFXEditor,
   val name : String,
-  val parentWorkspace : Workspace,
+  val parentWorkspace : JavaFXWorkspace,
   val defn : Definition,
-  val shell : NCell[Option[Expression]]
+  val shell : NCell[Seq[Int]]
 ) extends SubstitutionWorkspace with JavaFXWorkspace { thisWksp =>
 
-  type GoalSeqType = ObservableBuffer[GoalComplex]
+  var activeExpressionIndex : SubstIndex = Internal(Seq.empty)
+  
+  def parentDefinitionWksp : JavaFXDefinitionWorkspace = 
+    if (parentWorkspace.isInstanceOf[JavaFXDefinitionWorkspace]) {
+      parentWorkspace.asInstanceOf[JavaFXDefinitionWorkspace]
+    } else {
+      parentWorkspace.asInstanceOf[JavaFXSubstitutionWorkspace].parentDefinitionWksp
+    }
 
-  val goals = ObservableBuffer.empty[GoalComplex]
+  def parentDefinition = parentDefinitionWksp
 
-  val treeItem = new TreeItem[NavigationTreeItem] {
-    value = SubstWorkspaceItem(thisWksp)
-  }
+  def contextView = parentDefinitionWksp.contextView
 
   def stabilityLevel : Option[Int] = parentWorkspace.stabilityLevel
   def invertibilityLevel : Option[Int] = parentWorkspace.invertibilityLevel
   def unicityLevel : Option[Int] = parentWorkspace.unicityLevel
 
-  // We need a panel and gallery class to display the goals, since these are stored in a different
-  // kind of complex.  And really, the inheritence hierarchy needs to be examined to make if a little
-  // cleaner
-
-  initialize
-
-  class GoalPanel(val complex : GoalComplex, val baseIndex : Int) 
-      extends ZoomPanel[GoalMarker] 
-      with MutablePanel[GoalMarker] { thisPanel =>
-
-    type CellType = GoalCell
-    type EdgeType = GoalEdge
-
-    type ComplexType = GoalComplex
-
-    class GoalCell(val owner : complex.GoalComplexCell) extends JavaFXCell with MutablePanelCell {
-
-      def renderLabel : jfxs.Node = {
-        val labelNode = new Text(item.toString)
-          // item match {
-          //   case Positive => new Text("+")
-          //   case Negative => new Text("-")
-          //   case Neutral(None) => new Region { prefWidth = 10 ; prefHeight = 10 }
-          //   case Neutral(Some(expr)) => new Text(expr.id)
-          // }
-
-        labelNode.layoutBounds onChange { thisPanel.refresh }
-        pane.getChildren.setAll(labelNode)
-        labelNode
-      }
-
+  val substContextRoot = buildSubstitutionContext(promoteExternalExpr(application))
+  val substContextView =
+    new TreeView[Expression[IndexType]] {
+      root = substContextRoot
+      showRoot = false
+      cellFactory = (_ => new SubstitutionContextTreeCell)
     }
 
-    class GoalEdge(val owner : complex.GoalComplexCell) extends JavaFXEdge with MutablePanelEdge
+  def buildSubstitutionContext(expr : Expression[IndexType]) : TreeItem[Expression[IndexType]] = 
+    expr match {
+      case app @ Application(defn, _, _) => {
+        val appItem = new TreeItem[Expression[IndexType]] { value = app }
 
-    def newCell(owner : complex.GoalComplexCell) : GoalCell = {
-      val cell = new GoalCell(owner)
+        defn.contextBuffer foreach (e => {
+          appItem.children += buildSubstitutionContext(promoteInternalExpr(e)).delegate
+        })
+
+        appItem
+      }
+      case other @ _ => new TreeItem[Expression[IndexType]] { value = other }
+    }
+
+  substContextView.getSelectionModel.selectedItem onChange {
+    val exprItem = substContextView.getSelectionModel.selectedItem()
+
+    if (exprItem != null) {
+      // generate a preview and set it in the window ...
+
+    } else {
+    }
+
+    contextView.getSelectionModel.clearSelection
+  }
+
+  // contextView.getSelectionModel.selectedItem onChange {
+  //   val exprItem = contextView.getSelectionModel.selectedItem()
+
+  //   if (exprItem != null) {
+  //     val expr = exprItem.value()
+  //     activeExpression = Some(expr)
+  //     activeExpressionIndex = indexOf(contextRoot, exprItem)
+
+  //     // Now make a gallery and show it in the preview pane
+  //     val gallery = new ShapeGallery(expr)
+  //     editor.setPreviewGallery(gallery)
+  //   } else {
+  //     activeExpression = None
+  //     activeExpressionIndex = Seq.empty
+  //   }
+  // }
+
+  class SubstitutionContextTreeCell extends jfxsc.TreeCell[Expression[SubstIndex]] {
+
+    getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-null"
+
+    def setCellStyleType(str : String) = {
+      getStyleClass(cellStyleIndex) = str
+    }
+
+    override def updateItem(expr : Expression[SubstIndex], empty : Boolean) = {
+      super.updateItem(expr, empty)
+
+      if (! empty) {
+        setCellStyleType("orch-list-cell-" ++ expr.styleString)
+        setText(context.expandIdentifier(expr.ident))
+      } else {
+        setCellStyleType("orch-list-null")
+        setText("")
+      }
+    } 
+  }
+
+  def newGallery(seed : NCell[Polarity[IndexType]]) : WorksheetGallery = 
+    new SubstitutionWorksheetGallery(seed)
+
+  class SubstitutionWorksheetPanel(val complex : SubstitutionWorksheet, val baseIndex : Int) extends WorksheetPanel { thisPanel =>
+
+    type CellType = SubstitutionWorksheetPanelCell
+    type EdgeType = SubstitutionWorksheetPanelEdge
+
+    type ComplexType = SubstitutionWorksheet
+
+    def newCell(owner : complex.SubstitutionWorksheetCell) : SubstitutionWorksheetPanelCell = {
+      val cell = new SubstitutionWorksheetPanelCell(owner)
       owner.registerPanelCell(thisPanel)(cell)
       reactTo(cell)
       cell
     }
-
-    def newEdge(owner : complex.GoalComplexCell) : GoalEdge = {
-      val edge = new GoalEdge(owner)
+    
+    def newEdge(owner : complex.SubstitutionWorksheetCell) : SubstitutionWorksheetPanelEdge = {
+      val edge = new SubstitutionWorksheetPanelEdge(owner)
       owner.registerPanelEdge(thisPanel)(edge)
       reactTo(edge)
       edge
     }
+    
+    class SubstitutionWorksheetPanelCell(val owner : complex.SubstitutionWorksheetCell) extends WorksheetPanelCell
+    class SubstitutionWorksheetPanelEdge(val owner : complex.SubstitutionWorksheetCell) extends WorksheetPanelEdge
 
     //============================================================================================
     // INITIALIZATION
     //
 
-    var baseCell : GoalCell = newCell(complex.baseCells(baseIndex))
+    var baseCell : SubstitutionWorksheetPanelCell = newCell(complex.baseCells(baseIndex))
 
     refreshPanelData
     initializeChildren
 
   }
 
-  class GoalGallery(val complex : GoalComplex) extends SpinnerGallery[GoalMarker] { thisGallery =>
+  class SubstitutionWorksheetGallery(val complex : SubstitutionWorksheet) extends WorksheetGallery {
 
-    type PanelType = GoalPanel
+    type PanelType = SubstitutionWorksheetPanel
 
-    def newPanel(i : Int) : GoalPanel = {
-      val panel = new GoalPanel(complex, i)
+    def this(seed : NCell[Polarity[IndexType]]) = this(new SubstitutionWorksheet(seed))
+
+    def newPanel(i : Int) : SubstitutionWorksheetPanel = {
+      val panel = new SubstitutionWorksheetPanel(complex, i)
       reactTo(panel)
       panel
     }
 
     initialize
+
   }
+
 }

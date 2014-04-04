@@ -100,16 +100,6 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onAssume(false)
   }
 
-  val composeItem = new MenuItem {
-    text = "Compose Selection"
-    onAction = onCompose
-  }
-
-  val identityItem = new MenuItem {
-    text = "Insert Identity"
-    onAction = onInsertIdentity
-  }
-
   val fillItem = new MenuItem {
     text = "Fill Nook"
     onAction = onFill
@@ -122,7 +112,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   val expressionMenu = new Menu {
     text = "Expression"
-    items ++= List(extrudeItem, dropItem, assumeItem, composeItem, identityItem, fillItem, useItem)
+    items ++= List(extrudeItem, dropItem, assumeItem, fillItem, useItem)
   }
 
   val menuBar = new MenuBar {
@@ -146,8 +136,6 @@ trait OrchardMenus { self : JavaFXEditor =>
   def onExtrude : Unit 
   def onDrop : Unit
   def onAssume(isThin : Boolean) : Unit
-  def onCompose : Unit
-  def onInsertIdentity : Unit
   def onFill : Unit
   def onUseEnvironment : Unit
 

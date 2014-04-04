@@ -130,132 +130,132 @@ object XmlSerializable {
         }
     }
 
-  implicit val expressionSerializable : XmlSerializable[Expression] =
-    new XmlSerializable[Expression] {
-      def toXML(expr : Expression) =
-        expr match {
-          case Variable(ident, isThin) => {
-            <variable isThin={isThin.toString}>{
-              identifierSerializable.toXML(ident)
-            }</variable>
-          }
-          case FillerFace(ident, filler, isThin) => {
-            <fillerface isThin={isThin.toString} filler={filler}>{
-              identifierSerializable.toXML(ident)
-            }</fillerface>
-          }
-          case Filler(ident) => {
-            <filler>{identifierSerializable.toXML(ident)}</filler>
-          }
-          case UnicityFiller(ident) => {
-            <ufiller>{identifierSerializable.toXML(ident)}</ufiller>
-          }
-          // Look at this one again, I think we can do better with an environment around ...
-          case Application(defn, args, shell) => {
-            <application><defn>{
-              definitionSerializable.toXML(defn)
-            }</defn><args>{
-              args map (cell => {
-                cellSerializable[Expression].toXML(cell)
-              })
-            }</args><shell>{
-              cellSerializable[Option[Expression]].toXML(shell)
-            }</shell></application>
-          }
-          case Projection(addr) => {
-            <projection>{addr map (i => <dot>{i.toString}</dot>)}</projection>
-          }
-        }
+  // implicit val expressionSerializable : XmlSerializable[Expression] =
+  //   new XmlSerializable[Expression] {
+  //     def toXML(expr : Expression) =
+  //       expr match {
+  //         case Variable(ident, isThin) => {
+  //           <variable isThin={isThin.toString}>{
+  //             identifierSerializable.toXML(ident)
+  //           }</variable>
+  //         }
+  //         case FillerFace(ident, filler, isThin) => {
+  //           <fillerface isThin={isThin.toString} filler={filler}>{
+  //             identifierSerializable.toXML(ident)
+  //           }</fillerface>
+  //         }
+  //         case Filler(ident) => {
+  //           <filler>{identifierSerializable.toXML(ident)}</filler>
+  //         }
+  //         case UnicityFiller(ident) => {
+  //           <ufiller>{identifierSerializable.toXML(ident)}</ufiller>
+  //         }
+  //         // Look at this one again, I think we can do better with an environment around ...
+  //         case Application(defn, args, shell) => {
+  //           <application><defn>{
+  //             definitionSerializable.toXML(defn)
+  //           }</defn><args>{
+  //             args map (cell => {
+  //               cellSerializable[Expression].toXML(cell)
+  //             })
+  //           }</args><shell>{
+  //             cellSerializable[Option[Expression]].toXML(shell)
+  //           }</shell></application>
+  //         }
+  //         case Projection(addr) => {
+  //           <projection>{addr map (i => <dot>{i.toString}</dot>)}</projection>
+  //         }
+  //       }
 
-      def fromXML(node : xml.Node) =
-        node match {
-          case v @ <variable>{identContent}</variable> => {
-            val ident = identifierSerializable.fromXML(identContent)
-            val isThin = (v \ "@isThin").text.toBoolean
-            Variable(ident, isThin)
-          }
-          case ff @ <fillerface>{identContent}</fillerface> => {
-            val ident = identifierSerializable.fromXML(identContent)
-            val isThin = (ff \ "@isThin").text.toBoolean
-            val filler = (ff \ "@filler").text
-            FillerFace(ident, filler, isThin)
-          }
-          case f @ <filler>{identContent}</filler> => {
-            val ident = identifierSerializable.fromXML(identContent)
-            Filler(ident)
-          }
-          case uf @ <ufiller>{identContent}</ufiller> => {
-            val ident = identifierSerializable.fromXML(identContent)
-            UnicityFiller(ident)
-          }
-          case ap @ <application><defn>{defnContent}</defn><args>{argContent @ _*}</args><shell>{shellContent}</shell></application> => {
-            val defn = definitionSerializable.fromXML(defnContent)
-            val shell : NCell[Option[Expression]] = 
-              NCell.cellIsNCell(cellSerializable[Option[Expression]].fromXML(shellContent))
+  //     def fromXML(node : xml.Node) =
+  //       node match {
+  //         case v @ <variable>{identContent}</variable> => {
+  //           val ident = identifierSerializable.fromXML(identContent)
+  //           val isThin = (v \ "@isThin").text.toBoolean
+  //           Variable(ident, isThin)
+  //         }
+  //         case ff @ <fillerface>{identContent}</fillerface> => {
+  //           val ident = identifierSerializable.fromXML(identContent)
+  //           val isThin = (ff \ "@isThin").text.toBoolean
+  //           val filler = (ff \ "@filler").text
+  //           FillerFace(ident, filler, isThin)
+  //         }
+  //         case f @ <filler>{identContent}</filler> => {
+  //           val ident = identifierSerializable.fromXML(identContent)
+  //           Filler(ident)
+  //         }
+  //         case uf @ <ufiller>{identContent}</ufiller> => {
+  //           val ident = identifierSerializable.fromXML(identContent)
+  //           UnicityFiller(ident)
+  //         }
+  //         case ap @ <application><defn>{defnContent}</defn><args>{argContent @ _*}</args><shell>{shellContent}</shell></application> => {
+  //           val defn = definitionSerializable.fromXML(defnContent)
+  //           val shell : NCell[Option[Expression]] = 
+  //             NCell.cellIsNCell(cellSerializable[Option[Expression]].fromXML(shellContent))
 
-            val args : Seq[NCell[Expression]] = 
-              trimText(argContent) map (n => {
-                NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
-              })
+  //           val args : Seq[NCell[Expression]] = 
+  //             trimText(argContent) map (n => {
+  //               NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
+  //             })
 
-            Application(defn, args, shell)
-          }
-          case proj @ <projection>{addrContent @ _*}</projection> => {
-            val addr : Seq[Int] = 
-              trimText(addrContent) map {
-                case <dot>{txt}</dot> => txt.text.toInt
-              }
+  //           Application(defn, args, shell)
+  //         }
+  //         case proj @ <projection>{addrContent @ _*}</projection> => {
+  //           val addr : Seq[Int] = 
+  //             trimText(addrContent) map {
+  //               case <dot>{txt}</dot> => txt.text.toInt
+  //             }
 
-            Projection(addr)
-          }
-        }
-    }
+  //           Projection(addr)
+  //         }
+  //       }
+  //   }
 
-  implicit val definitionSerializable : XmlSerializable[Definition] = 
-    new XmlSerializable[Definition] {
+  // implicit val definitionSerializable : XmlSerializable[Definition] = 
+  //   new XmlSerializable[Definition] {
 
-      def toXML(defn : Definition) = {
-        def optToInt(opt : Option[Int]) : Int = 
-          opt getOrElse -1
+  //     def toXML(defn : Definition) = {
+  //       def optToInt(opt : Option[Int]) : Int = 
+  //         opt getOrElse -1
 
-        <definition 
-          name={defn.name}
-          slevel={optToInt(defn.stabilityLevel).toString}
-          ilevel={optToInt(defn.invertibilityLevel).toString}
-          ulevel={optToInt(defn.unicityLevel).toString}
-        ><output>{
-          expressionSerializable.toXML(defn.output)
-        }</output><environment>{
-          defn.environment map (cell => {
-            cellSerializable[Expression].toXML(cell)
-          })
-        }</environment></definition>
-      }
+  //       <definition 
+  //         name={defn.name}
+  //         slevel={optToInt(defn.stabilityLevel).toString}
+  //         ilevel={optToInt(defn.invertibilityLevel).toString}
+  //         ulevel={optToInt(defn.unicityLevel).toString}
+  //       ><output>{
+  //         expressionSerializable.toXML(defn.output)
+  //       }</output><environment>{
+  //         defn.environment map (cell => {
+  //           cellSerializable[Expression].toXML(cell)
+  //         })
+  //       }</environment></definition>
+  //     }
 
-      def fromXML(node : xml.Node) = {
-        def intToOpt(i : Int) : Option[Int] = if (i < 0) None else Some(i)
+  //     def fromXML(node : xml.Node) = {
+  //       def intToOpt(i : Int) : Option[Int] = if (i < 0) None else Some(i)
 
-        node match {
-          case defXml @ <definition><output>{outputContent}</output><environment>{envCells @ _*}</environment></definition> => {
+  //       node match {
+  //         case defXml @ <definition><output>{outputContent}</output><environment>{envCells @ _*}</environment></definition> => {
 
-            val output : Expression = 
-              expressionSerializable.fromXML(outputContent)
+  //           val output : Expression = 
+  //             expressionSerializable.fromXML(outputContent)
 
-            val env : Seq[NCell[Expression]] = 
-              trimText(envCells) map (n => {
-                NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
-              })
+  //           val env : Seq[NCell[Expression]] = 
+  //             trimText(envCells) map (n => {
+  //               NCell.cellIsNCell(cellSerializable[Expression].fromXML(n))
+  //             })
 
-            val name : String = (defXml \ "@name").text
-            val stabilityLevel : Option[Int] = intToOpt((defXml \ "@slevel").text.toInt)
-            val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
-            val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
+  //           val name : String = (defXml \ "@name").text
+  //           val stabilityLevel : Option[Int] = intToOpt((defXml \ "@slevel").text.toInt)
+  //           val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
+  //           val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
 
-            new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, env, output)
-          }
-        }
-      }
-    }
+  //           new Definition(name, stabilityLevel, invertibilityLevel, unicityLevel, env, output)
+  //         }
+  //       }
+  //     }
+  //   }
 
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =
     new XmlSerializable[Cell[_ <: Nat, A]] {

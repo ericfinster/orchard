@@ -15,7 +15,7 @@ import javafx.scene.transform.Scale
 
 import orchard.core._
 
-abstract class StaticPanel[A] extends Region with JavaFXPanel[A] { thisPanel =>
+abstract class StaticPanel[A] extends JavaFXPanel[A] { thisPanel =>
 
   getStyleClass add "orch-static-panel"
 

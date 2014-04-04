@@ -28,8 +28,14 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   trait DependencyDialog extends CancellableDialog {
 
-    val dependenciesList = new ListView[NCell[Expression]] {
-      cellFactory = (_ => new EnvironmentCell )
+    val dependenciesList = new ListView[String] {
+      // cellFactory = (_ => new EnvironmentCell )
+    }
+
+    for {
+      wksp <- activeWorkspace
+    } {
+      dependenciesList.items() ++= wksp.context.freeVariableMap.keys
     }
 
   }
@@ -291,7 +297,7 @@ trait OrchardDialogs { self : JavaFXEditor =>
             } else None
 
 
-          newWorkspace(name, stabilityLevel, invertibilityLevel, unicityLevel)
+          newDefinition(name, stabilityLevel, invertibilityLevel, unicityLevel)
         }
         case DialogCancel => ()
       }

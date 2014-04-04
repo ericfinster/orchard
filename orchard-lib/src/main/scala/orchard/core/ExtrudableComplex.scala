@@ -1,5 +1,5 @@
 /**
-  * AbstractExpressionWorksheet.scala - A complex which holds incomplete expressions
+  * ExtrudableComplex.scala - A complex with extrudable features
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -7,46 +7,27 @@
 
 package orchard.core
 
-import Util._
+// trait ExtrudableEnvironment[A] extends FrameworkEnvironment[Polarity[A]] { thisEnvironment =>
 
-abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expression]]])
-    extends AbstractMutableComplex[Polarity[Option[Expression]]](seed)
-    with CardinalComplex[Option[Expression]] 
-    with SelectableComplex[Polarity[Option[Expression]]]
-    with ExpressionFramework[Polarity[Option[Expression]]] {
+//   implicit def extrudableHasEmpty : HasEmpty[A]
 
-  def this() = this(Composite(Negative, Seed(Object(Neutral(None))), Positive))
+//   override implicit def hasEmpty : HasEmpty[Polarity[A]] = 
+//     new HasEmpty[Polarity[A]] {
+//       def empty = Neutral(implicitly[HasEmpty[A]].empty)
+//     }
 
-  type CellType <: AbstractExpressionWorksheetCell
+abstract class ExtrudableComplex[A : HasEmpty](seed : NCell[Polarity[A]])
+    extends Framework[Polarity[A]](seed)
+    with SelectableComplex[Polarity[A]]
+    with CardinalComplex[A] {
+
+  type CellType <: ExtrudableCell
+
+  abstract class ExtrudableCell(itm : Polarity[A])
+      extends FrameworkCell(itm)
+      with CardinalCell { thisCell : CellType => }
 
   def extend = glob(Negative, Positive)
-
-  abstract class AbstractExpressionWorksheetCell(initialItem : Polarity[Option[Expression]])
-      extends AbstractMutableCell
-      with ExpressionFrameworkCell
-      with CardinalCell { thisCell : CellType =>
-
-    private var myItem : Polarity[Option[Expression]] = initialItem
-
-    def item = myItem
-    def item_=(newItem : Polarity[Option[Expression]]) = {
-      val oldItem = myItem
-      myItem = newItem
-      emit(ChangeEvents.ItemChangedEvent(oldItem))
-    }
-
-    def exprItem = 
-      item match {
-        case Neutral(expr) => expr
-        case _ => throw new IllegalArgumentException("Expression error")
-      }
-
-    override def toString = "ExprCell(" ++ item.toString ++ ")@" ++ hashCode.toString
-  }
-
-  //============================================================================================
-  // SEMANTICS
-  //
 
   def selectionIsComposable : Boolean = {
     val cellsAreComplete = (true /: (selectedCells map (_.isComplete))) (_&&_)
@@ -62,7 +43,7 @@ abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expressi
   }
 
   def selectionIsEmptyCell : Boolean = {
-    if (! selectionIsUnique) false else 
+    if (! selectionIsUnique) false else
       selectionBase match {
         case None => false
         case Some(cell) => cell.isEmpty
@@ -116,9 +97,11 @@ abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expressi
     }
   }
 
-  def emptyExtrusion = extrudeAtSelection(None, None)
+  def emptyExtrusion =
+    extrudeAtSelection(implicitly[HasEmpty[A]].empty,
+      implicitly[HasEmpty[A]].empty)
 
-  def extrudeAtSelection(targetExpr : Option[Expression], fillerExpr : Option[Expression]) = 
+  def extrudeAtSelection(targetExpr : A, fillerExpr : A) =
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -134,16 +117,18 @@ abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expressi
         val basePtr = (new RoseZipper(baseContainer.canopy.get, Nil))
           .lookup(base).get
 
-        val (targetCell, fillerCell) = 
+        val (targetCell, fillerCell) =
           baseContainer.insertComposite(Neutral(targetExpr), Neutral(fillerExpr), basePtr, (cell => selectedCells contains cell))
 
         clearAndSelect(targetCell)
       }
     }
 
-  def emptyDrop = dropAtSelection(None, None)
+  def emptyDrop =
+    dropAtSelection(implicitly[HasEmpty[A]].empty,
+      implicitly[HasEmpty[A]].empty)
 
-  def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) =
+  def dropAtSelection(compositeExpr : A, fillerExpr : A) =
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -155,7 +140,7 @@ abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expressi
 
         val positiveBase = this(base.dimension + 1)
 
-        val outPtr = 
+        val outPtr =
           new RoseZipper(positiveBase.canopy.get, Nil).
             lookup(base.outgoing.get).get
 
@@ -163,26 +148,25 @@ abstract class AbstractExpressionWorksheet(seed : NCell[Polarity[Option[Expressi
           case Rose(_) => throw new IllegalArgumentException("Didn't find the outgoing cell!")
           case Branch(outCell, brs) => {
             val i = brs indexWhere
-              (branch =>
-                branch match {
-                  case Rose(idx) => {
-                    val srcs = positiveBase.sources.get
-                    if (srcs(idx) == base) true else false
-                  }
-                  case Branch(cell, _) => {
-                    if (cell.target.get == base) true else false
-                  }
-                })
+            (branch =>
+              branch match {
+                case Rose(idx) => {
+                  val srcs = positiveBase.sources.get
+                  if (srcs(idx) == base) true else false
+                }
+                case Branch(cell, _) => {
+                  if (cell.target.get == base) true else false
+                }
+              })
 
             outPtr.visitBranch(i).get
           }
         }
 
-        val (targetCell, fillerCell) = 
+        val (targetCell, fillerCell) =
           positiveBase.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (_ => false))
 
         clearAndSelect(targetCell)
       }
     }
-
 }

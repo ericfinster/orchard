@@ -7,52 +7,83 @@
 
 package orchard.core
 
-import scala.collection.mutable.Buffer
+import scala.collection.mutable.Map
 
-import Identifier._
+import Environment._
 
-sealed trait Expression { 
+trait HasEmpty[A] {
 
-  def ident : Identifier 
+  def empty : A
+
+  def isEmpty(a : A) : Boolean = 
+    a == empty
+
+}
+
+object HasEmpty {
+
+  implicit def seqHasEmpty[A] : HasEmpty[Seq[A]] = 
+    new HasEmpty[Seq[A]] {
+      def empty = Seq.empty
+      override def isEmpty(seq : Seq[A]) = seq.isEmpty
+    }
+
+  implicit def polarityHasEmpty[A : HasEmpty] : HasEmpty[Polarity[A]] = 
+    new HasEmpty[Polarity[A]] {
+      def empty = Neutral(implicitly[HasEmpty[A]].empty)
+    }
+
+}
+
+sealed trait Expression[A] {
+
+  def ident : IndexedIdentifier[A]
   def isThin : Boolean
+
+  def styleString : String
 
   def id = ident.toString
 
-  override def toString = id
-}
-
-case class Variable(val ident : Identifier, val isThin : Boolean) extends Expression { 
+  def map[B : HasEmpty](f : A => B) : Expression[B]
 
   override def toString = id
-}
-
-case class Application(val defn : Definition, val args : Seq[NCell[Expression]], val shell : NCell[Option[Expression]]) extends Expression {
-
-  val bindings = defn.bindingsFromEnvironment(args map (_.value))
-  val ident = defn.output.ident.translateWithBindings(bindings)
-
-  def isThin : Boolean = defn.output.isThin
 
 }
 
-case class FillerFace(val ident : Identifier, val filler : String, val isThin : Boolean) extends Expression
-case class Filler(val ident : Identifier) extends Expression { def isThin : Boolean = true }
-case class UnicityFiller(val ident : Identifier) extends Expression { def isThin : Boolean = true }
+case class Variable[A : HasEmpty](val shell : NCell[A], val ident : IndexedIdentifier[A], val isThin : Boolean) extends Expression[A] {
 
-case class Projection(val addr : Seq[Int]) extends Expression {
+  def map[B : HasEmpty](f : A => B) = Variable(shell map f, ident map f, isThin)
 
-  // Okay, the problem here is that expressions are not really at all connected
-  // with the environment.  So we can't really use the environment in the definition
-  // to lookup the corrent values in the environment ...
+  def styleString = if (isThin) "var-thin" else "var"
 
-  // One solution is to make the expressions live in the workspace.  The editor, you'll notice
-  // is already not to dependent on the expressions, not many things are left.  But this will
-  // kind of mess up the xml writing.
+}
 
-  // A simpler solution is probably to just override the identifier definition when they are
-  // created, although you will probably want to change this setup later
+case class Interior[A : HasEmpty](val bdry : A, val nook : NCell[A], val ident : IndexedIdentifier[A]) extends Expression[A] {
 
-  def ident : Identifier = ???
-  def isThin : Boolean = ???
+  def map[B : HasEmpty](f : A => B) = Interior(f(bdry), nook map f, ident map f)
+  def isThin : Boolean = true
+
+  def styleString = "filler"
+}
+
+case class Boundary[A : HasEmpty](val intr : A, val ident : IndexedIdentifier[A], val isThin : Boolean) extends Expression[A] {
+
+  def map[B : HasEmpty](f : A => B) = Boundary(f(intr), ident map f, isThin)
+  def styleString = if (isThin) "filler-face-thin" else "filler-face"
+}
+
+case class Contraction[A : HasEmpty](val shell : NCell[A], val ident : IndexedIdentifier[A]) extends Expression[A] {
+  def map[B : HasEmpty](f : A => B) = Contraction(shell map f, ident map f)
+  def isThin : Boolean = true
+  def styleString = "ufiller"
+}
+
+case class Application[A : HasEmpty](val defn : Definition, val bindings : Seq[A], val shell : NCell[A]) extends Expression[A] {
+
+  def map[B : HasEmpty](f : A => B) = Application(defn, bindings map f, shell map f)
+  def ident = ???
+  def isThin = ???
+
+  def styleString = "app"
 
 }

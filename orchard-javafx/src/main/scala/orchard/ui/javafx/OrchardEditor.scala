@@ -43,7 +43,9 @@ trait JavaFXEditor extends Editor {
 
   implicit def pm : PopupManager
 
-  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
+  def newDefinition(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
+  def setPreviewGallery[A](gallery : SpinnerGallery[A]) : Unit
+  def activeWorkspace : Option[JavaFXWorkspace]
 
 }
 
@@ -58,126 +60,33 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val fileChooser = new FileChooser
 
-  val sheetPane = new StackPane {
-    padding = Insets(10,10,10,10)
-    styleClass += "orch-pane"
-  }
-
-  val noEnvironmentLabel = new Label("No Environment")
-
-  val environmentPane = new TitledPane {
-    text = "Environment"
-    content = noEnvironmentLabel
-  }
-
-  val goalsListView = 
-    new ListView[GoalComplex] {
-      items = ObservableBuffer.empty[GoalComplex]
-      cellFactory = (_ => new GoalListCell)
-    }
-
-  goalsListView.getSelectionModel.selectedItem onChange {
-    val item = goalsListView.getSelectionModel.selectedItem()
-
-    if (item != null) {
-      for {
-        wksp <- activeWorkspace
-      } {
-        if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-          val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
-          val gallery = new substWksp.GoalGallery(item)
-          gallery.renderAll
-          previewPane.content = gallery
-          previewPane.requestLayout
-        }
-      }
-    }
-  }
-
-  val goalsPane = new TitledPane {
-    text = "Goals"
-    content = goalsListView
-  }
-
-  val localAccordion = new Accordion {
-    panes = List(environmentPane, goalsPane)
-    expandedPane = environmentPane
-  }
-
-  val navigationTreeRoot = new TreeItem[NavigationTreeItem]
+  val navigationTreeRoot = new TreeItem[JavaFXWorkspace]
   val navigationTreeView = 
-    new TreeView[NavigationTreeItem] {
+    new TreeView[JavaFXWorkspace] {
       root = navigationTreeRoot
       showRoot = false
-      cellFactory = (_ => new NavigationTreeCell)
     }
 
   navigationTreeView.selectionModel().selectedItem onChange {
     val item = navigationTreeView.selectionModel().getSelectedItem
     
     if (item != null) {
-      item.value() match {
-        case DefnWorkspaceItem(wksp) => selectWorkspace(wksp)
-        case SubstWorkspaceItem(wksp) => selectWorkspace(wksp)
-        case _ => println("Don't know what to do with this.")
-      }
-    }
-  }
-
-  val navigationPane = new TitledPane {
-    text = "Navigation"
-    content = navigationTreeView
-  }
-
-  class NavigationTreeCell extends jfxsc.TreeCell[NavigationTreeItem] {
-
-    getStyleClass add "orch-list-cell"
-
-    var lastStyle : Option[String] = None
-
-    def setStyleType(styleType : String) = {
-      lastStyle foreach (st => getStyleClass remove st)
-      getStyleClass add styleType
-      lastStyle = Some(styleType)
-    }
-
-    def clearStyleType = {
-      lastStyle foreach (st => getStyleClass remove st)
-      lastStyle = None
-    }
-
-    override def updateItem(navTreeItem : NavigationTreeItem, empty : Boolean) = {
-      super.updateItem(navTreeItem, empty)
-
-      if (! empty) {
-        navTreeItem match {
-          case DefnWorkspaceItem(wksp) => { clearStyleType ; setText(wksp.name) }
-          case SubstWorkspaceItem(wksp) => { clearStyleType ; setText(wksp.name) }
-          case item @ _ => { clearStyleType ; setText(item.toString) }
-        }
-      }
+      selectWorkspace(item.value())
     }
   }
 
   sealed trait DefinitionTreeItem
-  case class DefinitionItem(val defn : Definition) extends DefinitionTreeItem { override def toString = defn.toString }
-  case class ExpressionItem(val expr : NCell[Expression]) extends DefinitionTreeItem { override def toString = expr.value.id }
+  case class DefinitionItem(val defn : Definition) extends DefinitionTreeItem { override def toString = defn.name }
+  case class ExpressionItem[A](val expr : Expression[A]) extends DefinitionTreeItem { override def toString = expr.id }
 
   class DefinitionTreeCell extends jfxsc.TreeCell[DefinitionTreeItem] {
 
     getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-null"
 
-    var lastStyle : Option[String] = None
-
-    def setStyleType(styleType : String) = {
-      lastStyle foreach (st => getStyleClass remove st)
-      getStyleClass add styleType
-      lastStyle = Some(styleType)
-    }
-
-    def clearStyleType = {
-      lastStyle foreach (st => getStyleClass remove st)
-      lastStyle = None
+    def setCellStyleType(str : String) = {
+      getStyleClass(cellStyleIndex) = str
     }
 
     override def updateItem(defnTreeItem : DefinitionTreeItem, empty : Boolean) = {
@@ -185,35 +94,18 @@ object OrchardEditor extends PopupManager(new VBox)
 
       if (! empty) {
         defnTreeItem match {
-          case DefinitionItem(defn) => { clearStyleType ; setText(defn.toString) }
-          case ExpressionItem(expr) => {
-            expr.value match {
-              case Variable(_, isThin) => {
-                if (isThin) {
-                  setStyleType("orch-list-cell-var-thin")
-                } else {
-                  setStyleType("orch-list-cell-var")
-                }
-              }
-              case Filler(_) => setStyleType("orch-list-cell-filler")
-              case FillerFace(_, _, isThin) => {
-                if (isThin) {
-                  setStyleType("orch-list-cell-filler-face-thin")
-                } else {
-                  setStyleType("orch-list-cell-filler-face")
-                }
-              }
-              case UnicityFiller(_) => setStyleType("orch-list-cell-ufiller")
-              case Application(_, _, _) => setStyleType("orch-list-cell-app")
-              case Projection(_) => setStyleType("orch-list-cell-filler")
-            }
-
-            setText(expr.toString)
+          case DefinitionItem(defn) => { setCellStyleType("orch-list-null") ; setText(defn.toString) }
+          case ExpressionItem(expr) => { 
+            setCellStyleType("orch-list-cell-" ++ expr.styleString)
+            setText(expr.id)
           }
-          case item @ _ => { clearStyleType ; setText(item.toString) }
         }
+      } else {
+        setCellStyleType("orch-list-null")
+        setText("")
       }
     }
+
   }
 
   val definitionTreeRoot = new TreeItem[DefinitionTreeItem]
@@ -224,68 +116,116 @@ object OrchardEditor extends PopupManager(new VBox)
       cellFactory = (_ => new DefinitionTreeCell)
     }
 
-  definitionTreeView.selectionModel().selectedItem onChange {
-    val item = definitionTreeView.selectionModel().getSelectedItem
+  // definitionTreeView.selectionModel().selectedItem onChange {
+  //   val item = definitionTreeView.selectionModel().getSelectedItem
     
-    if (item != null) {
-      item.value() match {
-        case ExpressionItem(expr) => setPreview(expr)
-        case _ => ()
-      }
-    }
+  //   if (item != null) {
+  //     item.value() match {
+  //       case ExpressionItem(expr) => setPreview(expr)
+  //       case _ => ()
+  //     }
+  //   }
+  // }
+
+  val navigationPane = new TitledPane {
+    text = "Navigation"
+    content = navigationTreeView
+    collapsible = false
   }
+
+  val navigationAnchor = new AnchorPane {
+    content = navigationPane
+    styleClass += "orch-pane"
+  }
+
+  AnchorPane.setTopAnchor(navigationPane, 10)
+  AnchorPane.setRightAnchor(navigationPane, 10)
+  AnchorPane.setBottomAnchor(navigationPane, 10)
+  AnchorPane.setLeftAnchor(navigationPane, 10)
 
   val definitionsPane = new TitledPane {
     text = "Local Definitions"
     content = definitionTreeView
+    collapsible = false
   }
 
-  val accordion = new Accordion {
-    panes = List(navigationPane, definitionsPane)
-    expandedPane = navigationPane
-  }
-
-  val accordionPane = new AnchorPane {
-    content = accordion
+  val definitionsAnchor = new AnchorPane {
+    content = definitionsPane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(accordion, 10)
-  AnchorPane.setRightAnchor(accordion, 10)
-  AnchorPane.setBottomAnchor(accordion, 10)
-  AnchorPane.setLeftAnchor(accordion, 10)
+  AnchorPane.setTopAnchor(definitionsPane, 10)
+  AnchorPane.setRightAnchor(definitionsPane, 10)
+  AnchorPane.setBottomAnchor(definitionsPane, 10)
+  AnchorPane.setLeftAnchor(definitionsPane, 10)
 
-  val localAnchorPane = new AnchorPane {
-    content = localAccordion
+  val noContextLabel = new Label("Empty Context")
+  val noSubstContextLabel = new Label("No Substitution Active")
+
+  val contextPane = new TitledPane {
+    text = "Context"
+    content = noContextLabel
+    collapsible = false
+  }
+
+  val contextAnchor = new AnchorPane {
+    content = contextPane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(localAccordion, 10)
-  AnchorPane.setRightAnchor(localAccordion, 10)
-  AnchorPane.setBottomAnchor(localAccordion, 10)
-  AnchorPane.setLeftAnchor(localAccordion, 10)
+  AnchorPane.setTopAnchor(contextPane, 10)
+  AnchorPane.setRightAnchor(contextPane, 10)
+  AnchorPane.setBottomAnchor(contextPane, 10)
+  AnchorPane.setLeftAnchor(contextPane, 10)
 
-  val navigationSplit = new SplitPane {
-    orientation = Orientation.VERTICAL
-    items.addAll(accordionPane, localAnchorPane)
+  val substContextPane = new TitledPane {
+    text = "Substitution Context"
+    content = noSubstContextLabel
+    collapsible = false
+  }
+
+  val substContextAnchor = new AnchorPane {
+    content = substContextPane
+    styleClass += "orch-pane"
+  }
+
+  AnchorPane.setTopAnchor(substContextPane, 10)
+  AnchorPane.setRightAnchor(substContextPane, 10)
+  AnchorPane.setBottomAnchor(substContextPane, 10)
+  AnchorPane.setLeftAnchor(substContextPane, 10)
+
+  val sheetPane = new StackPane {
+    padding = Insets(10,10,10,10)
+    styleClass += "orch-pane"
   }
 
   val previewPane = new StackPane {
-    styleClass += "orch-pane"
     padding = Insets(0,10,0,10)
+    styleClass += "orch-pane"
   }
 
-  val verticalSplit = new SplitPane {
+  val leftVerticalSplit = new SplitPane {
+    orientation = Orientation.VERTICAL
+    items.addAll(navigationAnchor, definitionsAnchor)
+  }
+
+  val middleVerticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
     items.addAll(sheetPane, previewPane)
     dividerPositions = 0.7f
   }
 
+  val rightVerticalSplit = new SplitPane {
+    orientation = Orientation.VERTICAL
+    items.addAll(contextAnchor, substContextAnchor)
+  }
+
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    items.addAll(navigationSplit, verticalSplit)
-    dividerPositions = 0.1f
+    items.addAll(leftVerticalSplit, middleVerticalSplit, rightVerticalSplit)
   }
+
+  horizontalSplit.setDividerPositions(0.1f, 0.8f)
 
   VBox.setVgrow(horizontalSplit, Priority.ALWAYS)
   mainVBox.content.addAll(menuBar, horizontalSplit)
@@ -300,7 +240,7 @@ object OrchardEditor extends PopupManager(new VBox)
         ev.getCode match {
           case KeyCode.LEFT => {
             if (ev.isControlDown) {
-              val previewGallery = previewPane.content.head.asInstanceOf[FrameworkGallery]
+              val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
               if (previewGallery != null)
                 previewGallery.prev
             } else
@@ -308,7 +248,7 @@ object OrchardEditor extends PopupManager(new VBox)
           }
           case KeyCode.RIGHT => {
             if (ev.isControlDown) {
-              val previewGallery = previewPane.content.head.asInstanceOf[FrameworkGallery]
+              val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
               if (previewGallery != null)
                 previewGallery.next
             } else 
@@ -317,8 +257,6 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
-          case KeyCode.C => if (ev.isControlDown) onCompose
-          case KeyCode.I => if (ev.isControlDown) onInsertIdentity
           case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
           case KeyCode.T => if (ev.isControlDown) onNewSheet
@@ -342,34 +280,27 @@ object OrchardEditor extends PopupManager(new VBox)
   def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
 
   def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
-  def onCompose : Unit = for { wksp <- activeWorkspace } { wksp.composeAtSelection }
-  def onInsertIdentity : Unit = for { wksp <- activeWorkspace } { wksp.identityAtSelection }
   def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
   def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
 
   def onNewDefinition = NewDefinitionDialog.run
   def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
 
-  def onCompleteDefinition = {
+  def onCompleteDefinition =
     for {
       wksp <- activeWorkspace
     } {
       if (wksp.isInstanceOf[JavaFXDefinitionWorkspace]) {
         val defnWksp = wksp.asInstanceOf[JavaFXDefinitionWorkspace]
-
+        
         for {
-          expr <- defnWksp.activeExpression
-          defn <- defnWksp.createDefinition(expr)
+          defn <- defnWksp.completeDefinition
         } {
-
           addLocalDefinition(defn)
           closeActiveWorkspace
-          accordion.expandedPane = definitionsPane
-
         }
       }
     }
-  }
 
   def onDeleteDefinition = {
     val defnItem = definitionTreeView.getSelectionModel.selectedItem()
@@ -379,21 +310,16 @@ object OrchardEditor extends PopupManager(new VBox)
     }
   }
 
-  def onApply = 
+  def onApply =
     for {
       wksp <- activeWorkspace
       defn <- activeDefinition
+      substWksp <- wksp.apply(defn)
     } {
-      val workspace = wksp.asInstanceOf[JavaFXWorkspace]
-
-      for {
-        substWksp <- workspace.apply(defn)
-      } {
-        navigationTreeView.getSelectionModel.select(substWksp.treeItem)
-      }
+      navigationTreeView.getSelectionModel.select(substWksp.treeItem)
     }
 
-  def onApplyInShell = 
+  def onApplyInShell =
     for { 
       wksp <- activeWorkspace
       gallery <- wksp.activeGallery
@@ -401,16 +327,16 @@ object OrchardEditor extends PopupManager(new VBox)
       defn <- activeDefinition
     } {
       if (gallery.complex.selectionIsUnique && cell.hasCompleteShell) {
-        val workspace = wksp.asInstanceOf[JavaFXWorkspace]
 
-        val shell = {
-          val frmwk = cell.getSimpleFramework
-          frmwk.topCell.item = None
-          frmwk.toCell
-        }
+        val shell = Object(Seq.empty)
+        // {
+        //   val frmwk = gallery.complex.extract(cell)
+        //   frmwk.topCell.item = Neutral(Seq.empty)
+        //   frmwk.topCell.neutralNCell
+        // }
 
         for {
-          substWksp <- workspace.applyInShell(shell, defn)
+          substWksp <- wksp.applyInShell(shell, defn)
         } {
           navigationTreeView.getSelectionModel.select(substWksp.treeItem)
         }
@@ -419,73 +345,74 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     }
 
-  def onSatisfyGoal = 
-    for {
-      wksp <- activeWorkspace
-      gallery <- wksp.activeGallery
-      selectedCell <- gallery.complex.selectionBase
-    } {
-      if (gallery.complex.selectionIsUnique) {
-        if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-          if (selectedCell.isComplete) {
-            val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
-            val selectedGoal = goalsListView.getSelectionModel.selectedItem()
-            val selectedExpr = selectedCell.toExpressionCell
+  def onSatisfyGoal = ???
+    // for {
+    //   wksp <- activeWorkspace
+    //   gallery <- wksp.activeGallery
+    //   selectedCell <- gallery.complex.selectionBase
+    // } {
+    //   if (gallery.complex.selectionIsUnique) {
+    //     if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+    //       if (selectedCell.isComplete) {
+    //         val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
+    //         val selectedGoal = substWksp.goalsListView.getSelectionModel.selectedItem()
 
-            substWksp.satisfyGoal(selectedGoal, selectedExpr)
+    //         substWksp.satisfyGoal(selectedGoal, new substWksp.ShapeFramework(selectedCell.neutralNCell))
 
-            // If the remaining number of goals is zero, delete the workspace
-            // and reselect the parent ...
+    //         // // If the remaining number of goals is zero, delete the workspace
+    //         // // and reselect the parent ...
 
-            if (substWksp.isComplete) {
-              println("Substitution finished ... importing results")
+    //         // if (substWksp.isComplete) {
+    //         //   println("Substitution finished ... importing results")
 
-              substWksp.environment.dump
+    //         //   substWksp.environment.dump
 
-              substWksp.getImports foreach (expr => {
-                if (! substWksp.parentWorkspace.environment.containsId(expr.value.id)) {
-                  println("Importing required cell " ++ expr.value.id)
-                  substWksp.parentWorkspace.environment += expr
-                } else {
-                  println("Skipping import of " ++ expr.value.id ++ " because of name clash.")
-                }
-              })
+    //         //   substWksp.getImports foreach (expr => {
+    //         //     if (! substWksp.parentWorkspace.environment.containsId(expr.value.id)) {
+    //         //       println("Importing required cell " ++ expr.value.id)
+    //         //       substWksp.parentWorkspace.environment += expr
+    //         //     } else {
+    //         //       println("Skipping import of " ++ expr.value.id ++ " because of name clash.")
+    //         //     }
+    //         //   })
 
-              val parentItem = substWksp.treeItem.parent()
-              parentItem.children -= substWksp.treeItem
-              navigationTreeView.getSelectionModel.select(parentItem)
-            }
-          }
-        }
-      }
-    }
+    //         //   val parentItem = substWksp.treeItem.parent()
+    //         //   parentItem.children -= substWksp.treeItem
+    //         //   navigationTreeView.getSelectionModel.select(parentItem)
+    //         // }
+    //       }
+    //     }
+    //   }
+    // }
 
-  def onUnfold = 
-    for {
-      wksp <- activeWorkspace
-    } {
-      wksp.unfoldSelectedApplication
-    }
+  def onUnfold = ???
+    // for {
+    //   wksp <- activeWorkspace
+    // } {
+    //   wksp.unfoldSelectedApplication
+    // }
 
-  def onOpen = {
-    fileChooser.setTitle("Open")
+  def onOpen = ???
+  // {
+  //   fileChooser.setTitle("Open")
 
-    val file = fileChooser.showOpenDialog(getScene.getWindow)
+  //   val file = fileChooser.showOpenDialog(getScene.getWindow)
 
-    if (file != null) {
-      loadDefinitions(file)
-    }
-  }
+  //   if (file != null) {
+  //     loadDefinitions(file)
+  //   }
+  // }
 
-  def onSave = {
-    fileChooser.setTitle("Save")
+  def onSave = ???
+  // {
+  //   fileChooser.setTitle("Save")
 
-    val file = fileChooser.showSaveDialog(getScene.getWindow)
+  //   val file = fileChooser.showSaveDialog(getScene.getWindow)
 
-    if (file != null) {
-      saveDefinitions(file)
-    }
-  }
+  //   if (file != null) {
+  //     saveDefinitions(file)
+  //   }
+  // }
 
   def onExit : Unit = javafx.application.Platform.exit
 
@@ -493,8 +420,7 @@ object OrchardEditor extends PopupManager(new VBox)
   // EDITOR HELPER ROUTINES
   //
 
-  def withAssumptionInfo(deps : Seq[NCell[Expression]],
-                         thinHint : Boolean,
+  def withAssumptionInfo(thinHint : Boolean,
                          forceThin : Boolean,
                          handler : (String, Boolean) => Unit) : Unit = {
     val varDialog = new VariableDialog(handler)
@@ -502,28 +428,22 @@ object OrchardEditor extends PopupManager(new VBox)
     if (thinHint || forceThin) varDialog.thinCheckBox.selected = true
     if (forceThin) varDialog.thinCheckBox.disable = true
 
-    varDialog.dependenciesList.items = ObservableBuffer(deps)
-
     varDialog.run
   }
 
-  def withFillerIdentifiers(deps : Seq[NCell[Expression]],
-    handler : (String, String) => Unit) : Unit = {
+  def withFillerIdentifiers(handler : (String, String) => Unit) : Unit = {
     val fillingDialog = new FillingDialog(handler)
-    fillingDialog.dependenciesList.items = ObservableBuffer(deps)
     fillingDialog.run
   }
 
-
-  def withFillerIdentifier(deps : Seq[NCell[Expression]], handler : String => Unit) : Unit = {
+  def withFillerIdentifier(handler : String => Unit) : Unit = {
     val uniqueFillingDialog = new UniqueFillingDialog(handler)
-    uniqueFillingDialog.dependenciesList.items = ObservableBuffer(deps)
     uniqueFillingDialog.run
   }
 
   var activeWorkspace : Option[JavaFXWorkspace] = None
 
-  def activeGallery : Option[JavaFXWorksheetGallery] = 
+  def activeGallery : Option[JavaFXWorkspace#WorksheetGallery] = 
     for { wksp <- activeWorkspace ; gallery <- wksp.activeGallery } yield gallery
 
   def activeSheet : Option[Workspace#Worksheet] = 
@@ -540,7 +460,7 @@ object OrchardEditor extends PopupManager(new VBox)
     } else None
   }
 
-  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
+  def newDefinition(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
     val wksp = new JavaFXDefinitionWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
 
     navigationTreeRoot.children += wksp.treeItem
@@ -551,14 +471,13 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def selectWorkspace(wksp : JavaFXWorkspace) = {
     sheetPane.content = wksp.sheetTabPane
-    environmentPane.content = wksp.environmentView
+    contextPane.content = wksp.contextView
 
-    goalsListView.items = 
-      if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-        val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
-        substWksp.goals
-      } else
-        ObservableBuffer.empty[GoalComplex]
+    if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
+      val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
+      substContextPane.content = substWksp.substContextView
+    } else
+      substContextPane.content = noSubstContextLabel
 
     activeWorkspace = Some(wksp)
   }
@@ -573,16 +492,14 @@ object OrchardEditor extends PopupManager(new VBox)
       parent.children.remove(wksp.treeItem)
     }
 
-    environmentPane.content = noEnvironmentLabel
+    contextPane.content = noContextLabel
     sheetPane.content.clear
     activeWorkspace = None
   }
 
-  def setPreview(expr : NCell[Expression]) = {
-    val gallery = new FrameworkGallery(expr map (e => Some(e)))
-    gallery.renderAll
-    previewPane.content = gallery
-    previewPane.requestLayout
+  def setPreviewGallery[A](gallery : SpinnerGallery[A]) = {
+    previewPane.content += gallery
+    gallery.refreshAll
   }
 
   def clearDefinitions = {
@@ -605,39 +522,39 @@ object OrchardEditor extends PopupManager(new VBox)
   def addLocalDefinition(defn : Definition) = {
     val defnTreeItem = new TreeItem[DefinitionTreeItem] {
       value = DefinitionItem(defn)
-      children ++= defn.environment map (expr => {
-        new TreeItem[DefinitionTreeItem] {
-          value = ExpressionItem(expr)
-        }.delegate
-      })
+      // children ++= defn.context map (expr => {
+      //   new TreeItem[DefinitionTreeItem] {
+      //     value = ExpressionItem(expr)
+      //   }.delegate
+      // })
     }
 
     definitionTreeRoot.children += defnTreeItem
   }
 
-  def saveDefinitions(file : java.io.File) = {
-    import XmlSerializable._
+  // def saveDefinitions(file : java.io.File) = {
+  //   import XmlSerializable._
 
-    val moduleXML = <module>{definitions map (defn => definitionSerializable.toXML(defn))}</module>
-    xml.XML.save(file.getAbsolutePath, moduleXML)
-  }
+  //   val moduleXML = <module>{definitions map (defn => definitionSerializable.toXML(defn))}</module>
+  //   xml.XML.save(file.getAbsolutePath, moduleXML)
+  // }
 
-  def loadDefinitions(file : java.io.File) = {
-    import XmlSerializable._
+  // def loadDefinitions(file : java.io.File) = {
+  //   import XmlSerializable._
 
-    clearDefinitions
+  //   clearDefinitions
 
-    val elem = xml.XML.loadFile(file.getAbsolutePath)
+  //   val elem = xml.XML.loadFile(file.getAbsolutePath)
 
-    elem match {
-      case <module>{defns @ _*}</module> => {
-        trimText(defns) foreach (defXml => {
-          val defn = definitionSerializable.fromXML(defXml)
-          addLocalDefinition(defn)
-        })        
-      }
-    }
-  }
+  //   elem match {
+  //     case <module>{defns @ _*}</module> => {
+  //       trimText(defns) foreach (defXml => {
+  //         val defn = definitionSerializable.fromXML(defXml)
+  //         addLocalDefinition(defn)
+  //       })        
+  //     }
+  //   }
+  // }
 }
 
 object Editor extends JFXApp {

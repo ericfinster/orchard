@@ -7,28 +7,21 @@
 
 package orchard.core
 
-import scala.collection.mutable.Map
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.Buffer
 
 import Environment._
-import Identifier._
 
 class Definition(
   val name : String,
   val stabilityLevel : Option[Int],
   val invertibilityLevel : Option[Int],
   val unicityLevel : Option[Int], 
-  val environment : Seq[NCell[Expression]],
-  val output : Expression
-) {
-
-  def bindingsFromEnvironment(env : Seq[Expression]) : Map[String, Expression] = {
-    HashMap.empty ++ ((environment.vars map (_.value.id)) zip env)
-  }
-
-  def outputExpr : NCell[Expression] = environment.lookup(output.id).get
-
+  val args : Seq[Expression[Seq[Int]]],
+  val outputIndex : Int
+) extends SequentialContextEnvironment {
 
   override def toString = name
+
+  def contextBuffer = Buffer.empty ++= args
 
 }

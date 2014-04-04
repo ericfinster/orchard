@@ -27,6 +27,8 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
       lbl
     }
 
+    def getStyleString : String = "orch-simple-cell"
+
     //============================================================================================
     // CELL EVENTS
     //

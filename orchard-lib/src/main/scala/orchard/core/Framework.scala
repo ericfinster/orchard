@@ -1,5 +1,5 @@
 /**
-  * ExpressionFramework.scala - Trait for a cell complex which represents and expression
+  * Framework.scala - An abstract class for complexes that may act as frameworks
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -7,29 +7,43 @@
 
 package orchard.core
 
+import scala.language.implicitConversions
 import scala.collection.mutable.Buffer
 
 import Util._
 
-trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
+abstract class Framework[A : HasEmpty](seed : NCell[A]) extends AbstractMutableComplex[A](seed) { thisFramework =>
 
-  type CellType <: ExpressionFrameworkCell
+  type CellType <: FrameworkCell
 
-  def toExpressionCell : NCell[Expression] = topCell.toExpressionCell
+  type ExprIndexType
+  type ExprType = Expression[ExprIndexType]
 
-  trait ExpressionFrameworkCell extends ComplexCell { thisCell : CellType =>
+  def extract(cell : CellType) : Framework[A]
+  def getExpression(a : A) : Option[ExprType]
 
-    def exprItem : Option[Expression]
+  abstract class FrameworkCell(itm : A) extends AbstractMutableCell { thisCell : CellType =>
 
-    def toExpressionCell : NCell[Expression] = skeleton map (_.exprItem.get)
+    protected var frameworkItem = itm
+    protected var expressionItem = getExpression(itm)
 
-    def isThin =
-      exprItem match {
+    def item = frameworkItem
+    def item_=(newItm : A) = {
+      val oldItem = frameworkItem
+      frameworkItem = newItm
+      expressionItem = getExpression(newItm)
+      emit(ChangeEvents.ItemChangedEvent(oldItem))
+    }
+
+    def expression : Option[ExprType] = expressionItem
+
+    def isThin : Boolean =
+      expression match {
+        case None => false
         case Some(expr) => expr.isThin
-        case _ => false
       }
 
-    def isEmpty : Boolean = exprItem == None
+    def isEmpty : Boolean = expression == None
     def isFull : Boolean = ! isEmpty
 
     def emptySources : Vector[CellType] =
@@ -44,11 +58,19 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
         case Some(srcs) => srcs filter (_.isFull)
       }
 
-    def fullFaces : Vector[CellType] = 
+
+    def fullFaces : Vector[CellType] =
       target match {
         case None => Vector.empty
         case Some(tgt) => if (tgt.isEmpty) fullSources else (tgt +: fullSources)
       }
+
+    // For an exposed nook, get the cell corresponding to the boundary
+    def boundaryFace : CellType = 
+      if (target.get.isEmpty)
+        target.get
+      else
+        emptySources.head
 
     def completeSources : Vector[CellType] =
       sources match {
@@ -94,21 +116,17 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
     def isExposedNook : Boolean = {
       if (isOutNook) true else {
         if (isInNook) {
-          val framework : SimpleFramework = 
-            if (thisFramework.isInstanceOf[SimpleFramework]) {
-              if (isTopCell) thisFramework.asInstanceOf[SimpleFramework] else getSimpleFramework
-            } else getSimpleFramework
-
+          val framework = extract(thisCell)
           val frameworkTgt = framework.topCell.target.force
 
-          val emptyPtr = (new RoseZipper(frameworkTgt.canopy.force, Nil)).find(c => c.item == None).force
+          val emptyPtr = (new RoseZipper(frameworkTgt.canopy.force, Nil)).find(c => c.isEmpty).force
 
           var status : Boolean = true
 
-          def getDerivedOutNook(cell : framework.CellType) : SimpleFramework = {
-            val derivedFramework = cell.getSimpleFramework
-            derivedFramework.topCell.item = None
-            derivedFramework.topCell.target.force.item = None
+          def getDerivedOutNook(cell : framework.CellType) : Framework[A] = {
+            val derivedFramework = framework.extract(cell)
+            derivedFramework.topCell.item = implicitly[HasEmpty[A]].empty
+            derivedFramework.topCell.target.force.item = implicitly[HasEmpty[A]].empty
             derivedFramework
           }
 
@@ -142,10 +160,10 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
                 val faceSave = incomingFace.item
                 val sourceSave = value.item
 
-                incomingFace.item = None
-                value.item = None
+                incomingFace.item = implicitly[HasEmpty[A]].empty
+                value.item = implicitly[HasEmpty[A]].empty
 
-                val derivedNook = value.getSimpleFramework
+                val derivedNook = framework.extract(value)
                 status &&= derivedNook.topCell.isExposedNook
 
                 incomingFace.item = faceSave
@@ -175,8 +193,6 @@ trait ExpressionFramework[A] extends CellComplex[A] { thisFramework =>
     def isShell : Boolean = isEmpty && hasCompleteShell
     def isComplete : Boolean = isFull && hasCompleteShell
 
-    def getSimpleFramework : SimpleFramework = {
-      new SimpleFramework(skeleton map (cell => cell.exprItem))
-    }
   }
 }
+

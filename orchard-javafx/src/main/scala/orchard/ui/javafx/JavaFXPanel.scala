@@ -30,7 +30,7 @@ import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 
-trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
+abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] { thisPanel =>
 
   override type CellType <: JavaFXCell
   override type EdgeType <: JavaFXEdge
@@ -100,13 +100,27 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
     // UI INITIALIZATION
     //
 
-    getStyleClass().add("javafx-cell")
+    getStyleClass add "orch-cell"
+
+    val cellStyleIndex = getStyleClass.length
+    val cellSelectedStyleIndex = cellStyleIndex + 1
+    val cellHoveredStyleIndex = cellStyleIndex + 2
+
+    getStyleClass add "orch-cell-unknown"
+    getStyleClass add "orch-cell-unknown-selected"
+    getStyleClass add "orch-cell-unknown-hovered"
 
     val pane = new Pane
 
-    var label : Node = renderLabel
+    var label : Node = new Region
 
     def renderLabel : Node
+    def getStyleString : String
+
+    def renderCell = {
+      assignStyle
+      label = renderLabel
+    }
 
     def collectChildren = {
       val myChildren = getChildren
@@ -127,6 +141,22 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
       labelWidth = w
       labelHeight = h + (if (isExternal) 0.0 else internalPadding)
     }
+
+    def setCellStyle(style : String) = getStyleClass(cellStyleIndex) = style
+    def setCellSelectedStyle(style : String) = getStyleClass(cellSelectedStyleIndex) = style
+    def setCellHoveredStyle(style : String) = getStyleClass(cellHoveredStyleIndex) = style
+
+    def removeCellStyle = setCellStyle("orch-cell-unknown")
+    def removeCellSelectedStyle = setCellSelectedStyle("orch-cell-unknown-selected")
+    def removeCellHoveredStyle = setCellHoveredStyle("orch-cell-unknown-hovered")
+
+    def assignStyle = setCellStyle("orch-cell-" ++ getStyleString)
+
+    override def doHover = setCellHoveredStyle("orch-cell-" ++ getStyleString ++ "-hovered")
+    override def doSelect = setCellSelectedStyle("orch-cell-" ++ getStyleString ++ "-selected")
+
+    override def doUnhover = removeCellHoveredStyle
+    override def doDeselect = removeCellSelectedStyle
 
     //============================================================================================
     // EVENTS
@@ -191,7 +221,7 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
     // UI INITIALIZATION
     //
 
-    getStyleClass().add("javafx-edge")
+    getStyleClass().add("orch-edge")
 
     setStroke(Color.BLACK)
     setStrokeWidth(strokeWidth)
@@ -222,6 +252,11 @@ trait JavaFXPanel[A] extends RenderingPanel[A] { thisPanel : Region =>
         getElements.setAll(List(startMove, vertLine, arcTo, horizLine))
       }
     }
+
+    override def doHover : Unit = setStroke(Color.TOMATO)
+    override def doSelect : Unit = setStroke(Color.TOMATO)
+    override def doUnhover : Unit = setStroke(Color.BLACK)
+    override def doDeselect : Unit = setStroke(Color.BLACK)
 
     override def toString = "Edge(" ++ item.toString ++ ")"
   }

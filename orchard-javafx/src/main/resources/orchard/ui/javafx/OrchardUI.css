@@ -312,14 +312,6 @@
     -fx-border-width: 1pt;
 }
 
-.javafx-cell {
-    -fx-background-color: white;
-    -fx-background-radius: 4pt;
-    -fx-border-color: black;
-    -fx-border-width: 2pt;
-    -fx-border-radius: 4pt;
-}
-
 .orch-spinner-gallery {
     -fx-background-color: -fx-background;
     -fx-padding: 10;
@@ -334,34 +326,43 @@
 .orch-static-panel {
 }
 
-.expr-cell-polarized { -fx-background-color: -fx-background; }
-.expr-cell-exposed-nook { -fx-background-color: red; }
 
-.expr-cell-empty { -fx-background-color: empty-base }
-.expr-cell-exposed { -fx-background-color: exposed-base }
-.expr-cell-var { -fx-background-color: var-base }
-.expr-cell-var-thin { -fx-background-color: var-thin-base }
-.expr-cell-filler { -fx-background-color: filler-base }
-.expr-cell-filler-face { -fx-background-color: filler-face-base }
-.expr-cell-filler-face-thin { -fx-background-color: filler-face-thin-base }
-.expr-cell-app { -fx-background-color: app-base }
+.orch-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 4pt;
+    -fx-border-color: black;
+    -fx-border-width: 2pt;
+    -fx-border-radius: 4pt;
+}
 
-.expr-cell-empty-hovered { -fx-background-color: empty-hover }
-.expr-cell-exposed-hovered { -fx-background-color: exposed-hover }
-.expr-cell-var-hovered { -fx-background-color:  var-hover }
-.expr-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
-.expr-cell-filler-hovered { -fx-background-color: filler-hover }
-.expr-cell-filler-face-hovered { -fx-background-color: filler-face-hover }
-.expr-cell-filler-face-thin-hovered { -fx-background-color: filler-face-thin-hover }
-.expr-cell-app-hovered { -fx-background-color: app-hover }
+.orch-cell-polarized { -fx-background-color: -fx-background; }
+.orch-cell-exposed-nook { -fx-background-color: red; }
 
-.expr-cell-empty-selected { -fx-background-color: empty-selected }
-.expr-cell-exposed-selected { -fx-background-color: exposed-selected }
-.expr-cell-var-selected { -fx-background-color: var-selected }
-.expr-cell-var-thin-selected { -fx-background-color: var-thin-selected }
-.expr-cell-filler-selected { -fx-background-color: filler-selected }
-.expr-cell-filler-face-selected { -fx-background-color: filler-face-selected }
-.expr-cell-filler-face-thin-selected { -fx-background-color: filler-face-thin-selected }
-.expr-cell-app-selected { -fx-background-color: app-selected }
+.orch-cell-empty { -fx-background-color: empty-base }
+.orch-cell-exposed { -fx-background-color: exposed-base }
+.orch-cell-var { -fx-background-color: var-base }
+.orch-cell-var-thin { -fx-background-color: var-thin-base }
+.orch-cell-filler { -fx-background-color: filler-base }
+.orch-cell-filler-face { -fx-background-color: filler-face-base }
+.orch-cell-filler-face-thin { -fx-background-color: filler-face-thin-base }
+.orch-cell-app { -fx-background-color: app-base }
+
+.orch-cell-empty-hovered { -fx-background-color: empty-hover }
+.orch-cell-exposed-hovered { -fx-background-color: exposed-hover }
+.orch-cell-var-hovered { -fx-background-color:  var-hover }
+.orch-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
+.orch-cell-filler-hovered { -fx-background-color: filler-hover }
+.orch-cell-filler-face-hovered { -fx-background-color: filler-face-hover }
+.orch-cell-filler-face-thin-hovered { -fx-background-color: filler-face-thin-hover }
+.orch-cell-app-hovered { -fx-background-color: app-hover }
+
+.orch-cell-empty-selected { -fx-background-color: empty-selected }
+.orch-cell-exposed-selected { -fx-background-color: exposed-selected }
+.orch-cell-var-selected { -fx-background-color: var-selected }
+.orch-cell-var-thin-selected { -fx-background-color: var-thin-selected }
+.orch-cell-filler-selected { -fx-background-color: filler-selected }
+.orch-cell-filler-face-selected { -fx-background-color: filler-face-selected }
+.orch-cell-filler-face-thin-selected { -fx-background-color: filler-face-thin-selected }
+.orch-cell-app-selected { -fx-background-color: app-selected }
 
 

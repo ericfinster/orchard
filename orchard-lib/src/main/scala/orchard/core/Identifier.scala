@@ -10,39 +10,24 @@ package orchard.core
 import scala.collection.mutable.Map
 import scala.util.parsing.combinator.RegexParsers
 
-case class Identifier(val tokens : List[IdentToken]) {
-  override def toString = (tokens map (_.value)).mkString
+case class IndexedIdentifier[A](val tokens : List[IndexedIdToken[A]]) {
+  def map[B](f : A => B) = IndexedIdentifier(tokens map (_ map f))
 }
 
-object Identifier {
+sealed trait IndexedIdToken[A] {
+  def map[B](f : A => B) : IndexedIdToken[B]
+}
 
-  implicit class IdentOps(ident : Identifier) {
+case class StringToken[A](str : String) extends IndexedIdToken[A] {
+  def map[B](f : A => B) = StringToken[B](str)
+}
 
-    def translateWithBindings(bindings : Map[String, Expression]) : Identifier = {
+case class IndexToken[A](idx : A) extends IndexedIdToken[A] {
+  def map[B](f : A => B) = IndexToken[B](f(idx))
+}
 
-      println("Translating identifier: " ++ ident.toString)
-
-      val idnt = Identifier(
-        ident.tokens map {
-          case ReferenceToken(ref) => {
-            if (bindings.isDefinedAt(ref)) {
-              println(ref ++ " -> " ++ bindings(ref).id)
-              ReferenceToken(bindings(ref).id)
-            } else {
-              // throw new IllegalArgumentException("Undefined reference in identifier translation: " ++ ref)
-              println("Skipping unknown identifier: " ++ ref)
-              ReferenceToken(ref)
-            }
-          }
-          case tok @ _ => tok
-        }
-      )
-
-      idnt
-    }
-
-  }
-
+case class Identifier(val tokens : List[IdentToken]) {
+  override def toString = (tokens map (_.value)).mkString
 }
 
 sealed trait IdentToken { def value : String }

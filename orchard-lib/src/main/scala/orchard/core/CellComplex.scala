@@ -134,6 +134,8 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
       }
     }
 
+    def toNCell : NCell[A] = skeleton map (_.item)
+
     //============================================================================================
     // XML CONVERSION
     //

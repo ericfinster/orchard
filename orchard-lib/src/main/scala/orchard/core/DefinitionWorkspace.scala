@@ -11,27 +11,46 @@ import scala.collection.mutable.Buffer
 
 import Environment._
 
-abstract class DefinitionWorkspace extends Workspace {
+abstract class DefinitionWorkspace extends Workspace with SequentialContextEnvironment {
 
-  def createDefinition(expr : NCell[Expression]) : Option[Definition] = {
-    val framework = Framework(expr)
+  class DefinitionWorksheet(seed : NCell[Polarity[Seq[Int]]]) 
+      extends Worksheet(seed) {
 
-    framework.glob(None, None)
-    val deps = framework.dependencies(environment)
+    type CellType = DefinitionWorksheetCell
 
-    val defnEnv = Buffer.empty ++ environment
-    defnEnv filter (e => deps.containsId(e.value.id))
+    def newCell(itm : Polarity[Seq[Int]]) = new DefinitionWorksheetCell(itm)
+    def extract(cell : DefinitionWorksheetCell) = new DefinitionWorksheet(cell.toNCell)
+    
+    // This is where we look it up in the context
+    def getExpression(idx : Polarity[Seq[Int]]) : Option[Expression[Seq[Int]]] =
+      idx match {
+        case Neutral(seq) => get(seq)
+        case _ => None
+      }
 
-    val defn =
-      new Definition(
-        name,
-        stabilityLevel,
-        invertibilityLevel,
-        unicityLevel,
-        defnEnv,
-        expr.value)
+    class DefinitionWorksheetCell(itm : Polarity[Seq[Int]]) extends WorksheetCell(itm)
 
-    Some(defn)
   }
+
+  // def createDefinition(expr : NCell[Expression]) : Option[Definition] = {
+  //   val framework = Framework(expr)
+
+  //   framework.glob(None, None)
+  //   val deps = framework.dependencies(environment)
+
+  //   val defnEnv = Buffer.empty ++ environment
+  //   defnEnv filter (e => deps.containsId(e.value.id))
+
+  //   val defn =
+  //     new Definition(
+  //       name,
+  //       stabilityLevel,
+  //       invertibilityLevel,
+  //       unicityLevel,
+  //       defnEnv,
+  //       expr.value)
+
+  //   Some(defn)
+  // }
 
 }

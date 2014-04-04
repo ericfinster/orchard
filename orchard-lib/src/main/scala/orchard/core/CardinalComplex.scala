@@ -14,6 +14,21 @@ case object Positive extends Polarity[Nothing] { override def toString = "+" }
 case object Negative extends Polarity[Nothing] { override def toString = "-" }
 case class Neutral[A](value : A) extends Polarity[A] { override def toString = value.toString }
 
+object Polarity {
+
+  implicit class PolarityOps[A](p : Polarity[A]) {
+
+    def map[B](f : A => B) : Polarity[B] = 
+      p match {
+        case Positive => Positive
+        case Negative => Negative
+        case Neutral(n) => Neutral(f(n))
+      }
+
+  }
+
+}
+
 trait CardinalComplex[A] { thisComplex : MutableComplex[Polarity[A]] =>
 
   override type CellType <: CardinalCell
@@ -39,6 +54,13 @@ trait CardinalComplex[A] { thisComplex : MutableComplex[Polarity[A]] =>
       }
 
     def isPolarized : Boolean = isPositive || isNegative
+
+    def neutralNCell : NCell[A] = 
+      toNCell map (p =>
+        p match {
+          case Neutral(a) => a
+          case _ => throw new IllegalArgumentException("Cell has a non-neutral face!")
+        })
   }
 
 }

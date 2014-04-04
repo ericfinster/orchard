@@ -7,15 +7,16 @@
 
 package orchard.core
 
+import Environment._
+
 trait Editor {
 
-  def withAssumptionInfo(deps : Seq[NCell[Expression]],
-                         thinHint : Boolean,
+  def withAssumptionInfo(thinHint : Boolean,
                          forceThin : Boolean,
                          handler : (String, Boolean) => Unit) : Unit 
 
-  def withFillerIdentifiers(deps : Seq[NCell[Expression]], handler : (String, String) => Unit) : Unit
-  def withFillerIdentifier(deps : Seq[NCell[Expression]], handler : String => Unit) : Unit
+  def withFillerIdentifiers(handler : (String, String) => Unit) : Unit
+  def withFillerIdentifier(handler : String => Unit) : Unit
 
 }
 

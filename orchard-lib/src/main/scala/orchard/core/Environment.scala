@@ -7,40 +7,46 @@
 
 package orchard.core
 
-import scala.collection.mutable.Map
-import scala.collection.mutable.HashMap
+import scala.language.implicitConversions
 import scala.collection.mutable.Buffer
 
 object Environment {
 
-  implicit class EnvironmentOps(env : Seq[NCell[Expression]]) {
+  // implicit class Shape(val ncell : NCell[Seq[Int]]) 
 
-    def containsId(id : String) : Boolean = 
-      env exists (expr => expr.value.id == id)
+  // implicit class Context(val ctxt : Buffer[Expression]) {
 
-    def lookup(id : String) : Option[NCell[Expression]] = 
-      env find (expr => expr.value.id == id)
+  //   def containsId(id : String) : Boolean = 
+  //     ctxt exists (expr => expr.id == id)
 
-    def vars : Seq[NCell[Expression]] = 
-      env filter (expr => {
-        expr.value match {
-          case Variable(_, _) => true
-          case _ => false
-        }
-      })
+  //   def findById(id : String) : Option[Expression] = 
+  //     ctxt find (expr => expr.id == id)
 
-    def nonVars : Seq[NCell[Expression]] = 
-      env filter (expr => {
-        expr.value match {
-          case Variable(_, _) => false
-          case _ => true
-        }
-      })
+  //   // And this is wrong, since if you check while extending, you could
+  //   // end up in a state with a dirty context when you have to add two 
+  //   // expressions in a row
+  //   def extendWith(expr : Expression) = 
+  //     if (containsId(expr.id)) {
+  //       throw new IllegalArgumentException("Duplicate identifier in context.")
+  //     } else {
+  //       if (expr.id == "") {
+  //         throw new IllegalArgumentException("Refusing to except emtpy identifier.")
+  //       } else {
+  //         ctxt += expr
+  //       }
+  //     }
 
-    def dump : Unit = {
-      println("Dumping current environment: ")
-      env foreach (expr => println(expr.value.id))
-    }
-  }
+  //   // This is essentially useless, since it forgets the position of the variables
+  //   // which we will basically always need
+  //   def variables : Seq[Expression] = 
+  //     ctxt filter {
+  //       case Variable(_, _, _) => true
+  //       case _ => false
+  //     }
+
+  // }
+
+  // implicit def shapeToNCell(shape : Shape) : NCell[Seq[Int]] = shape.ncell
+  // implicit def contextToBuf(ctx : Context) : Seq[Expression] = ctx.ctxt
 
 }

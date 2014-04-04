@@ -9,21 +9,21 @@ package orchard.ui.javafx
 
 import orchard.core._
 
-class FrameworkGallery(seed : NCell[Option[Expression]]) extends SpinnerGallery[Option[Expression]] {
+// class FrameworkGallery(seed : NCell[Option[Expression]]) extends SpinnerGallery[Option[Expression]] {
 
-  //============================================================================================
-  // INITIALIZATION
-  //
+//   //============================================================================================
+//   // INITIALIZATION
+//   //
 
-  type PanelType = FrameworkZoomPanel
+//   type PanelType = FrameworkZoomPanel
 
-  val complex = new SimpleFramework(seed)
+//   val complex = new SimpleFramework(seed)
 
-  def newPanel(i : Int) : FrameworkZoomPanel = {
-    val panel = new FrameworkZoomPanel(complex, i)
-    reactTo(panel) 
-    panel 
-  }
+//   def newPanel(i : Int) : FrameworkZoomPanel = {
+//     val panel = new FrameworkZoomPanel(complex, i)
+//     reactTo(panel) 
+//     panel 
+//   }
 
-  initialize
-}
+//   initialize
+// }

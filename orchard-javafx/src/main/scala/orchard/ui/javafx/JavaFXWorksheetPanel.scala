@@ -198,10 +198,6 @@ abstract class JavaFXWorksheetPanel
 
   abstract class JavaFXWorksheetEdge extends JavaFXEdge with MutablePanelEdge { thisEdge : EdgeType => 
 
-    override def doHover : Unit = setStroke(Color.TOMATO)
-    override def doSelect : Unit = setStroke(Color.TOMATO)
-    override def doUnhover : Unit = setStroke(Color.BLACK)
-    override def doDeselect : Unit = setStroke(Color.BLACK)
     
   }
 
