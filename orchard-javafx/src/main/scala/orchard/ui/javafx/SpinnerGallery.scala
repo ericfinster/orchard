@@ -9,7 +9,6 @@ package orchard.ui.javafx
 
 import scalafx.Includes._
 
-import orchard.core._
 import orchard.ui.javafx.controls.Spinner
 
 abstract class SpinnerGallery[A] extends Spinner with JavaFXGallery[A] {

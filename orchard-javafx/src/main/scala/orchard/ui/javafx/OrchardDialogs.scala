@@ -32,11 +32,11 @@ trait OrchardDialogs { self : JavaFXEditor =>
       // cellFactory = (_ => new EnvironmentCell )
     }
 
-    for {
-      wksp <- activeWorkspace
-    } {
-      dependenciesList.items() ++= wksp.context.freeVariableMap.keys
-    }
+    // for {
+    //   wksp <- activeWorkspace
+    // } {
+    //   dependenciesList.items() ++= wksp.context.freeVariableMap.keys
+    // }
 
   }
 
