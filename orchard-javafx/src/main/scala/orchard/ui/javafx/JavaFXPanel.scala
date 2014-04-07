@@ -9,8 +9,6 @@ package orchard.ui.javafx
 
 import scala.collection.JavaConversions._
 
-import orchard.core._
-
 import javafx.scene.Node
 import javafx.scene.Group
 
@@ -29,6 +27,9 @@ import javafx.scene.paint.Color
 import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
+
+import orchard.core.ui._
+import orchard.core.complex._
 
 abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] { thisPanel =>
 
