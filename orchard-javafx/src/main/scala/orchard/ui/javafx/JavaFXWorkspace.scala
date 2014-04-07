@@ -90,6 +90,36 @@ class JavaFXWorkspace(
     node
   }
 
+  def buildEnvironmentTreeItems(node : EnvironmentNode) : TreeItem[EnvironmentNode] = 
+    node match {
+      case g @ GroupNode(name) => {
+        val item = 
+          new TreeItem[EnvironmentNode] {
+            value = g
+          }
+
+        item.children ++= g.children map (buildEnvironmentTreeItems(_).delegate)
+        item
+      }
+      case e @ ExpressionNode(expr) => {
+        new TreeItem[EnvironmentNode] {
+          value = e
+        }
+      }
+    }
+
+
+  override def addToEnvironment(node : EnvironmentNode) = {
+    super.addToEnvironment(node)
+
+    node match {
+      case g @ GroupNode(name) => {
+        environmentRoot.children add buildEnvironmentTreeItems(g).delegate
+      }
+      case e @ ExpressionNode(expr) => addToEnvironment(expr)
+    }
+  }
+
   environmentView.getSelectionModel.selectedItem onChange {
     val item = environmentView.getSelectionModel.selectedItem()
 

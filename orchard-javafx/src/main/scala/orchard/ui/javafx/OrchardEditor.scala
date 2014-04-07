@@ -34,7 +34,9 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 
+import orchard.core.cell._
 import orchard.core.editor._
+import orchard.core.expression._
 
 import orchard.ui.javafx.controls._
 
@@ -85,57 +87,58 @@ object OrchardEditor extends PopupManager(new VBox)
     }
   }
 
-  sealed trait DefinitionTreeItem
-  // case class DefinitionItem(val defn : Definition) extends DefinitionTreeItem { override def toString = defn.name }
-  // case class ExpressionItem[A](val expr : Expression[A]) extends DefinitionTreeItem { override def toString = expr.id }
+  sealed trait TemplateTreeItem
+  case class TemplateItem(template : Template) extends TemplateTreeItem { override def toString = template.name }
+  case class EnvironmentItem(node : EnvironmentNode) extends TemplateTreeItem
 
-  // class DefinitionTreeCell extends jfxsc.TreeCell[DefinitionTreeItem] {
+  class TemplateTreeCell extends jfxsc.TreeCell[TemplateTreeItem] {
 
-  //   getStyleClass add "orch-list-cell"
-  //   val cellStyleIndex = getStyleClass.length
-  //   getStyleClass add "orch-list-null"
+    getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-null"
 
-  //   def setCellStyleType(str : String) = {
-  //     getStyleClass(cellStyleIndex) = str
-  //   }
-
-  //   override def updateItem(defnTreeItem : DefinitionTreeItem, empty : Boolean) = {
-  //     super.updateItem(defnTreeItem, empty)
-
-  //     if (! empty) {
-  //       defnTreeItem match {
-  //         case DefinitionItem(defn) => { setCellStyleType("orch-list-null") ; setText(defn.toString) }
-  //         case ExpressionItem(expr) => { 
-  //           setCellStyleType("orch-list-cell-" ++ expr.styleString)
-  //           setText(expr.id)
-  //         }
-  //       }
-  //     } else {
-  //       setCellStyleType("orch-list-null")
-  //       setText("")
-  //     }
-  //   }
-
-  // }
-
-  val definitionTreeRoot = new TreeItem[DefinitionTreeItem]
-  val definitionTreeView = 
-    new TreeView[DefinitionTreeItem] {
-      root = definitionTreeRoot
-      showRoot = false
-      // cellFactory = (_ => new DefinitionTreeCell)
+    def setCellStyleType(str : String) = {
+      getStyleClass(cellStyleIndex) = str
     }
 
-  // definitionTreeView.selectionModel().selectedItem onChange {
-  //   val item = definitionTreeView.selectionModel().getSelectedItem
+    override def updateItem(item : TemplateTreeItem, empty : Boolean) = {
+      super.updateItem(item, empty)
+
+      if (! empty) {
+        item match {
+          case TemplateItem(template) => { setCellStyleType("orch-list-null") ; setText(template.name) }
+          case EnvironmentItem(GroupNode(name)) => { setCellStyleType("orch-list-null") ; setText(name) }
+          case EnvironmentItem(ExpressionNode(expr)) => {
+            setCellStyleType("orch-list-cell-" ++ expr.value.styleString)
+            setText(expr.value.toString)
+          }
+        }
+      } else {
+        setCellStyleType("orch-list-null")
+        setText("")
+      }
+    }
+
+  }
+
+  val templateTreeRoot = new TreeItem[TemplateTreeItem]
+  val templateTreeView = 
+    new TreeView[TemplateTreeItem] {
+      root = templateTreeRoot
+      showRoot = false
+      cellFactory = (_ => new TemplateTreeCell)
+    }
+
+  templateTreeView.selectionModel().selectedItem onChange {
+    val item = templateTreeView.selectionModel().getSelectedItem
     
-  //   if (item != null) {
-  //     item.value() match {
-  //       case ExpressionItem(expr) => setPreview(expr)
-  //       case _ => ()
-  //     }
-  //   }
-  // }
+    if (item != null) {
+      item.value() match {
+        case EnvironmentItem(ExpressionNode(expr)) => setPreview(expr)
+        case _ => ()
+      }
+    }
+  }
 
   val workspacePane = new TitledPane {
     text = "Workspaces"
@@ -153,21 +156,21 @@ object OrchardEditor extends PopupManager(new VBox)
   AnchorPane.setBottomAnchor(workspacePane, 10)
   AnchorPane.setLeftAnchor(workspacePane, 10)
 
-  val definitionsPane = new TitledPane {
-    text = "Local Definitions"
-    content = definitionTreeView
+  val templatePane = new TitledPane {
+    text = "Templates"
+    content = templateTreeView
     collapsible = false
   }
 
-  val definitionsAnchor = new AnchorPane {
-    content = definitionsPane
+  val templateAnchor = new AnchorPane {
+    content = templatePane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(definitionsPane, 10)
-  AnchorPane.setRightAnchor(definitionsPane, 10)
-  AnchorPane.setBottomAnchor(definitionsPane, 10)
-  AnchorPane.setLeftAnchor(definitionsPane, 10)
+  AnchorPane.setTopAnchor(templatePane, 10)
+  AnchorPane.setRightAnchor(templatePane, 10)
+  AnchorPane.setBottomAnchor(templatePane, 10)
+  AnchorPane.setLeftAnchor(templatePane, 10)
 
   val noEnvLabel = new Label("Empty Environment")
 
@@ -199,7 +202,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val leftVerticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items.addAll(workspaceAnchor, definitionsAnchor)
+    items.addAll(workspaceAnchor, templateAnchor)
   }
 
   val middleVerticalSplit = new SplitPane {
@@ -227,19 +230,19 @@ object OrchardEditor extends PopupManager(new VBox)
       def handle(ev : KeyEvent) {
         ev.getCode match {
           case KeyCode.LEFT => {
-            // if (ev.isControlDown) {
-            //   val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-            //   if (previewGallery != null)
-            //     previewGallery.prev
-            // } else
+            if (ev.isControlDown) {
+              val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
+              if (previewGallery != null)
+                previewGallery.prev
+            } else
               for { gallery <- activeGallery } gallery.prev
           }
           case KeyCode.RIGHT => {
-            // if (ev.isControlDown) {
-            //   val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-            //   if (previewGallery != null)
-            //     previewGallery.next
-            // } else 
+            if (ev.isControlDown) {
+              val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
+              if (previewGallery != null)
+                previewGallery.next
+            } else 
               for { gallery <- activeGallery } gallery.next
           }
           case KeyCode.E => if (ev.isControlDown) onExtrude
@@ -273,6 +276,34 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def onNewWorkspace = NewWorkspaceDialog.run
   def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
+
+  def onNewTemplate = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      println("Exporting workspace as template ...")
+      val template = wksp.templateSnapshot
+      val treeItem = buildTemplateTreeItems(template.root)
+      treeItem.value = TemplateItem(template)
+      templateTreeRoot.children += treeItem.delegate
+    }
+
+  def onApplyTemplate = 
+    for {
+      wksp <- activeWorkspace
+      template <- activeTemplate
+    } {
+      println("Applying template")
+      wksp.importTemplate(template)
+    }
+
+  def onApplyTemplateInShell = 
+    for {
+      wksp <- activeWorkspace
+      template <- activeTemplate
+    } {
+      wksp.importTemplateAtSelection(template)
+    }
 
   def onOpen = ???
   // {
@@ -334,13 +365,20 @@ object OrchardEditor extends PopupManager(new VBox)
       sheet <- wksp.activeSheet
     } yield sheet
 
-  // def activeDefinition : Option[Definition] = {
-  //   val selectedDefnItem = definitionTreeView.getSelectionModel.selectedItem()
+  def activeTemplate : Option[Template] = {
+    val item = templateTreeView.selectionModel().getSelectedItem
 
-  //   if (selectedDefnItem != null) {
-  //     Some(findParentDefinition(selectedDefnItem))
-  //   } else None
-  // }
+    if (item != null) {
+      var curItem = item
+
+      while (curItem.parent() != templateTreeRoot.delegate) {
+        curItem = curItem.parent()
+      }
+
+      Some(curItem.value().asInstanceOf[TemplateItem].template)
+    } else
+      None
+  }
 
   def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
     val wksp = new JavaFXWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
@@ -367,41 +405,35 @@ object OrchardEditor extends PopupManager(new VBox)
     activeWorkspace = None
   }
 
+  def setPreview(expr : NCell[Expression]) = {
+    // Here we have the problem that the gallery is tied to the workspace, which
+    // it seems like is a bit of a bad idea ....
+    ()
+  }
+
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) = {
     previewPane.content += gallery
     gallery.refreshAll
   }
 
-  // def clearDefinitions = {
-  //   definitionTreeRoot.children.clear
-  // }
+  def buildTemplateTreeItems(node : EnvironmentNode) : TreeItem[TemplateTreeItem] = 
+    node match {
+      case g @ GroupNode(name) => {
+        val item = 
+          new TreeItem[TemplateTreeItem] {
+            value = EnvironmentItem(g)
+          }
 
-  // def definitions : Seq[Definition] = {
-  //   definitionTreeRoot.children map (child => {
-  //     child.value().asInstanceOf[DefinitionItem].defn
-  //   })
-  // }
-
-  // def findParentDefinition(treeItem : TreeItem[DefinitionTreeItem]) : Definition = {
-  //   treeItem.value() match {
-  //     case DefinitionItem(defn) => defn
-  //     case _ => findParentDefinition(treeItem.parent())
-  //   }
-  // }
-
-  // def addLocalDefinition(defn : Definition) = {
-  //   val defnTreeItem = new TreeItem[DefinitionTreeItem] {
-  //     value = DefinitionItem(defn)
-  //     // children ++= defn.context map (expr => {
-  //     //   new TreeItem[DefinitionTreeItem] {
-  //     //     value = ExpressionItem(expr)
-  //     //   }.delegate
-  //     // })
-  //   }
-
-  //   definitionTreeRoot.children += defnTreeItem
-  // }
-
+        item.children ++= g.children map (buildTemplateTreeItems(_).delegate)
+        item
+      }
+      case e @ ExpressionNode(expr) => {
+        new TreeItem[TemplateTreeItem] {
+          value = EnvironmentItem(e)
+        }
+      }
+    }
+  
   // def saveDefinitions(file : java.io.File) = {
   //   import XmlSerializable._
 

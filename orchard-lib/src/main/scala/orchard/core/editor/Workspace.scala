@@ -30,12 +30,16 @@ trait Workspace extends CheckableEnvironment {
   def activeSheet : Option[Worksheet]
   def activeExpression : Option[NCell[Expression]]
 
-  val environment : GroupNode = GroupNode("root")
+  val environment : GroupNode = GroupNode(name)
 
   def addToEnvironment(expr : NCell[Expression]) : EnvironmentNode = {
     val node = ExpressionNode(expr)
     environment.children += node
     node
+  }
+
+  def addToEnvironment(node : EnvironmentNode) : Unit = { 
+    environment.children += node 
   }
 
   def dumpEnvironment : Unit = {
@@ -232,6 +236,37 @@ trait Workspace extends CheckableEnvironment {
             }
           }
         }
+      }
+    }
+
+  def templateSnapshot : Template = {
+    new Template(environment.clone.asInstanceOf[GroupNode])
+  }
+
+  def importTemplate(template : Template) = 
+    importTemplateWithShell(template, Object(None))
+
+  def importTemplateWithShell(template : Template, shell : NCell[Option[Expression]]) = {
+    val newGroup = template.root map (expr => {
+      val shellFramework = new ExpressionFramework(shell)
+      shellFramework.stablyAppend(new ExpressionFramework(expr map (Some(_))))
+      shellFramework.toCell map (_.get)
+    })
+
+    addToEnvironment(newGroup)
+  }
+
+  def importTemplateAtSelection(template : Template) = 
+    for {
+      sheet <- activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+      if (sheet.selectionIsShell || selectedCell.isComplete) {
+        val shellFramework = selectedCell.framework
+        shellFramework.topCell.item = None
+        importTemplateWithShell(template, shellFramework.toCell)
+      } else {
+        println("Selection is not a shell.")
       }
     }
 
