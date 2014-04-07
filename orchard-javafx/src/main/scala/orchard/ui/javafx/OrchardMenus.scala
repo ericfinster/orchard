@@ -35,9 +35,9 @@ trait OrchardMenus { self : JavaFXEditor =>
     items ++= List(openItem, saveItem, exitItem)
   }
 
-  val newDefnItem = new MenuItem {
-    text = "New Definition"
-    onAction = onNewDefinition
+  val newWkspItem = new MenuItem {
+    text = "New Workspace"
+    onAction = onNewWorkspace
   }
 
   val newSheetItem = new MenuItem {
@@ -45,45 +45,35 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onNewSheet
   }
 
-  val completeItem = new MenuItem {
-    text = "Complete Definition"
-    onAction = onCompleteDefinition
+  val workspaceMenu = new Menu {
+    text = "Workspace"
+    items ++= List(newWkspItem, newSheetItem)
   }
 
-  val deleteItem = new MenuItem {
-    text = "Delete Definition"
-    onAction = onDeleteDefinition
-  }
+  // val applyItem = new MenuItem {
+  //   text = "Apply"
+  //   onAction = onApply
+  // }
 
-  val definitionMenu = new Menu {
-    text = "Definition"
-    items ++= List(newDefnItem, newSheetItem, completeItem, deleteItem)
-  }
+  // val applyInShellItem = new MenuItem {
+  //   text = "Apply in Shell"
+  //   onAction = onApplyInShell
+  // }
 
-  val applyItem = new MenuItem {
-    text = "Apply"
-    onAction = onApply
-  }
+  // val satisfyGoalItem = new MenuItem {
+  //   text = "Satisfy Goal"
+  //   onAction = onSatisfyGoal
+  // }
 
-  val applyInShellItem = new MenuItem {
-    text = "Apply in Shell"
-    onAction = onApplyInShell
-  }
+  // val unfoldItem = new MenuItem {
+  //   text = "Unfold Expression"
+  //   onAction = onUnfold
+  // }
 
-  val satisfyGoalItem = new MenuItem {
-    text = "Satisfy Goal"
-    onAction = onSatisfyGoal
-  }
-
-  val unfoldItem = new MenuItem {
-    text = "Unfold Expression"
-    onAction = onUnfold
-  }
-
-  val substitutionMenu = new Menu {
-    text = "Substitution"
-    items ++= List(applyItem, applyInShellItem, satisfyGoalItem, unfoldItem)
-  }
+  // val substitutionMenu = new Menu {
+  //   text = "Substitution"
+  //   items ++= List(applyItem, applyInShellItem, satisfyGoalItem, unfoldItem)
+  // }
 
   val extrudeItem = new MenuItem {
     text = "Extrude Selection"
@@ -116,22 +106,15 @@ trait OrchardMenus { self : JavaFXEditor =>
   }
 
   val menuBar = new MenuBar {
-    menus ++= List(fileMenu, definitionMenu, substitutionMenu, expressionMenu)
+    menus ++= List(fileMenu, workspaceMenu, expressionMenu)
   }
 
   def onOpen : Unit
   def onSave : Unit
   def onExit : Unit
 
-  def onNewDefinition : Unit
+  def onNewWorkspace : Unit
   def onNewSheet : Unit
-  def onCompleteDefinition : Unit
-  def onDeleteDefinition : Unit
-
-  def onApply : Unit
-  def onApplyInShell : Unit
-  def onSatisfyGoal : Unit
-  def onUnfold : Unit
 
   def onExtrude : Unit 
   def onDrop : Unit

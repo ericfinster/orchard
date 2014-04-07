@@ -121,12 +121,12 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   }
 
-  object NewDefinitionDialog extends CancellableDialog {
+  object NewWorkspaceDialog extends CancellableDialog {
 
-    heading.text = "New Definition"
+    heading.text = "New Workspace"
 
     val nameLabel = new Label("Name: ")
-    val nameField = new TextField { promptText = "Definition name" }
+    val nameField = new TextField { promptText = "Workspace name" }
     val nameHBox = new HBox {
       content = List(nameLabel, nameField)
       alignment = Pos.CENTER
@@ -297,7 +297,7 @@ trait OrchardDialogs { self : JavaFXEditor =>
             } else None
 
 
-          newDefinition(name, stabilityLevel, invertibilityLevel, unicityLevel)
+          newWorkspace(name, stabilityLevel, invertibilityLevel, unicityLevel)
         }
         case DialogCancel => ()
       }

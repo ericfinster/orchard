@@ -16,6 +16,7 @@ case class Identifier(val tokens : List[IdentToken]) {
 sealed trait IdentToken { def value : String }
 case class LiteralToken(val lit : String) extends IdentToken { def value = lit }
 case class ReferenceToken(val ident : String) extends IdentToken { def value = ident }
+case class ExpressionToken(val expr : Expression) extends IdentToken { def value = expr.ident.toString }
 
 object IdentParser extends RegexParsers {
 
@@ -29,4 +30,5 @@ object IdentParser extends RegexParsers {
   def apply(input : String) = parseAll(tokenSeq, input)
 
   override def skipWhitespace = false
+
 }

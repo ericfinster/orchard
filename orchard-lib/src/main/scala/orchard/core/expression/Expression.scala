@@ -13,6 +13,8 @@ sealed trait Expression {
   def isThin : Boolean
   def styleString : String
 
+  override def toString = ident.toString
+
 }
 
 case class Variable(val ident : Identifier, val isThin : Boolean) extends Expression {

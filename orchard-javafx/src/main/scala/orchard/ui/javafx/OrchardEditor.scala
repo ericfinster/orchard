@@ -42,7 +42,7 @@ trait JavaFXEditor extends Editor {
 
   implicit def pm : PopupManager
 
-  def newDefinition(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
+  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) : Unit
   def activeWorkspace : Option[JavaFXWorkspace]
 
@@ -59,18 +59,13 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val fileChooser = new FileChooser
 
-  val navigationTreeRoot = new TreeItem[JavaFXWorkspace]
-  val navigationTreeView = 
-    new TreeView[JavaFXWorkspace] {
-      root = navigationTreeRoot
-      showRoot = false
-    }
+  val workspaceListView = new ListView[JavaFXWorkspace]
 
-  navigationTreeView.selectionModel().selectedItem onChange {
-    val item = navigationTreeView.selectionModel().getSelectedItem
+  workspaceListView.selectionModel().selectedItem onChange {
+    val item = workspaceListView.selectionModel().getSelectedItem
     
     if (item != null) {
-      selectWorkspace(item.value())
+      selectWorkspace(item)
     }
   }
 
@@ -126,21 +121,21 @@ object OrchardEditor extends PopupManager(new VBox)
   //   }
   // }
 
-  val navigationPane = new TitledPane {
-    text = "Navigation"
-    content = navigationTreeView
+  val workspacePane = new TitledPane {
+    text = "Workspaces"
+    content = workspaceListView
     collapsible = false
   }
 
-  val navigationAnchor = new AnchorPane {
-    content = navigationPane
+  val workspaceAnchor = new AnchorPane {
+    content = workspacePane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(navigationPane, 10)
-  AnchorPane.setRightAnchor(navigationPane, 10)
-  AnchorPane.setBottomAnchor(navigationPane, 10)
-  AnchorPane.setLeftAnchor(navigationPane, 10)
+  AnchorPane.setTopAnchor(workspacePane, 10)
+  AnchorPane.setRightAnchor(workspacePane, 10)
+  AnchorPane.setBottomAnchor(workspacePane, 10)
+  AnchorPane.setLeftAnchor(workspacePane, 10)
 
   val definitionsPane = new TitledPane {
     text = "Local Definitions"
@@ -159,7 +154,6 @@ object OrchardEditor extends PopupManager(new VBox)
   AnchorPane.setLeftAnchor(definitionsPane, 10)
 
   val noContextLabel = new Label("Empty Context")
-  val noSubstContextLabel = new Label("No Substitution Active")
 
   val contextPane = new TitledPane {
     text = "Context"
@@ -177,22 +171,6 @@ object OrchardEditor extends PopupManager(new VBox)
   AnchorPane.setBottomAnchor(contextPane, 10)
   AnchorPane.setLeftAnchor(contextPane, 10)
 
-  val substContextPane = new TitledPane {
-    text = "Substitution Context"
-    content = noSubstContextLabel
-    collapsible = false
-  }
-
-  val substContextAnchor = new AnchorPane {
-    content = substContextPane
-    styleClass += "orch-pane"
-  }
-
-  AnchorPane.setTopAnchor(substContextPane, 10)
-  AnchorPane.setRightAnchor(substContextPane, 10)
-  AnchorPane.setBottomAnchor(substContextPane, 10)
-  AnchorPane.setLeftAnchor(substContextPane, 10)
-
   val sheetPane = new StackPane {
     padding = Insets(10,10,10,10)
     styleClass += "orch-pane"
@@ -205,7 +183,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val leftVerticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items.addAll(navigationAnchor, definitionsAnchor)
+    items.addAll(workspaceAnchor, definitionsAnchor)
   }
 
   val middleVerticalSplit = new SplitPane {
@@ -214,14 +192,9 @@ object OrchardEditor extends PopupManager(new VBox)
     dividerPositions = 0.7f
   }
 
-  val rightVerticalSplit = new SplitPane {
-    orientation = Orientation.VERTICAL
-    items.addAll(contextAnchor, substContextAnchor)
-  }
-
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    items.addAll(leftVerticalSplit, middleVerticalSplit, rightVerticalSplit)
+    items.addAll(leftVerticalSplit, middleVerticalSplit, contextAnchor)
   }
 
   horizontalSplit.setDividerPositions(0.1f, 0.8f)
@@ -262,7 +235,7 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.O => if (ev.isControlDown) onOpen
           case KeyCode.S => if (ev.isControlDown) onSave
   //         // case KeyCode.V => if (ev.isControlDown) onView
-          case KeyCode.N => if (ev.isControlDown) onNewDefinition
+          case KeyCode.N => if (ev.isControlDown) onNewWorkspace
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
   //         // case KeyCode.X => if (ev.isControlDown) onExtra
@@ -282,115 +255,8 @@ object OrchardEditor extends PopupManager(new VBox)
   def onFill : Unit = ??? // for { wksp <- activeWorkspace } { wksp.fillAtSelection }
   def onUseEnvironment : Unit = ??? // for { wksp <- activeWorkspace } { wksp.expressionToSelection }
 
-  def onNewDefinition = NewDefinitionDialog.run
+  def onNewWorkspace = NewWorkspaceDialog.run
   def onNewSheet = ??? // for { wksp <- activeWorkspace } { wksp.newSheet }
-
-  def onCompleteDefinition = ???
-    // for {
-    //   wksp <- activeWorkspace
-    // } {
-    //   if (wksp.isInstanceOf[JavaFXDefinitionWorkspace]) {
-    //     val defnWksp = wksp.asInstanceOf[JavaFXDefinitionWorkspace]
-        
-    //     for {
-    //       defn <- defnWksp.completeDefinition
-    //     } {
-    //       addLocalDefinition(defn)
-    //       closeActiveWorkspace
-    //     }
-    //   }
-    // }
-
-  def onDeleteDefinition = ???
-  // {
-  //   val defnItem = definitionTreeView.getSelectionModel.selectedItem()
-
-  //   if (defnItem != null) {
-  //     definitionTreeRoot.children -= defnItem
-  //   }
-  // }
-
-  def onApply = ???
-    // for {
-    //   wksp <- activeWorkspace
-    //   defn <- activeDefinition
-    //   substWksp <- wksp.apply(defn)
-    // } {
-    //   navigationTreeView.getSelectionModel.select(substWksp.treeItem)
-    // }
-
-  def onApplyInShell = ???
-    // for { 
-    //   wksp <- activeWorkspace
-    //   gallery <- wksp.activeGallery
-    //   cell <- gallery.complex.selectionBase
-    //   defn <- activeDefinition
-    // } {
-    //   if (gallery.complex.selectionIsUnique && cell.hasCompleteShell) {
-
-    //     val shell = Object(Seq.empty)
-    //     // {
-    //     //   val frmwk = gallery.complex.extract(cell)
-    //     //   frmwk.topCell.item = Neutral(Seq.empty)
-    //     //   frmwk.topCell.neutralNCell
-    //     // }
-
-    //     for {
-    //       substWksp <- wksp.applyInShell(shell, defn)
-    //     } {
-    //       navigationTreeView.getSelectionModel.select(substWksp.treeItem)
-    //     }
-    //   } else {
-    //     println("Cannot spawn application here.")
-    //   }
-    // }
-
-  def onSatisfyGoal = ???
-    // for {
-    //   wksp <- activeWorkspace
-    //   gallery <- wksp.activeGallery
-    //   selectedCell <- gallery.complex.selectionBase
-    // } {
-    //   if (gallery.complex.selectionIsUnique) {
-    //     if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-    //       if (selectedCell.isComplete) {
-    //         val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
-    //         val selectedGoal = substWksp.goalsListView.getSelectionModel.selectedItem()
-
-    //         substWksp.satisfyGoal(selectedGoal, new substWksp.ShapeFramework(selectedCell.neutralNCell))
-
-    //         // // If the remaining number of goals is zero, delete the workspace
-    //         // // and reselect the parent ...
-
-    //         // if (substWksp.isComplete) {
-    //         //   println("Substitution finished ... importing results")
-
-    //         //   substWksp.environment.dump
-
-    //         //   substWksp.getImports foreach (expr => {
-    //         //     if (! substWksp.parentWorkspace.environment.containsId(expr.value.id)) {
-    //         //       println("Importing required cell " ++ expr.value.id)
-    //         //       substWksp.parentWorkspace.environment += expr
-    //         //     } else {
-    //         //       println("Skipping import of " ++ expr.value.id ++ " because of name clash.")
-    //         //     }
-    //         //   })
-
-    //         //   val parentItem = substWksp.treeItem.parent()
-    //         //   parentItem.children -= substWksp.treeItem
-    //         //   navigationTreeView.getSelectionModel.select(parentItem)
-    //         // }
-    //       }
-    //     }
-    //   }
-    // }
-
-  def onUnfold = ???
-    // for {
-    //   wksp <- activeWorkspace
-    // } {
-    //   wksp.unfoldSelectedApplication
-    // }
 
   def onOpen = ???
   // {
@@ -460,17 +326,16 @@ object OrchardEditor extends PopupManager(new VBox)
   //   } else None
   // }
 
-  def newDefinition(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = ???
-  // {
-  //   val wksp = new JavaFXDefinitionWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
+  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
+    val wksp = new JavaFXWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
 
-  //   navigationTreeRoot.children += wksp.treeItem
-  //   navigationTreeView.getSelectionModel.select(wksp.treeItem)
+    workspaceListView.items() += wksp
+    workspaceListView.getSelectionModel.select(wksp)
 
-  //   wksp.newSheet
-  // }
+    wksp.newSheet
+  }
 
-  def selectWorkspace(wksp : JavaFXWorkspace) = ???
+  def selectWorkspace(wksp : JavaFXWorkspace) = ()
   // {
   //   sheetPane.content = wksp.sheetTabPane
   //   contextPane.content = wksp.contextView
