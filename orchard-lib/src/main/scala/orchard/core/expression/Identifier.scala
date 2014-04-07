@@ -9,6 +9,10 @@ package orchard.core.expression
 
 import scala.util.parsing.combinator.RegexParsers
 
+case class Identifier(val tokens : List[IdentToken]) {
+  override def toString = (tokens map (_.value)).mkString
+}
+
 sealed trait IdentToken { def value : String }
 case class LiteralToken(val lit : String) extends IdentToken { def value = lit }
 case class ReferenceToken(val ident : String) extends IdentToken { def value = ident }
