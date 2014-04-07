@@ -34,10 +34,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 
-import orchard.core._
 import orchard.ui.javafx.controls._
-
-import Environment._
 
 trait JavaFXEditor extends Editor {
 
