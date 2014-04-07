@@ -216,7 +216,7 @@ object OrchardEditor extends PopupManager(new VBox)
             //   if (previewGallery != null)
             //     previewGallery.prev
             // } else
-            //   for { gallery <- activeGallery } gallery.prev
+              for { gallery <- activeGallery } gallery.prev
           }
           case KeyCode.RIGHT => {
             // if (ev.isControlDown) {
@@ -224,7 +224,7 @@ object OrchardEditor extends PopupManager(new VBox)
             //   if (previewGallery != null)
             //     previewGallery.next
             // } else 
-            //   for { gallery <- activeGallery } gallery.next
+              for { gallery <- activeGallery } gallery.next
           }
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
@@ -248,15 +248,15 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     })
 
-  def onExtrude : Unit = ??? // for { wksht <- activeSheet } { wksht.extrude }
-  def onDrop : Unit = ??? // for { wksht <- activeSheet } { wksht.drop }
+  def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrude }
+  def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
 
-  def onAssume(thinHint : Boolean) : Unit = ??? // for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
-  def onFill : Unit = ??? // for { wksp <- activeWorkspace } { wksp.fillAtSelection }
-  def onUseEnvironment : Unit = ??? // for { wksp <- activeWorkspace } { wksp.expressionToSelection }
+  def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
+  def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
+  def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
 
   def onNewWorkspace = NewWorkspaceDialog.run
-  def onNewSheet = ??? // for { wksp <- activeWorkspace } { wksp.newSheet }
+  def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
 
   def onOpen = ???
   // {
@@ -309,14 +309,14 @@ object OrchardEditor extends PopupManager(new VBox)
 
   var activeWorkspace : Option[JavaFXWorkspace] = None
 
-  // def activeGallery : Option[JavaFXWorkspace#WorksheetGallery] = ???
-    // for { wksp <- activeWorkspace ; gallery <- wksp.activeGallery } yield gallery
+  def activeGallery : Option[JavaFXWorkspace#WorksheetGallery] =
+    for { wksp <- activeWorkspace ; gallery <- wksp.activeGallery } yield gallery
 
-  // def activeSheet : Option[Workspace#Worksheet] = 
-  //   for { 
-  //     wksp <- activeWorkspace 
-  //     sheet <- wksp.activeSheet
-  //   } yield sheet
+  def activeSheet : Option[JavaFXWorkspace#Worksheet] = 
+    for { 
+      wksp <- activeWorkspace 
+      sheet <- wksp.activeSheet
+    } yield sheet
 
   // def activeDefinition : Option[Definition] = {
   //   val selectedDefnItem = definitionTreeView.getSelectionModel.selectedItem()
@@ -335,19 +335,11 @@ object OrchardEditor extends PopupManager(new VBox)
     wksp.newSheet
   }
 
-  def selectWorkspace(wksp : JavaFXWorkspace) = ()
-  // {
-  //   sheetPane.content = wksp.sheetTabPane
+  def selectWorkspace(wksp : JavaFXWorkspace) = {
+    sheetPane.content = wksp.sheetTabPane
   //   contextPane.content = wksp.contextView
-
-  //   if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-  //     val substWksp = wksp.asInstanceOf[JavaFXSubstitutionWorkspace]
-  //     substContextPane.content = substWksp.substContextView
-  //   } else
-  //     substContextPane.content = noSubstContextLabel
-
-  //   activeWorkspace = Some(wksp)
-  // }
+    activeWorkspace = Some(wksp)
+  }
 
   // def closeActiveWorkspace =
   //   for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
