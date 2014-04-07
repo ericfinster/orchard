@@ -22,7 +22,7 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
 
   override def emptyItem : Polarity[Option[Expression]] = Neutral(None)
 
-  abstract class AbstractWorksheetCell(itm : Polarity[Option[Expression]])
+  abstract class AbstractWorksheetCell
       extends AbstractMutableCell
       with FrameworkCell
       with CardinalCell { thisCell : CellType => }
