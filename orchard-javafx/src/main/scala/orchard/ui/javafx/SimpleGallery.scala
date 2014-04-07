@@ -16,9 +16,8 @@ import javafx.event.EventHandler
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 
-import orchard.core._
-
-import Util._
+import orchard.core.cell._
+import orchard.core.complex._
 
 class SimpleGallery[A](seed : NCell[A]) extends SpinnerGallery[A] {
 

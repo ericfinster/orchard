@@ -10,7 +10,7 @@ package orchard.ui.javafx
 import javafx.scene.Node
 import javafx.scene.text.Text
 
-import orchard.core._
+import orchard.core.complex._
 
 class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends ZoomPanel[A] { thisPanel =>
 

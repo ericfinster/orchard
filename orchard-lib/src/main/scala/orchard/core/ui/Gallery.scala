@@ -7,8 +7,8 @@
 
 package orchard.core.ui
 
-import orchard.core.util.EventConduit
-import orchard.core.complex.CellEvent
+import orchard.core.util._
+import orchard.core.complex._
 
 trait Gallery[A] extends EventConduit[CellEvent] {
 

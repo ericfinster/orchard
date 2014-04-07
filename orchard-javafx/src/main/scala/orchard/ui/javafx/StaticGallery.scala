@@ -12,8 +12,6 @@ import scalafx.Includes._
 import javafx.geometry.Pos
 import javafx.scene.{layout => jfxsl}
 
-import orchard.core._
-
 abstract class StaticGallery[A] extends jfxsl.HBox with JavaFXGallery[A] {
 
   //============================================================================================

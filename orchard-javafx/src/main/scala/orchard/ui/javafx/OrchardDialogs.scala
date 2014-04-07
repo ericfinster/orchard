@@ -18,8 +18,6 @@ import orchard.ui.javafx.controls.Dialog
 import orchard.ui.javafx.controls.PopupManager
 import orchard.ui.javafx.controls.CancellableDialog
 
-import orchard.core._
-
 trait OrchardDialogs { self : JavaFXEditor =>
 
   //============================================================================================

@@ -17,8 +17,8 @@ import Util._
 // Add a type class so that A is renderable??
 trait RenderingPanel[A] extends Panel[A] {
 
-  override type CellType <: VisualCell
-  override type EdgeType <: VisualEdge
+  type CellType <: VisualCell
+  type EdgeType <: VisualEdge
 
   //============================================================================================
   // VISUAL OPTIONS

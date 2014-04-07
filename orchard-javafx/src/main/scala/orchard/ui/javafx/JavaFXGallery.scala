@@ -12,11 +12,11 @@ import scala.collection.JavaConversions._
 import scalafx.Includes._
 import scalafx.collections.ObservableBuffer
 
-import orchard.core._
+import orchard.core.ui._
 
 trait JavaFXGallery[A] extends Gallery[A] {
 
-  override type PanelType <: JavaFXPanel[A]
+  type PanelType <: JavaFXPanel[A]
 
   protected val myPanels = new ObservableBuffer[PanelType]
 

@@ -29,12 +29,13 @@ import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 
 import orchard.core.ui._
+import orchard.core.util._
 import orchard.core.complex._
 
 abstract class JavaFXPanel[A] extends Region with RenderingPanel[A] { thisPanel =>
 
-  override type CellType <: JavaFXCell
-  override type EdgeType <: JavaFXEdge
+  type CellType <: JavaFXCell
+  type EdgeType <: JavaFXEdge
 
   //============================================================================================
   // UI INITIALIZATION

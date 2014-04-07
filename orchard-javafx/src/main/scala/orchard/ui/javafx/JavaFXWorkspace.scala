@@ -31,14 +31,29 @@ class JavaFXWorkspace(
 
   def newSheet = ()
 
-  class WorksheetPanel extends ZoomPanel[Polarity[Option[Expression]]] { thisPanel =>
+  class WorksheetPanel(val complex : Worksheet, val baseIndex : Int) 
+      extends ZoomPanel[Polarity[Option[Expression]]] { thisPanel =>
 
     type ComplexType = Worksheet
 
     type CellType = WorksheetPanelCell
     type EdgeType = WorksheetPanelEdge
 
-    class WorksheetPanelCell extends JavaFXCell { thisCell : CellType =>
+    def newCell(owner : complex.WorksheetCell) : WorksheetPanelCell = {
+      val cell = new WorksheetPanelCell(owner)
+      owner.registerPanelCell(thisPanel)(cell)
+      reactTo(cell)
+      cell
+    }
+    
+    def newEdge(owner : complex.WorksheetCell) : WorksheetPanelEdge = {
+      val edge = new WorksheetPanelEdge(owner)
+      owner.registerPanelEdge(thisPanel)(edge)
+      reactTo(edge)
+      edge
+    }
+
+    class WorksheetPanelCell(val owner : complex.WorksheetCell) extends JavaFXCell { thisCell : CellType =>
 
       def renderLabel : jfxs.Node = {
         val labelNode = 
@@ -75,9 +90,34 @@ class JavaFXWorkspace(
 
     }
 
-    class WorksheetPanelEdge extends JavaFXEdge { thisEdge : EdgeType => }
+    class WorksheetPanelEdge(val owner : complex.WorksheetCell) extends JavaFXEdge { thisEdge : EdgeType => }
+
+    //============================================================================================
+    // INITIALIZATION
+    //
+
+    var baseCell : WorksheetPanelCell = newCell(complex.baseCells(baseIndex))
+
+    refreshPanelData
+    initializeChildren
 
   }
+
+  // class DefinitionWorksheetGallery(val complex : DefinitionWorksheet) extends WorksheetGallery {
+
+  //   type PanelType = DefinitionWorksheetPanel
+
+  //   def this(seed : NCell[Polarity[IndexType]]) = this(new DefinitionWorksheet(seed))
+
+  //   def newPanel(i : Int) : DefinitionWorksheetPanel = {
+  //     val panel = new DefinitionWorksheetPanel(complex, i)
+  //     reactTo(panel)
+  //     panel
+  //   }
+
+  //   initialize
+
+  // }
 
   // abstract class WorksheetGallery extends SpinnerGallery[Polarity[IndexType]] { thisGallery =>
 
