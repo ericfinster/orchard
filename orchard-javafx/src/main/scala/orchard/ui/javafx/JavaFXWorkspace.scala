@@ -28,7 +28,7 @@ class JavaFXWorkspace(
   val stabilityLevel : Option[Int],
   val invertibilityLevel : Option[Int],
   val unicityLevel : Option[Int]
-) extends Workspace with JavaFXWorksheetEnv {
+) extends Workspace with JavaFXWorksheetEnv with JavaFXFrameworkEnv {
 
   var activeExpression : Option[NCell[Expression]] = None
   var activeGallery : Option[WorksheetGallery] = None 
@@ -90,31 +90,24 @@ class JavaFXWorkspace(
     node
   }
 
-  // contextView.getSelectionModel.selectedItem onChange {
-  //   val exprItem = contextView.getSelectionModel.selectedItem()
+  environmentView.getSelectionModel.selectedItem onChange {
+    val item = environmentView.getSelectionModel.selectedItem()
 
-  //   if (exprItem != null) {
-  //     val expr = exprItem.value()
-  //     activeExpression = Some(expr)
-  //     activeExpressionIndex = getItemSeq(contextRoot, exprItem)
+    if (item != null) {
+      item.value() match {
+        case ExpressionNode(expr) => {
+          activeExpression = Some(expr)
 
-  //     // Now make a gallery and show it in the preview pane
-  //     val gallery = new ShapeGallery(ShapeFramework(activeExpressionIndex))
-  //     editor.setPreviewGallery(gallery)
-  //   } else {
-  //     activeExpression = None
-  //     activeExpressionIndex = Seq.empty
-  //   }
-
-  //   for {
-  //     wksp <- editor.activeWorkspace
-  //   } {
-  //     if (wksp.isInstanceOf[JavaFXSubstitutionWorkspace]) {
-  //       wksp.asInstanceOf[JavaFXSubstitutionWorkspace].
-  //         substContextView.getSelectionModel.clearSelection
-  //     }
-  //   }
-  // }
+          // Now make a gallery and show it in the preview pane
+          val gallery = new FrameworkGallery(expr map (Some(_)))
+          editor.setPreviewGallery(gallery)
+        }
+        case _ => activeExpression = None
+      }
+    } else {
+      activeExpression = None
+    }
+  }
 
   class EnvironmentTreeCell extends jfxsc.TreeCell[EnvironmentNode] {
 
@@ -131,7 +124,7 @@ class JavaFXWorkspace(
 
       if (! empty) {
         node match {
-          case GroupNode(name, _) => {
+          case GroupNode(name) => {
             setCellStyleType("orch-list-null")
             setText(name)
           }

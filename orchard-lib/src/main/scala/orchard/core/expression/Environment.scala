@@ -23,9 +23,10 @@ sealed trait EnvironmentNode {
 
 }
 
-case class GroupNode(val name : String, val children : Buffer[EnvironmentNode]) extends EnvironmentNode {
+case class GroupNode(val name : String) extends EnvironmentNode {
 
   def flatten : Seq[NCell[Expression]] = children flatMap (_.flatten)
+  val children : Buffer[EnvironmentNode] = Buffer.empty
 
 }
 

@@ -30,12 +30,22 @@ trait Workspace extends CheckableEnvironment {
   def activeSheet : Option[Worksheet]
   def activeExpression : Option[NCell[Expression]]
 
-  def environment : GroupNode = GroupNode("root", Buffer.empty[EnvironmentNode])
+  val environment : GroupNode = GroupNode("root")
 
   def addToEnvironment(expr : NCell[Expression]) : EnvironmentNode = {
     val node = ExpressionNode(expr)
     environment.children += node
     node
+  }
+
+  def dumpEnvironment : Unit = {
+    val seq = environment.flatten
+
+    println("Environment (length = " ++ seq.length.toString ++ "): ")
+
+    seq foreach (expr => {
+      println(expr.value.toString)
+    })
   }
 
   def processIdentifier(ident : Identifier) : Option[Identifier] = {
@@ -44,7 +54,14 @@ trait Workspace extends CheckableEnvironment {
         ident.tokens flatMap {
           case LiteralToken(lit) => Some(LiteralToken(lit))
           case ReferenceToken(ref) => {
-            environment.lookup(ref) map (expr => ExpressionToken(expr.value))
+            val opt = environment.lookup(ref) map (expr => ExpressionToken(expr.value))
+
+            opt match {
+              case None => println("Failed to find expression with id: " ++ ref)
+              case Some(_) => ()
+            }
+
+            opt
           }
           case ExpressionToken(expr) => None
         }
@@ -186,7 +203,14 @@ trait Workspace extends CheckableEnvironment {
               case (cell, expr) => {
                 if (! cell.isEmpty) {
                   cell.item match {
-                    case Neutral(e) => itFits &&= (e == expr)
+                    case Neutral(Some(e)) => itFits &&= {
+                      if (e == expr) true else {
+                        println("Match error:")
+                        println("e : " ++ e.toString)
+                        println("expr : " ++ expr.toString)
+                        false
+                      } 
+                    }
                     case _ => itFits = false
                   }
                 }

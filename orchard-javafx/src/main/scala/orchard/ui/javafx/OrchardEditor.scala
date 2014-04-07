@@ -368,8 +368,8 @@ object OrchardEditor extends PopupManager(new VBox)
   }
 
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) = {
-    // previewPane.content += gallery
-    // gallery.refreshAll
+    previewPane.content += gallery
+    gallery.refreshAll
   }
 
   // def clearDefinitions = {

@@ -33,7 +33,7 @@ case class Filler(val ident : Identifier, bdryIdent : Identifier, bdryIsThin : B
     def ident = bdryIdent
     def interior = thisFiller
     def isThin = bdryIsThin
-    def styleString = if (isThin) "filler-tgt-thin" else "filler-tgt"
+    def styleString = if (isThin) "filler-face-thin" else "filler-face"
 
   }
 
