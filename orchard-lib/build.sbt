@@ -4,5 +4,5 @@ scalaVersion := "2.10.2"
 
 scalacOptions += "-feature"
 
-excludeFilter in unmanagedSources ~= { _ || "AbstractExpressionWorksheet.scala" || "AbstractFramework.scala" || "ExpressionGallery.scala" || "ExpressionPanel.scala" || "ExpressionWorksheet.scala" || "SimpleFramework.scala" }
+excludeFilter in unmanagedSources ~= { _ || "svg*" }
 
