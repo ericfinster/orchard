@@ -59,8 +59,24 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val fileChooser = new FileChooser
 
-  val workspaceListView = new ListView[JavaFXWorkspace]
+  val workspaceListView = 
+    new ListView[JavaFXWorkspace] {
+      cellFactory = (_ => new WorkspaceListCell)
+    }
 
+  class WorkspaceListCell extends jfxsc.ListCell[JavaFXWorkspace] {
+
+    getStyleClass add "orch-list-cell"
+
+    override def updateItem(wksp : JavaFXWorkspace, empty : Boolean) = {
+      super.updateItem(wksp, empty)
+
+      if (! empty) {
+        setText(wksp.name)
+      }
+    }
+  }
+  
   workspaceListView.selectionModel().selectedItem onChange {
     val item = workspaceListView.selectionModel().getSelectedItem
     
@@ -153,23 +169,23 @@ object OrchardEditor extends PopupManager(new VBox)
   AnchorPane.setBottomAnchor(definitionsPane, 10)
   AnchorPane.setLeftAnchor(definitionsPane, 10)
 
-  val noContextLabel = new Label("Empty Context")
+  val noEnvLabel = new Label("Empty Environment")
 
-  val contextPane = new TitledPane {
-    text = "Context"
-    content = noContextLabel
+  val environmentPane = new TitledPane {
+    text = "Environment"
+    content = noEnvLabel
     collapsible = false
   }
 
-  val contextAnchor = new AnchorPane {
-    content = contextPane
+  val environmentAnchor = new AnchorPane {
+    content = environmentPane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(contextPane, 10)
-  AnchorPane.setRightAnchor(contextPane, 10)
-  AnchorPane.setBottomAnchor(contextPane, 10)
-  AnchorPane.setLeftAnchor(contextPane, 10)
+  AnchorPane.setTopAnchor(environmentPane, 10)
+  AnchorPane.setRightAnchor(environmentPane, 10)
+  AnchorPane.setBottomAnchor(environmentPane, 10)
+  AnchorPane.setLeftAnchor(environmentPane, 10)
 
   val sheetPane = new StackPane {
     padding = Insets(10,10,10,10)
@@ -194,7 +210,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    items.addAll(leftVerticalSplit, middleVerticalSplit, contextAnchor)
+    items.addAll(leftVerticalSplit, middleVerticalSplit, environmentAnchor)
   }
 
   horizontalSplit.setDividerPositions(0.1f, 0.8f)
@@ -337,24 +353,19 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def selectWorkspace(wksp : JavaFXWorkspace) = {
     sheetPane.content = wksp.sheetTabPane
-  //   contextPane.content = wksp.contextView
+    environmentPane.content = wksp.environmentView
     activeWorkspace = Some(wksp)
   }
 
-  // def closeActiveWorkspace =
-  //   for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
+  def closeActiveWorkspace =
+    for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
 
-  // def closeWorkspace(wksp : JavaFXWorkspace) = {
-  //   val parent = wksp.treeItem.parent()
-
-  //   if (parent != null) {
-  //     parent.children.remove(wksp.treeItem)
-  //   }
-
-  //   contextPane.content = noContextLabel
-  //   sheetPane.content.clear
-  //   activeWorkspace = None
-  // }
+  def closeWorkspace(wksp : JavaFXWorkspace) = {
+    workspaceListView.items() -= wksp
+    environmentPane.content = noEnvLabel
+    sheetPane.content.clear
+    activeWorkspace = None
+  }
 
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) = {
     // previewPane.content += gallery

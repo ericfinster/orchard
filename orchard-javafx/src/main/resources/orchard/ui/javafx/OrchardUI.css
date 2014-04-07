@@ -175,15 +175,16 @@
     -fx-border-radius: 4 4 0 0;
 }
 
-
 .list-view {
-    -fx-background-color: transparent;
+    -fx-background-color: -fx-box-border;
     -fx-background-insets: 0;
+    -fx-padding: 1;
 }
 
 .list-view:focused {
-    -fx-background-color: transparent;
+    -fx-background-color: -fx-box-border;
     -fx-background-insets: 0;
+    -fx-padding: 1;
 }
 
 .orch-list-cell { -fx-background-color: empty-base; }

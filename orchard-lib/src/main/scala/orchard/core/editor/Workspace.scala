@@ -32,8 +32,10 @@ trait Workspace extends CheckableEnvironment {
 
   def environment : GroupNode = GroupNode("root", Buffer.empty[EnvironmentNode])
 
-  def addToEnvironment(expr : NCell[Expression]) = {
-    environment.children += ExpressionNode(expr)
+  def addToEnvironment(expr : NCell[Expression]) : EnvironmentNode = {
+    val node = ExpressionNode(expr)
+    environment.children += node
+    node
   }
 
   def processIdentifier(ident : Identifier) : Option[Identifier] = {
