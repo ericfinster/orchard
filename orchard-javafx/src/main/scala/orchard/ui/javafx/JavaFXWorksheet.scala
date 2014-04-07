@@ -70,7 +70,7 @@ trait JavaFXWorksheetEnv { thisEnv : JavaFXWorkspace =>
 
       override def onEventEmitted(ev : CellEvent) = {
         ev match {
-          case complex.ChangeEvents.ItemChangedEvent(oldItem) => { println("Item change.") ; renderCell ;  super.onEventEmitted(ev) }
+          case complex.ChangeEvents.ItemChangedEvent(oldItem) => { renderCell ;  super.onEventEmitted(ev) }
           case CellEntered(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
           case CellExited(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
           case _ => super.onEventEmitted(ev)

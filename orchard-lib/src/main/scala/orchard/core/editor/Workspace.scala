@@ -220,9 +220,18 @@ trait Workspace extends CheckableEnvironment {
     def newCell(item : Polarity[Option[Expression]]) = new WorksheetCell(item)
     def extract(cell : CellType) = new Worksheet(cell.skeleton map (_.item))
 
-    class WorksheetCell(var item : Polarity[Option[Expression]])
+    class WorksheetCell(itm : Polarity[Option[Expression]])
         extends AbstractWorksheetCell
         with CheckableCell {
+
+      protected var myItem = itm
+
+      def item = myItem
+      def item_=(newItm : Polarity[Option[Expression]]) = {
+        val oldItem = item
+        myItem = newItm
+        emit(ChangeEvents.ItemChangedEvent(oldItem))
+      }
 
       def expression : Option[Expression] = 
         item match {
