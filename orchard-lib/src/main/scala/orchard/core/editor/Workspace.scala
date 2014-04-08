@@ -43,7 +43,7 @@ trait Workspace extends CheckableEnvironment {
   }
 
   def dumpEnvironment : Unit = {
-    val seq = environment.flatten
+    val seq = environment.toSeq
 
     println("Environment (length = " ++ seq.length.toString ++ "): ")
 
@@ -52,12 +52,12 @@ trait Workspace extends CheckableEnvironment {
     })
   }
 
-  def processIdentifier(ident : Identifier) : Option[Identifier] = {
+  def processIdentifier(ident : RawIdentifier) : Option[Identifier] = {
     if (ident.tokens.length > 0) {
       val newTokens = 
         ident.tokens flatMap {
-          case LiteralToken(lit) => Some(LiteralToken(lit))
-          case ReferenceToken(ref) => {
+          case RawLiteral(lit) => Some(LiteralToken(lit))
+          case RawReference(ref) => {
             val opt = environment.lookup(ref) map (expr => ExpressionToken(expr.value))
 
             opt match {
@@ -67,7 +67,6 @@ trait Workspace extends CheckableEnvironment {
 
             opt
           }
-          case ExpressionToken(expr) => None
         }
 
       if (newTokens.length != ident.tokens.length) {
@@ -102,7 +101,7 @@ trait Workspace extends CheckableEnvironment {
               case Success(ident, _) => {
 
                 val finalIdent = processIdentifier(ident).get
-                val varExpr = Variable(ident, isThin)
+                val varExpr = Variable(finalIdent, isThin)
 
                 sheet.deselectAll
                 selectedCell.item = Neutral(Some(varExpr))
@@ -171,7 +170,7 @@ trait Workspace extends CheckableEnvironment {
                         selectedCell.emptySources.head
 
                     selectedCell.item = Neutral(Some(filler))
-                    boundaryCell.item = Neutral(Some(filler.Boundary))
+                    boundaryCell.item = Neutral(Some(filler.MyBoundary))
 
                     addToEnvironment(boundaryCell.framework.toCell map (_.get))
                     addToEnvironment(selectedCell.framework.toCell map (_.get))
@@ -239,17 +238,22 @@ trait Workspace extends CheckableEnvironment {
       }
     }
 
+  def substitute(varExpr : Expression, expr : Expression) = {
+    println("Starting substitution: " ++ expr.toString " => " ++ varExpr.toString)
+
+  }
+
   def templateSnapshot : Template = {
-    new Template(environment.clone.asInstanceOf[GroupNode])
+    new Template(EnvironmentNode.clone(environment).asInstanceOf[GroupNode])
   }
 
   def importTemplate(template : Template) = 
     importTemplateWithShell(template, Object(None))
 
   def importTemplateWithShell(template : Template, shell : NCell[Option[Expression]]) = {
-    val newGroup = template.root map (expr => {
-      val shellFramework = new ExpressionFramework(shell)
-      shellFramework.stablyAppend(new ExpressionFramework(expr map (Some(_))))
+    val newGroup = EnvironmentNode.clone(template.root) map (expr => {
+      val shellFramework = new WorkspaceFramework(shell)
+      shellFramework.stablyAppend(new WorkspaceFramework(expr map (Some(_))))
       shellFramework.toCell map (_.get)
     })
 
@@ -298,23 +302,23 @@ trait Workspace extends CheckableEnvironment {
           case _ => throw new IllegalArgumentException("Tried to get expression from polarized cell.")
         }
 
-      def framework : ExpressionFramework = 
-        new ExpressionFramework(skeleton map (_.expression))
+      def framework : WorkspaceFramework = 
+        new WorkspaceFramework(skeleton map (_.expression))
     }
   }
 
-  class ExpressionFramework(seed : NCell[Option[Expression]])
+  class WorkspaceFramework(seed : NCell[Option[Expression]])
       extends AbstractMutableComplex[Option[Expression]](seed)
       with Framework[Option[Expression]]
       with CheckableFramework[Option[Expression]] {
 
-    type CellType = ExpressionFrameworkCell
+    type CellType = WorkspaceFrameworkCell
 
-    def newCell(item : Option[Expression]) = new ExpressionFrameworkCell(item)
-    def extract(cell : CellType) = new ExpressionFramework(cell.skeleton map (_.item))
+    def newCell(item : Option[Expression]) = new WorkspaceFrameworkCell(item)
+    def extract(cell : CellType) = new WorkspaceFramework(cell.skeleton map (_.item))
     def emptyItem : Option[Expression] = None
 
-    class ExpressionFrameworkCell(var item : Option[Expression])
+    class WorkspaceFrameworkCell(var item : Option[Expression])
         extends AbstractMutableCell
         with FrameworkCell
         with CheckableCell {
@@ -322,5 +326,4 @@ trait Workspace extends CheckableEnvironment {
       def expression : Option[Expression] = item
     }
   }
-
 }

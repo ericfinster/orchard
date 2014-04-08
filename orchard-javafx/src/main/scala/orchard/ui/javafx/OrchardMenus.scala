@@ -45,9 +45,14 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onNewSheet
   }
 
+  val substVarItem = new MenuItem {
+    text = "Substitute for Variable"
+    onAction = onSubstitute
+  }
+
   val workspaceMenu = new Menu {
     text = "Workspace"
-    items ++= List(newWkspItem, newSheetItem)
+    items ++= List(newWkspItem, newSheetItem, substVarItem)
   }
 
   val newTemplateItem = new MenuItem {
@@ -110,6 +115,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   def onNewWorkspace : Unit
   def onNewSheet : Unit
+  def onSubstitute : Unit
 
   def onNewTemplate : Unit
   def onApplyTemplate : Unit

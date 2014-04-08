@@ -13,6 +13,11 @@ sealed trait Expression {
   def isThin : Boolean
   def styleString : String
 
+  // Use very strict comparison
+  override def equals(other : Any) : Boolean = 
+    super.equals(other)
+
+  override def hashCode = super.hashCode
   override def toString = ident.toString
 
 }
@@ -28,13 +33,25 @@ case class Filler(val ident : Identifier, bdryIdent : Identifier, bdryIsThin : B
   def isThin : Boolean = true
   def styleString = "filler"
 
-  object Boundary extends Expression {
+  trait Boundary extends Expression {
 
     def ident = bdryIdent
     def interior = thisFiller
     def isThin = bdryIsThin
-    def styleString = if (isThin) "filler-face-thin" else "filler-face"
+    def styleString = if (isThin) "bdry-thin" else "bdry"
 
   }
 
+  case object MyBoundary extends Boundary
+
 }
+
+// object Boundary {
+
+//   def unapply(expr : Expression) : Option[Filler] = {
+//     if (expr.isInstanceOf[Filler.Boundary.type]) {
+//       // Some(expr.asInstanceOf[Filler.Boundary].interior)
+//       None
+//     } else None
+//   }
+// }

@@ -254,6 +254,7 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.O => if (ev.isControlDown) onOpen
           case KeyCode.S => if (ev.isControlDown) onSave
   //         // case KeyCode.V => if (ev.isControlDown) onView
+          case KeyCode.B => if (ev.isControlDown) onSubstitute
           case KeyCode.N => if (ev.isControlDown) onNewWorkspace
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
@@ -276,6 +277,19 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def onNewWorkspace = NewWorkspaceDialog.run
   def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
+
+  def onSubstitute =
+    for {
+      wksp <- activeWorkspace
+      varExpr <- wksp.activeExpression
+    } {
+      if (varExpr.value.isInstanceOf[Variable]) {
+        val substDialog = new SubstitutionDialog(varExpr, wksp.buildEnvironmentView)
+        substDialog.run
+      } else {
+        println("Selected expression is not a variable.")
+      }
+    }
 
   def onNewTemplate = 
     for {
@@ -406,12 +420,14 @@ object OrchardEditor extends PopupManager(new VBox)
   }
 
   def setPreview(expr : NCell[Expression]) = {
-    // Here we have the problem that the gallery is tied to the workspace, which
-    // it seems like is a bit of a bad idea ....
-    ()
+    val gallery = new FrameworkGallery(expr map (Some(_)))
+    previewPane.content.clear
+    previewPane.content += gallery
+    gallery.refreshAll
   }
 
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) = {
+    previewPane.content.clear
     previewPane.content += gallery
     gallery.refreshAll
   }

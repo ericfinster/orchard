@@ -28,7 +28,7 @@ class JavaFXWorkspace(
   val stabilityLevel : Option[Int],
   val invertibilityLevel : Option[Int],
   val unicityLevel : Option[Int]
-) extends Workspace with JavaFXWorksheetEnv with JavaFXFrameworkEnv {
+) extends Workspace with JavaFXWorksheetEnv {
 
   var activeExpression : Option[NCell[Expression]] = None
   var activeGallery : Option[WorksheetGallery] = None 
@@ -71,13 +71,8 @@ class JavaFXWorkspace(
 
   }
 
-  val environmentRoot = new TreeItem[EnvironmentNode]
-  val environmentView =
-    new TreeView[EnvironmentNode] {
-      root = environmentRoot
-      showRoot = false
-      cellFactory = (_ => new EnvironmentTreeCell)
-    }
+  val environmentView = buildEnvironmentView
+  val environmentRoot = environmentView.root()
 
   override def addToEnvironment(expr : NCell[Expression]) = {
     val node = super.addToEnvironment(expr)
@@ -108,6 +103,15 @@ class JavaFXWorkspace(
       }
     }
 
+  def buildEnvironmentView : TreeView[EnvironmentNode] = {
+    val rootItem = buildEnvironmentTreeItems(environment)
+
+    new TreeView[EnvironmentNode] {
+      root = rootItem
+      showRoot = false
+      cellFactory = (_ => new EnvironmentTreeCell)
+    }
+  }
 
   override def addToEnvironment(node : EnvironmentNode) = {
     super.addToEnvironment(node)

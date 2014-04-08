@@ -18,6 +18,9 @@ import orchard.ui.javafx.controls.Dialog
 import orchard.ui.javafx.controls.PopupManager
 import orchard.ui.javafx.controls.CancellableDialog
 
+import orchard.core.cell._
+import orchard.core.expression._
+
 trait OrchardDialogs { self : JavaFXEditor =>
 
   //============================================================================================
@@ -114,6 +117,76 @@ trait OrchardDialogs { self : JavaFXEditor =>
     def onHide =
       response match {
         case DialogOK => handler(fillerField.text())
+        case DialogCancel => ()
+      }
+
+  }
+
+  class SubstitutionDialog(varExpr : NCell[Expression], envView : TreeView[EnvironmentNode]) extends CancellableDialog {
+
+    heading.text = "Substitution"
+
+    val varGallery = new FrameworkGallery(varExpr map (Some(_)))
+
+    val varPane = new StackPane {
+      content = varGallery
+      prefWidth = 500
+      prefHeight = 200
+    }
+
+    val envPane = new StackPane {
+      maxWidth = 500
+      maxHeight = 200
+      content = envView
+      padding = Insets(10,10,10,10)
+    }
+
+    val selectionPane = new StackPane {
+      prefWidth = 500
+      prefHeight = 200
+    }
+
+    borderPane.center =
+      new VBox {
+        content = List(varPane, envPane, selectionPane)
+      }
+
+    envView.getSelectionModel.selectedItem onChange {
+      val item = envView.getSelectionModel.selectedItem()
+
+      if (item != null) {
+        item.value() match {
+          case ExpressionNode(expr) => {
+            val gallery = new FrameworkGallery(expr map (Some(_)))
+            selectionPane.content.clear
+            selectionPane.content += gallery
+            gallery.refreshAll
+          }
+          case _ => ()
+        }
+      }
+    }
+
+    def onShow = {
+      varGallery.refreshAll
+    }
+
+    def onHide =
+      response match {
+        case DialogOK => {
+          for { wksp <- activeWorkspace } { 
+            val item = envView.getSelectionModel.selectedItem()
+
+            if (item != null) {
+              item.value() match {
+                case ExpressionNode(expr) => wksp.substitute(varExpr.value, expr.value)
+                case _ => println("Cannot substitute this ...")
+              }
+            } else {
+              println("Nothing selected.")
+            }
+          }
+        }
         case DialogCancel => ()
       }
 
