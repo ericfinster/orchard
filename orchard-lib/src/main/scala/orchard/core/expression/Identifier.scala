@@ -21,7 +21,7 @@ case class Identifier(val tokens : List[IdentToken]) {
 
 sealed trait IdentToken { def value : String }
 case class LiteralToken(val lit : String) extends IdentToken { def value = lit }
-case class ExpressionToken(val expr : Expression) extends IdentToken { def value = expr.ident.toString }
+case class ExpressionToken(var expr : Expression) extends IdentToken { def value = expr.ident.toString }
 
 case class RawIdentifier(val tokens : List[RawIdentToken]) {
   override def toString = (tokens map (_.value)).mkString

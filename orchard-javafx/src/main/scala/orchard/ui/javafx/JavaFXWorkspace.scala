@@ -72,7 +72,7 @@ class JavaFXWorkspace(
   }
 
   val environmentView = buildEnvironmentView
-  val environmentRoot = environmentView.root()
+  def environmentRoot = environmentView.root()
 
   override def addToEnvironment(expr : NCell[Expression]) = {
     val node = super.addToEnvironment(expr)
@@ -141,6 +141,11 @@ class JavaFXWorkspace(
     } else {
       activeExpression = None
     }
+  }
+
+  override def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
+    super.substitute(varExpr, expr)
+    environmentView.root = buildEnvironmentTreeItems(environment)
   }
 
   class EnvironmentTreeCell extends jfxsc.TreeCell[EnvironmentNode] {

@@ -8,6 +8,7 @@
 package orchard.core.editor
 
 import scala.collection.mutable.Buffer
+import scala.collection.mutable.HashMap
 
 import orchard.core.cell._
 import orchard.core.complex._
@@ -197,7 +198,7 @@ trait Workspace extends CheckableEnvironment {
       if (sheet.selectionIsUnique) {
 
         selectedCell.skeleton.zip(selectedExpr) match {
-          case None => println("Not compatible. Zip failed.")
+          case None => println("Selected cell has incompativle shape.")
           case Some(zippedTree) => {
 
             var itFits = true
@@ -238,9 +239,102 @@ trait Workspace extends CheckableEnvironment {
       }
     }
 
-  def substitute(varExpr : Expression, expr : Expression) = {
-    println("Starting substitution: " ++ expr.toString " => " ++ varExpr.toString)
+  def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
+    println("Starting substitution: " ++ expr.value.toString ++ " => " ++ varExpr.value.toString)
 
+    varExpr.zip(expr) match {
+      case None => println("Selected cell has incompatible shape.")
+      case Some(zippedTree) => {
+        println("Shape is compatible.")
+
+        val bindings = HashMap.empty[Expression, Expression]
+
+        var statusOk : Boolean = true
+
+        zippedTree map {
+          case (tgtExpr, srcExpr) => {
+            if (tgtExpr == srcExpr) {
+              println("Cell match for: " ++ tgtExpr.toString)
+            } else {
+              tgtExpr match {
+                case Variable(ident, isThin) => {
+                  println("Attempting subordinate bind: " ++ srcExpr.toString ++ " => " ++ ident.toString)
+                  bindings(tgtExpr) = srcExpr
+
+                  if (isThin && ! srcExpr.isThin) {
+                    println("Cannot bind " ++ srcExpr.toString ++ " to thin variable " ++ ident.toString)
+                    statusOk = false
+                  }
+                }
+                case _ => {
+                  println("Cell " ++ tgtExpr.toString ++ " is rigid and cannot be substituted for.")
+                  statusOk = false
+                }
+              }
+            }
+          }
+        }
+
+        if (statusOk) {
+          println("Look's like we're a go ...")
+
+          // We need to get these guys out of the context now.  And this is a little bit tricky with
+          // the current setup.
+
+          // Well, so what do we have?  
+
+          // 1) Occurrences in sheets
+
+          sheets foreach (sheet => {
+            sheet.forAllCells(cell => {
+              cell.item match {
+                case Neutral(Some(e)) => {
+                  if (bindings.isDefinedAt(e)) {
+                    val newExpr = bindings(e)
+                    println("Replacing cell " ++ e.toString ++ " with " ++ newExpr.toString ++ " in sheet.")
+                    cell.item = Neutral(Some(newExpr))
+                  }
+                }
+                case _ => ()
+              }
+            })
+          })
+
+          // 2) Occurrences in ncells in the environment
+
+          val newEnv = 
+            environment map (ncell => {
+              ncell map (ex => {
+                if (bindings.isDefinedAt(ex)) {
+                  println("Replacing " ++ ex.toString ++ " in ncell " ++ ncell.value.toString)
+                  bindings(ex)
+                } else ex
+              })
+            })
+
+          environment.children.clear
+          environment.children ++= newEnv.asInstanceOf[GroupNode].children
+
+          // 3) Occurrences in identifiers
+
+          environment.toExprSeq foreach (ex => {
+            if (ex.ident.exprRefs exists (ref => bindings.isDefinedAt(ref))) {
+              println("Expression " ++ ex.toString ++ " references a bound variable.")
+
+              ex.ident.tokens foreach {
+                case et @ ExpressionToken(e) => if (bindings.isDefinedAt(e)) { et.expr = bindings(e) }
+                case _ => ()
+              }
+            }
+          })
+
+          // Then we also need to delete this guy from the current environment
+          // Also, cells need to be rechecked for universality ...
+          // And we're going to need to refresh all the galleries and the environment view
+
+        }
+      }
+    }
   }
 
   def templateSnapshot : Template = {

@@ -179,7 +179,7 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
             if (item != null) {
               item.value() match {
-                case ExpressionNode(expr) => wksp.substitute(varExpr.value, expr.value)
+                case ExpressionNode(expr) => wksp.substitute(varExpr, expr)
                 case _ => println("Cannot substitute this ...")
               }
             } else {
