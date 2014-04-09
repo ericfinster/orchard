@@ -31,7 +31,7 @@ trait CheckableEnvironment extends HasFillingParameters {
         if (isUnicityFillable) true else isExposedNook
 
       // For an exposed nook, determine if the filler face is thin
-      def isThinFillerFace : Boolean = {
+      def isThinBoundary : Boolean = {
         val thinByInvertibility =
           invertibilityLevel match {
             case None => false

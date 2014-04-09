@@ -7,8 +7,10 @@
 
 package orchard.core.editor
 
+import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 
 import orchard.core.cell._
 import orchard.core.complex._
@@ -33,6 +35,42 @@ trait Workspace extends CheckableEnvironment {
 
   val environment : GroupNode = GroupNode(name)
 
+  val dependencyMap : Map[Expression, List[Expression]] = 
+    new HashMap[Expression, List[Expression]]
+
+  def addDependency(dep : Expression, filler : Expression) = {
+    println("Adding dependency of " ++ filler.toString ++ " on " ++ dep.toString)
+
+    if (dependencyMap.isDefinedAt(dep))
+      dependencyMap(dep) = filler :: dependencyMap(dep)
+    else
+      dependencyMap(dep) = List(filler)
+  }
+
+  def addDependencies(node : EnvironmentNode) = {
+    val seq = node.toSeq
+
+    seq foreach (ncell => {
+      ncell.value match {
+        case filler @ Filler(_, _, _) => {
+          // Make a framework, grab the faces and set the dependencies
+          val framework = new WorkspaceFramework(ncell map (Some(_)))
+
+          framework(framework.dimension - 1) foreachCell (cell => {
+            cell.item match {
+              case Some(v @ Variable(_, isThin)) => 
+                if (! isThin) addDependency(v, filler)
+              case Some(bdry : Filler#Boundary) => 
+                if (bdry != filler.MyBoundary && ! bdry.isThin) addDependency(bdry, filler)
+              case _ => ()
+            }
+          })
+        }
+        case _ => ()
+      }
+    })
+  }
+
   def addToEnvironment(expr : NCell[Expression]) : EnvironmentNode = {
     val node = ExpressionNode(expr)
     environment.children += node
@@ -52,6 +90,38 @@ trait Workspace extends CheckableEnvironment {
       println(expr.value.toString)
     })
   }
+
+  def templateSnapshot : Template = {
+    new Template(EnvironmentNode.clone(environment).asInstanceOf[GroupNode])
+  }
+
+  def importTemplate(template : Template) = 
+    importTemplateWithShell(template, Object(None))
+
+  def importTemplateWithShell(template : Template, shell : NCell[Option[Expression]]) = {
+    val newGroup = EnvironmentNode.clone(template.root) map (expr => {
+      val shellFramework = new WorkspaceFramework(shell)
+      shellFramework.stablyAppend(new WorkspaceFramework(expr map (Some(_))))
+      shellFramework.toCell map (_.get)
+    })
+
+    addDependencies(newGroup)
+    addToEnvironment(newGroup)
+  }
+
+  def importTemplateAtSelection(template : Template) = 
+    for {
+      sheet <- activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+      if (sheet.selectionIsShell || selectedCell.isComplete) {
+        val shellFramework = selectedCell.framework
+        shellFramework.topCell.item = None
+        importTemplateWithShell(template, shellFramework.toCell)
+      } else {
+        println("Selection is not a shell.")
+      }
+    }
 
   def processIdentifier(ident : RawIdentifier) : Option[Identifier] = {
     if (ident.tokens.length > 0) {
@@ -162,13 +232,21 @@ trait Workspace extends CheckableEnvironment {
                     val bdryFinalIdent = processIdentifier(bdryIdent).get
                     val fillerFinalIdent = processIdentifier(fillerIdent).get
 
-                    val filler = Filler(fillerFinalIdent, bdryFinalIdent, selectedCell.isThinFillerFace)
+                    val filler = Filler(fillerFinalIdent, bdryFinalIdent, selectedCell.isThinBoundary)
 
                     val boundaryCell =
                       if (selectedCell.isOutNook)
                         selectedCell.target.get
                       else
                         selectedCell.emptySources.head
+
+                    selectedCell.fullFaces foreach (face => {
+                      face.item match {
+                        case Neutral(Some(v @ Variable(ident, isThin))) => if (! isThin) addDependency(v, filler)
+                        case Neutral(Some(bdry : Filler#Boundary)) => if (! bdry.isThin) addDependency(bdry, filler)
+                        case _ => ()
+                      }
+                    })
 
                     selectedCell.item = Neutral(Some(filler))
                     boundaryCell.item = Neutral(Some(filler.MyBoundary))
@@ -248,6 +326,7 @@ trait Workspace extends CheckableEnvironment {
         println("Shape is compatible.")
 
         val bindings = HashMap.empty[Expression, Expression]
+        val thinDeps = HashSet.empty[Expression]
 
         var statusOk : Boolean = true
 
@@ -259,11 +338,24 @@ trait Workspace extends CheckableEnvironment {
               tgtExpr match {
                 case Variable(ident, isThin) => {
                   println("Attempting subordinate bind: " ++ srcExpr.toString ++ " => " ++ ident.toString)
+
+                  if (bindings.isDefinedAt(tgtExpr)) {
+                    if (bindings(tgtExpr) != srcExpr) {
+                      println("Variable " ++ ident.toString ++ " is already bound to " ++ bindings(tgtExpr).toString)
+                      statusOk = false
+                    }
+                  }
+
                   bindings(tgtExpr) = srcExpr
 
                   if (isThin && ! srcExpr.isThin) {
                     println("Cannot bind " ++ srcExpr.toString ++ " to thin variable " ++ ident.toString)
                     statusOk = false
+                  }
+
+                  if (! isThin && srcExpr.isThin) {
+                    println("Variable " ++ ident.toString ++ " substituted with thin expression " ++ srcExpr.toString)
+                    thinDeps += tgtExpr
                   }
                 }
                 case _ => {
@@ -278,10 +370,10 @@ trait Workspace extends CheckableEnvironment {
         if (statusOk) {
           println("Look's like we're a go ...")
 
-          // We need to get these guys out of the context now.  And this is a little bit tricky with
-          // the current setup.
-
-          // Well, so what do we have?  
+          bindings.keySet.foreach (key => {
+            println("Deleting " ++ key.toString ++ "@" ++ key.hashCode.toString)
+            environment.locateNode(key).get.delete
+          })
 
           // 1) Occurrences in sheets
 
@@ -328,45 +420,47 @@ trait Workspace extends CheckableEnvironment {
             }
           })
 
-          // Then we also need to delete this guy from the current environment
-          // Also, cells need to be rechecked for universality ...
-          // And we're going to need to refresh all the galleries and the environment view
+          // 4) Recheck necessary cells for universality
 
+          while (thinDeps.size > 0) {
+            val newDeps = new HashSet[Expression]
+
+            thinDeps foreach (dep => {
+              println("Rechecking universality dependents for " ++ dep.toString)
+
+              if (dependencyMap.isDefinedAt(dep)) {
+                dependencyMap(dep) foreach (d => {
+                  val ncell = environment.locateNode(d).get.expr
+                  val filler = ncell.value.asInstanceOf[Filler]
+                  val framework = new WorkspaceFramework(ncell map (Some(_)))
+
+                  // Clear the framework to nook state
+                  framework.topCell.item = None
+                  framework(framework.dimension - 1) foreachCell (cell => {
+                    if (cell.item == Some(filler.MyBoundary)) cell.item = None
+                  })
+
+                  if (! framework.topCell.isExposedNook)
+                    throw new IllegalStateException("Found an ill-defined filler.")
+
+                  if (framework.topCell.isThinBoundary && ! filler.MyBoundary.isThin) {
+                    println("Boundary " ++ filler.MyBoundary.toString ++ " has become thin.")
+
+                    filler.bdryIsThin = true
+                    newDeps += filler.MyBoundary
+                  }
+                })
+              }
+
+              thinDeps -= dep
+            })
+
+            thinDeps ++= newDeps
+          }
         }
       }
     }
   }
-
-  def templateSnapshot : Template = {
-    new Template(EnvironmentNode.clone(environment).asInstanceOf[GroupNode])
-  }
-
-  def importTemplate(template : Template) = 
-    importTemplateWithShell(template, Object(None))
-
-  def importTemplateWithShell(template : Template, shell : NCell[Option[Expression]]) = {
-    val newGroup = EnvironmentNode.clone(template.root) map (expr => {
-      val shellFramework = new WorkspaceFramework(shell)
-      shellFramework.stablyAppend(new WorkspaceFramework(expr map (Some(_))))
-      shellFramework.toCell map (_.get)
-    })
-
-    addToEnvironment(newGroup)
-  }
-
-  def importTemplateAtSelection(template : Template) = 
-    for {
-      sheet <- activeSheet
-      selectedCell <- sheet.selectionBase
-    } {
-      if (sheet.selectionIsShell || selectedCell.isComplete) {
-        val shellFramework = selectedCell.framework
-        shellFramework.topCell.item = None
-        importTemplateWithShell(template, shellFramework.toCell)
-      } else {
-        println("Selection is not a shell.")
-      }
-    }
 
   class Worksheet(seed : NCell[Polarity[Option[Expression]]])
       extends AbstractWorksheet(seed)

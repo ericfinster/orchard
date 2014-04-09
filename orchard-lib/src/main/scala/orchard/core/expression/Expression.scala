@@ -28,7 +28,7 @@ case class Variable(val ident : Identifier, val isThin : Boolean) extends Expres
 
 }
 
-case class Filler(val ident : Identifier, bdryIdent : Identifier, bdryIsThin : Boolean) extends Expression { thisFiller =>
+case class Filler(val ident : Identifier, bdryIdent : Identifier, var bdryIsThin : Boolean) extends Expression { thisFiller =>
 
   def isThin : Boolean = true
   def styleString = "filler"
@@ -37,7 +37,7 @@ case class Filler(val ident : Identifier, bdryIdent : Identifier, bdryIsThin : B
 
     def ident = bdryIdent
     def interior = thisFiller
-    def isThin = bdryIsThin
+    def isThin = bdryIsThin  // This can be changed by substitutions
     def styleString = if (isThin) "bdry-thin" else "bdry"
 
   }

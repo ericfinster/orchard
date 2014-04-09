@@ -74,17 +74,6 @@ class JavaFXWorkspace(
   val environmentView = buildEnvironmentView
   def environmentRoot = environmentView.root()
 
-  override def addToEnvironment(expr : NCell[Expression]) = {
-    val node = super.addToEnvironment(expr)
-
-    environmentRoot.children add
-      new TreeItem[EnvironmentNode] {
-        value = node
-      }.delegate
-
-    node
-  }
-
   def buildEnvironmentTreeItems(node : EnvironmentNode) : TreeItem[EnvironmentNode] = 
     node match {
       case g @ GroupNode(name) => {
@@ -113,12 +102,40 @@ class JavaFXWorkspace(
     }
   }
 
+
+  override def addToEnvironment(expr : NCell[Expression]) = {
+    val node = super.addToEnvironment(expr)
+
+    val treeItem = 
+      new TreeItem[EnvironmentNode] {
+        value = node
+      }
+
+    node.onDelete = { treeItem.parent().children -= treeItem }
+    node.onMap = (newNode => treeItem.value = newNode)
+    environmentRoot.children add treeItem
+
+    node
+  }
+
+  def foreachTreeItem[A](root : TreeItem[A], op : TreeItem[A] => Unit) : Unit = {
+    root.children foreach (child => foreachTreeItem(child, op))
+    op(root)
+  }
+
   override def addToEnvironment(node : EnvironmentNode) = {
     super.addToEnvironment(node)
 
     node match {
       case g @ GroupNode(name) => {
-        environmentRoot.children add buildEnvironmentTreeItems(g).delegate
+        val treeItem = buildEnvironmentTreeItems(g)
+
+        foreachTreeItem[EnvironmentNode](treeItem, (child => {
+          child.value().onDelete = { child.parent().children -= child }
+          child.value().onMap = (newNode => child.value = newNode )
+        }))
+
+        environmentRoot.children add treeItem
       }
       case e @ ExpressionNode(expr) => addToEnvironment(expr)
     }
@@ -143,10 +160,10 @@ class JavaFXWorkspace(
     }
   }
 
-  override def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
-    super.substitute(varExpr, expr)
-    environmentView.root = buildEnvironmentTreeItems(environment)
-  }
+  // override def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
+  //   super.substitute(varExpr, expr)
+  //   environmentView.root = buildEnvironmentTreeItems(environment)
+  // }
 
   class EnvironmentTreeCell extends jfxsc.TreeCell[EnvironmentNode] {
 

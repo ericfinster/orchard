@@ -7,7 +7,7 @@
 
 package orchard.core.expression
 
-
+import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
@@ -18,6 +18,11 @@ sealed trait EnvironmentNode {
 
   def toSeq : Seq[NCell[Expression]]
   def toExprSeq : Seq[Expression]
+  def toNodeSeq : Seq[ExpressionNode]
+
+  def locateNode(expr : Expression) : Option[ExpressionNode] = {
+    toNodeSeq find (nd => nd.expr.value == expr)
+  }
 
   def lookup(id : String) : Option[NCell[Expression]] = 
     toSeq find (expr => expr.value.toString == id)
@@ -29,32 +34,43 @@ sealed trait EnvironmentNode {
     this match {
       case g @ GroupNode(name) => {
         val node = GroupNode(name)
-        node.children ++= g.children map (n => n map f)
+        node.children ++= g.children map (n => { val nd = n map f ; nd.parent = Some(node) ; nd })
+        node.mapCallback = g.mapCallback
+        node.deleteCallback = g.deleteCallback
+        g.mapCallback(node)
         node
       }
-      case e @ ExpressionNode(expr) => ExpressionNode(f(expr))
+      case e @ ExpressionNode(expr) => {
+        val node = ExpressionNode(f(expr))
+        node.mapCallback = e.mapCallback
+        node.deleteCallback = e.deleteCallback
+        e.mapCallback(node)
+        node
+      }
     }
 
-  override def clone : EnvironmentNode = 
-    this match {
-      case g @ GroupNode(name) => {
-        println("Cloning group " ++ name ++ " with " ++ g.children.length.toString ++ " children.")
-        val node = GroupNode(name)
-        val chldrn = g.children map (_.clone)
-        node.children ++= chldrn
-        node
-      }
-      case ExpressionNode(expr) => {
-        println("Cloning node for: " ++ expr.value.toString)
-        ExpressionNode(expr)
-      }
-    }
+  var parent : Option[GroupNode] = None
+
+  private var deleteCallback : (() => Unit) = () => ()
+  private var mapCallback : (EnvironmentNode => Unit) = (_ => ())
+
+  def onDelete_=(op : =>Unit) = deleteCallback = (() => op)
+  def onDelete = deleteCallback
+
+  def onMap_=(op : EnvironmentNode => Unit) = mapCallback = op
+  def onMap = mapCallback
+
+  def delete = {
+    parent foreach (p => p.children -= this)
+    deleteCallback()
+  }
 }
 
 case class GroupNode(val name : String) extends EnvironmentNode {
 
   def toSeq : Seq[NCell[Expression]] = children flatMap (_.toSeq)
   def toExprSeq : Seq[Expression] = children flatMap (_.toExprSeq)
+  def toNodeSeq : Seq[ExpressionNode] = children flatMap(_.toNodeSeq)
 
   val children : Buffer[EnvironmentNode] = Buffer.empty
 
@@ -64,6 +80,7 @@ case class ExpressionNode(val expr : NCell[Expression]) extends EnvironmentNode 
 
   def toSeq : Seq[NCell[Expression]] = Seq(expr)
   def toExprSeq : Seq[Expression] = Seq(expr.value)
+  def toNodeSeq : Seq[ExpressionNode] = Seq(this)
 
 }
 
@@ -132,4 +149,6 @@ object EnvironmentNode {
     })
   }
 }
+
+
 
