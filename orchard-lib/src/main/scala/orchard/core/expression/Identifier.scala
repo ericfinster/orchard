@@ -23,6 +23,16 @@ sealed trait IdentToken { def value : String }
 case class LiteralToken(val lit : String) extends IdentToken { def value = lit }
 case class ExpressionToken(var expr : Expression) extends IdentToken { def value = expr.ident.toString }
 
+object Identifier {
+
+  def empty : Identifier = Identifier(List.empty)
+
+}
+
+// This is busted.  Now that we have a situation where names can repeat themselves,
+// referring just to the name may not be unique enough.  We're going to have to do
+// something else to have better name resolution ...
+
 case class RawIdentifier(val tokens : List[RawIdentToken]) {
   override def toString = (tokens map (_.value)).mkString
 }

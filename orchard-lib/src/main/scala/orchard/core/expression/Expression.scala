@@ -22,13 +22,13 @@ sealed trait Expression {
 
 }
 
-case class Variable(val ident : Identifier, val isThin : Boolean) extends Expression {
+case class Variable(var ident : Identifier, var isThin : Boolean) extends Expression {
 
   def styleString = if (isThin) "var-thin" else "var"
 
 }
 
-case class Filler(val ident : Identifier, bdryIdent : Identifier, var bdryIsThin : Boolean) extends Expression { thisFiller =>
+case class Filler(var ident : Identifier, var bdryIdent : Identifier, var bdryIsThin : Boolean) extends Expression { thisFiller =>
 
   def isThin : Boolean = true
   def styleString = "filler"
@@ -46,12 +46,6 @@ case class Filler(val ident : Identifier, bdryIdent : Identifier, var bdryIsThin
 
 }
 
-// object Boundary {
-
-//   def unapply(expr : Expression) : Option[Filler] = {
-//     if (expr.isInstanceOf[Filler.Boundary.type]) {
-//       // Some(expr.asInstanceOf[Filler.Boundary].interior)
-//       None
-//     } else None
-//   }
-// }
+sealed trait RawExpression
+case class RawVariable(val ident : RawIdentifier, val isThin : Boolean) extends RawExpression
+case class RawFiller(val ident : RawIdentifier, val bdryIdent : RawIdentifier, val bdyIsThin : Boolean) extends RawExpression

@@ -296,10 +296,7 @@ object OrchardEditor extends PopupManager(new VBox)
       wksp <- activeWorkspace
     } {
       println("Exporting workspace as template ...")
-      val template = wksp.templateSnapshot
-      val treeItem = buildTemplateTreeItems(template.root)
-      treeItem.value = TemplateItem(template)
-      templateTreeRoot.children += treeItem.delegate
+      addTemplate(wksp.templateSnapshot)
     }
 
   def onApplyTemplate = 
@@ -319,27 +316,25 @@ object OrchardEditor extends PopupManager(new VBox)
       wksp.importTemplateAtSelection(template)
     }
 
-  def onOpen = ???
-  // {
-  //   fileChooser.setTitle("Open")
+  def onOpen = {
+    fileChooser.setTitle("Open")
 
-  //   val file = fileChooser.showOpenDialog(getScene.getWindow)
+    val file = fileChooser.showOpenDialog(getScene.getWindow)
 
-  //   if (file != null) {
-  //     loadDefinitions(file)
-  //   }
-  // }
+    if (file != null) {
+      loadTemplates(file)
+    }
+  }
 
-  def onSave = ???
-  // {
-  //   fileChooser.setTitle("Save")
+  def onSave = {
+    fileChooser.setTitle("Save")
 
-  //   val file = fileChooser.showSaveDialog(getScene.getWindow)
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
 
-  //   if (file != null) {
-  //     saveDefinitions(file)
-  //   }
-  // }
+    if (file != null) {
+      saveTemplates(file)
+    }
+  }
 
   def onExit : Unit = javafx.application.Platform.exit
 
@@ -450,29 +445,40 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     }
   
-  // def saveDefinitions(file : java.io.File) = {
-  //   import XmlSerializable._
+  def templates : Seq[Template] = {
+    templateTreeRoot.children map (child =>
+      child.value() match {
+        case TemplateItem(template) => template
+        case _ => ???
+      }
+    )
+  }
 
-  //   val moduleXML = <module>{definitions map (defn => definitionSerializable.toXML(defn))}</module>
-  //   xml.XML.save(file.getAbsolutePath, moduleXML)
-  // }
+  def addTemplate(template : Template) = {
+    val treeItem = buildTemplateTreeItems(template.root)
+    treeItem.value = TemplateItem(template)
+    templateTreeRoot.children += treeItem.delegate
+  }
 
-  // def loadDefinitions(file : java.io.File) = {
-  //   import XmlSerializable._
+  def saveTemplates(file : java.io.File) = {
+    val moduleXML = <module>{templates map (template => Template.templateToXML(template))}</module>
+    xml.XML.save(file.getAbsolutePath, moduleXML)
+  }
 
-  //   clearDefinitions
+  def loadTemplates(file : java.io.File) = {
+    // clearTemplates
 
-  //   val elem = xml.XML.loadFile(file.getAbsolutePath)
+    val elem = xml.XML.loadFile(file.getAbsolutePath)
 
-  //   elem match {
-  //     case <module>{defns @ _*}</module> => {
-  //       trimText(defns) foreach (defXml => {
-  //         val defn = definitionSerializable.fromXML(defXml)
-  //         addLocalDefinition(defn)
-  //       })        
-  //     }
-  //   }
-  // }
+    elem match {
+      case <module>{templates @ _*}</module> => {
+        templates foreach (t => {
+          val template = Template.fromXML(t)
+          addTemplate(template)
+        })        
+      }
+    }
+  }
 }
 
 object Editor extends JFXApp {

@@ -49,21 +49,6 @@ object XmlSerializable {
         }
     }
 
-  // implicit val tokenSerializable : XmlSerializable[IdentToken] =
-  //   new XmlSerializable[IdentToken] {
-  //     def toXML(ident : IdentToken) =
-  //       ident match {
-  //         case LiteralToken(lit) => <literal>{xml.Text(lit)}</literal>
-  //         case ReferenceToken(id) => <reference>{xml.Text(id)}</reference>
-  //       }
-
-  //     def fromXML(node : xml.Node) : IdentToken = 
-  //       node match {
-  //         case <literal>{content}</literal> => LiteralToken(content.text)
-  //         case <reference>{content}</reference> => ReferenceToken(content.text)
-  //       }
-  //   }
-
   implicit def optionSerializable[A : XmlSerializable] : XmlSerializable[Option[A]] =
     new XmlSerializable[Option[A]] {
       val ev = implicitly[XmlSerializable[A]]
@@ -283,7 +268,7 @@ object XmlSerializable {
               cell match {
                 case <obj>{objContents @ _*}</obj> => {
                   val id = (cell \ "@id").text.toInt
-                  val item = ev.fromXML(trimText((objContents \\ "label")(0).descendant)(0))
+                  val item = ev.fromXML(((objContents \\ "label")(0).descendant)(0))
 
                   env(id) = Object(item)
                 }
@@ -291,7 +276,7 @@ object XmlSerializable {
 
                   val id = (cell \ "@id").text.toInt
                   val targetId = ((cellContents \\ "target")(0) \ "@ref").text.toInt
-                  val item = ev.fromXML(trimText((cellContents \\ "label")(0).descendant)(0))
+                  val item = ev.fromXML(((cellContents \\ "label")(0).descendant)(0))
 
                   def extractTree[D <: Nat](node : xml.Node) : CellTree[D, A] = {
                     node match {
