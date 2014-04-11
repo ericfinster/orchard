@@ -15,14 +15,19 @@ import orchard.ui.javafx.controls.PopupManager
 
 trait OrchardMenus { self : JavaFXEditor =>
 
-  val openItem = new MenuItem {
-    text = "Open"
-    onAction = onOpen
+  val newModuleItem = new MenuItem {
+    text = "New Module"
+    onAction = onNewModule
   }
 
-  val saveItem = new MenuItem {
-    text = "Save"
-    onAction = onSave
+  val openModuleItem = new MenuItem {
+    text = "Open Module"
+    onAction = onOpenModule
+  }
+
+  val saveModuleItem = new MenuItem {
+    text = "Save Module"
+    onAction = onSaveModule
   }
 
   val exitItem = new MenuItem {
@@ -32,47 +37,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   val fileMenu = new Menu {
     text = "File"
-    items ++= List(openItem, saveItem, exitItem)
-  }
-
-  val newWkspItem = new MenuItem {
-    text = "New Workspace"
-    onAction = onNewWorkspace
-  }
-
-  val newSheetItem = new MenuItem {
-    text = "New Sheet"
-    onAction = onNewSheet
-  }
-
-  val substVarItem = new MenuItem {
-    text = "Substitute for Variable"
-    onAction = onSubstitute
-  }
-
-  val workspaceMenu = new Menu {
-    text = "Workspace"
-    items ++= List(newWkspItem, newSheetItem, substVarItem)
-  }
-
-  val newTemplateItem = new MenuItem {
-    text = "Create From Workspace"
-    onAction = onNewTemplate
-  }
-
-  val applyItem = new MenuItem {
-    text = "Apply"
-    onAction = onApplyTemplate
-  }
-
-  val applyInShellItem = new MenuItem {
-    text = "Apply in Shell"
-    onAction = onApplyTemplateInShell
-  }
-
-  val templateMenu = new Menu {
-    text = "Template"
-    items ++= List(newTemplateItem, applyItem, applyInShellItem)
+    items ++= List(newModuleItem, openModuleItem, saveModuleItem, exitItem)
   }
 
   val extrudeItem = new MenuItem {
@@ -85,46 +50,100 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onDrop
   }
 
+  val shapeMenu = new Menu {
+    text = "Shape"
+    items ++= List(extrudeItem, dropItem)
+  }
+
+  val newWkspItem = new MenuItem {
+    text = "New Workspace"
+    onAction = onNewWorkspace
+  }
+
+  val closeWkspItem = new MenuItem {
+    text = "Close Workspace"
+    onAction = onCloseWorkspace
+  }
+
+  val newSheetItem = new MenuItem {
+    text = "New Sheet"
+    onAction = onNewSheet
+  }
+
+  val exportTemplateItem = new MenuItem {
+    text = "Export To Module"
+    onAction = onExportTemplate
+  }
+
+  val importItem = new MenuItem {
+    text = "Import Template"
+    onAction = onImportTemplate
+  }
+
+  val importInShellItem = new MenuItem {
+    text = "Import Template in Shell"
+    onAction = onImportTemplateInShell
+  }
+
+  val workspaceMenu = new Menu {
+    text = "Workspace"
+    items ++= List(newWkspItem, closeWkspItem, newSheetItem, exportTemplateItem, importItem, importInShellItem)
+  }
+
   val assumeItem = new MenuItem {
     text = "Assume Variable"
     onAction = onAssume(false)
   }
 
   val fillItem = new MenuItem {
-    text = "Fill Nook"
+    text = "Fill Exposed Nook"
     onAction = onFill
   }
 
   val useItem = new MenuItem {
-    text = "Use Cell From Environment"
+    text = "Use Environment Cell"
     onAction = onUseEnvironment
+  }
+
+  val substVarItem = new MenuItem {
+    text = "Substitute for Variable"
+    onAction = onSubstitute
+  }
+
+  val abstractItem = new MenuItem {
+    text = "Abstract Expression"
+    onAction = onAbstract
   }
 
   val expressionMenu = new Menu {
     text = "Expression"
-    items ++= List(extrudeItem, dropItem, assumeItem, fillItem, useItem)
+    items ++= List(assumeItem, fillItem, useItem, substVarItem, abstractItem)
   }
 
   val menuBar = new MenuBar {
-    menus ++= List(fileMenu, workspaceMenu, templateMenu, expressionMenu)
+    menus ++= List(fileMenu, workspaceMenu, expressionMenu, shapeMenu)
   }
 
-  def onOpen : Unit
-  def onSave : Unit
+  def onNewModule : Unit
+  def onOpenModule : Unit
+  def onSaveModule : Unit
   def onExit : Unit
 
   def onNewWorkspace : Unit
+  def onCloseWorkspace : Unit
   def onNewSheet : Unit
-  def onSubstitute : Unit
+  def onExportTemplate : Unit
+  def onImportTemplate : Unit
+  def onImportTemplateInShell : Unit
 
-  def onNewTemplate : Unit
-  def onApplyTemplate : Unit
-  def onApplyTemplateInShell : Unit
-
-  def onExtrude : Unit 
-  def onDrop : Unit
   def onAssume(isThin : Boolean) : Unit
   def onFill : Unit
   def onUseEnvironment : Unit
+  def onSubstitute : Unit
+  def onAbstract : Unit
+
+  def onExtrude : Unit 
+  def onDrop : Unit
+
 
 }

@@ -90,8 +90,6 @@ object Template {
 
           exprMap(id) = Variable(Identifier.empty, isThin)
           identMap(id) = ident
-
-          println("Finished reading variable: " ++ ident.toString)
         }
 
         case f @ <filler><fillerIdent>{fillerIdentContent}</fillerIdent><bdryIdent>{bdryIdentContent}</bdryIdent></filler> => {
@@ -109,8 +107,6 @@ object Template {
           
           exprMap(bdryId) = filler.MyBoundary
           identMap(bdryId) = bdryIdent
-
-          println("Finished reading filler: " ++ fillerIdent.toString)
         }
       }
 
@@ -134,7 +130,6 @@ object Template {
           envNode
         }
         case <expression>{exprContent}</expression> => {
-          println("Reading expression ...")
           val expr = XmlSerializable.cellSerializable[String].fromXML(exprContent)
           ExpressionNode(NCell.cellIsNCell(expr map (id => exprMap(id.toInt))))
         }

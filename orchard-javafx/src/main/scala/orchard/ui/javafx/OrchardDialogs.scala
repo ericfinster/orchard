@@ -33,11 +33,31 @@ trait OrchardDialogs { self : JavaFXEditor =>
       // cellFactory = (_ => new EnvironmentCell )
     }
 
-    // for {
-    //   wksp <- activeWorkspace
-    // } {
-    //   dependenciesList.items() ++= wksp.context.freeVariableMap.keys
-    // }
+  }
+
+  class NewModuleDialog extends CancellableDialog {
+
+    heading.text = "New Module"
+
+    val nameField = new TextField { promptText = "Module Name" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center = 
+      new StackPane {
+        padding = Insets(10, 10, 10, 10)
+        content = nameField
+      }
+
+    def onShow = {
+      nameField.clear
+      nameField.requestFocus
+    }
+
+    def onHide = {
+      response match {
+        case DialogOK => newModule(nameField.text())
+        case DialogCancel => ()
+      }
+    }
 
   }
 

@@ -47,6 +47,7 @@ trait JavaFXEditor extends Editor {
   def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) : Unit
   def activeWorkspace : Option[JavaFXWorkspace]
+  def newModule(name : String)
 
 }
 
@@ -87,11 +88,12 @@ object OrchardEditor extends PopupManager(new VBox)
     }
   }
 
-  sealed trait TemplateTreeItem
-  case class TemplateItem(template : Template) extends TemplateTreeItem { override def toString = template.name }
-  case class EnvironmentItem(node : EnvironmentNode) extends TemplateTreeItem
+  sealed trait ModuleTreeItem
+  case class ModuleItem(name : String) extends ModuleTreeItem { override def toString = name }
+  case class TemplateItem(template : Template) extends ModuleTreeItem { override def toString = template.name }
+  case class EnvironmentItem(node : EnvironmentNode) extends ModuleTreeItem
 
-  class TemplateTreeCell extends jfxsc.TreeCell[TemplateTreeItem] {
+  class ModuleTreeCell extends jfxsc.TreeCell[ModuleTreeItem] {
 
     getStyleClass add "orch-list-cell"
     val cellStyleIndex = getStyleClass.length
@@ -101,11 +103,12 @@ object OrchardEditor extends PopupManager(new VBox)
       getStyleClass(cellStyleIndex) = str
     }
 
-    override def updateItem(item : TemplateTreeItem, empty : Boolean) = {
+    override def updateItem(item : ModuleTreeItem, empty : Boolean) = {
       super.updateItem(item, empty)
 
       if (! empty) {
         item match {
+          case ModuleItem(name) => { setCellStyleType("orch-list-null") ; setText(name) }
           case TemplateItem(template) => { setCellStyleType("orch-list-null") ; setText(template.name) }
           case EnvironmentItem(GroupNode(name)) => { setCellStyleType("orch-list-null") ; setText(name) }
           case EnvironmentItem(ExpressionNode(expr)) => {
@@ -121,21 +124,41 @@ object OrchardEditor extends PopupManager(new VBox)
 
   }
 
-  val templateTreeRoot = new TreeItem[TemplateTreeItem]
-  val templateTreeView = 
-    new TreeView[TemplateTreeItem] {
-      root = templateTreeRoot
+  val moduleRoot = new TreeItem[ModuleTreeItem]
+  val moduleTreeView = 
+    new TreeView[ModuleTreeItem] {
+      root = moduleRoot
       showRoot = false
-      cellFactory = (_ => new TemplateTreeCell)
+      cellFactory = (_ => new ModuleTreeCell)
     }
 
-  templateTreeView.selectionModel().selectedItem onChange {
-    val item = templateTreeView.selectionModel().getSelectedItem
+  moduleTreeView.selectionModel().selectedItem onChange {
+    val item = moduleTreeView.selectionModel().getSelectedItem
     
+    def setModuleTemplateInfo(itm : TreeItem[ModuleTreeItem]) : Unit = {
+
+      def isTemplateItem(i : TreeItem[ModuleTreeItem]) = 
+        i.value().isInstanceOf[TemplateItem]
+
+      var curItem = itm
+
+      while (! curItem.value().isInstanceOf[TemplateItem]) { 
+        curItem = curItem.parent() 
+      }
+
+      activeTemplate = Some(curItem.value().asInstanceOf[TemplateItem].template)
+      activeModuleItem = Some(curItem.parent())
+    }
+
     if (item != null) {
       item.value() match {
-        case EnvironmentItem(ExpressionNode(expr)) => setPreview(expr)
-        case _ => ()
+        case m @ ModuleItem(name) => activeModuleItem = Some(item)
+        case t @ TemplateItem(template) => {
+          activeModuleItem = Some(item.parent())
+          activeTemplate = Some(template)
+        }
+        case e @ EnvironmentItem(ExpressionNode(expr)) => { setPreview(expr) ; setModuleTemplateInfo(item) }
+        case e @ EnvironmentItem(_) => setModuleTemplateInfo(item)
       }
     }
   }
@@ -156,21 +179,21 @@ object OrchardEditor extends PopupManager(new VBox)
   AnchorPane.setBottomAnchor(workspacePane, 10)
   AnchorPane.setLeftAnchor(workspacePane, 10)
 
-  val templatePane = new TitledPane {
-    text = "Templates"
-    content = templateTreeView
+  val modulePane = new TitledPane {
+    text = "Modules"
+    content = moduleTreeView
     collapsible = false
   }
 
-  val templateAnchor = new AnchorPane {
-    content = templatePane
+  val moduleAnchor = new AnchorPane {
+    content = modulePane
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(templatePane, 10)
-  AnchorPane.setRightAnchor(templatePane, 10)
-  AnchorPane.setBottomAnchor(templatePane, 10)
-  AnchorPane.setLeftAnchor(templatePane, 10)
+  AnchorPane.setTopAnchor(modulePane, 10)
+  AnchorPane.setRightAnchor(modulePane, 10)
+  AnchorPane.setBottomAnchor(modulePane, 10)
+  AnchorPane.setLeftAnchor(modulePane, 10)
 
   val noEnvLabel = new Label("Empty Environment")
 
@@ -202,7 +225,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   val leftVerticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items.addAll(workspaceAnchor, templateAnchor)
+    items.addAll(workspaceAnchor, moduleAnchor)
   }
 
   val middleVerticalSplit = new SplitPane {
@@ -251,11 +274,14 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.U => if (ev.isControlDown) onUseEnvironment
           case KeyCode.T => if (ev.isControlDown) onNewSheet
-          case KeyCode.O => if (ev.isControlDown) onOpen
-          case KeyCode.S => if (ev.isControlDown) onSave
-  //         // case KeyCode.V => if (ev.isControlDown) onView
+          case KeyCode.O => if (ev.isControlDown) onOpenModule
+          case KeyCode.S => if (ev.isControlDown) onSaveModule
           case KeyCode.B => if (ev.isControlDown) onSubstitute
           case KeyCode.N => if (ev.isControlDown) onNewWorkspace
+          case KeyCode.M => if (ev.isControlDown) onNewModule
+          case KeyCode.I => if (ev.isControlDown) { if (ev.isShiftDown) onImportTemplateInShell else onImportTemplate }
+          case KeyCode.X => if (ev.isControlDown) { onCloseWorkspace }
+  //         // case KeyCode.V => if (ev.isControlDown) onView
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
   //         // case KeyCode.X => if (ev.isControlDown) onExtra
@@ -268,15 +294,67 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     })
 
-  def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrude }
-  def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
+
+  def onNewModule = {
+    val moduleDialog = new NewModuleDialog
+    moduleDialog.run
+  }
+
+  def onOpenModule = {
+    fileChooser.setTitle("Open")
+
+    val file = fileChooser.showOpenDialog(getScene.getWindow)
+
+    if (file != null) {
+      loadModule(file)
+    }
+  }
+
+  def onSaveModule = {
+    fileChooser.setTitle("Save")
+
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+    if (file != null) {
+      saveActiveModule(file)
+    }
+  }
+
+  def onExit : Unit = javafx.application.Platform.exit
+
+  def onNewWorkspace = NewWorkspaceDialog.run
+  def onCloseWorkspace = for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
+  def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
+
+  def onExportTemplate = 
+    for {
+      wksp <- activeWorkspace
+      moduleItem <- activeModuleItem
+    } {
+      println("Exporting workspace as template ...")
+      addTemplateToModule(wksp.templateSnapshot, moduleItem)
+    }
+
+  def onImportTemplate = 
+    for {
+      wksp <- activeWorkspace
+      template <- activeTemplate
+    } {
+      println("Applying template")
+      wksp.importTemplate(template)
+    }
+
+  def onImportTemplateInShell = 
+    for {
+      wksp <- activeWorkspace
+      template <- activeTemplate
+    } {
+      wksp.importTemplateAtSelection(template)
+    }
 
   def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
   def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
   def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
-
-  def onNewWorkspace = NewWorkspaceDialog.run
-  def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
 
   def onSubstitute =
     for {
@@ -291,52 +369,20 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     }
 
-  def onNewTemplate = 
+  def onAbstract = 
     for {
       wksp <- activeWorkspace
+      expr <- wksp.activeExpression
     } {
-      println("Exporting workspace as template ...")
-      addTemplate(wksp.templateSnapshot)
+      expr.value match {
+        case Variable(_, _) => println("Cannot abstract a variable.")
+        case f @ Filler(_, _, _) => wksp.abstractExpression(f)
+        case bdry : Filler#Boundary => wksp.abstractExpression(bdry.interior)
+      }
     }
 
-  def onApplyTemplate = 
-    for {
-      wksp <- activeWorkspace
-      template <- activeTemplate
-    } {
-      println("Applying template")
-      wksp.importTemplate(template)
-    }
-
-  def onApplyTemplateInShell = 
-    for {
-      wksp <- activeWorkspace
-      template <- activeTemplate
-    } {
-      wksp.importTemplateAtSelection(template)
-    }
-
-  def onOpen = {
-    fileChooser.setTitle("Open")
-
-    val file = fileChooser.showOpenDialog(getScene.getWindow)
-
-    if (file != null) {
-      loadTemplates(file)
-    }
-  }
-
-  def onSave = {
-    fileChooser.setTitle("Save")
-
-    val file = fileChooser.showSaveDialog(getScene.getWindow)
-
-    if (file != null) {
-      saveTemplates(file)
-    }
-  }
-
-  def onExit : Unit = javafx.application.Platform.exit
+  def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrude }
+  def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
 
   //============================================================================================
   // EDITOR HELPER ROUTINES
@@ -364,6 +410,8 @@ object OrchardEditor extends PopupManager(new VBox)
   }
 
   var activeWorkspace : Option[JavaFXWorkspace] = None
+  var activeModuleItem : Option[TreeItem[ModuleTreeItem]] = None
+  var activeTemplate : Option[Template] = None
 
   def activeGallery : Option[JavaFXWorkspace#WorksheetGallery] =
     for { wksp <- activeWorkspace ; gallery <- wksp.activeGallery } yield gallery
@@ -373,21 +421,6 @@ object OrchardEditor extends PopupManager(new VBox)
       wksp <- activeWorkspace 
       sheet <- wksp.activeSheet
     } yield sheet
-
-  def activeTemplate : Option[Template] = {
-    val item = templateTreeView.selectionModel().getSelectedItem
-
-    if (item != null) {
-      var curItem = item
-
-      while (curItem.parent() != templateTreeRoot.delegate) {
-        curItem = curItem.parent()
-      }
-
-      Some(curItem.value().asInstanceOf[TemplateItem].template)
-    } else
-      None
-  }
 
   def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
     val wksp = new JavaFXWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
@@ -403,9 +436,6 @@ object OrchardEditor extends PopupManager(new VBox)
     environmentPane.content = wksp.environmentView
     activeWorkspace = Some(wksp)
   }
-
-  def closeActiveWorkspace =
-    for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
 
   def closeWorkspace(wksp : JavaFXWorkspace) = {
     workspaceListView.items() -= wksp
@@ -427,11 +457,19 @@ object OrchardEditor extends PopupManager(new VBox)
     gallery.refreshAll
   }
 
-  def buildTemplateTreeItems(node : EnvironmentNode) : TreeItem[TemplateTreeItem] = 
+  def modules : Seq[ModuleItem] = 
+    moduleRoot.children map (child => child.asInstanceOf[ModuleItem])
+
+  def newModule(name : String) = {
+    val moduleItem = new TreeItem[ModuleTreeItem] { value = ModuleItem(name) }
+    moduleRoot.children += moduleItem
+  }
+
+  def buildTemplateTreeItems(node : EnvironmentNode) : TreeItem[ModuleTreeItem] = 
     node match {
       case g @ GroupNode(name) => {
         val item = 
-          new TreeItem[TemplateTreeItem] {
+          new TreeItem[ModuleTreeItem] {
             value = EnvironmentItem(g)
           }
 
@@ -439,43 +477,45 @@ object OrchardEditor extends PopupManager(new VBox)
         item
       }
       case e @ ExpressionNode(expr) => {
-        new TreeItem[TemplateTreeItem] {
+        new TreeItem[ModuleTreeItem] {
           value = EnvironmentItem(e)
         }
       }
     }
   
-  def templates : Seq[Template] = {
-    templateTreeRoot.children map (child =>
-      child.value() match {
-        case TemplateItem(template) => template
-        case _ => ???
-      }
-    )
-  }
-
-  def addTemplate(template : Template) = {
+  def addTemplateToModule(template : Template, moduleItem : TreeItem[ModuleTreeItem]) = {
     val treeItem = buildTemplateTreeItems(template.root)
     treeItem.value = TemplateItem(template)
-    templateTreeRoot.children += treeItem.delegate
+    moduleItem.children += treeItem.delegate
   }
 
-  def saveTemplates(file : java.io.File) = {
-    val moduleXML = <module>{templates map (template => Template.templateToXML(template))}</module>
-    xml.XML.save(file.getAbsolutePath, moduleXML)
-  }
+  def saveActiveModule(file : java.io.File) = 
+    for {
+      moduleItem <- activeModuleItem
+    } {
+      val name = moduleItem.value().asInstanceOf[ModuleItem].name
+      val templates = moduleItem.children map (child => child.value().asInstanceOf[TemplateItem].template)
+      val moduleXML = <module name={name}>{templates map (template => Template.templateToXML(template))}</module>
+      xml.XML.save(file.getAbsolutePath, moduleXML)
+    }
 
-  def loadTemplates(file : java.io.File) = {
-    // clearTemplates
-
+  def loadModule(file : java.io.File) = {
     val elem = xml.XML.loadFile(file.getAbsolutePath)
 
     elem match {
-      case <module>{templates @ _*}</module> => {
+      case m @ <module>{templates @ _*}</module> => {
+        val name = (m \ "@name").text
+        val moduleItem = 
+          new TreeItem[ModuleTreeItem] {
+            value = ModuleItem(name)
+          }
+
         templates foreach (t => {
           val template = Template.fromXML(t)
-          addTemplate(template)
-        })        
+          addTemplateToModule(template, moduleItem)
+        })    
+
+        moduleRoot.children += moduleItem
       }
     }
   }

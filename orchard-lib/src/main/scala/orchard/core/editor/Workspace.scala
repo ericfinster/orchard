@@ -317,6 +317,55 @@ trait Workspace extends CheckableEnvironment {
       }
     }
 
+  def replaceInSheets(bindings : Map[Expression, Expression]) = {
+    sheets foreach (sheet => {
+      sheet.forAllCells(cell => {
+        cell.item match {
+          case Neutral(Some(e)) => {
+            if (bindings.isDefinedAt(e)) {
+              val newExpr = bindings(e)
+              println("Replacing cell " ++ e.toString ++ " with " ++ newExpr.toString ++ " in sheet.")
+              cell.item = Neutral(Some(newExpr))
+            }
+          }
+          case _ => ()
+        }
+      })
+    })
+  }
+
+  def replaceInEnvironment(bindings : Map[Expression, Expression]) = {
+
+    // Could we use a foreach here so that we don't have to reset the
+    // environment below there?
+
+    val newEnv =
+      environment map (ncell => {
+        ncell map (ex => {
+          if (bindings.isDefinedAt(ex)) {
+            println("Replacing " ++ ex.toString ++ " in ncell " ++ ncell.value.toString)
+            bindings(ex)
+          } else ex
+        })
+      })
+
+    environment.children.clear
+    environment.children ++= newEnv.asInstanceOf[GroupNode].children
+  }
+
+  def replaceInIdentifiers(bindings : Map[Expression, Expression]) = {
+    environment.toExprSeq foreach (ex => {
+      if (ex.ident.exprRefs exists (ref => bindings.isDefinedAt(ref))) {
+        println("Expression " ++ ex.toString ++ " references a bound variable.")
+
+        ex.ident.tokens foreach {
+          case et @ ExpressionToken(e) => if (bindings.isDefinedAt(e)) { et.expr = bindings(e) }
+          case _ => ()
+        }
+      }
+    })
+  }
+
   def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
     println("Starting substitution: " ++ expr.value.toString ++ " => " ++ varExpr.value.toString)
 
@@ -375,52 +424,11 @@ trait Workspace extends CheckableEnvironment {
             environment.locateNode(key).get.delete
           })
 
-          // 1) Occurrences in sheets
+          replaceInSheets(bindings)
+          replaceInEnvironment(bindings)
+          replaceInIdentifiers(bindings)
 
-          sheets foreach (sheet => {
-            sheet.forAllCells(cell => {
-              cell.item match {
-                case Neutral(Some(e)) => {
-                  if (bindings.isDefinedAt(e)) {
-                    val newExpr = bindings(e)
-                    println("Replacing cell " ++ e.toString ++ " with " ++ newExpr.toString ++ " in sheet.")
-                    cell.item = Neutral(Some(newExpr))
-                  }
-                }
-                case _ => ()
-              }
-            })
-          })
-
-          // 2) Occurrences in ncells in the environment
-
-          val newEnv = 
-            environment map (ncell => {
-              ncell map (ex => {
-                if (bindings.isDefinedAt(ex)) {
-                  println("Replacing " ++ ex.toString ++ " in ncell " ++ ncell.value.toString)
-                  bindings(ex)
-                } else ex
-              })
-            })
-
-          environment.children.clear
-          environment.children ++= newEnv.asInstanceOf[GroupNode].children
-
-          // 3) Occurrences in identifiers
-
-          environment.toExprSeq foreach (ex => {
-            if (ex.ident.exprRefs exists (ref => bindings.isDefinedAt(ref))) {
-              println("Expression " ++ ex.toString ++ " references a bound variable.")
-
-              ex.ident.tokens foreach {
-                case et @ ExpressionToken(e) => if (bindings.isDefinedAt(e)) { et.expr = bindings(e) }
-                case _ => ()
-              }
-            }
-          })
-
-          // 4) Recheck necessary cells for universality
+          // Now recheck necessary cells for universality
 
           while (thinDeps.size > 0) {
             val newDeps = new HashSet[Expression]
@@ -460,6 +468,22 @@ trait Workspace extends CheckableEnvironment {
         }
       }
     }
+  }
+
+  def abstractExpression(filler : Filler) = {
+    val bindings : Map[Expression, Expression] = new HashMap
+
+    val fillerVariable = Variable(filler.ident, true)
+    val boundaryVariable = Variable(filler.bdryIdent, filler.bdryIsThin)
+
+    bindings(filler) = fillerVariable
+    bindings(filler.MyBoundary) = boundaryVariable
+
+    replaceInSheets(bindings)
+    replaceInEnvironment(bindings)
+    replaceInIdentifiers(bindings)
+
+    // What about the environment nodes?  I think it's okay ...
   }
 
   class Worksheet(seed : NCell[Polarity[Option[Expression]]])

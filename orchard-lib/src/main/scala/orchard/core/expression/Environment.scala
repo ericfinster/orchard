@@ -60,8 +60,12 @@ sealed trait EnvironmentNode {
   def onMap_=(op : EnvironmentNode => Unit) = mapCallback = op
   def onMap = mapCallback
 
-  def delete = {
-    parent foreach (p => p.children -= this)
+  def delete : Unit = {
+    parent foreach (p => {
+      p.children -= this
+      if (p.children.isEmpty) p.delete
+    })
+
     deleteCallback()
   }
 }
