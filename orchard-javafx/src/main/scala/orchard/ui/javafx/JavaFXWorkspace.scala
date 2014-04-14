@@ -30,15 +30,28 @@ class JavaFXWorkspace(
   val unicityLevel : Option[Int]
 ) extends Workspace with JavaFXWorksheetEnv {
 
+  type SubstitutionType = JavaFXSubstitution
+  type EnvironmentNodeType = jfxsc.TreeItem[EnvironmentElement]
+
   var activeExpression : Option[NCell[Expression]] = None
   var activeGallery : Option[WorksheetGallery] = None 
-
-  var sheetCount : Int = 1
 
   def activeSheet : Option[Worksheet] =
     for {
       gallery <- activeGallery
     } yield gallery.complex
+
+  def activeSubstitution : Option[JavaFXSubstitution] = {
+    val pane = 
+      substitutionAccordion.expandedPane().
+        asInstanceOf[JavaFXSubstitution#SubstitutionPane]
+
+    if (pane != null) {
+      Some(pane.substitution)
+    } else None
+  }
+
+  var sheetCount : Int = 1
 
   val sheetTabPane = new TabPane {
     side = Side.TOP
@@ -71,86 +84,53 @@ class JavaFXWorkspace(
 
   }
 
-  val environmentView = buildEnvironmentView
-  def environmentRoot = environmentView.root()
+  def newSubstitutionInShell(defn : Definition, shell : NCell[Option[Expression]]) = {
+    val newSubst = new JavaFXSubstitution(this, defn, shell)
+    substitutionAccordion.panes += newSubst.substitutionPane
+    substitutionAccordion.expandedPane = newSubst.substitutionPane
+  }
 
-  def buildEnvironmentTreeItems(node : EnvironmentNode) : TreeItem[EnvironmentNode] = 
-    node match {
-      case g @ GroupNode(name) => {
-        val item = 
-          new TreeItem[EnvironmentNode] {
-            value = g
-          }
+  def importActiveSubstitution : Unit = 
+    for {
+      subst <- activeSubstitution
+    } { 
 
-        item.children ++= g.children map (buildEnvironmentTreeItems(_).delegate)
-        item
-      }
-      case e @ ExpressionNode(expr) => {
-        new TreeItem[EnvironmentNode] {
-          value = e
-        }
-      }
+      // Idea: check for name clashes here and force some kind of 
+      // renaming or whatever if there are duplicates ...
+
+      envOps.appendNode(envRoot, subst.envRoot)
+      substitutionAccordion.panes -= subst.substitutionPane
     }
 
-  def buildEnvironmentView : TreeView[EnvironmentNode] = {
-    val rootItem = buildEnvironmentTreeItems(environment)
+  def cancelActiveSubstitution : Unit = 
+    for {
+      subst <- activeSubstitution
+    } {
+      substitutionAccordion.panes -= subst.substitutionPane
+    }
 
-    new TreeView[EnvironmentNode] {
-      root = rootItem
+  val substitutionAccordion = new Accordion
+
+  val envOps = JavaFXEnvironment
+  val envRoot = envOps.createNode(GroupElement(name))
+
+  val environmentView = 
+    new TreeView[EnvironmentElement] {
+      root = envRoot
       showRoot = false
-      cellFactory = (_ => new EnvironmentTreeCell)
+      cellFactory = (_ => new JavaFXEnvironment.EnvironmentTreeCell)
     }
-  }
-
-
-  override def addToEnvironment(expr : NCell[Expression]) = {
-    val node = super.addToEnvironment(expr)
-
-    val treeItem = 
-      new TreeItem[EnvironmentNode] {
-        value = node
-      }
-
-    node.onDelete = { treeItem.parent().children -= treeItem }
-    node.onMap = (newNode => treeItem.value = newNode)
-    environmentRoot.children add treeItem
-
-    node
-  }
-
-  def foreachTreeItem[A](root : TreeItem[A], op : TreeItem[A] => Unit) : Unit = {
-    root.children foreach (child => foreachTreeItem(child, op))
-    op(root)
-  }
-
-  override def addToEnvironment(node : EnvironmentNode) = {
-    super.addToEnvironment(node)
-
-    node match {
-      case g @ GroupNode(name) => {
-        val treeItem = buildEnvironmentTreeItems(g)
-
-        foreachTreeItem[EnvironmentNode](treeItem, (child => {
-          child.value().onDelete = { child.parent().children -= child }
-          child.value().onMap = (newNode => child.value = newNode )
-        }))
-
-        environmentRoot.children add treeItem
-      }
-      case e @ ExpressionNode(expr) => addToEnvironment(expr)
-    }
-  }
 
   environmentView.getSelectionModel.selectedItem onChange {
     val item = environmentView.getSelectionModel.selectedItem()
 
     if (item != null) {
       item.value() match {
-        case ExpressionNode(expr) => {
-          activeExpression = Some(expr)
+        case ExpressionElement(ncell) => {
+          activeExpression = Some(ncell)
 
           // Now make a gallery and show it in the preview pane
-          val gallery = new FrameworkGallery(expr map (Some(_)))
+          val gallery = new FrameworkGallery(ncell map (Some(_)))
           editor.setPreviewGallery(gallery)
         }
         case _ => activeExpression = None
@@ -160,40 +140,9 @@ class JavaFXWorkspace(
     }
   }
 
-  // override def substitute(varExpr : NCell[Expression], expr : NCell[Expression]) = {
-  //   super.substitute(varExpr, expr)
-  //   environmentView.root = buildEnvironmentTreeItems(environment)
-  // }
-
-  class EnvironmentTreeCell extends jfxsc.TreeCell[EnvironmentNode] {
-
-    getStyleClass add "orch-list-cell"
-    val cellStyleIndex = getStyleClass.length
-    getStyleClass add "orch-list-null"
-
-    def setCellStyleType(str : String) = {
-      getStyleClass(cellStyleIndex) = str
-    }
-
-    override def updateItem(node : EnvironmentNode, empty : Boolean) = {
-      super.updateItem(node, empty)
-
-      if (! empty) {
-        node match {
-          case GroupNode(name) => {
-            setCellStyleType("orch-list-null")
-            setText(name)
-          }
-          case ExpressionNode(expr) => {
-            setCellStyleType("orch-list-cell-" ++ expr.value.styleString)
-            setText(expr.value.ident.toString)
-          }
-        }
-      } else {
-        setCellStyleType("orch-list-null")
-        setText("")
-      }
-    } 
-  }
-
+  // val environment
+  // val previewContent = 
+  //   new VBox {
+  //     content = List()
+  //   }
 }

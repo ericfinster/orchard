@@ -46,7 +46,7 @@ class FrameworkPanel(val complex : Framework[Option[Expression]], val baseIndex 
       val labelNode =
         item match {
           case None => new Region { prefWidth = 10 ; prefHeight = 10 }
-          case Some(expr) => new Text(expr.toString)
+          case Some(expr) => new Text(expr.id)
         }
 
       labelNode.layoutBounds onChange { thisPanel.refresh }

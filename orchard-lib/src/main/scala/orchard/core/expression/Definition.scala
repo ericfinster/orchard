@@ -1,5 +1,5 @@
 /**
-  * Template.scala - Lift templates
+  * Definition.scala - Definitions
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -13,15 +13,23 @@ import scala.collection.mutable.HashMap
 import orchard.core.cell.NCell
 import orchard.core.util.XmlSerializable
 
-// Need filling parameters to be saved for the template ...
+class Definition(
+  val envRoot : SimpleEnvironmentNode,
+  val stabilityLevel : Option[Int],
+  val invertibilityLevel : Option[Int],
+  val unicityLevel : Option[Int]
+) extends HasEnvironment {
 
-class Template(val root : GroupNode) {
+  type EnvironmentNodeType = SimpleEnvironmentNode
 
-  def name : String = root.name
+  def envOps = SimpleNodeImplementation
+
+  def name : String = envRoot.element.asInstanceOf[GroupElement].name
+
 
 }
 
-object Template {
+object Definition {
 
   def identifierToXML(ident : Identifier) : xml.Node = 
     <identifier>{ident.tokens map {
@@ -58,25 +66,23 @@ object Template {
       case bdry : Filler#Boundary => xml.NodeSeq.Empty
     }
 
-  def environmentToXML(node : EnvironmentNode) : xml.Node = 
-    node match {
-      case g @ GroupNode(name) => {
-        <group name={name}>{ g.children map (environmentToXML(_)) }</group>
-      }
-      case ExpressionNode(expr) => {
-        <expression>{
-          XmlSerializable.cellSerializable[String].toXML(expr map (_.hashCode.toString))
-        }</expression>
-      }
-    }
+  def definitionToXML(definition : Definition) : xml.Node = {
+    def optToInt(opt : Option[Int]) : Int =
+      opt getOrElse -1
 
-  def templateToXML(template : Template) : xml.Node = {
-    val exprXML = template.root.toExprSeq map (expressionToXML(_))
-    val envXML = environmentToXML(template.root)
-    <template name={template.name}><expressions>{exprXML}</expressions><environment>{envXML}</environment></template>
+    <definition
+       name={definition.name}
+       slevel={optToInt(definition.stabilityLevel).toString}
+       ilevel={optToInt(definition.invertibilityLevel).toString}
+       ulevel={optToInt(definition.unicityLevel).toString}
+    ><expressions>{
+      definition.envOps.toExprSeq(definition.envRoot) map (expressionToXML(_))
+    }</expressions><environment>{
+      definition.envOps.toXML(definition.envRoot)
+    }</environment></definition>
   }
 
-  def fromXML(node : xml.Node) : Template = {
+  def fromXML(node : xml.Node) : Definition = {
     val exprMap : Map[Int, Expression] = new HashMap
     val identMap : Map[Int, RawIdentifier] = new HashMap
 
@@ -118,25 +124,32 @@ object Template {
         }
       )
 
-    def readEnvironment(node : xml.Node) : EnvironmentNode = 
+    def readEnvironment(node : xml.Node) : SimpleEnvironmentNode =
       node match {
         case g @ <group>{groupContent @ _*}</group> => {
           val chldrn = groupContent map (readEnvironment(_))
           val name = (g \ "@name").text
 
-          val envNode = GroupNode(name)
+          val envNode = new SimpleEnvironmentNode(GroupElement(name))
           envNode.children ++= chldrn
 
           envNode
         }
         case <expression>{exprContent}</expression> => {
           val expr = XmlSerializable.cellSerializable[String].fromXML(exprContent)
-          ExpressionNode(NCell.cellIsNCell(expr map (id => exprMap(id.toInt))))
+          val el = ExpressionElement(NCell.cellIsNCell(expr map (id => exprMap(id.toInt))))
+          new SimpleEnvironmentNode(el)
         }
       }
 
     node match {
-      case <template><expressions>{expressionContent @ _*}</expressions><environment>{environmentContent}</environment></template> => {
+      case defXml @ <definition><expressions>{expressionContent @ _*}</expressions><environment>{environmentContent}</environment></definition> => {
+
+        def intToOpt(i : Int) : Option[Int] = if (i < 0) None else Some(i)
+
+        val stabilityLevel : Option[Int] = intToOpt((defXml \ "@slevel").text.toInt)
+        val invertibilityLevel : Option[Int] = intToOpt((defXml \ "@ilevel").text.toInt)
+        val unicityLevel : Option[Int] = intToOpt((defXml \ "@ulevel").text.toInt)
 
         // This should fill the expression map with information
         expressionContent foreach (readExpression(_))
@@ -155,7 +168,8 @@ object Template {
           }
         }
 
-        new Template(readEnvironment(environmentContent).asInstanceOf[GroupNode])
+        val envRoot = readEnvironment(environmentContent)
+        new Definition(envRoot, stabilityLevel, invertibilityLevel, unicityLevel)
       }
     }
   }

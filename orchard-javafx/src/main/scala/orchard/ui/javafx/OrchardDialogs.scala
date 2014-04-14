@@ -142,75 +142,75 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   }
 
-  class SubstitutionDialog(varExpr : NCell[Expression], envView : TreeView[EnvironmentNode]) extends CancellableDialog {
+  // class SubstitutionDialog(varExpr : NCell[Expression], envView : TreeView[EnvironmentNode]) extends CancellableDialog {
 
-    heading.text = "Substitution"
+  //   heading.text = "Substitution"
 
-    val varGallery = new FrameworkGallery(varExpr map (Some(_)))
+  //   val varGallery = new FrameworkGallery(varExpr map (Some(_)))
 
-    val varPane = new StackPane {
-      content = varGallery
-      prefWidth = 500
-      prefHeight = 200
-    }
+  //   val varPane = new StackPane {
+  //     content = varGallery
+  //     prefWidth = 500
+  //     prefHeight = 200
+  //   }
 
-    val envPane = new StackPane {
-      maxWidth = 500
-      maxHeight = 200
-      content = envView
-      padding = Insets(10,10,10,10)
-    }
+  //   val envPane = new StackPane {
+  //     maxWidth = 500
+  //     maxHeight = 200
+  //     content = envView
+  //     padding = Insets(10,10,10,10)
+  //   }
 
-    val selectionPane = new StackPane {
-      prefWidth = 500
-      prefHeight = 200
-    }
+  //   val selectionPane = new StackPane {
+  //     prefWidth = 500
+  //     prefHeight = 200
+  //   }
 
-    borderPane.center =
-      new VBox {
-        content = List(varPane, envPane, selectionPane)
-      }
+  //   borderPane.center =
+  //     new VBox {
+  //       content = List(varPane, envPane, selectionPane)
+  //     }
 
-    envView.getSelectionModel.selectedItem onChange {
-      val item = envView.getSelectionModel.selectedItem()
+  //   envView.getSelectionModel.selectedItem onChange {
+  //     val item = envView.getSelectionModel.selectedItem()
 
-      if (item != null) {
-        item.value() match {
-          case ExpressionNode(expr) => {
-            val gallery = new FrameworkGallery(expr map (Some(_)))
-            selectionPane.content.clear
-            selectionPane.content += gallery
-            gallery.refreshAll
-          }
-          case _ => ()
-        }
-      }
-    }
+  //     if (item != null) {
+  //       item.value() match {
+  //         case ExpressionNode(expr) => {
+  //           val gallery = new FrameworkGallery(expr map (Some(_)))
+  //           selectionPane.content.clear
+  //           selectionPane.content += gallery
+  //           gallery.refreshAll
+  //         }
+  //         case _ => ()
+  //       }
+  //     }
+  //   }
 
-    def onShow = {
-      varGallery.refreshAll
-    }
+  //   def onShow = {
+  //     varGallery.refreshAll
+  //   }
 
-    def onHide =
-      response match {
-        case DialogOK => {
-          for { wksp <- activeWorkspace } { 
-            val item = envView.getSelectionModel.selectedItem()
+  //   def onHide =
+  //     response match {
+  //       case DialogOK => {
+  //         for { wksp <- activeWorkspace } { 
+  //           val item = envView.getSelectionModel.selectedItem()
 
-            if (item != null) {
-              item.value() match {
-                case ExpressionNode(expr) => wksp.substitute(varExpr, expr)
-                case _ => println("Cannot substitute this ...")
-              }
-            } else {
-              println("Nothing selected.")
-            }
-          }
-        }
-        case DialogCancel => ()
-      }
+  //           if (item != null) {
+  //             item.value() match {
+  //               case ExpressionNode(expr) => ??? // wksp.substitute(varExpr, expr)
+  //               case _ => println("Cannot substitute this ...")
+  //             }
+  //           } else {
+  //             println("Nothing selected.")
+  //           }
+  //         }
+  //       }
+  //       case DialogCancel => ()
+  //     }
 
-  }
+  // }
 
   object NewWorkspaceDialog extends CancellableDialog {
 

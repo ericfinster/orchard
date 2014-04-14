@@ -50,7 +50,7 @@ trait JavaFXWorksheetEnv { thisEnv : JavaFXWorkspace =>
             case Positive => new Text("+")
             case Negative => new Text("-")
             case Neutral(None) => new Region { prefWidth = 10 ; prefHeight = 10 }
-            case Neutral(Some(expr)) => new Text(expr.toString)
+            case Neutral(Some(expr)) => new Text(expr.id)
           }
 
         labelNode.layoutBounds onChange { thisPanel.refresh }
