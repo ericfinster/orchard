@@ -326,8 +326,10 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.B => if (ev.isControlDown) onBind
           case KeyCode.N => if (ev.isControlDown) onNewWorkspace
           case KeyCode.M => if (ev.isControlDown) onNewModule
-          // case KeyCode.I => if (ev.isControlDown) { if (ev.isShiftDown) onImportTemplateInShell else onImportTemplate }
-          case KeyCode.X => if (ev.isControlDown) { onCloseWorkspace }
+          case KeyCode.I => if (ev.isControlDown) onImportSubstitution
+          case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
+          case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
+          case KeyCode.L => if (ev.isControlDown) onAbstract
   //         // case KeyCode.V => if (ev.isControlDown) onView
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal

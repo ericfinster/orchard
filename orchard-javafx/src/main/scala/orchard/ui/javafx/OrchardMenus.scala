@@ -97,7 +97,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   val substitutionMenu = new Menu {
     text = "Substitution"
-    items ++= List(newSubstItem, newSubstInShellItem, importItem)
+    items ++= List(newSubstItem, newSubstInShellItem, importItem, cancelItem)
   }
 
   val assumeItem = new MenuItem {

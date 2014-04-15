@@ -156,7 +156,7 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
 
               if (dependencyMap.isDefinedAt(dep)) {
                 dependencyMap(dep) foreach (d => {
-                  val ncell : NCell[Expression] = ??? // environment.locateNode(d).get.expr
+                  val ncell : NCell[Expression] = envOps.getNCell(envOps.findByExpression(envRoot, d).get)
                   val filler = ncell.value.asInstanceOf[Filler]
                   val framework = new wksp.WorkspaceFramework(ncell map (Some(_)))
 
