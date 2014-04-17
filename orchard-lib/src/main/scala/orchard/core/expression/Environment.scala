@@ -95,6 +95,9 @@ trait EnvironmentType[A] {
   def findById(a : A, id : String) : Option[A] =
     toSeq(a) find (getExpression(_).id == id)
 
+  def containsId(a : A, id : String) : Boolean = 
+    toSeq(a) exists (getExpression(_).id == id)
+
   def getNCell(a : A) : NCell[Expression] =
     getElement(a) match {
       case GroupElement(_) => throw new NoSuchElementException
@@ -189,6 +192,23 @@ trait EnvironmentType[A] {
 
     replicate(b)
   }
+
+  def shallowClone(a : A) : A = 
+    getElement(a) match {
+      case GroupElement(name) => {
+        val node = createNode(GroupElement(name))
+
+        children(node) ++= children(a) map (child => {
+          val newChild = shallowClone(child)
+          setParent(newChild, node)
+          newChild
+        })
+
+        node
+      }
+      case ExpressionElement(ncell) =>
+        createNode(ExpressionElement(ncell))
+    }
 
   def toXML(a : A) : xml.Node = 
     getElement(a) match {

@@ -29,7 +29,6 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
   type SubstitutionType <: Substitution
 
   val sheets = Buffer.empty[Worksheet]
-  // val substitutions = Buffer.empty[SubstitutionType]
 
   def newSheet : Unit 
 
@@ -37,8 +36,37 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
   def activeExpression : Option[NCell[Expression]]
   def activeSubstitution : Option[SubstitutionType]
 
-  def addToEnvironment(ncell : NCell[Expression]) : Unit = 
+  def addToEnvironment(ncell : NCell[Expression]) : Unit = {
     envOps.appendElement(envRoot, ExpressionElement(ncell))
+  }
+
+  def addToEnvironment(node : EnvironmentNodeType) : Boolean = {
+    // We would like to check for internal conflicts as well, so let's make a list of the 
+    // imported identifiers as well as the conflicts and then print them out.
+
+    val existingIdents = HashSet.empty[String]
+    val duplicateIdents = HashSet.empty[String]
+
+    // First add all the identifiers in the current environment
+    existingIdents ++= envOps.toExprSeq(envRoot) map (_.id)
+
+    envOps.foreachExpr(node, (expr => {
+      if (existingIdents.contains(expr.id)) {
+        duplicateIdents += expr.id
+      } else {
+        existingIdents += expr.id
+      }
+    }))
+
+    if (duplicateIdents.size > 0) {
+      duplicateIdents foreach (ident => println("Duplicate Identifier: " ++ ident))
+      println("Environment import failed.")
+      false
+    } else {
+      envOps.children(envRoot) += node
+      true
+    }
+  }
 
   def definitionSnapshot : Definition = {
     val defEnvRoot = SimpleNodeImplementation.cloneFrom(envRoot, envOps)
@@ -48,7 +76,15 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
   def newSubstitution(defn : Definition) : Unit = newSubstitutionInShell(defn, Object(None))
   def newSubstitutionInShell(defn : Definition, shell : NCell[Option[Expression]]) : Unit
 
+  def closeSubstitution(subst : SubstitutionType) : Unit
   def importActiveSubstitution : Unit
+
+  def cancelActiveSubstitution : Unit = 
+    for {
+      subst <- activeSubstitution
+    } {
+      closeSubstitution(subst)
+    }
 
   def newSubstitutionInSelectedShell(defn : Definition) = 
     for {
@@ -117,10 +153,14 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
                 val finalIdent = processIdentifier(ident).get
                 val varExpr = Variable(finalIdent, isThin)
 
-                sheet.deselectAll
-                selectedCell.item = Neutral(Some(varExpr))
-                addToEnvironment(selectedCell.framework.toCell map (_.get))
-                sheet.selectAsBase(selectedCell)
+                if (envOps.containsId(envRoot, finalIdent.toString)) {
+                  println("Duplicate identifier.")
+                } else {
+                  sheet.deselectAll
+                  selectedCell.item = Neutral(Some(varExpr))
+                  addToEnvironment(selectedCell.framework.toCell map (_.get))
+                  sheet.selectAsBase(selectedCell)
+                }
               }
 
               case _ : NoSuccess => println("Identifier parse failed.")
@@ -175,29 +215,35 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
                     val bdryFinalIdent = processIdentifier(bdryIdent).get
                     val fillerFinalIdent = processIdentifier(fillerIdent).get
 
-                    val filler = Filler(fillerFinalIdent, bdryFinalIdent, selectedCell.isThinBoundary)
+                    if (envOps.containsId(envRoot, bdryFinalIdent.toString) ||
+                        envOps.containsId(envRoot, fillerFinalIdent.toString) ||
+                        bdryFinalIdent.toString == fillerFinalIdent.toString) {
+                      println("Duplicate identifier.")
+                    } else {
+                      val filler = Filler(fillerFinalIdent, bdryFinalIdent, selectedCell.isThinBoundary)
 
-                    val boundaryCell =
-                      if (selectedCell.isOutNook)
-                        selectedCell.target.get
-                      else
-                        selectedCell.emptySources.head
+                      val boundaryCell =
+                        if (selectedCell.isOutNook)
+                          selectedCell.target.get
+                        else
+                          selectedCell.emptySources.head
 
-                    // selectedCell.fullFaces foreach (face => {
-                    //   face.item match {
-                    //     case Neutral(Some(v @ Variable(ident, isThin))) => if (! isThin) addDependency(v, filler)
-                    //     case Neutral(Some(bdry : Filler#Boundary)) => if (! bdry.isThin) addDependency(bdry, filler)
-                    //     case _ => ()
-                    //   }
-                    // })
+                      // selectedCell.fullFaces foreach (face => {
+                      //   face.item match {
+                      //     case Neutral(Some(v @ Variable(ident, isThin))) => if (! isThin) addDependency(v, filler)
+                      //     case Neutral(Some(bdry : Filler#Boundary)) => if (! bdry.isThin) addDependency(bdry, filler)
+                      //     case _ => ()
+                      //   }
+                      // })
 
-                    selectedCell.item = Neutral(Some(filler))
-                    boundaryCell.item = Neutral(Some(filler.MyBoundary))
+                      selectedCell.item = Neutral(Some(filler))
+                      boundaryCell.item = Neutral(Some(filler.MyBoundary))
 
-                    addToEnvironment(boundaryCell.framework.toCell map (_.get))
-                    addToEnvironment(selectedCell.framework.toCell map (_.get))
+                      addToEnvironment(boundaryCell.framework.toCell map (_.get))
+                      addToEnvironment(selectedCell.framework.toCell map (_.get))
 
-                    sheet.clearAndSelect(selectedCell)
+                      sheet.clearAndSelect(selectedCell)
+                    }
                   }
                   case _ : NoSuccess => println("Filler parse failed.")
                 }
@@ -210,7 +256,7 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
       }
     }
 
-  def expressionToSelection = 
+  def pasteToSelection = 
     for {
       sheet <- activeSheet
       selectedCell <- sheet.selectionBase

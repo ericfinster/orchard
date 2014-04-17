@@ -110,9 +110,9 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onFill
   }
 
-  val useItem = new MenuItem {
-    text = "Use Environment Cell"
-    onAction = onUseEnvironment
+  val pasteItem = new MenuItem {
+    text = "Paste from Environment"
+    onAction = onPaste
   }
 
   val bindVarItem = new MenuItem {
@@ -127,7 +127,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   val expressionMenu = new Menu {
     text = "Expression"
-    items ++= List(assumeItem, fillItem, useItem, bindVarItem, abstractItem)
+    items ++= List(assumeItem, fillItem, pasteItem, bindVarItem, abstractItem)
   }
 
   val extrudeItem = new MenuItem {
@@ -168,7 +168,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   def onAssume(isThin : Boolean) : Unit
   def onFill : Unit
-  def onUseEnvironment : Unit
+  def onPaste : Unit
   def onAbstract : Unit
   def onBind : Unit
 

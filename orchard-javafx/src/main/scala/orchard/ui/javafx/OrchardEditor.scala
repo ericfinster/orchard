@@ -319,7 +319,7 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.F => if (ev.isControlDown) onFill  
-          case KeyCode.U => if (ev.isControlDown) onUseEnvironment
+          case KeyCode.P => if (ev.isControlDown) onPaste
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           case KeyCode.O => if (ev.isControlDown) onOpenModule
           case KeyCode.S => if (ev.isControlDown) onSaveModule
@@ -426,7 +426,7 @@ object OrchardEditor extends PopupManager(new VBox)
 
   def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
   def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
-  def onUseEnvironment : Unit = for { wksp <- activeWorkspace } { wksp.expressionToSelection }
+  def onPaste : Unit = for { wksp <- activeWorkspace } { wksp.pasteToSelection }
 
   def onBind =
     for {

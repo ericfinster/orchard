@@ -80,6 +80,8 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
 
   val rigidVariables = HashSet.empty[Expression]
 
+  // BUG!!! - When you make substitutions, you may need to update the dependency lists.  Fix this.
+
   def bindVariable(varExpr : NCell[Expression], expr : NCell[Expression]) = {
     println("Starting substitution: " ++ expr.value.toString ++ " => " ++ varExpr.value.toString)
 
@@ -203,6 +205,13 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
     //replaceInSheets(bindings)
     replaceInEnvironment(bindings)
     replaceInIdentifiers(bindings)
+
+    if (! filler.bdryIsThin) {
+      if (dependencyMap.isDefinedAt(filler.MyBoundary)) {
+        // Should really delete the old key as well ...
+        dependencyMap(boundaryVariable) = dependencyMap(filler.MyBoundary)
+      }
+    }
   }
 
 }

@@ -90,23 +90,17 @@ class JavaFXWorkspace(
     substitutionAccordion.expandedPane = newSubst.substitutionPane
   }
 
-  def importActiveSubstitution : Unit = 
+  def closeSubstitution(subst : JavaFXSubstitution) : Unit = {
+    substitutionAccordion.panes -= subst.substitutionPane
+  }
+
+  def importActiveSubstitution : Unit =
     for {
       subst <- activeSubstitution
     } { 
-
-      // Idea: check for name clashes here and force some kind of 
-      // renaming or whatever if there are duplicates ...
-
-      envOps.appendNode(envRoot, subst.envRoot)
-      substitutionAccordion.panes -= subst.substitutionPane
-    }
-
-  def cancelActiveSubstitution : Unit = 
-    for {
-      subst <- activeSubstitution
-    } {
-      substitutionAccordion.panes -= subst.substitutionPane
+      if (addToEnvironment(envOps.shallowClone(subst.envRoot))) {
+        closeSubstitution(subst)    
+      } 
     }
 
   val substitutionAccordion = new Accordion
