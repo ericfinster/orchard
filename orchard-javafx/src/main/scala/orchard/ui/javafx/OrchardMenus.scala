@@ -60,6 +60,11 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onNewWorkspace
   }
 
+  val openDefnItem = new MenuItem {
+    text = "Open Definition"
+    onAction = onOpenDefinition
+  }
+
   val closeWkspItem = new MenuItem {
     text = "Close Workspace"
     onAction = onCloseWorkspace
@@ -68,11 +73,6 @@ trait OrchardMenus { self : JavaFXEditor =>
   val newSheetItem = new MenuItem {
     text = "New Sheet"
     onAction = onNewSheet
-  }
-
-  val workspaceMenu = new Menu {
-    text = "Workspace"
-    items ++= List(newWkspItem, closeWkspItem, newSheetItem)
   }
 
   val newSubstItem = new MenuItem {
@@ -85,8 +85,23 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onNewSubstInShell
   }
 
+  val workspaceMenu = new Menu {
+    text = "Workspace"
+    items ++= List(newWkspItem, openDefnItem, closeWkspItem, newSheetItem, newSubstItem, newSubstInShellItem)
+  }
+
+  val bindVarItem = new MenuItem {
+    text = "Bind Variable"
+    onAction = onBind
+  }
+
+  val abstractItem = new MenuItem {
+    text = "Abstract Expression"
+    onAction = onAbstract
+  }
+
   val importItem = new MenuItem {
-    text = "Import to Environment"
+    text = "Import to Workspace"
     onAction = onImportSubstitution
   }
 
@@ -97,7 +112,7 @@ trait OrchardMenus { self : JavaFXEditor =>
 
   val substitutionMenu = new Menu {
     text = "Substitution"
-    items ++= List(newSubstItem, newSubstInShellItem, importItem, cancelItem)
+    items ++= List(bindVarItem, abstractItem, importItem, cancelItem)
   }
 
   val assumeItem = new MenuItem {
@@ -115,19 +130,14 @@ trait OrchardMenus { self : JavaFXEditor =>
     onAction = onPaste
   }
 
-  val bindVarItem = new MenuItem {
-    text = "Bind Variable"
-    onAction = onBind
-  }
-
-  val abstractItem = new MenuItem {
-    text = "Abstract Expression"
-    onAction = onAbstract
+  val renameItem = new MenuItem {
+    text = "Rename"
+    onAction = onRename
   }
 
   val expressionMenu = new Menu {
     text = "Expression"
-    items ++= List(assumeItem, fillItem, pasteItem, bindVarItem, abstractItem)
+    items ++= List(assumeItem, fillItem, pasteItem, renameItem)
   }
 
   val extrudeItem = new MenuItem {
@@ -158,19 +168,21 @@ trait OrchardMenus { self : JavaFXEditor =>
   def onDeleteDefinition : Unit
 
   def onNewWorkspace : Unit
+  def onOpenDefinition : Unit
   def onCloseWorkspace : Unit
   def onNewSheet : Unit
-
   def onNewSubstitution : Unit
   def onNewSubstInShell : Unit
+
+  def onAbstract : Unit
+  def onBind : Unit
   def onImportSubstitution : Unit
   def onCancelSubstitution : Unit
 
   def onAssume(isThin : Boolean) : Unit
   def onFill : Unit
   def onPaste : Unit
-  def onAbstract : Unit
-  def onBind : Unit
+  def onRename : Unit
 
   def onExtrude : Unit 
   def onDrop : Unit

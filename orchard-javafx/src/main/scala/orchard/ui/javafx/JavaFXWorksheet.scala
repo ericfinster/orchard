@@ -62,7 +62,7 @@ trait JavaFXWorksheetEnv { thisEnv : JavaFXWorkspace =>
         item match {
           case Positive => "polarized"
           case Negative => "polarized"
-          case Neutral(None) => "empty"
+          case Neutral(None) => if (owner.isFillable) "exposed" else "empty"
           case Neutral(Some(expr)) => expr.styleString
         }
 
@@ -105,6 +105,13 @@ trait JavaFXWorksheetEnv { thisEnv : JavaFXWorkspace =>
     }
 
     initialize
+
+    override def refreshAll = {
+      super.refreshAll
+      panels foreach (panel => {
+        panel.baseCell foreachCell (cell => cell.assignStyle)
+      })
+    }
 
     //============================================================================================
     // EVENTS

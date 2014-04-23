@@ -61,6 +61,32 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   }
 
+  class RenameDialog(expr : Expression, handler : String => Unit) extends CancellableDialog {
+
+    heading.text = "Rename Expression"
+
+    val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center = 
+      new StackPane {
+        padding = Insets(10, 10, 10, 10)
+        content = idField
+      }
+
+    def onShow = {
+      idField.text = expr.ident.rawStr
+      idField.selectAll
+      idField.requestFocus
+    }
+
+    def onHide = 
+      response match {
+        case DialogOK => handler(idField.text())
+        case DialogCancel => ()
+      }
+
+  }
+
   class VariableDialog(handler : (String, Boolean) => Unit) extends DependencyDialog {
 
     heading.text = "Assume Variable"
@@ -72,11 +98,11 @@ trait OrchardDialogs { self : JavaFXEditor =>
       new VBox {
         padding = Insets(10,10,10,10)
         spacing = 10
-        content = List(dependenciesList, idField, thinCheckBox)
+        content = List(/*dependenciesList,*/ idField, thinCheckBox)
       }
 
     def onShow = {
-      idField.clear
+      // idField.clear
       idField.requestFocus
     }
 
@@ -101,12 +127,12 @@ trait OrchardDialogs { self : JavaFXEditor =>
       new VBox {
         padding = Insets(10,10,10,10)
         spacing = 10
-        content = List(dependenciesList, composeField, fillerField)
+        content = List(/*dependenciesList,*/ composeField, fillerField)
       }
 
     def onShow = {
-      composeField.clear
-      fillerField.clear
+      // composeField.clear
+      // fillerField.clear
       composeField.requestFocus
     }
 

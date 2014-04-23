@@ -44,7 +44,7 @@ trait JavaFXEditor extends Editor {
 
   implicit def pm : PopupManager
 
-  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : Unit
+  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : JavaFXWorkspace
 
   def setPreviewGallery[A](gallery : SpinnerGallery[A]) : Unit
   def setGoalPreviewGallery[A](gallery : SpinnerGallery[A]) : Unit
@@ -330,6 +330,8 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
           case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
           case KeyCode.L => if (ev.isControlDown) onAbstract
+          case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
+          case KeyCode.R => if (ev.isControlDown) onRename
   //         // case KeyCode.V => if (ev.isControlDown) onView
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
@@ -391,6 +393,15 @@ object OrchardEditor extends PopupManager(new VBox)
     }
 
   def onNewWorkspace = NewWorkspaceDialog.run
+  def onOpenDefinition = 
+    for {
+      defn <- activeDefinition
+    } {
+      val wksp = newWorkspace(defn.name, defn.stabilityLevel, defn.invertibilityLevel, defn.unicityLevel)
+      val env = wksp.envOps.cloneFrom(defn.envRoot, defn.envOps)
+      wksp.envOps.children(wksp.envRoot) ++= wksp.envOps.children(env)
+    }
+
   def onCloseWorkspace = for { wksp <- activeWorkspace } { closeWorkspace(wksp) }
   def onNewSheet = for { wksp <- activeWorkspace } { wksp.newSheet }
 
@@ -424,10 +435,6 @@ object OrchardEditor extends PopupManager(new VBox)
       wksp.cancelActiveSubstitution
     }
 
-  def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
-  def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
-  def onPaste : Unit = for { wksp <- activeWorkspace } { wksp.pasteToSelection }
-
   def onBind =
     for {
       wksp <- activeWorkspace
@@ -454,6 +461,11 @@ object OrchardEditor extends PopupManager(new VBox)
         case bdry : Filler#Boundary => subst.abstractExpression(bdry.interior)
       }
     }
+
+  def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }
+  def onFill : Unit = for { wksp <- activeWorkspace } { wksp.fillAtSelection }
+  def onPaste : Unit = for { wksp <- activeWorkspace } { wksp.pasteToSelection }
+  def onRename : Unit = for { wksp <- activeWorkspace } { wksp.renameActiveExpression }
 
   def onExtrude : Unit = for { wksht <- activeSheet } { wksht.extrude }
   def onDrop : Unit = for { wksht <- activeSheet } { wksht.drop }
@@ -483,6 +495,11 @@ object OrchardEditor extends PopupManager(new VBox)
     uniqueFillingDialog.run
   }
 
+  def withRenameIdentifier(expr : Expression, handler : String => Unit) : Unit = {
+    val renameDialog = new RenameDialog(expr, handler)
+    renameDialog.run
+  }
+
   var activeWorkspace : Option[JavaFXWorkspace] = None
   var activeModuleItem : Option[TreeItem[ModuleTreeItem]] = None
   var activeDefinition : Option[Definition] = None
@@ -496,13 +513,14 @@ object OrchardEditor extends PopupManager(new VBox)
       sheet <- wksp.activeSheet
     } yield sheet
 
-  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) = {
+  def newWorkspace(name : String, stabilityLevel : Option[Int], invertibilityLevel : Option[Int], unicityLevel : Option[Int]) : JavaFXWorkspace = {
     val wksp = new JavaFXWorkspace(thisEditor, name, stabilityLevel, invertibilityLevel, unicityLevel)
 
     workspaceListView.items() += wksp
     workspaceListView.getSelectionModel.select(wksp)
 
     wksp.newSheet
+    wksp
   }
 
   def selectWorkspace(wksp : JavaFXWorkspace) = {

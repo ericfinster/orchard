@@ -134,9 +134,5 @@ class JavaFXWorkspace(
     }
   }
 
-  // val environment
-  // val previewContent = 
-  //   new VBox {
-  //     content = List()
-  //   }
+  
 }

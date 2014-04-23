@@ -15,13 +15,14 @@ case class Identifier(val tokens : List[IdentToken]) {
     (tokens filter (_.isInstanceOf[ExpressionToken])) map 
       (_.asInstanceOf[ExpressionToken].expr)
 
-  override def toString = (tokens map (_.value)).mkString
+  def rawStr = (tokens map (_.rawStr)).mkString
 
+  override def toString = (tokens map (_.value)).mkString
 }
 
-sealed trait IdentToken { def value : String }
-case class LiteralToken(val lit : String) extends IdentToken { def value = lit }
-case class ExpressionToken(var expr : Expression) extends IdentToken { def value = expr.ident.toString }
+sealed trait IdentToken { def value : String ; def rawStr : String }
+case class LiteralToken(val lit : String) extends IdentToken { def value = lit ; def rawStr = lit }
+case class ExpressionToken(var expr : Expression) extends IdentToken { def value = expr.ident.toString ; def rawStr = "${" ++ expr.ident.rawStr ++ "}" }
 
 object Identifier {
 

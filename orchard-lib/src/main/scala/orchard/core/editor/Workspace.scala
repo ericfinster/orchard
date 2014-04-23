@@ -256,6 +256,10 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
       }
     }
 
+  // BUG!!! - There are constraints generated when pasting a loop which
+  //          I think are not being checked.  (For example, try pasting 
+  //          a non-loop f : x -> y into a loop on x and see what happens ...
+
   def pasteToSelection = 
     for {
       sheet <- activeSheet
@@ -304,6 +308,41 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
           }
         }
       }
+    }
+
+  def renameActiveExpression = 
+    for {
+      expr <- activeExpression
+    } {
+      editor.withRenameIdentifier(expr.value,
+        (idString => {
+
+          IdentParser(idString) match {
+            case Success(ident, _) => {
+
+              val finalIdent = processIdentifier(ident).get
+
+              println("New identifier: " ++ idString)
+
+              if (envOps.containsId(envRoot, finalIdent.toString)) {
+                println("Duplicate identifier")
+              } else {
+
+                expr.value match {
+                  case v @ Variable(_, _) => v.ident = finalIdent
+                  case f @ Filler(_, _, _) => f.ident = finalIdent
+                  case bdry : Filler#Boundary => bdry.interior.bdryIdent = finalIdent
+                }
+
+                // BUG !! - Need to refresh a bunch of stuff so that the new
+                //          identifier gets exported to all the sheets and the
+                //          environment view
+              }
+            }
+            case _ : NoSuccess => println("Identifier parse failed.")
+          }
+        })
+      )
     }
 
   // def replaceInSheets(bindings : Map[Expression, Expression]) = {
