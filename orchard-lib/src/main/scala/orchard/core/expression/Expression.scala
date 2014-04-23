@@ -7,8 +7,6 @@
 
 package orchard.core.expression
 
-List[Cell[Expression]]
-
 sealed trait Expression {
 
   def ident : Identifier
