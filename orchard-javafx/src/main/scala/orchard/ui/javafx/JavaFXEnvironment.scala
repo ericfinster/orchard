@@ -15,6 +15,10 @@ import scalafx.collections._
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeCell
 
+import javafx.event.Event
+import javafx.event.EventHandler
+import javafx.scene.input.MouseEvent
+
 object JavaFXEnvironment extends EnvironmentType[TreeItem[EnvironmentElement]] {
 
   type ChildCollectionType = ObservableBuffer[TreeItem[EnvironmentElement]]
@@ -65,6 +69,16 @@ object JavaFXEnvironment extends EnvironmentType[TreeItem[EnvironmentElement]] {
         setText("")
       }
     } 
+
+    addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler[MouseEvent] {
+      override def handle(ev : MouseEvent) = {
+        if (ev.getClickCount > 1) {
+          onRequestOpen
+        }
+      }
+    })
+
+    def onRequestOpen : Unit = ()
   }
 
 }

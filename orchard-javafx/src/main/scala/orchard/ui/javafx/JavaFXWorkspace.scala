@@ -58,6 +58,7 @@ class JavaFXWorkspace(
   }
 
   def newSheet = newSheet(CardinalComplex(Object(None)))
+  def newSheetWithExpression(ncell : NCell[Expression]) = newSheet(CardinalComplex(ncell map (Some(_))))
 
   def newSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
     val gallery = new WorksheetGallery(seed)
@@ -103,6 +104,15 @@ class JavaFXWorkspace(
       } 
     }
 
+  def selectEnvironmentCell(id : String) : Unit = {
+    envOps.findById(envRoot, id) match {
+      case None => ()
+      case Some(item) => {
+        environmentView.selectionModel().select(item)
+      }
+    }
+  }
+
   val substitutionAccordion = new Accordion
 
   val envOps = JavaFXEnvironment
@@ -112,8 +122,23 @@ class JavaFXWorkspace(
     new TreeView[EnvironmentElement] {
       root = envRoot
       showRoot = false
-      cellFactory = (_ => new JavaFXEnvironment.EnvironmentTreeCell)
+      cellFactory = (_ => new JavaFXEnvironment.EnvironmentTreeCell { thisCell =>
+        override def onRequestOpen = {
+          thisCell.item() match {
+            case ExpressionElement(ncell) => {
+              newSheetWithExpression(ncell)
+            }
+            case _ => ()
+          }
+        }
+      })
     }
+
+  def previewNCell(ncell : NCell[Expression]) = {
+    // Now make a gallery and show it in the preview pane
+    val gallery = new FrameworkGallery(ncell map (Some(_)))
+    editor.setPreviewGallery(gallery)
+  }
 
   environmentView.getSelectionModel.selectedItem onChange {
     val item = environmentView.getSelectionModel.selectedItem()
@@ -122,10 +147,7 @@ class JavaFXWorkspace(
       item.value() match {
         case ExpressionElement(ncell) => {
           activeExpression = Some(ncell)
-
-          // Now make a gallery and show it in the preview pane
-          val gallery = new FrameworkGallery(ncell map (Some(_)))
-          editor.setPreviewGallery(gallery)
+          previewNCell(ncell)
         }
         case _ => activeExpression = None
       }

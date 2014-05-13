@@ -8,8 +8,10 @@
 package orchard.core.editor
 
 import scala.collection.mutable.Map
+import scala.collection.mutable.Set
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.collection.mutable.Buffer
 
 import orchard.core.cell._
 import orchard.core.expression._
@@ -79,6 +81,49 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
   }
 
   val rigidVariables = HashSet.empty[Expression]
+
+  def canBind(rigidVars : Set[Expression], boundExpr : NCell[Expression], bindingExpr : NCell[Expression]) : Boolean = {
+
+    boundExpr.zip(bindingExpr) match {
+      case None => false
+      case Some(zippedTree) => {
+
+        val bindings = HashMap.empty[Expression, Expression]
+
+        try {
+          zippedTree map {
+            case (tgtExpr, srcExpr) => {
+              if (tgtExpr != srcExpr) {
+                if (! tgtExpr.isVariable || rigidVars.contains(tgtExpr)) {
+                  throw new IllegalStateException
+                } else {
+                  val varTgt = tgtExpr.asInstanceOf[Variable]
+
+                  if (bindings.isDefinedAt(tgtExpr)) {
+                    if (bindings(tgtExpr) != srcExpr) {
+                      throw new IllegalStateException
+                    }
+                  }
+
+                  if (varTgt.isThin && ! srcExpr.isThin) {
+                    throw new IllegalStateException
+                  }
+
+                  bindings(tgtExpr) = srcExpr
+                }
+              }
+            }
+          }
+
+          // I think we should be okay ....
+          true
+
+        } catch {
+          case e : IllegalStateException => false
+        }
+      }
+    }
+  }
 
   // BUG!!! - When you make substitutions, you may need to update the dependency lists.  Fix this.
 
@@ -193,7 +238,7 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
     }
   }
 
-  def abstractExpression(filler : Filler) = {
+  def abstractExpression(filler : Filler) : Variable = {
     val bindings : Map[Expression, Expression] = new HashMap
 
     val fillerVariable = Variable(filler.ident, true)
@@ -212,7 +257,81 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
         dependencyMap(boundaryVariable) = dependencyMap(filler.MyBoundary)
       }
     }
+
+    fillerVariable
   }
 
+  def unifyFillers(unifyVariables : Boolean) = {
+
+    val conflicts = Buffer.empty[Expression]
+
+    envOps.toExprSeq(envRoot) foreach {
+      case f : Filler => {
+        if (wksp.envOps.containsId(wksp.envRoot, f.id)) {
+          println("Adding " ++ f.id ++ " to list of unifiable expressions")
+          conflicts += f
+        } else {
+          println("Skipping non-conflicting expression " ++ f.id)
+        }
+      }
+      case _ => ()
+    }
+
+    // Now what?  You keep a size counter and loop through the buffer.  When you succeed in
+    // unifying an element, you remove it from the list.  Continue until the list is empty
+    // or there is no progress.
+
+    var done : Boolean = false
+
+    // while (! done) {
+
+      conflicts foreach (f => {
+        // So I think we need to write a test first to make sure that will happen ....
+
+        // Grab the expressions
+        val substExpr = envOps.getNCell(envOps.findByExpression(envRoot, f).get)
+        val wkspExpr = wksp.envOps.getNCell(wksp.envOps.findById(wksp.envRoot, f.id).get)
+
+        val filler = f.asInstanceOf[Filler]
+        val fillerFramework = new SimpleFramework(substExpr map (Some(_)))
+
+        val fillerVariable = Variable(filler.ident, true)
+        val boundaryVariable = Variable(filler.bdryIdent, filler.bdryIsThin)
+
+        fillerFramework.topCell.item = Some(fillerVariable)
+        fillerFramework(fillerFramework.dimension - 1) foreachCell (cell => {
+          cell.item foreach (i => {
+            if (i == filler.MyBoundary) {
+              cell.item = Some(boundaryVariable)
+            }
+          })
+        })
+
+        val rigidVars = HashSet.empty ++ rigidVariables
+        val finalExpr = fillerFramework.toCell map {
+          case Some(e) => {
+            if (e != fillerVariable && e != boundaryVariable) {
+              rigidVars += e
+            }
+
+            e
+          }
+          case _ => ???
+        }
+
+        if (canBind(if (unifyVariables) rigidVariables else rigidVars, finalExpr, wkspExpr)) {
+          println("Conflict with " ++ f.id ++ " is unifiable. Trying ...")
+
+          val newVar = envOps.getNCell(envOps.findByExpression(envRoot, abstractExpression(filler)).get)
+
+          bindVariable(newVar, wkspExpr)
+        } else {
+          println("Binding would fail for " ++ f.id)
+        }
+      })
+
+
+    // }
+  }
 }
 

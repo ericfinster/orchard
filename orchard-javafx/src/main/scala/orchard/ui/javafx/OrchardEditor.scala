@@ -306,6 +306,8 @@ object OrchardEditor extends PopupManager(new VBox)
                 previewGallery.prev
             } else
               for { gallery <- activeGallery } gallery.prev
+
+            ev.consume
           }
           case KeyCode.RIGHT => {
             if (ev.isControlDown) {
@@ -314,6 +316,8 @@ object OrchardEditor extends PopupManager(new VBox)
                 previewGallery.next
             } else 
               for { gallery <- activeGallery } gallery.next
+
+            ev.consume
           }
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
@@ -332,6 +336,8 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.L => if (ev.isControlDown) onAbstract
           case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
           case KeyCode.R => if (ev.isControlDown) onRename
+          case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
+          case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
   //         // case KeyCode.V => if (ev.isControlDown) onView
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
@@ -435,6 +441,18 @@ object OrchardEditor extends PopupManager(new VBox)
       wksp.cancelActiveSubstitution
     }
 
+  def onGetEnvironmentCell = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      val idDialog = 
+        new SimpleIdentifierDialog(wksp.selectEnvironmentCell) { 
+          heading.text = "Find Cell by Identifier"
+        }
+
+      idDialog.run
+    }
+
   def onBind =
     for {
       wksp <- activeWorkspace
@@ -460,6 +478,15 @@ object OrchardEditor extends PopupManager(new VBox)
         case f @ Filler(_, _, _) => subst.abstractExpression(f)
         case bdry : Filler#Boundary => subst.abstractExpression(bdry.interior)
       }
+    }
+
+  def onUnify(unifyVariables : Boolean) =
+    for {
+      wksp <- activeWorkspace
+      subst <- wksp.activeSubstitution
+    } {
+      println("Unifying substitution with environment expressions ...")
+      subst.unifyFillers(unifyVariables)
     }
 
   def onAssume(thinHint : Boolean) : Unit = for { wksp <- activeWorkspace } { wksp.assumeAtSelection(thinHint) }

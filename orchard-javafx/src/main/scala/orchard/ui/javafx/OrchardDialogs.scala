@@ -61,6 +61,29 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   }
 
+  class SimpleIdentifierDialog(handler : String => Unit) extends CancellableDialog {
+
+    val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center = 
+      new StackPane {
+        padding = Insets(10, 10, 10, 10)
+        content = idField
+      }
+
+    def onShow = {
+      idField.clear
+      idField.requestFocus
+    }
+
+    def onHide = 
+      response match {
+        case DialogOK => handler(idField.text())
+        case DialogCancel => ()
+      }
+
+  }
+  
   class RenameDialog(expr : Expression, handler : String => Unit) extends CancellableDialog {
 
     heading.text = "Rename Expression"
