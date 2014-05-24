@@ -274,6 +274,12 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
           println("Skipping non-conflicting expression " ++ f.id)
         }
       }
+      case v : Variable => {
+        if (wksp.envOps.containsId(wksp.envRoot, v.id) || unifyVariables) {
+          println("Adding " ++ v.id ++ " to the list of unifiable expressions")
+          conflicts += v
+        } 
+      }
       case _ => ()
     }
 
@@ -285,48 +291,58 @@ abstract class Substitution(wksp : Workspace, defn : Definition, shell : NCell[O
 
     // while (! done) {
 
-      conflicts foreach (f => {
+      conflicts foreach (e => {
         // So I think we need to write a test first to make sure that will happen ....
 
         // Grab the expressions
-        val substExpr = envOps.getNCell(envOps.findByExpression(envRoot, f).get)
-        val wkspExpr = wksp.envOps.getNCell(wksp.envOps.findById(wksp.envRoot, f.id).get)
+        val substExpr = envOps.getNCell(envOps.findByExpression(envRoot, e).get)
+        val wkspExpr = wksp.envOps.getNCell(wksp.envOps.findById(wksp.envRoot, e.id).get)
 
-        val filler = f.asInstanceOf[Filler]
-        val fillerFramework = new SimpleFramework(substExpr map (Some(_)))
-
-        val fillerVariable = Variable(filler.ident, true)
-        val boundaryVariable = Variable(filler.bdryIdent, filler.bdryIsThin)
-
-        fillerFramework.topCell.item = Some(fillerVariable)
-        fillerFramework(fillerFramework.dimension - 1) foreachCell (cell => {
-          cell.item foreach (i => {
-            if (i == filler.MyBoundary) {
-              cell.item = Some(boundaryVariable)
-            }
-          })
-        })
-
+        val substFramework = new SimpleFramework(substExpr map (Some(_)))
         val rigidVars = HashSet.empty ++ rigidVariables
-        val finalExpr = fillerFramework.toCell map {
-          case Some(e) => {
-            if (e != fillerVariable && e != boundaryVariable) {
-              rigidVars += e
+
+        e match {
+          case filler : Filler => {
+
+            val fillerVariable = Variable(filler.ident, true)
+            val boundaryVariable = Variable(filler.bdryIdent, filler.bdryIsThin)
+
+            substFramework.topCell.item = Some(fillerVariable)
+            substFramework(substFramework.dimension - 1) foreachCell (cell => {
+              cell.item foreach (i => {
+                if (i == filler.MyBoundary) {
+                  cell.item = Some(boundaryVariable)
+                }
+              })
+            })
+
+            val finalExpr = substFramework.toCell map {
+              case Some(e) => {
+                if (e != fillerVariable && e != boundaryVariable) {
+                  rigidVars += e
+                }
+
+                e
+              }
+              case _ => ???
             }
 
-            e
+            if (canBind(if (unifyVariables) rigidVariables else rigidVars, finalExpr, wkspExpr)) {
+              println("Conflict with " ++ filler.id ++ " is unifiable. Trying ...")
+
+              val newVar = envOps.getNCell(envOps.findByExpression(envRoot, abstractExpression(filler)).get)
+
+              bindVariable(newVar, wkspExpr)
+            } else {
+              println("Binding would fail for " ++ filler.id)
+            }
           }
-          case _ => ???
-        }
-
-        if (canBind(if (unifyVariables) rigidVariables else rigidVars, finalExpr, wkspExpr)) {
-          println("Conflict with " ++ f.id ++ " is unifiable. Trying ...")
-
-          val newVar = envOps.getNCell(envOps.findByExpression(envRoot, abstractExpression(filler)).get)
-
-          bindVariable(newVar, wkspExpr)
-        } else {
-          println("Binding would fail for " ++ f.id)
+          case variable : Variable => {
+            if (canBind(rigidVariables, substExpr, wkspExpr)) {
+              bindVariable(substExpr, wkspExpr)
+            }
+          }
+          case _ => ()
         }
       })
 
