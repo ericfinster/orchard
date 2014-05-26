@@ -19,4 +19,5 @@ trait Editor {
   def withFillerIdentifier(handler : String => Unit) : Unit
 
   def withRenameIdentifier(expr : Expression, handler : String => Unit) : Unit
+
 }
