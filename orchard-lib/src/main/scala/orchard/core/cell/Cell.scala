@@ -49,9 +49,9 @@ object Composite {
 
 object Cell {
 
-  // //============================================================================================
-  // // COERCIONS
-  // //
+  //============================================================================================
+  // COERCIONS
+  //
 
   implicit def toSucc[D <: Nat : HasPred, A](tree : Cell[D, A]) : Cell[S[D#Pred], A] =
       tree.asInstanceOf[Cell[S[D#Pred], A]]
@@ -65,9 +65,9 @@ object Cell {
   implicit def fromSuccVect[D <: Nat : HasPred, A](l : Vector[Cell[S[D#Pred], A]]) : Vector[Cell[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
 
-  // //============================================================================================
-  // // CELL OPERATIONS
-  // //
+  //============================================================================================
+  // CELL OPERATIONS
+  //
 
   implicit class CellOps[D <: Nat, A](cell : Cell[D, A]) {
 
