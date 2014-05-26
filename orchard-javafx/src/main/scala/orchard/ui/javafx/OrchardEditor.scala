@@ -13,10 +13,22 @@ import scalafx.scene.Scene
 import scalafx.scene.layout.VBox
 import scalafx.application.JFXApp
 
+import javafx.scene.{layout => jfxsl}
+
 import orchard.ui.javafx.controls.PopupManager
 
 object OrchardEditor extends PopupManager(new VBox)
-    with JavaFXEditor
+    with JavaFXEditor 
+    with JavaFXMenus
+    with JavaFXDialogs { 
+
+  implicit def pm = this
+
+  val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
+
+  mainVBox.content.addAll(???)
+
+}
 
 object OrchardApp extends JFXApp {
 

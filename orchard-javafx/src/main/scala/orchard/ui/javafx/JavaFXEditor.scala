@@ -7,8 +7,12 @@
 
 package orchard.ui.javafx
 
+import orchard.ui.javafx.controls.PopupManager
+
 trait JavaFXEditor {
-  
+
+  implicit def pm : PopupManager
+
 }
 
 
