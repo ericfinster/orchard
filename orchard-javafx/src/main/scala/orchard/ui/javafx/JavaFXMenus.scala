@@ -11,5 +11,6 @@ import controls._
 
 trait JavaFXMenus { thisEditor : JavaFXEditor =>
 
+  val menuBar = new MenuBar
 
 }
