@@ -11,6 +11,20 @@ import controls._
 
 trait JavaFXMenus { thisEditor : JavaFXEditor =>
 
-  val menuBar = new MenuBar
+  val exitItem = new MenuItem {
+    text = "Exit"
+    onAction = onExit
+  }
+
+  val fileMenu = new Menu {
+    text = "File"
+    items ++= List(exitItem)
+  }
+
+  val menuBar = new MenuBar {
+    menus ++= List(fileMenu)
+  }
+
+  def onExit = ()
 
 }

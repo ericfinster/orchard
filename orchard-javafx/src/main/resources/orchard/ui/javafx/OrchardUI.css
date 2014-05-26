@@ -113,6 +113,9 @@
     app-base: rose-5;
     app-hover: rose-2;
     app-selected: rose-3;
+
+    orchard-background: #f4f4f4;
+
 }
 
 /* JavaFX Control Customizations */
@@ -133,7 +136,7 @@
 }
 
 .titled-pane > *.content {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
@@ -143,7 +146,7 @@
 }
 
 .tab-pane *.tab-header-background {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-effect: null;
     -fx-border-color: -fx-box-border;
     -fx-border-width: 0 0 1 0;
@@ -169,7 +172,7 @@
 }
 
 .tab {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-border-color: -fx-box-border;
     -fx-border-width: 1 1 0 1;
     -fx-border-radius: 4 4 0 0;
@@ -248,7 +251,7 @@
 /* Orchard custom classes */
 
 .orch-pane {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
 }
 
 .orch-btn {
@@ -266,7 +269,7 @@
 }
 
 .orch-menu-item {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-padding: 5pt;
 }
 
@@ -281,25 +284,25 @@
 }
 
 .orch-menu {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-background-radius: 4pt;
     -fx-padding: 2pt;
     -fx-effect: dropshadow( one-pass-box , black , 7 , 0.0 , 0 , 0 );
 }
 
 .orch-menu-bar {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-padding: 2;
-    -fx-border-color:gainsboro;
+    -fx-border-color: gainsboro;
     -fx-border-width: 0 0 6 0;
 }
 
 .orchard-editor {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
 }
 
 .orchard-dialog {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-background-radius: 4pt;
     -fx-padding: 2pt;
     -fx-effect: dropshadow( one-pass-box , black , 7 , 0.0 , 0 , 0 );
@@ -314,7 +317,7 @@
 }
 
 .orch-spinner-gallery {
-    -fx-background-color: -fx-background;
+    -fx-background-color: orchard-background;
     -fx-padding: 10;
 }
 
@@ -336,7 +339,7 @@
     -fx-border-radius: 4pt;
 }
 
-.orch-cell-polarized { -fx-background-color: -fx-background; }
+.orch-cell-polarized { -fx-background-color: orchard-background; }
 .orch-cell-exposed-nook { -fx-background-color: red; }
 
 .orch-cell-empty { -fx-background-color: empty-base }
