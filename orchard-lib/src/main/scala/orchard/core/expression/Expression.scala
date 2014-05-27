@@ -17,26 +17,27 @@ sealed trait Expression {
 
 }
 
-case class Variable(var ident : Identifier, var isThin : Boolean) extends Expression {
+case class Variable(val shell : Shell, val idx : Int, val ident : Identifier, val isThin : Boolean) extends Expression {
 
   def styleString = if (isThin) "var-thin" else "var"
 
 }
 
-case class Filler(var ident : Identifier, var bdryIdent : Identifier, var bdryIsThin : Boolean) extends Expression { thisFiller =>
+case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { thisFiller =>
 
+  val ident = Identifier(LiteralToken("def-") :: bdryIdent.tokens)
   def isThin : Boolean = true
   def styleString = "filler"
 
-  trait Boundary extends Expression {
+  trait BoundaryExpr extends Expression {
 
-    def ident = bdryIdent
-    def interior = thisFiller
-    def isThin = bdryIsThin  // This can be changed by substitutions
+    val ident = bdryIdent
+    val interior = thisFiller
+    def isThin = nook.isThinBoundary
     def styleString = if (isThin) "bdry-thin" else "bdry"
 
   }
 
-  case object MyBoundary extends Boundary
+  case object Boundary extends BoundaryExpr
 
 }
