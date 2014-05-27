@@ -12,26 +12,6 @@ import scala.collection.mutable.ListBuffer
 import orchard.core.cell._
 import orchard.core.util._
 
-sealed trait Polarity[+A]
-case object Positive extends Polarity[Nothing] { override def toString = "+" }
-case object Negative extends Polarity[Nothing] { override def toString = "-" }
-case class Neutral[A](value : A) extends Polarity[A] { override def toString = value.toString }
-
-object Polarity {
-
-  implicit class PolarityOps[A](p : Polarity[A]) {
-
-    def map[B](f : A => B) : Polarity[B] = 
-      p match {
-        case Positive => Positive
-        case Negative => Negative
-        case Neutral(n) => Neutral(f(n))
-      }
-
-  }
-
-}
-
 trait CardinalComplex[A] { thisComplex : MutableComplex[Polarity[A]] =>
 
   override type CellType <: CardinalCell

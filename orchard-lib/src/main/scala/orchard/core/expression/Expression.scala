@@ -17,7 +17,7 @@ sealed trait Expression {
 
 }
 
-case class Variable(val shell : Shell, val idx : Int, val ident : Identifier, val isThin : Boolean) extends Expression {
+case class Variable(val shell : Shell, val index : Int, val ident : Identifier, val isThin : Boolean) extends Expression {
 
   def styleString = if (isThin) "var-thin" else "var"
 
