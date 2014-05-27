@@ -20,6 +20,10 @@ class SimpleFramework(seed : NCell[Option[Expression]])
   def extract(cell : CellType) = new SimpleFramework(cell.skeleton map (_.item))
   def emptyItem : Option[Expression] = None
 
+  def stabilityLevel : Option[Int] = None
+  def invertibilityLevel : Option[Int] = None
+  def unicityLevel : Option[Int] = None
+
   class SimpleFrameworkCell(var item : Option[Expression])
       extends AbstractMutableCell
       with FrameworkCell {

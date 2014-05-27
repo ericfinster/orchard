@@ -25,6 +25,4 @@ trait JavaFXMenus { thisEditor : JavaFXEditor =>
     menus ++= List(fileMenu)
   }
 
-  def onExit = ()
-
 }

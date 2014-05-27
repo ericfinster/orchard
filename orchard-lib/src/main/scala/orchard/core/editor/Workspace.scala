@@ -19,10 +19,14 @@ import orchard.core.expression._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait Workspace extends CheckableEnvironment with HasEnvironment {
+trait Workspace extends HasEnvironment { thisWorkspace =>
 
   def name : String
   def editor : Editor
+
+  def stabilityLevel : Option[Int]
+  def invertibilityLevel : Option[Int]
+  def unicityLevel : Option[Int]
 
   override def toString = name
 
@@ -363,17 +367,19 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
   // }
 
   class Worksheet(seed : NCell[Polarity[Option[Expression]]])
-      extends AbstractWorksheet(seed)
-      with CheckableFramework[Polarity[Option[Expression]]] {
+      extends AbstractWorksheet(seed) {
 
     type CellType = WorksheetCell
+
+    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
     def newCell(item : Polarity[Option[Expression]]) = new WorksheetCell(item)
     def extract(cell : CellType) = new Worksheet(cell.skeleton map (_.item))
 
     class WorksheetCell(itm : Polarity[Option[Expression]])
-        extends AbstractWorksheetCell
-        with CheckableCell {
+        extends AbstractWorksheetCell {
 
       protected var myItem = itm
 
@@ -397,8 +403,7 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
 
   class WorkspaceFramework(seed : NCell[Option[Expression]])
       extends AbstractMutableComplex[Option[Expression]](seed)
-      with Framework[Option[Expression]]
-      with CheckableFramework[Option[Expression]] {
+      with Framework[Option[Expression]] {
 
     type CellType = WorkspaceFrameworkCell
 
@@ -406,10 +411,13 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
     def extract(cell : CellType) = new WorkspaceFramework(cell.skeleton map (_.item))
     def emptyItem : Option[Expression] = None
 
+    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
+
     class WorkspaceFrameworkCell(var item : Option[Expression])
         extends AbstractMutableCell
-        with FrameworkCell
-        with CheckableCell {
+        with FrameworkCell {
 
       def expression : Option[Expression] = item
     }

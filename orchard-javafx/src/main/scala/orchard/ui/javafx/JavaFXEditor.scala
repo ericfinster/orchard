@@ -13,6 +13,12 @@ trait JavaFXEditor {
 
   implicit def pm : PopupManager
 
+  def consoleMessage(str : String) : Unit
+  def consoleError(str : String) : Unit
+
+  def onExit = {
+  }
+
 }
 
 

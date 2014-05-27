@@ -19,6 +19,10 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
   def emptyItem : A
   def extract(cell : CellType) : Framework[A] 
 
+  def stabilityLevel : Option[Int]
+  def invertibilityLevel : Option[Int]
+  def unicityLevel : Option[Int]
+
   trait FrameworkCell extends MutableCell { thisCell : CellType =>
 
     def expression : Option[Expression]
@@ -43,7 +47,6 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
         case None => Vector.empty
         case Some(srcs) => srcs filter (_.isFull)
       }
-
 
     def fullFaces : Vector[CellType] =
       target match {
@@ -178,6 +181,30 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
 
     def isShell : Boolean = isEmpty && hasCompleteShell
     def isComplete : Boolean = isFull && hasCompleteShell
+
+    def isUnicityFillable : Boolean =
+      unicityLevel match {
+        case None => false
+        case Some(l) => isShell && (dimension > l)
+      }
+
+    def isFillable : Boolean =
+      if (isUnicityFillable) true else isExposedNook
+
+    // For an exposed nook, determine if the filler face is thin
+    def isThinBoundary : Boolean = {
+      val thinByInvertibility =
+        invertibilityLevel match {
+          case None => false
+          case Some(l) => (dimension - 1) > l
+        }
+
+      if (isOutNook) {
+        (true /: (sources.get map (_.isThin))) (_&&_) || thinByInvertibility
+      } else {
+        target.get.isThin || thinByInvertibility
+      }
+    }
 
   }
 }
