@@ -5,12 +5,15 @@
   * @version 0.1 
   */
 
-package orchard.core.editor
+package orchard.core.expression
 
-trait Module extends {
+import scala.collection.mutable.Buffer
 
-  def imports : Seq[Module]
-  def entries : Seq[SectionEntry]
+trait Module extends EntryContainer { thisModule : Scope =>
+
+  type ModuleType <: Module
+
+  def imports : Buffer[ModuleType]
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]

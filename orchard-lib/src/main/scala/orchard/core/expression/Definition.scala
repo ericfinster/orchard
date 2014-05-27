@@ -5,8 +5,8 @@
   * @version 0.1 
   */
 
-package orchard.core.editor
+package orchard.core.expression
 
-trait Definition extends SectionEntry {
+trait Definition extends SectionEntry { thisDefinition : Scope =>
 
 }

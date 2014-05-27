@@ -7,21 +7,27 @@
 
 package orchard.ui.javafx
 
+import scala.collection.mutable.Buffer
+
 import scalafx.Includes._
+import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
-import orchard.core.editor._
+import orchard.core.expression._
 
 class JavaFXModule(
   val name : String,
   val stabilityLevel : Option[Int], 
   val invertibilityLevel : Option[Int],
   val unicityLevel : Option[Int]
-) extends Module {
+) extends JavaFXScope with Module {
 
-  def imports : Seq[Module] = ??? 
-  def entries : Seq[SectionEntry] = ???
+  type ModuleType = JavaFXModule
+  type SectionEntryType = JavaFXSectionEntry
+
+  def imports : Buffer[JavaFXModule] = ??? 
+  def entries : Buffer[JavaFXSectionEntry] = ???
 
   //============================================================================================
   // UI
@@ -30,14 +36,26 @@ class JavaFXModule(
   val moduleTreeView = new TreeView
   val importTreeView = new TreeView
 
-  val modulePane = new TitledPane {
-    text = name
-    content = moduleTreeView
+  val modulePane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    content = new TitledPane {
+      text = name
+      content = moduleTreeView
+      collapsible = false
+    }
+
+    styleClass += "orch-pane"
   }
 
-  val importsPane = new TitledPane {
-    text = "Imports"
-    content = importTreeView
+  val importsPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    content = new TitledPane {
+      text = "Imports"
+      content = importTreeView
+      collapsible = false
+    }
+
+    styleClass += "orch-pane"
   }
 
   val workspacePane = new StackPane {
@@ -45,11 +63,14 @@ class JavaFXModule(
   }
 
   val leftVerticalSplit = new SplitPane {
+    orientation = Orientation.VERTICAL
     items ++= List(modulePane, importsPane)
   }
 
   val horizontalSplit = new SplitPane {
+    orientation = Orientation.HORIZONTAL
     items ++= List(leftVerticalSplit, workspacePane)
+    dividerPositions = 0.1f
   }
 
   val ui = horizontalSplit

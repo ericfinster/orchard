@@ -15,21 +15,21 @@ import scalafx.scene.control._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
-  val upperStack = new StackPane
+  val noModuleLabel = new Label("No Module Loaded")
+
+  val moduleDisplayPane = new StackPane {
+    content = noModuleLabel
+    styleClass += "orch-pane"
+  }
 
   val console = new TextArea {
     editable = false
   }
 
-  def consoleMessage(str : String) : Unit = 
-    console.text = console.text() ++ "INFO: " ++ str ++ "\n"
-
-  def consoleError(str : String) : Unit = 
-    console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
-
   val verticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items ++= List(upperStack, console)
+    items ++= List(moduleDisplayPane, console)
+    dividerPositions = 0.8f
   }
 
   val ui = verticalSplit

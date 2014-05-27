@@ -5,15 +5,16 @@
   * @version 0.1 
   */
 
-package orchard.core.editor
+package orchard.core.expression
 
 import orchard.core.cell._
 import orchard.core.complex._
-import orchard.core.expression._
 
-trait SectionEntry {
+trait SectionEntry { thisEntry : Scope =>
 
-  def module : Module
+  type ModuleType <: Module
+
+  def module : ModuleType
 
   class Worksheet(seed : NCell[Polarity[Option[Expression]]])
       extends AbstractWorksheet(seed) {

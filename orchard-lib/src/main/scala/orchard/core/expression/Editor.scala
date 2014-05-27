@@ -5,9 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.core.editor
-
-import orchard.core.expression._
+package orchard.core.expression
 
 trait Editor {
 
