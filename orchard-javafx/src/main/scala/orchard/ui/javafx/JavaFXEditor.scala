@@ -7,6 +7,8 @@
 
 package orchard.ui.javafx
 
+import scalafx.Includes._
+
 import orchard.ui.javafx.controls.PopupManager
 
 trait JavaFXEditor {
@@ -16,8 +18,7 @@ trait JavaFXEditor {
   def consoleMessage(str : String) : Unit
   def consoleError(str : String) : Unit
 
-  def onExit = {
-  }
+  def onExit = scalafx.application.Platform.exit
 
 }
 

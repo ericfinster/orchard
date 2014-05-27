@@ -21,7 +21,6 @@ import orchard.ui.javafx.controls.PopupManager
 object OrchardEditor extends PopupManager(new VBox)
     with JavaFXEditor 
     with JavaFXUI
-    with JavaFXEvents
     with JavaFXMenus
     with JavaFXDialogs { 
 
