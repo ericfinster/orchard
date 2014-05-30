@@ -72,12 +72,21 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
           // case KeyCode.W => if (ev.isControlDown) onWebView
           // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
-          // case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
+          case KeyCode.Z => if (ev.isControlDown) onDebug
           case _ => ()
         }
       }
     })
 
+
+  def onDebug : Unit =
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+      cell <- worksheet.selectionBase
+    } {
+      consoleMessage("Cell is: " ++ cell.toString)
+    }
 
   def onExit : Unit = 
     scalafx.application.Platform.exit
