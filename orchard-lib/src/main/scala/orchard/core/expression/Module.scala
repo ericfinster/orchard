@@ -14,7 +14,12 @@ trait Module extends ModuleEntry {
 
   type EntryType <: ModuleEntry
 
+  def name : String
   def entries : Seq[EntryType]
+
+  def stabilityLevel : Option[Int]
+  def invertibilityLevel : Option[Int]
+  def unicityLevel : Option[Int]
 
   //============================================================================================
   // WORKSHEETS
@@ -56,9 +61,9 @@ trait Module extends ModuleEntry {
 
     type CellType = ModuleFrameworkCell
 
-    def stabilityLevel : Option[Int] = module.stabilityLevel
-    def invertibilityLevel : Option[Int] = module.invertibilityLevel
-    def unicityLevel : Option[Int] = module.unicityLevel
+    def stabilityLevel : Option[Int] = None // module.stabilityLevel
+    def invertibilityLevel : Option[Int] = None // module.invertibilityLevel
+    def unicityLevel : Option[Int] = None // module.unicityLevel
 
     def newCell(item : Option[Expression]) =
       new ModuleFrameworkCell(item)

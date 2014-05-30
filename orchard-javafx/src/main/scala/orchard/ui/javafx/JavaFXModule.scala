@@ -9,10 +9,17 @@ package orchard.ui.javafx
 
 import orchard.core.expression._
 
-class JavaFXModule extends JavaFXModuleEntry with Module {
+class JavaFXModule(
+  val name : String,
+  val stabilityLevel : Option[Int],
+  val invertibilityLevel : Option[Int],
+  val unicityLevel : Option[Int]
+) extends JavaFXModuleEntry with Module {
 
   type EntryType = JavaFXModuleEntry
 
-  def entries : Seq[JavaFXModuleEntry] = ???
+  def entries : Seq[JavaFXModuleEntry] =
+    treeItem.children map (_.getValue)
+
 
 }

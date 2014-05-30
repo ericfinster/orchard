@@ -15,6 +15,12 @@ import scalafx.scene.control._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
+  val importRoot = new TreeItem[JavaFXModuleEntry]
+  val importView = new TreeView {
+    root = importRoot
+    showRoot = false
+  }
+
   val noModuleLabel = new Label("No Module Loaded")
 
   val moduleDisplayPane = new StackPane {

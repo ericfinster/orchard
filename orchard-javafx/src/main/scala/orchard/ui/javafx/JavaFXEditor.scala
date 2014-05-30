@@ -39,14 +39,14 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // MODULE HANDLING
   //
 
-  // private var currentModule : Option[JavaFXModule] = None
+  private var currentModule : Option[JavaFXModule] = None
 
-  // def activeModule : Option[JavaFXModule] = currentModule
-  // def activeModule_=(mod : JavaFXModule) = {
-  //   currentModule = Some(mod)
+  def activeModule : Option[JavaFXModule] = currentModule
+  def activeModule_=(mod : JavaFXModule) = {
+    currentModule = Some(mod)
   //   moduleDisplayPane.content = mod.ui
-  //   consoleMessage("Set active module to: " ++ mod.name)
-  // }
+    consoleMessage("Set active module to: " ++ mod.name)
+  }
 
 }
 
