@@ -14,7 +14,6 @@ trait Module extends ModuleEntry {
 
   type EntryType <: ModuleEntry
 
-  def name : String
   def entries : Seq[EntryType]
 
   def stabilityLevel : Option[Int]

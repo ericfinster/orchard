@@ -9,4 +9,6 @@ package orchard.core.expression
 
 trait ModuleEntry {
 
+  def name : String
+
 }
