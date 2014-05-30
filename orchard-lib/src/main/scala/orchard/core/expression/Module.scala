@@ -69,7 +69,7 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
                 } {
 
                   // Make sure the identifier is unique
-                  if (totalParameters contains ((p : ModuleVariable) => p.name == finalIdent.toString)) {
+                  if (totalParameters exists (_.name == finalIdent.toString)) {
                     editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
                   } else {
 
@@ -96,6 +96,55 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
       }
     }
 
+
+  def fillAtSelection = 
+    for {
+      worksheet <- activeWorksheet
+      selectedCell <- worksheet.selectionBase
+    } {
+      if (selectedCell.isUnicityFillable) {
+
+        ???
+
+      } else if (selectedCell.isExposedNook) {
+
+        val nook = new Nook(new ModuleFramework(selectedCell.neutralNCell))
+        val totalParameters = parameters ++ localParameters
+
+        editor.withFillerIdentifier(
+          identString => {
+
+            IdentParser(identString) match {
+              case Success(ident, _) => {
+
+                for {
+                  finalIdent <- processIdentifier(ident, totalParameters)
+                } {
+
+                  // Make sure the identifier is unique
+                  if (totalParameters exists (_.name == finalIdent.toString)) {
+                    editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
+                  } else {
+
+                    val boundaryCell = selectedCell.boundaryFace
+                    val filler = Filler(nook, finalIdent)
+
+                    worksheet.deselectAll
+                    selectedCell.item = Neutral(Some(filler))
+                    boundaryCell.item = Neutral(Some(filler.Boundary))
+                    worksheet.selectAsBase(selectedCell)
+
+                  }
+
+                }
+              }
+              case _ : NoSuccess => println("Compose parse failed.")
+            }
+          })
+      } else {
+        editor.consoleError("Selection is not fillable.")
+      }
+    }
   
   //============================================================================================
   // WORKSHEETS

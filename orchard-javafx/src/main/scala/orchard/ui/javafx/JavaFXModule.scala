@@ -37,7 +37,7 @@ class JavaFXModule(
   def appendParameter(ve : Variable) : Unit = {
     val newVar = new JavaFXModuleVariable(Some(thisModule), ve)
     treeItem.children += newVar.treeItem
-    //moduleView.selectionModel().select(newVar.treeItem)
+    editor.moduleView.selectionModel().select(newVar.treeItem)
   }
 
   def appendDefinition(fillerExpr : Filler) : Unit = ()

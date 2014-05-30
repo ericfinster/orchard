@@ -37,6 +37,9 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def consoleError(str : String) : Unit = 
     console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
 
+  def consoleDebug(str : String) : Unit =
+    console.text = console.text() ++ "DEBUG: " ++ str ++ "\n"
+
   //============================================================================================
   // IO CALLBACK ROUTINES
   //
@@ -58,6 +61,12 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     varDialog.run
   }
 
+  def withFillerIdentifier(handler : String => Unit) : Unit = {
+    val idDialog = new SimpleIdentifierDialog(handler)
+    idDialog.setHeading("Fill Nook")
+    idDialog.run
+  }
+  
 
   //============================================================================================
   // MODULE HANDLING
@@ -97,7 +106,11 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
       item.value() match {
         case mod : JavaFXModule => activeModule = mod
-        case _ => ()
+        case _ => 
+          for { 
+            pMod <- entry.parent 
+            mod <- activeModule 
+          } { if (pMod != mod) activeModule = pMod }
       }
 
     }
