@@ -48,7 +48,7 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     modulePane.text = mod.name
     moduleAnchor.content = modulePane
     parameterAnchor.content = parameterPane
-  //   moduleDisplayPane.content = mod.ui
+    workspacePane.content = mod.worksheetTabPane
     consoleMessage("Set active module to: " ++ mod.name)
   }
 

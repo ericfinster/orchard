@@ -7,6 +7,8 @@
 
 package orchard.ui.javafx
 
+import scala.collection.mutable.Buffer
+
 import orchard.core.expression._
 
 class JavaFXModule(
@@ -14,12 +16,13 @@ class JavaFXModule(
   val stabilityLevel : Option[Int],
   val invertibilityLevel : Option[Int],
   val unicityLevel : Option[Int]
-) extends JavaFXModuleEntry with Module {
+) extends JavaFXModuleEntry with JavaFXModuleUI with Module {
 
   type EntryType = JavaFXModuleEntry
 
   def entries : Seq[JavaFXModuleEntry] =
     treeItem.children map (_.getValue)
 
+  def worksheets : Buffer[Worksheet] = Buffer.empty
 
 }

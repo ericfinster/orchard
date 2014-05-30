@@ -20,6 +20,43 @@ import orchard.core.expression._
 
 trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
+  val worksheetTabPane = new TabPane {
+    styleClass += "orch-pane"
+  }
+
+  //============================================================================================
+  // WORKSHEET MANIPULATION
+  //
+
+  var sheetCount : Int = 1
+
+  def newSheet : Unit = newSheet(CardinalComplex(Object(None)))
+  // def newSheetWithExpression(ncell : NCell[Expression]) = newSheet(CardinalComplex(ncell map (Some(_))))
+
+  def newSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
+    val gallery = new WorksheetGallery(seed)
+
+    val tab = new Tab {
+      text = "Sheet " ++ sheetCount.toString
+      content = gallery
+
+      onClosed = () => {
+        worksheets -= gallery.complex
+      }
+
+      // onSelectionChanged = () => {
+      //   if (selected())
+      //     activeGallery = Some(gallery)
+      // }
+    }
+
+    worksheetTabPane += tab
+    worksheetTabPane.selectionModel().select(tab)
+    worksheets += gallery.complex
+    sheetCount += 1
+    gallery.refreshAll
+  }
+
   //============================================================================================
   // WORKSHEET PANEL IMPLEMENTATION
   //

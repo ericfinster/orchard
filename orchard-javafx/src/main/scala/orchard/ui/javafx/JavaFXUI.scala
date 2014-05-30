@@ -77,7 +77,8 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     dividerPositions = 0.3f
   }
 
-  val workspacePane = new TabPane {
+  val workspacePane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
     styleClass += "orch-pane"
   }
 

@@ -195,6 +195,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
           val newModule = new JavaFXModule(name, stabilityLevel, invertibilityLevel, unicityLevel) 
           consoleMessage("Created new module named: " ++ name)
           activeModule = newModule
+          newModule.newSheet
         }
         case DialogCancel => ()
       }
