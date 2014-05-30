@@ -5,12 +5,11 @@
   * @version 0.1 
   */
 
-package orchard.core.editor
+package orchard.core.expression
 
 import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
-import orchard.core.expression._
 
 abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
     extends AbstractMutableComplex[Polarity[Option[Expression]]](seed)

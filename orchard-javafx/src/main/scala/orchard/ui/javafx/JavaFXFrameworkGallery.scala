@@ -12,7 +12,6 @@ import scalafx.scene.layout.Region
 
 import orchard.core.ui._
 import orchard.core.cell._
-import orchard.core.editor._
 import orchard.core.complex._
 import orchard.core.expression._
 
