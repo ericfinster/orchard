@@ -13,11 +13,14 @@ import scalafx.scene.layout._
 
 import controls._
 
+import orchard.core.expression.Editor
+
 abstract class JavaFXEditor extends PopupManager(new VBox) 
     with JavaFXEvents 
     with JavaFXDialogs
     with JavaFXUI
-    with JavaFXMenus {
+    with JavaFXMenus 
+    with Editor {
 
   implicit def pm : PopupManager = this
 
@@ -34,24 +37,72 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def consoleError(str : String) : Unit = 
     console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
 
+  //============================================================================================
+  // IO CALLBACK ROUTINES
+  //
+
+
+  def withAssumptionInfo(thinHint : Boolean,
+                         forceThin : Boolean,
+                         handler : (String, Boolean) => Unit) : Unit = {
+
+    val varDialog = new VariableDialog(handler)
+
+    varDialog.thinCheckBox.selected = thinHint
+
+    if (forceThin) {
+      varDialog.thinCheckBox.selected = true
+      varDialog.thinCheckBox.disable = true
+    }
+
+    varDialog.run
+  }
+
 
   //============================================================================================
   // MODULE HANDLING
   //
 
-  private var currentModule : Option[JavaFXModule] = None
+  private var myTopLevelModule : Option[JavaFXModule] = None
 
-  def activeModule : Option[JavaFXModule] = currentModule
+  def topLevelModule : Option[JavaFXModule] = myTopLevelModule
+  def topLevelModule_=(mod : JavaFXModule) = {
+    myTopLevelModule = Some(mod)
+    moduleView.root = mod.treeItem
+    moduleAnchor.content = modulePane
+    parameterAnchor.content = parameterPane
+    moduleView.selectionModel().select(mod.treeItem)
+  }
+
+  private var myActiveModule : Option[JavaFXModule] = None
+
+  def activeModule : Option[JavaFXModule] = myActiveModule
   def activeModule_=(mod : JavaFXModule) = {
-    currentModule = Some(mod)
-    moduleAnchor.content = mod.modulePane
-    parameterAnchor.content = mod.parameterPane
+    myActiveModule = Some(mod)
     workspacePane.content = mod.worksheetTabPane
     consoleMessage("Set active module to: " ++ mod.name)
   }
 
+  def displayParameters(entry : JavaFXModuleEntry) : Unit = {
+    parameterView.items().clear
+    parameterView.items() ++= (entry.parameters map (_.asInstanceOf[JavaFXModuleVariable]))
+  }
+
+  moduleView.selectionModel().selectedItem onChange {
+    val item = moduleView.selectionModel().selectedItem()
+
+    if (item != null) {
+      val entry = item.value()
+      displayParameters(entry)
+
+      item.value() match {
+        case mod : JavaFXModule => activeModule = mod
+        case _ => ()
+      }
+
+    }
+  }
+
 }
-
-
 
 

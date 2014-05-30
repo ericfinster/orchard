@@ -24,38 +24,6 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
     styleClass += "orch-pane"
   }
 
-  val parameterView = new ListView[JavaFXModuleEntry] {
-    cellFactory = (_ => new ModuleListCell)
-  }
-
-  val parameterPane = new TitledPane {
-    text = "Parameters"
-    content = parameterView
-    collapsible = false
-  }
-
-  AnchorPane.setTopAnchor(parameterPane, 10)
-  AnchorPane.setRightAnchor(parameterPane, 10)
-  AnchorPane.setBottomAnchor(parameterPane, 10)
-  AnchorPane.setLeftAnchor(parameterPane, 10)
-
-  val moduleView = new TreeView[JavaFXModuleEntry] {
-    root = treeItem
-    showRoot = false
-    cellFactory = (_ => new ModuleTreeCell)
-  }
-
-  val modulePane = new TitledPane {
-      text = name
-      collapsible = false
-      content = moduleView
-    }
-
-  AnchorPane.setTopAnchor(modulePane, 10)
-  AnchorPane.setRightAnchor(modulePane, 10)
-  AnchorPane.setBottomAnchor(modulePane, 10)
-  AnchorPane.setLeftAnchor(modulePane, 10)
-
   //============================================================================================
   // WORKSHEET MANIPULATION
   //
@@ -67,7 +35,13 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
   // def newSheetWithExpression(ncell : NCell[Expression]) = newSheet(CardinalComplex(ncell map (Some(_))))
 
   def newSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
-    val gallery = new WorksheetGallery(seed)
+    val worksheet = new Worksheet(seed)
+    worksheets += worksheet
+    displayWorksheet(worksheet)
+  }
+
+  def displayWorksheet(worksheet : Worksheet) : Unit = {
+    val gallery = new WorksheetGallery(worksheet)
 
     val tab = new Tab {
       text = "Sheet " ++ sheetCount.toString
@@ -85,7 +59,6 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
     worksheetTabPane += tab
     worksheetTabPane.selectionModel().select(tab)
-    worksheets += gallery.complex
     sheetCount += 1
     gallery.refreshAll
   }
@@ -134,7 +107,7 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
       override def onEventEmitted(ev : CellEvent) = {
         ev match {
-          case complex.ChangeEvents.ItemChangedEvent(oldItem) => { renderCell ;  super.onEventEmitted(ev) }
+          case complex.ChangeEvents.ItemChangedEvent(oldItem) => { renderCell ; super.onEventEmitted(ev) }
           case CellEntered(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered) }
           case CellExited(cell) => if (owner.isPolarized) () else { owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered) }
           case _ => super.onEventEmitted(ev)

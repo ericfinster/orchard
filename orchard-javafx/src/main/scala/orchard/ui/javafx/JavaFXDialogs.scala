@@ -16,6 +16,57 @@ import controls._
 
 trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
+  class SimpleIdentifierDialog(handler : String => Unit) extends CancellableDialog {
+
+    val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
+
+    borderPane.center =
+      new VBox {
+        padding = Insets(10,10,10,10)
+        spacing = 10
+        content = List(idField)
+      }
+
+    def onShow = {
+      // idField.clear
+      idField.requestFocus
+    }
+
+    def onHide =
+      response match {
+        case DialogOK => handler(idField.text())
+        case DialogCancel => ()
+      }
+
+  }
+
+  class VariableDialog(handler : (String, Boolean) => Unit) extends CancellableDialog {
+
+    setHeading("Assume Variable")
+
+    val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
+    val thinCheckBox = new CheckBox("Thin") { allowIndeterminate = false }
+
+    borderPane.center =
+      new VBox {
+        padding = Insets(10,10,10,10)
+        spacing = 10
+        content = List(/*dependenciesList,*/ idField, thinCheckBox)
+      }
+
+    def onShow = {
+      // idField.clear
+      idField.requestFocus
+    }
+
+    def onHide =
+      response match {
+        case DialogOK => handler(idField.text(), thinCheckBox.selected())
+        case DialogCancel => ()
+      }
+
+  }
+
   object NewModuleDialog extends CancellableDialog {
 
     heading.text = "New Module"
@@ -192,9 +243,9 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
             } else None
 
 
-          val newModule = new JavaFXModule(name, thisEditor, stabilityLevel, invertibilityLevel, unicityLevel) 
+          val newModule = new JavaFXModule(name, None, thisEditor, stabilityLevel, invertibilityLevel, unicityLevel) 
           consoleMessage("Created new module named: " ++ name)
-          activeModule = newModule
+          topLevelModule = newModule
           newModule.newSheet
         }
         case DialogCancel => ()

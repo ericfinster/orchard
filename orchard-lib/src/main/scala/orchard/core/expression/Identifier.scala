@@ -22,7 +22,7 @@ case class Identifier(val tokens : List[IdentToken]) {
 
 sealed trait IdentToken { def value : String ; def rawStr : String }
 case class LiteralToken(val lit : String) extends IdentToken { def value = lit ; def rawStr = lit }
-case class ExpressionToken(var expr : Expression) extends IdentToken { def value = expr.ident.toString ; def rawStr = "${" ++ expr.ident.rawStr ++ "}" }
+case class ExpressionToken(val expr : Expression) extends IdentToken { def value = expr.ident.toString ; def rawStr = "${" ++ expr.ident.rawStr ++ "}" }
 
 object Identifier {
 

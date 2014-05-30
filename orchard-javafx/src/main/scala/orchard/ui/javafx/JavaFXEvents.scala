@@ -48,7 +48,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           }
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
-          // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
+          case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
           case KeyCode.T => if (ev.isControlDown) onNewSheet
@@ -71,7 +71,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.X => if (ev.isControlDown) onExtra
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
           // case KeyCode.W => if (ev.isControlDown) onWebView
-          // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
+          case KeyCode.M => if (ev.isControlDown) onNewSubmodule
           case KeyCode.Z => if (ev.isControlDown) onDebug
           case _ => ()
         }
@@ -93,6 +93,16 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   def onNewModule : Unit = 
     NewModuleDialog.run
+
+  def onNewSubmodule : Unit =
+    for {
+      mod <- activeModule
+    } {
+      def idHandler(name : String) = mod.appendSubmodule(name)
+      val idDialog = new SimpleIdentifierDialog(idHandler)
+      idDialog.setHeading("New Submodule")
+      idDialog.run
+    }
 
   def onNewSheet : Unit =
     for {
@@ -117,4 +127,10 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       worksheet.drop
     }
 
+  def onAssume(thinHint : Boolean) : Unit = 
+    for {
+      mod <- activeModule
+    } {
+      mod.assumeAtSelection(thinHint)
+    }
 }

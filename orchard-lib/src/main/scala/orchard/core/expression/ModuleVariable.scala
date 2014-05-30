@@ -7,6 +7,10 @@
 
 package orchard.core.expression
 
-trait ModuleVariable extends ModuleEntry {
+trait ModuleVariable extends ModuleEntry { thisVariable : ModuleEnvironment#ModuleVariable =>
+
+  def varExpr : Variable
+
+  override def name = varExpr.id
 
 }

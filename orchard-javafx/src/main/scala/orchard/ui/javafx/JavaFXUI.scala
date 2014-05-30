@@ -48,6 +48,22 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   AnchorPane.setBottomAnchor(noModulePane, 10)
   AnchorPane.setLeftAnchor(noModulePane, 10)
 
+  val moduleView = new TreeView[JavaFXModuleEntry] {
+    showRoot = true
+    cellFactory = (_ => new ModuleTreeCell)
+  }
+
+  val modulePane = new TitledPane {
+    text = "Current Module"
+    collapsible = false
+    content = moduleView
+  }
+
+  AnchorPane.setTopAnchor(modulePane, 10)
+  AnchorPane.setRightAnchor(modulePane, 10)
+  AnchorPane.setBottomAnchor(modulePane, 10)
+  AnchorPane.setLeftAnchor(modulePane, 10)
+
   val moduleAnchor = new AnchorPane {
     content = noModulePane
     styleClass += "orch-pane"
@@ -73,6 +89,21 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   AnchorPane.setRightAnchor(noParametersPane, 10)
   AnchorPane.setBottomAnchor(noParametersPane, 10)
   AnchorPane.setLeftAnchor(noParametersPane, 10)
+
+  val parameterView = new ListView[JavaFXModuleEntry] {
+    cellFactory = (_ => new ModuleListCell)
+  }
+
+  val parameterPane = new TitledPane {
+    text = "Parameters"
+    content = parameterView
+    collapsible = false
+  }
+
+  AnchorPane.setTopAnchor(parameterPane, 10)
+  AnchorPane.setRightAnchor(parameterPane, 10)
+  AnchorPane.setBottomAnchor(parameterPane, 10)
+  AnchorPane.setLeftAnchor(parameterPane, 10)
 
   val parameterAnchor = new AnchorPane {
     content = noParametersPane

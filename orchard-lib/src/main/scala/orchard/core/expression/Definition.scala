@@ -7,6 +7,6 @@
 
 package orchard.core.expression
 
-trait Definition extends ModuleEntry {
+// trait Definition extends ModuleEntry {
 
-}
+// }

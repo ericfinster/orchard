@@ -21,10 +21,20 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
 
   override def emptyItem : Polarity[Option[Expression]] = Neutral(None)
 
-  abstract class AbstractWorksheetCell
+  abstract class AbstractWorksheetCell(itm : Polarity[Option[Expression]])
       extends AbstractMutableCell
       with FrameworkCell
-      with CardinalCell { thisCell : CellType => }
+      with CardinalCell { thisCell : CellType => 
+
+      protected var myItem = itm
+
+      def item = myItem
+      def item_=(newItm : Polarity[Option[Expression]]) = {
+        val oldItem = item
+        myItem = newItm
+        emit(ChangeEvents.ItemChangedEvent(oldItem))
+      }
+  }
 
   def extend = glob(Negative, Positive)
 

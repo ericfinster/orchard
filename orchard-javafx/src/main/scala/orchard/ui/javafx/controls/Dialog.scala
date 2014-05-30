@@ -40,6 +40,8 @@ abstract class Dialog(implicit pm : PopupManager) extends PopupRegion {
     borderPane.relocate(getInsets.getLeft, getInsets.getTop)
   }
 
+  def setHeading(str : String) = heading.text = str
+
   protected val okBtn =
     new Button("Ok") {
       onAction = () => { onOkAction }

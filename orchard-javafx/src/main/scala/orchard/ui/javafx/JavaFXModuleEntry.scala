@@ -12,10 +12,9 @@ import scalafx.scene.control._
 
 import orchard.core.expression._
 
-abstract class JavaFXModuleEntry extends ModuleEntry {
+abstract class JavaFXModuleEntry extends ModuleEntry with JavaFXModuleEnvironment.ModuleEntry {
 
-  // Here is where we are going to put ui components for the
-  // tree view ....
+  def liftEntry = this
 
   val treeItem = new TreeItem[JavaFXModuleEntry](this)
 

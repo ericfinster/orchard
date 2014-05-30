@@ -7,8 +7,29 @@
 
 package orchard.core.expression
 
-trait ModuleEntry {
+trait ModuleEntry { thisEntry : ModuleEnvironment#ModuleEntry =>
 
-  def name : String
+//   type EntryType <: ModuleEntry
+//   type ModuleType <: Module
+//   type VariableType <: ModuleVariable
+
+//   def name : String
+//   def parent : Option[ModuleType]
+
+//   def parameters : Seq[ModuleVariable] = 
+//     parent match {
+//       case None => Seq.empty[ModuleVariable]
+//       case Some(p) => {
+//         val parentParams = p.parameters
+//         val myIndex = p.entries.indexOf(thisEntry)
+//         val siblingParams = p.entries.slice(0, myIndex) flatMap {
+//           case mv : ModuleVariable => Some(mv)
+//           case _ => None
+//         }
+
+//         parentParams ++ siblingParams
+//       }
+//     }
+
 
 }
