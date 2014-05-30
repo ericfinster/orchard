@@ -8,19 +8,48 @@
 package orchard.ui.javafx
 
 import scalafx.Includes._
+import scalafx.scene.Node
+import scalafx.scene.layout._
 
-import orchard.ui.javafx.controls.PopupManager
+import controls._
 
-trait JavaFXEditor {
+abstract class JavaFXEditor extends PopupManager(new VBox) 
+    with JavaFXEvents 
+    with JavaFXDialogs
+    with JavaFXUI
+    with JavaFXMenus {
 
-  implicit def pm : PopupManager
+  implicit def pm : PopupManager = this
 
-  def consoleMessage(str : String) : Unit
-  def consoleError(str : String) : Unit
+  //============================================================================================
+  // CONSOLE ROUTINES
+  //
 
-  def onExit = scalafx.application.Platform.exit
+  def consoleWrite(str : String) : Unit = 
+    console.text = console.text() ++ str ++ "\n"
+
+  def consoleMessage(str : String) : Unit = 
+    console.text = console.text() ++ "INFO: " ++ str ++ "\n"
+
+  def consoleError(str : String) : Unit = 
+    console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
+
+
+  //============================================================================================
+  // MODULE HANDLING
+  //
+
+  // private var currentModule : Option[JavaFXModule] = None
+
+  // def activeModule : Option[JavaFXModule] = currentModule
+  // def activeModule_=(mod : JavaFXModule) = {
+  //   currentModule = Some(mod)
+  //   moduleDisplayPane.content = mod.ui
+  //   consoleMessage("Set active module to: " ++ mod.name)
+  // }
 
 }
+
 
 
 

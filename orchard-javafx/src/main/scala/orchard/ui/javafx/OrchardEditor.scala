@@ -9,6 +9,7 @@ package orchard.ui.javafx
 
 import scalafx.Includes._
 
+import scalafx.scene.Node
 import scalafx.scene.Scene
 import scalafx.scene.layout.VBox
 import scalafx.scene.layout.Priority
@@ -16,19 +17,16 @@ import scalafx.application.JFXApp
 
 import javafx.scene.{layout => jfxsl}
 
-import orchard.ui.javafx.controls.PopupManager
+import controls._
 
-object OrchardEditor extends PopupManager(new VBox)
-    with JavaFXEditor 
-    with JavaFXUI
-    with JavaFXMenus
-    with JavaFXDialogs { 
-
-  implicit def pm = this
+object OrchardEditor extends JavaFXEditor {
 
   val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
+
   VBox.setVgrow(ui, Priority.ALWAYS)
   mainVBox.content.addAll(menuBar, ui)
+
+  consoleWrite("Welcome to Orchard!")
 
 }
 
