@@ -24,10 +24,43 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
     styleClass += "orch-pane"
   }
 
+  val parameterView = new ListView[JavaFXModuleEntry] {
+    cellFactory = (_ => new ModuleListCell)
+  }
+
+  val parameterPane = new TitledPane {
+    text = "Parameters"
+    content = parameterView
+    collapsible = false
+  }
+
+  AnchorPane.setTopAnchor(parameterPane, 10)
+  AnchorPane.setRightAnchor(parameterPane, 10)
+  AnchorPane.setBottomAnchor(parameterPane, 10)
+  AnchorPane.setLeftAnchor(parameterPane, 10)
+
+  val moduleView = new TreeView[JavaFXModuleEntry] {
+    root = treeItem
+    showRoot = false
+    cellFactory = (_ => new ModuleTreeCell)
+  }
+
+  val modulePane = new TitledPane {
+      text = name
+      collapsible = false
+      content = moduleView
+    }
+
+  AnchorPane.setTopAnchor(modulePane, 10)
+  AnchorPane.setRightAnchor(modulePane, 10)
+  AnchorPane.setBottomAnchor(modulePane, 10)
+  AnchorPane.setLeftAnchor(modulePane, 10)
+
   //============================================================================================
   // WORKSHEET MANIPULATION
   //
 
+  var activeGallery : Option[WorksheetGallery] = None
   var sheetCount : Int = 1
 
   def newSheet : Unit = newSheet(CardinalComplex(Object(None)))
@@ -44,10 +77,10 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
         worksheets -= gallery.complex
       }
 
-      // onSelectionChanged = () => {
-      //   if (selected())
-      //     activeGallery = Some(gallery)
-      // }
+      onSelectionChanged = () => {
+        if (selected())
+          activeGallery = Some(gallery)
+      }
     }
 
     worksheetTabPane += tab

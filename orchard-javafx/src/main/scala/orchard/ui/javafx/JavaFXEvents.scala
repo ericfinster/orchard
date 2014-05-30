@@ -20,28 +20,34 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     new EventHandler[KeyEvent] {
       def handle(ev : KeyEvent) {
         ev.getCode match {
-          // case KeyCode.LEFT => {
-          //   if (ev.isControlDown) {
-          //     val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-          //     if (previewGallery != null)
-          //       previewGallery.prev
-          //   } else
-          //     for { gallery <- activeGallery } gallery.prev
+          case KeyCode.LEFT => {
+            if (ev.isControlDown) {
+              // val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
+              // if (previewGallery != null)
+              //   previewGallery.prev
+            } else
+              for { 
+                mod <- activeModule
+                gallery <- mod.activeGallery 
+              } gallery.prev
 
-          //   ev.consume
-          // }
-          // case KeyCode.RIGHT => {
-          //   if (ev.isControlDown) {
-          //     val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-          //     if (previewGallery != null)
-          //       previewGallery.next
-          //   } else 
-          //     for { gallery <- activeGallery } gallery.next
+            ev.consume
+          }
+          case KeyCode.RIGHT => {
+            if (ev.isControlDown) {
+              // val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
+              // if (previewGallery != null)
+              //   previewGallery.next
+            } else 
+              for { 
+                mod <- activeModule
+                gallery <- mod.activeGallery 
+              } gallery.next
 
-          //   ev.consume
-          // }
-          // case KeyCode.E => if (ev.isControlDown) onExtrude
-          // case KeyCode.D => if (ev.isControlDown) onDrop
+            ev.consume
+          }
+          case KeyCode.E => if (ev.isControlDown) onExtrude
+          case KeyCode.D => if (ev.isControlDown) onDrop
           // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
@@ -85,4 +91,21 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     } {
       mod.newSheet
     }
+
+  def onExtrude : Unit =
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+    } {
+      worksheet.extrude
+    }
+
+  def onDrop : Unit =
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+    } {
+      worksheet.drop
+    }
+
 }

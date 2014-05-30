@@ -13,8 +13,6 @@ import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
-import javafx.scene.{control => jfxsc}
-
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val importRoot = new TreeItem[JavaFXModuleEntry]
@@ -50,22 +48,6 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   AnchorPane.setBottomAnchor(noModulePane, 10)
   AnchorPane.setLeftAnchor(noModulePane, 10)
 
-  val moduleView = new TreeView[JavaFXModuleEntry] {
-    showRoot = false
-    cellFactory = (_ => new ModuleTreeCell)
-  }
-
-  val modulePane = new TitledPane {
-      text = "Untitled"
-      collapsible = false
-      content = moduleView
-    }
-
-  AnchorPane.setTopAnchor(modulePane, 10)
-  AnchorPane.setRightAnchor(modulePane, 10)
-  AnchorPane.setBottomAnchor(modulePane, 10)
-  AnchorPane.setLeftAnchor(modulePane, 10)
-
   val moduleAnchor = new AnchorPane {
     content = noModulePane
     styleClass += "orch-pane"
@@ -92,21 +74,6 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   AnchorPane.setBottomAnchor(noParametersPane, 10)
   AnchorPane.setLeftAnchor(noParametersPane, 10)
 
-  val parameterView = new ListView[JavaFXModuleEntry] {
-    cellFactory = (_ => new ModuleListCell)
-  }
-
-  val parameterPane = new TitledPane {
-    text = "Parameters"
-    content = parameterView
-    collapsible = false
-  }
-
-  AnchorPane.setTopAnchor(parameterPane, 10)
-  AnchorPane.setRightAnchor(parameterPane, 10)
-  AnchorPane.setBottomAnchor(parameterPane, 10)
-  AnchorPane.setLeftAnchor(parameterPane, 10)
-
   val parameterAnchor = new AnchorPane {
     content = noParametersPane
     styleClass += "orch-pane"
@@ -130,33 +97,5 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   }
 
   val ui = verticalSplit
-
-  //============================================================================================
-  // CELL IMPLEMENTATIONS
-  //
-
-  class ModuleTreeCell extends jfxsc.TreeCell[JavaFXModuleEntry] {
-
-    getStyleClass add "orch-list-cell"
-
-    override def updateItem(item : JavaFXModuleEntry, empty : Boolean) = {
-      if (! empty) {
-        setText(item.name)
-      }
-    }
-
-  }
-
-  class ModuleListCell extends jfxsc.ListCell[JavaFXModuleEntry] {
-
-    getStyleClass add "orch-list-cell"
-
-    override def updateItem(item : JavaFXModuleEntry, empty : Boolean) = {
-      if (! empty) {
-        setText(item.name)
-      }
-    }
-
-  }
 
 }

@@ -192,7 +192,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
             } else None
 
 
-          val newModule = new JavaFXModule(name, stabilityLevel, invertibilityLevel, unicityLevel) 
+          val newModule = new JavaFXModule(name, thisEditor, stabilityLevel, invertibilityLevel, unicityLevel) 
           consoleMessage("Created new module named: " ++ name)
           activeModule = newModule
           newModule.newSheet
