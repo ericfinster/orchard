@@ -40,6 +40,28 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     forAllCells(0, dimension, action)
   }
 
+  def seek(addr : CellAddress) : Option[CellType] = 
+    addr match {
+      case Immediate => Some(topCell)
+      case Target(prefix) => 
+        for { 
+          pref <- seek(prefix) 
+          tgt <- pref.target 
+        } yield tgt
+      // case Source(Immediate, loc) => 
+      //   Some((topCell.sources.get)(loc.head))
+      case Source(prefix, loc) =>
+        for { 
+          pref <- seek(prefix) 
+          ptr <- new RoseZipper(pref.totalCanopy, Nil).seek(loc)
+        } yield {
+          ptr.focus match {
+            case Rose(idx) => (pref.sources.get)(idx) 
+            case Branch(cell, _) => cell.target.get
+          }
+        }
+    }
+
   //============================================================================================
   // COMPLEX CELLS
   //
@@ -139,6 +161,75 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     }
 
     def toNCell : NCell[A] = skeleton map (_.item)
+
+    def extractCanopy(verticalBoundary : Vector[CellType]) : RoseTree[CellType, Int] = {
+
+      def verticalTrace(cell : CellType, lvs : Vector[RoseTree[CellType, Int]]) : RoseTree[CellType, Int] = {
+        if ((verticalBoundary contains cell) || cell.isExternal) {
+          Branch(cell, lvs)
+        } else {
+
+          def horizontalTrace(tr : RoseTree[CellType, Int]) : RoseTree[CellType, Int] =
+            tr match {
+              case Rose(idx) => if (cell.isObject) { Rose(idx) } else lvs(idx)
+              case Branch(hCell, hBranches) => {
+                verticalTrace(hCell, hBranches map horizontalTrace)
+              }
+            }
+
+          horizontalTrace(cell.canopy.get)
+        }
+      }
+
+      val startLeaves = Range(0, sourceCount) map (i => Rose(i))
+      verticalTrace(thisCell, startLeaves.toVector)
+
+    }
+
+    def totalCanopy : RoseTree[CellType, Int] =
+      extractCanopy(Vector.empty)
+
+    def sourceTree : Option[RoseTree[CellType, Int]] = 
+      for {
+        tgt <- target
+        srcs <- sources
+      } yield {
+        tgt.extractCanopy(srcs)
+      }
+
+    def address : CellAddress = {
+      if (thisCell.dimension == thisComplex.dimension) {
+        Immediate
+      } else if (thisCell.dimension == thisComplex.dimension - 1) {
+        if (! isExternal) {
+          Target(Immediate)
+        } else {
+          Source(Immediate, List(topCell.sources.get indexOf thisCell))
+        }
+      } else {
+        // This should be the generic case.  We look at the base cell two dimensions higher,
+        // and get it's source tree.  Then we look for this guy as an edge in that rose tree
+
+        val refCell = baseCells(thisCell.dimension + 2)
+        val refSrcs = baseCells(thisCell.dimension + 1).sources.get
+
+        val ptr = new RoseZipper(refCell.sourceTree.get, Nil).find(
+          branchCell => {
+            branchCell.target == Some(thisCell)
+          },
+          roseIdx => {
+            refSrcs(roseIdx) == thisCell
+          }).get
+
+        def buildPrefix(i : Int) : AddressPrefix =
+          if (i <= 0) Immediate else Target(buildPrefix(i - 1))
+
+        val prefix : AddressPrefix = 
+          buildPrefix(thisComplex.dimension - thisCell.dimension - 1)
+
+        Source(prefix, ptr.toAddr)
+      }
+    }
 
     //============================================================================================
     // XML CONVERSION

@@ -88,7 +88,7 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def activeModule : Option[JavaFXModule] = myActiveModule
   def activeModule_=(mod : JavaFXModule) = {
     myActiveModule = Some(mod)
-    workspacePane.content = mod.worksheetTabPane
+    workspacePane.content = mod.ui
     consoleMessage("Set active module to: " ++ mod.name)
   }
 

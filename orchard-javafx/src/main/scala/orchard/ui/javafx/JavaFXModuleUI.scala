@@ -12,6 +12,8 @@ import scalafx.scene.text._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import scalafx.geometry._
+
 import javafx.{scene => jfxs}
 
 import orchard.core.cell._
@@ -20,8 +22,62 @@ import orchard.core.expression._
 
 trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
-  val worksheetTabPane = new TabPane {
+  val worksheetTabPane = new TabPane
+
+  val worksheetPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
     styleClass += "orch-pane"
+    content = worksheetTabPane
+  }
+
+  val controlTabPane = new TabPane {
+    side = Side.BOTTOM
+  }
+
+  val controlPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    styleClass += "orch-pane"
+    content = controlTabPane
+  }
+
+  val clipboardPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    styleClass += "orch-pane"
+  }
+
+  val clipboardTab = new Tab {
+    text = "Clipboard"
+    content = clipboardPane
+  }
+
+  controlTabPane += clipboardTab
+
+  val moduleSplit = new SplitPane {
+    orientation = Orientation.VERTICAL
+    items ++= List(worksheetPane, controlPane)
+    dividerPositions = 0.6f
+  }
+
+  val ui = moduleSplit
+
+  //============================================================================================
+  // CLIPBOARD MANIPULATION
+  //
+
+  private var theClipboardExpression : Option[Expression] = None
+
+  def clipboardExpression : Option[Expression] = theClipboardExpression
+  def clipboardExpression_=(exprOpt : Option[Expression]) = {
+    theClipboardExpression = exprOpt
+
+    exprOpt match {
+      case None => clipboardPane.content.clear
+      case Some(expr) => {
+        val gallery = new FrameworkGallery(expr.ncell map (Some(_)))
+        clipboardPane.content = gallery
+        gallery.refreshAll
+      }
+    }
   }
 
   //============================================================================================

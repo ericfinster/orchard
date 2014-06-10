@@ -386,7 +386,7 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
               case Some(ecpy) => ecpy.leaves
             }
 
-          val mySrcTree : RoseTree[CellType, Int] = myTarget.selectedCanopy(myExtendedSources)
+          val mySrcTree : RoseTree[CellType, Int] = myTarget.extractCanopy(myExtendedSources)
           val myCorrectedSources : Vector[CellType] = mySrcTree.nodeVector
 
           sources = Some(myCorrectedSources)
@@ -416,31 +416,6 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
           }
         }
       }
-    }
-
-    // Extract the tree formed by successively passing to canopies and stopping when
-    // the cell is in the list of sources
-    def selectedCanopy(sources : Vector[CellType]) : RoseTree[CellType, Int] = {
-
-      def verticalTrace(cell : CellType, lvs : Vector[RoseTree[CellType, Int]]) : RoseTree[CellType, Int] = {
-        if (sources contains cell) {
-          Branch(cell, lvs)
-        } else {
-
-            def horizontalTrace(tr : RoseTree[CellType, Int]) : RoseTree[CellType, Int] = 
-              tr match {
-                case Rose(idx) => if (cell.isObject) { Rose(idx) } else lvs(idx)
-                case Branch(hCell, hBranches) => {
-                  verticalTrace(hCell, hBranches map horizontalTrace)
-                }
-              }
-
-          horizontalTrace(cell.canopy.get)
-        }
-      }
-
-      val startLeaves = Range(0, sourceCount) map (i => Rose(i))
-      verticalTrace(thisCell, startLeaves.toVector)
     }
   }
 

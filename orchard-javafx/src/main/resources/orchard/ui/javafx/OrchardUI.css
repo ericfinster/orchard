@@ -178,6 +178,10 @@
     -fx-border-radius: 4 4 0 0;
 }
 
+.text-area:disabled {
+    -fx-opacity: 1;
+}
+
 .list-view {
     -fx-background-color: -fx-box-border;
     -fx-background-insets: 0;

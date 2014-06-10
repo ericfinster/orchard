@@ -14,6 +14,8 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 
+import orchard.core.expression._
+
 trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   addEventFilter(KeyEvent.KEY_PRESSED,
@@ -73,6 +75,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.W => if (ev.isControlDown) onWebView
           case KeyCode.M => if (ev.isControlDown) onNewSubmodule
           case KeyCode.Z => if (ev.isControlDown) onDebug
+          case KeyCode.SPACE => if (ev.isControlDown) onMarkExpression
           case _ => ()
         }
       }
@@ -85,7 +88,13 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       worksheet <- mod.activeWorksheet
       cell <- worksheet.selectionBase
     } {
-      consoleMessage("Cell is: " ++ cell.toString)
+      val addr = cell.address
+
+      consoleMessage("Cell has address: " ++ addr.toString)
+
+      val theCell = worksheet.seek(addr).get
+
+      consoleMessage("Cell at that address is: " ++ theCell.expression.toString)
     }
 
   def onExit : Unit = 
@@ -141,4 +150,12 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       mod.fillAtSelection
     }
 
+  def onMarkExpression : Unit = 
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+      selectedCell <- worksheet.selectionBase
+    } {
+      mod.clipboardExpression = selectedCell.expression
+    }
 }

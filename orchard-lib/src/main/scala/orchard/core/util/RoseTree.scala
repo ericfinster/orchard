@@ -150,16 +150,16 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
           } yield res
       }
 
-  def find(prop : A => Boolean) : Option[RoseZipper[A, B]] =
+  def find(branchProp : A => Boolean, roseProp : B => Boolean) : Option[RoseZipper[A, B]] = 
     focus match {
-      case Rose(_) => None
+      case Rose(value) => if (roseProp(value)) Some(this) else None
       case Branch(value, branches) => {
-        if (prop(value)) Some(this) else {
+        if (branchProp(value)) Some(this) else {
           // Ummm ... got a better way?
           var i : Int = 0
 
           while (i < branches.length) {
-            val res = visitBranch(i).force.find(prop)
+            val res = visitBranch(i).force.find(branchProp, roseProp)
             if (res != None) return res
             i += 1
           }
@@ -168,6 +168,9 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
         }
       }
     }
+
+  def find(prop : A => Boolean) : Option[RoseZipper[A, B]] =
+    find(prop, (_ => false))
 
   def lookup(v : A) : Option[RoseZipper[A, B]] =
     find((a => v == a))
