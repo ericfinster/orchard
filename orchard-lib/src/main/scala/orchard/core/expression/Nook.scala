@@ -13,6 +13,8 @@ class Nook(val framework : ExpressionFramework) {
 
   assert(framework.topCell.isNook)
 
+  val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
+
   def isThinBoundary : Boolean = 
     framework.topCell.isThinBoundary
 
@@ -30,6 +32,17 @@ class Nook(val framework : ExpressionFramework) {
     boundaryFramework.topCell.toNCell map (_.get)
   }
 
-  // TODO : Equality
+  def canEqual(other : Any) : Boolean = 
+    other.isInstanceOf[Nook]
+
+  override def equals(other : Any) : Boolean = 
+    other match {
+      case that : Nook =>
+        (that canEqual this) && (that.ncell == this.ncell)
+      case _ => false
+    }
+
+  override def hashCode : Int = 
+    41 * (41 + ncell.hashCode)
 
 }

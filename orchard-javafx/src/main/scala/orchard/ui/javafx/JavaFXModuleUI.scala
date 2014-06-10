@@ -96,6 +96,9 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
     displayWorksheet(worksheet)
   }
 
+  def newSheet(expr : Expression) : Unit =
+    newSheet(CardinalComplex(expr.ncell map (Some(_))))
+
   def displayWorksheet(worksheet : Worksheet) : Unit = {
     val gallery = new WorksheetGallery(worksheet)
 
@@ -248,6 +251,14 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
             cmplx.clearAndSelect(cell)
           } else {
             cmplx.deselectAll
+          }
+        }
+
+        case CellDoubleClicked(c) => {
+          val cell = c.owner.asInstanceOf[cmplx.CellType]
+
+          if (cell.isNeutral) {
+            newSheet(CardinalComplex(cell.neutralNCell))
           }
         }
 

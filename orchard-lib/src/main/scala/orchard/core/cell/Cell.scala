@@ -243,13 +243,16 @@ abstract class NCell[A] {
     }
   }
 
-  override def equals(that : Any) = {
-    if (that.isInstanceOf[NCell[A]]) {
-      cell == that.asInstanceOf[NCell[A]].cell
-    } else {
-      false
+  override def equals(other : Any) = 
+    other match {
+      case that : NCell[A] => 
+        (that.cell == this.cell)
+      case _ => false
     }
-  }
+
+  override def hashCode : Int = 
+    41 * (41 + cell.hashCode)
+
 }
 
 object NCell {

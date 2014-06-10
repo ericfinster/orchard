@@ -10,6 +10,7 @@ package orchard.ui.javafx
 import scalafx.Includes._
 
 import scalafx.geometry._
+import scalafx.scene.input._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
@@ -50,7 +51,19 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val moduleView = new TreeView[JavaFXModuleEntry] {
     showRoot = true
-    cellFactory = (_ => new ModuleTreeCell)
+    cellFactory = (_ => 
+      new TreeCell(new ModuleTreeCell) { thisCell =>
+        onMouseClicked = (ev : MouseEvent) => {
+          if (thisCell.item().isInstanceOf[JavaFXModuleVariable] && ev.clickCount > 1) {
+            for {
+              mod <- activeModule
+            } {
+              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleVariable].varExpr)
+            }
+          }
+        }
+      }
+    )
   }
 
   val modulePane = new TitledPane {
@@ -90,7 +103,19 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   AnchorPane.setLeftAnchor(noParametersPane, 10)
 
   val parameterView = new ListView[JavaFXModuleEntry] {
-    cellFactory = (_ => new ModuleListCell)
+    cellFactory = (_ =>
+      new ListCell(new ModuleListCell) { thisCell =>
+        onMouseClicked = (ev : MouseEvent) => { 
+          if (ev.clickCount > 1) {
+            for {
+              mod <- activeModule
+            } {
+              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleVariable].varExpr)
+            }
+          }
+        }
+      }
+    )
   }
 
   val parameterPane = new TitledPane {

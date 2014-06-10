@@ -13,7 +13,7 @@ class Shell(val framework : ExpressionFramework) {
 
   assert(framework.topCell.isShell)
 
-  // TODO : Equality
+  val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
 
   def withFillingExpression(expr : Expression) : NCell[Expression] =
     framework.topCell.skeleton map (cell => {
@@ -22,5 +22,18 @@ class Shell(val framework : ExpressionFramework) {
         case Some(e) => e
       }
     })
+
+  def canEqual(other : Any) : Boolean = 
+    other.isInstanceOf[Shell]
+
+  override def equals(other : Any) : Boolean = 
+    other match {
+      case that : Shell =>
+        (that canEqual this) && (that.ncell == this.ncell)
+      case _ => false
+    }
+
+  override def hashCode : Int = 
+    41 * (41 + ncell.hashCode)
 
 }

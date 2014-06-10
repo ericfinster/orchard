@@ -146,6 +146,56 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
       }
     }
   
+  def pasteToSelection(pasteExpr : Expression) =
+    for {
+      worksheet <- activeWorksheet
+      if (worksheet.selectionIsUnique)
+      selectedCell <- worksheet.selectionBase
+    } {
+      selectedCell.skeleton.zip(pasteExpr.ncell) match {
+        case None => editor.consoleError("Selected cell has incompatible shape.")
+        case Some(zippedTree) => {
+
+          var itFits = true
+
+          zippedTree map {
+            case (cell, expr) => {
+              if (! cell.isEmpty) {
+                cell.item match {
+                  case Neutral(Some(e)) => itFits &&= {
+                    if (e == expr) true else {
+                      println("Match error:")
+                      println("e : " ++ e.toString)
+                      println("expr : " ++ expr.toString)
+                      false
+                    }
+                  }
+                  case _ => itFits = false
+                }
+              }
+            }
+          }
+
+          if (itFits) {
+            worksheet.deselectAll
+
+            // BUG!!! - This refreshes the gallery on *every* assignment.  Need to delay that
+            // somehow ....
+
+            zippedTree map {
+              case (cell, expr) => {
+                if (cell.isEmpty) {
+                  cell.item = Neutral(Some(expr))
+                }
+              }
+            }
+          } else {
+            editor.consoleError("Pasting failed.")
+          }
+        }
+      }
+    }
+
   //============================================================================================
   // WORKSHEETS
   //

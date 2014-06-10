@@ -28,6 +28,27 @@ case class Variable(val shell : Shell, val index : Int, val ident : Identifier, 
   val ncell : NCell[Expression] =
     shell.withFillingExpression(this)
 
+  //============================================================================================
+  // DEFINITIONAL EQUALITY
+  //
+
+  def canEqual(other : Any) : Boolean = 
+    other.isInstanceOf[Variable]
+
+  override def equals(other : Any) : Boolean = 
+    other match {
+      case that : Variable =>
+        (that canEqual this) && (that.shell == this.shell) && (that.index == this.index)
+      case _ => false
+    }
+
+  override def hashCode : Int = 
+    41 * (
+      41 * (
+        41 + shell.hashCode
+      ) + index.hashCode
+    )
+
   override def toString = "Variable(" ++ id ++ ")"
 }
 
@@ -40,7 +61,28 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
   val ncell : NCell[Expression] = 
     nook.withFiller(thisFiller)
 
+  //============================================================================================
+  // DEFINITIONAL EQUALITY
+  //
+
+  def canEqual(other : Any) : Boolean = 
+    other.isInstanceOf[Filler]
+
+  override def equals(other : Any) : Boolean = 
+    other match {
+      case that : Filler =>
+        (that canEqual this) && (that.nook == this.nook)
+      case _ => false
+    }
+
+  override def hashCode : Int = 
+    41 * ( 41 + nook.hashCode )
+
   override def toString = "Filler(" ++ id ++ ")"
+
+  //============================================================================================
+  // BOUNDARY DEFINITION
+  //
 
   trait BoundaryExpr extends Expression { thisBdry =>
 
@@ -52,10 +94,29 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
     val ncell : NCell[Expression] =
       nook.withBoundary(thisBdry)
 
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Filler#BoundaryExpr]
+
   }
 
   case object Boundary extends BoundaryExpr {
+
+    //============================================================================================
+    // DEFINITIONAL EQUALITY
+    //
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Filler#BoundaryExpr =>
+          (that canEqual this) && (that.interior == this.interior)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * ( 41 + interior.hashCode )
+
     override def toString = "Boundary(" ++ id ++ ")"
+
   }
 
 }

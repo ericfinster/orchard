@@ -52,7 +52,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.F => if (ev.isControlDown) onFill  
-          // case KeyCode.P => if (ev.isControlDown) onPaste
+          case KeyCode.P => if (ev.isControlDown) onPaste
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
@@ -157,5 +157,13 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       selectedCell <- worksheet.selectionBase
     } {
       mod.clipboardExpression = selectedCell.expression
+    }
+
+  def onPaste : Unit = 
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+    } {
+      
     }
 }
