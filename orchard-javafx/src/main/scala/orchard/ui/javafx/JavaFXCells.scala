@@ -11,6 +11,8 @@ import scala.collection.JavaConversions._
 
 import javafx.scene.{control => jfxsc}
 
+import JavaFXModuleSystem._
+
 trait JavaFXCell { thisCell : jfxsc.Cell[JavaFXModuleEntry] => 
 
   getStyleClass add "orch-list-cell"
@@ -21,11 +23,7 @@ trait JavaFXCell { thisCell : jfxsc.Cell[JavaFXModuleEntry] =>
   def removeCellStyle = setCellStyle("orch-list-cell-unknown")
 
   def renderCell(item : JavaFXModuleEntry) {
-    item match {
-      case mv : JavaFXModuleVariable => setCellStyle("var")
-      case _ => removeCellStyle
-    }
-
+    setCellStyle(item.styleString)
     setText(item.name)
   }
 }

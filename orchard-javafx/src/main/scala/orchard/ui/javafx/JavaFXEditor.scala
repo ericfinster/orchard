@@ -12,6 +12,7 @@ import scalafx.scene.Node
 import scalafx.scene.layout._
 
 import controls._
+import JavaFXModuleSystem._
 
 import orchard.core.expression.Editor
 
@@ -94,7 +95,7 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
   def displayParameters(entry : JavaFXModuleEntry) : Unit = {
     parameterView.items().clear
-    parameterView.items() ++= (entry.parameters map (_.asInstanceOf[JavaFXModuleVariable]))
+    parameterView.items() ++= (entry.parameters map (_.asInstanceOf[JavaFXModuleParameter]))
   }
 
   moduleView.selectionModel().selectedItem onChange {
@@ -106,11 +107,25 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
       item.value() match {
         case mod : JavaFXModule => activeModule = mod
-        case _ => 
+        case _ =>
           for { 
-            pMod <- entry.parent 
+            p <- entry.parent 
             mod <- activeModule 
-          } { if (pMod != mod) activeModule = pMod }
+          } {
+            val parent = p
+
+            if (parent.isInstanceOf[JavaFXModule]) {
+              // When the parent is a module
+              if (mod != parent)
+                activeModule = parent.asInstanceOf[JavaFXModule]
+            } else {
+              // When the parent is a definition
+              val pMod = parent.parent.get
+
+              if (mod != pMod)
+                activeModule = pMod.asInstanceOf[JavaFXModule]
+            }
+          }
       }
 
     }

@@ -20,6 +20,8 @@ import orchard.core.cell._
 import orchard.core.complex._
 import orchard.core.expression._
 
+import JavaFXModuleSystem._
+
 trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
   val worksheetTabPane = new TabPane

@@ -68,7 +68,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
           // case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
           // case KeyCode.V => if (ev.isControlDown) onView
-          // case KeyCode.L => if (ev.isControlDown) onLoadExpr
+          case KeyCode.L => if (ev.isControlDown) onDefine
           // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           // case KeyCode.X => if (ev.isControlDown) onExtra
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
@@ -162,8 +162,23 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
   def onPaste : Unit = 
     for {
       mod <- activeModule
-      worksheet <- mod.activeWorksheet
+      pasteExpr <- mod.clipboardExpression
     } {
-      
+      mod.pasteToSelection(pasteExpr)
+    }
+
+  def onDefine : Unit = 
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+      if worksheet.selectionIsUnique
+      selectedCell <- worksheet.selectionBase
+    } {
+
+      selectedCell.expression match {
+        case Some(f : Filler) => mod.appendDefinition(f)
+        case Some(b : Filler#BoundaryExpr) => mod.appendDefinition(b.interior)
+        case _ => consoleError("Selected cell cannot be used as a definition.")
+      }
     }
 }

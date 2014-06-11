@@ -1,5 +1,5 @@
 /**
-  * Module.scala - Modules
+  * Workspace.scala - Trait encapsulating the worksheet view of expression manipulation
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -13,23 +13,30 @@ import orchard.core.complex._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
+trait Workspace { thisWorkspace =>
 
-  type VariableType = ModuleEnvironment#VariableType
+  def editor : Editor
 
   def activeWorksheet : Option[Worksheet]
+
+  def stabilityLevel : Option[Int]
+  def invertibilityLevel : Option[Int]
+  def unicityLevel : Option[Int]
+
+  def variables : Seq[Variable]
+  def appendVariable(variable : Variable) : Unit
 
   //============================================================================================
   // SEMANTIC ROUTINES
   //
 
-  def processIdentifier(rawIdent : RawIdentifier, params : Seq[VariableType]) : Option[Identifier] = {
+  def processIdentifier(rawIdent : RawIdentifier) : Option[Identifier] = {
     val newTokens = rawIdent.tokens flatMap {
       case RawLiteral(lit) => Some(LiteralToken(lit))
       case RawReference(ref) =>
-        params find (p => p.name == ref) match {
+        variables find (p => p.id == ref) match {
           case None => { editor.consoleError("Unresolved reference: " ++ ref) ; None }
-          case Some(mv) => Some(ExpressionToken(mv.varExpr))
+          case Some(v) => Some(ExpressionToken(v))
         }
     }
 
@@ -49,7 +56,7 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
 
       try {
 
-        val shell = new Shell(new ModuleFramework(selectedCell.neutralNCell))
+        val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
 
         val forceThin =
           invertibilityLevel match {
@@ -57,30 +64,28 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
             case Some(l) => selectedCell.dimension > l
           }
 
-        val totalParameters = parameters ++ localParameters
-
         editor.withAssumptionInfo(thinHint, forceThin,
           (identString, isThin) => {
             IdentParser(identString) match {
               case Success(ident, _) => {
 
                 for {
-                  finalIdent <- processIdentifier(ident, totalParameters)
+                  finalIdent <- processIdentifier(ident)
                 } {
 
                   // Make sure the identifier is unique
-                  if (totalParameters exists (_.name == finalIdent.toString)) {
+                  if (variables exists (_.id == finalIdent.toString)) {
                     editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
                   } else {
 
-                    val varExpr = Variable(shell, totalParameters.length, finalIdent, isThin)
+                    val varExpr = Variable(shell, variables.length, finalIdent, isThin)
 
                     worksheet.deselectAll
                     selectedCell.item = Neutral(Some(varExpr))
                     worksheet.selectAsBase(selectedCell)
 
                     // Add the variable to the environment
-                    appendParameter(varExpr)
+                    appendVariable(varExpr)
                   }
 
                 }
@@ -108,8 +113,7 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
 
       } else if (selectedCell.isExposedNook) {
 
-        val nook = new Nook(new ModuleFramework(selectedCell.neutralNCell))
-        val totalParameters = parameters ++ localParameters
+        val nook = new Nook(new WorkspaceFramework(selectedCell.neutralNCell))
 
         editor.withFillerIdentifier(
           identString => {
@@ -118,11 +122,11 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
               case Success(ident, _) => {
 
                 for {
-                  finalIdent <- processIdentifier(ident, totalParameters)
+                  finalIdent <- processIdentifier(ident)
                 } {
 
                   // Make sure the identifier is unique
-                  if (totalParameters exists (_.name == finalIdent.toString)) {
+                  if (variables exists (_.id == finalIdent.toString)) {
                     editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
                   } else {
 
@@ -138,7 +142,7 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
 
                 }
               }
-              case _ : NoSuccess => println("Compose parse failed.")
+              case _ : NoSuccess => editor.consoleError("Compose parse failed.")
             }
           })
       } else {
@@ -164,9 +168,8 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
                 cell.item match {
                   case Neutral(Some(e)) => itFits &&= {
                     if (e == expr) true else {
-                      println("Match error:")
-                      println("e : " ++ e.toString)
-                      println("expr : " ++ expr.toString)
+                      editor.consoleError("Match error: expressions " ++ e.toString ++ 
+                        " and " ++ expr.toString ++ " are not convertible.")
                       false
                     }
                   }
@@ -205,9 +208,9 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
 
     type CellType = WorksheetCell
 
-    def stabilityLevel : Option[Int] = thisModule.stabilityLevel
-    def invertibilityLevel : Option[Int] = thisModule.invertibilityLevel
-    def unicityLevel : Option[Int] = thisModule.unicityLevel
+    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
     def newCell(item : Polarity[Option[Expression]]) = 
       new WorksheetCell(item)
@@ -231,22 +234,22 @@ trait Module extends ModuleEntry { thisModule : ModuleEnvironment#Module =>
   // FRAMEWORKS
   //
 
-  class ModuleFramework(seed : NCell[Option[Expression]]) 
+  class WorkspaceFramework(seed : NCell[Option[Expression]]) 
       extends ExpressionFramework(seed) {
 
-    type CellType = ModuleFrameworkCell
+    type CellType = WorkspaceFrameworkCell
 
-    def stabilityLevel : Option[Int] = thisModule.stabilityLevel
-    def invertibilityLevel : Option[Int] = thisModule.invertibilityLevel
-    def unicityLevel : Option[Int] = thisModule.unicityLevel
+    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
     def newCell(item : Option[Expression]) =
-      new ModuleFrameworkCell(item)
+      new WorkspaceFrameworkCell(item)
 
     def extract(cell : CellType) =
-      new ModuleFramework(cell.skeleton map (_.item))
+      new WorkspaceFramework(cell.skeleton map (_.item))
 
-    class ModuleFrameworkCell(var item : Option[Expression])
+    class WorkspaceFrameworkCell(var item : Option[Expression])
         extends ExpressionFrameworkCell(item)
 
   }

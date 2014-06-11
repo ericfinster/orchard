@@ -14,6 +14,8 @@ import scalafx.scene.input._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import JavaFXModuleSystem._
+
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val importRoot = new TreeItem[JavaFXModuleEntry]
@@ -54,11 +56,11 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     cellFactory = (_ => 
       new TreeCell(new ModuleTreeCell) { thisCell =>
         onMouseClicked = (ev : MouseEvent) => {
-          if (thisCell.item().isInstanceOf[JavaFXModuleVariable] && ev.clickCount > 1) {
+          if (thisCell.item().isInstanceOf[JavaFXModuleParameter] && ev.clickCount > 1) {
             for {
               mod <- activeModule
             } {
-              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleVariable].varExpr)
+              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
             }
           }
         }
@@ -110,7 +112,7 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
             for {
               mod <- activeModule
             } {
-              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleVariable].varExpr)
+              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
             }
           }
         }

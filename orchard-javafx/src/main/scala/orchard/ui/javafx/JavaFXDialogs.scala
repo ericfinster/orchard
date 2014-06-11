@@ -13,6 +13,7 @@ import scalafx.scene.control._
 import scalafx.geometry._
 
 import controls._
+import JavaFXModuleSystem._
 
 trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
