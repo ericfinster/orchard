@@ -14,6 +14,7 @@ abstract class ExpressionFramework(seed : NCell[Option[Expression]])
     extends AbstractMutableComplex[Option[Expression]](seed)
     with Framework[Option[Expression]] {
 
+  type FrameworkType <: ExpressionFramework
   type CellType <: ExpressionFrameworkCell
 
   val emptyItem : Option[Expression] = None

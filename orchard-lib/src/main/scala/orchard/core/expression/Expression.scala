@@ -8,16 +8,22 @@
 package orchard.core.expression
 
 import orchard.core.cell._
+import orchard.core.ui.Stylable
 
-sealed trait Expression {
+sealed trait Expression extends Stylable {
 
   def ident : Identifier
   def isThin : Boolean
-  def styleString : String
 
   def id = ident.toString
+  def name = id
 
   def ncell : NCell[Expression]
+
+  def unfold : Expression
+  def reduce : Expression
+
+  def normalize : Expression = this.unfold.reduce
 
 }
 
@@ -27,6 +33,9 @@ case class Variable(val shell : Shell, val index : Int, val ident : Identifier, 
 
   val ncell : NCell[Expression] =
     shell.withFillingExpression(this)
+
+  def unfold : Expression = Variable(shell map (_.unfold), index, ident, isThin)
+  def reduce : Expression = Variable(shell map (_.reduce), index, ident, isThin)
 
   //============================================================================================
   // DEFINITIONAL EQUALITY
@@ -61,6 +70,9 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
   val ncell : NCell[Expression] = 
     nook.withFiller(thisFiller)
 
+  def unfold : Expression = Filler(nook map (_.unfold), bdryIdent)
+  def reduce : Expression = Filler(nook map (_.reduce), bdryIdent)
+
   //============================================================================================
   // DEFINITIONAL EQUALITY
   //
@@ -94,6 +106,12 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
     val ncell : NCell[Expression] =
       nook.withBoundary(thisBdry)
 
+    def unfold : Expression = 
+      interior.unfold.asInstanceOf[Filler].Boundary
+
+    def reduce : Expression = 
+      interior.reduce.asInstanceOf[Filler].Boundary
+
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Filler#BoundaryExpr]
 
@@ -121,7 +139,7 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
 
 }
 
-case class Reference(defn : ModuleSystem#Definition, addr : CellAddress) extends Expression {
+case class Reference(val defn : ModuleSystem#Definition, val addr : CellAddress) extends Expression {
 
   assert(defn.isComplete)
 
@@ -137,13 +155,19 @@ case class Reference(defn : ModuleSystem#Definition, addr : CellAddress) extends
     framework.topCell.skeleton map (cell => Reference(defn, cell.address))
   }
 
+  def unfold : Expression = 
+    referencedExpression.unfold
+
+  // Reduction is blocked by folded references
+  def reduce : Expression = this
+
   def styleString: String = referencedExpression.styleString
 
 }
 
-case class Substitution(expr : Expression, bindings : Map[Int, Expression]) extends Expression {
+case class Substitution(val expr : Expression, val bindings : Map[Int, Expression]) extends Expression {
 
-  def ident: Identifier = {
+  def translateIdent(id : Identifier) : Identifier = {
     Identifier(
       expr.ident.tokens map {
         case et @ ExpressionToken(Variable(_, idx, _, _)) =>
@@ -155,24 +179,48 @@ case class Substitution(expr : Expression, bindings : Map[Int, Expression]) exte
     )
   }
 
+  def ident: Identifier = translateIdent(expr.ident)
+
   def ncell: NCell[Expression] = 
     expr.ncell map (Substitution(_, bindings))
 
-  // This we can't tell until we reduce, I think ...
-  def isThin: Boolean = ???
+  def unfold : Expression = 
+    Substitution(expr.unfold, bindings)
 
-  // Right, this too.  We have to reduce the guy to find out what he 
-  // really will be.  Actually, no, I guess the only case that is difficult
-  // is the boundary case.  And same for is thin.  So you should do these
-  // guys after you have real reduction.
-  def styleString: String = 
+  // This is where the substitution work goes ...
+  def reduce : Expression =
     expr match {
-      case v : Variable(_, idx, _, _) => 
-        if (bindings.isDefinedAt(idx))
-          bindings(idx).styleString
-        else
-          v.styleString
-      case _ => expr.styleString  // I think this will be wrong.
+      case v : Variable => {
+        if (bindings.isDefinedAt(v.index)) {
+          bindings(v.index).reduce
+        } else {
+          // Do we need to pass the substitution on to the shell first????
+          Variable(v.shell map (Substitution(_, bindings).reduce), v.index, ident, v.isThin)
+        }
+      }
+
+      case f : Filler =>
+        Filler(f.nook map (Substitution(_, bindings).reduce), translateIdent(f.bdryIdent))
+
+      case b : Filler#BoundaryExpr => 
+        Substitution(b.interior, bindings).reduce.asInstanceOf[Filler].Boundary
+
+      // On a reference, we can't reduce
+      case r : Reference => this
+
+      case s : Substitution => {
+        // Compose the two subtitutions by creating a new map
+        // How does the map composition work????
+
+        ???
+      }
+
     }
+
+  // Since these depend on filling parameters and whatnot, I'm going to
+  // do some overkill here and normalize them.  But this can clearly be
+  // sped up quite a bit with some more careful thought.
+  def isThin: Boolean = normalize.isThin
+  def styleString: String = normalize.styleString
 
 }

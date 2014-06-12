@@ -15,6 +15,7 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
   def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
+  type FrameworkType = SimpleFramework
   type CellType = SimpleFrameworkCell
 
   def newCell(item : Option[Expression]) = new SimpleFrameworkCell(item)

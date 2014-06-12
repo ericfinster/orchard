@@ -15,6 +15,16 @@ class Nook(val framework : ExpressionFramework) {
 
   val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
 
+  def map(f : Expression => Expression) : Nook = {
+    val duplicate = framework.duplicate
+
+    duplicate forAllCells (cell => {
+      cell.item = cell.item map f
+    })
+
+    new Nook(duplicate)
+  }
+
   def isThinBoundary : Boolean = 
     framework.topCell.isThinBoundary
 

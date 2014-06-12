@@ -15,6 +15,16 @@ class Shell(val framework : ExpressionFramework) {
 
   val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
 
+  def map(f : Expression => Expression) : Shell = {
+    val duplicate = framework.duplicate
+
+    duplicate forAllCells (cell => {
+      cell.item = cell.item map f
+    })
+
+    new Shell(duplicate)
+  }
+
   def withFillingExpression(expr : Expression) : NCell[Expression] =
     framework.topCell.skeleton map (cell => {
       cell.item match {

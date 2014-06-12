@@ -209,6 +209,7 @@ trait Workspace { thisWorkspace =>
   class Worksheet(seed : NCell[Polarity[Option[Expression]]])
       extends AbstractWorksheet(seed) {
 
+    type FrameworkType = Worksheet
     type CellType = WorksheetCell
 
     def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
@@ -242,6 +243,7 @@ trait Workspace { thisWorkspace =>
 
     def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
+    type FrameworkType = WorkspaceFramework
     type CellType = WorkspaceFrameworkCell
 
     def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel

@@ -14,10 +14,12 @@ import Util._
 
 trait Framework[A] extends MutableComplex[A] { thisFramework =>
 
+  type FrameworkType <: Framework[A]
   type CellType <: FrameworkCell
 
   def emptyItem : A
-  def extract(cell : CellType) : Framework[A] 
+  def extract(cell : CellType) : FrameworkType
+  def duplicate : FrameworkType = extract(topCell)
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]

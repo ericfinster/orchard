@@ -11,6 +11,7 @@ import scalafx.Includes._
 import scalafx.scene.control._
 
 import orchard.core.expression._
+import orchard.core.ui.Stylable
 
 object JavaFXModuleSystem extends ModuleSystem {
 
@@ -24,7 +25,7 @@ object JavaFXModuleSystem extends ModuleSystem {
   // MODULE ENTRIES
   //
 
-  abstract class JavaFXModuleEntry extends ModuleEntry {
+  abstract class JavaFXModuleEntry extends ModuleEntry with Stylable {
 
     def liftEntry = this
     def styleString : String = "unknown"

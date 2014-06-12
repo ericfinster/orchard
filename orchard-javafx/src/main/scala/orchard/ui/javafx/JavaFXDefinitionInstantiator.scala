@@ -18,30 +18,29 @@ import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, shell : Shell, defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
+class JavaFXDefinitionInstantiator(val owner : JavaFXWorkspace, val shell : Shell, val defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
 
   def this(owner : JavaFXWorkspace, defn : JavaFXDefinition) = this(owner, owner.emptyShell, defn)
 
-  //============================================================================================
-  // SEMANTICS
-  //
-
-  val referenceExpression = Reference(defn, Immediate)
+  // def goals : Seq[JavaFXModuleParameter] = 
+  //   (defn.parameters ++ defn.localParameters) map ((mp : JavaFXModuleParameter) =>
+  //     new JavaFXModuleParameter(defn, new Goal(mp.variable))
+  //   )
 
   //============================================================================================
   // UI ELEMENTS
   //
 
-  val parameterView = new ListView[JavaFXModuleEntry] {
-    cellFactory = (_ => new ModuleListCell)
-    items() ++= (defn.parameters ++ defn.localParameters)
+  val parameterView = new ListView[Expression] {
+    cellFactory = (_ => new ExpressionListCell)
+    items() ++= goals
   }
 
   parameterView.selectionModel().selectedItem onChange {
     val entry = parameterView.selectionModel().selectedItem()
 
     if (entry != null) {
-      displayGoal(entry.asInstanceOf[JavaFXModuleParameter].variable)
+      displayGoal(entry)
     }
   }
 
@@ -54,6 +53,12 @@ class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, shell : Shell, defn 
   def displayExpr(expr : Expression) : Unit = {
     val gallery = new FrameworkGallery(expr)
     exprPane.content = gallery
+    gallery.refreshAll
+  }
+
+  def displayOutput(expr : Expression) : Unit = {
+    val gallery = new FrameworkGallery(expr)
+    outputPane.content = gallery
     gallery.refreshAll
   }
 
@@ -86,23 +91,31 @@ class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, shell : Shell, defn 
     styleClass += "orch-pane"
   }
 
-  val goalRow = new RowConstraints { percentHeight = 50 }
-  val exprRow = new RowConstraints { percentHeight = 50 }
+  val outputPane = new StackPane {
+    styleClass += "orch-pane"
+  }
 
+  val goalRow = new RowConstraints { percentHeight = 33 }
+  val exprRow = new RowConstraints { percentHeight = 33 }
+  val outputRow = new RowConstraints { percentHeight = 34 }
+  
   val gridPane = new GridPane {
     styleClass += "orch-pane"
     rowConstraints ++= List(goalRow, exprRow)
   }
 
-  GridPane.setRowSpan(parameterAnchor, 2)
+  GridPane.setRowSpan(parameterAnchor, 3)
   GridPane.setHgrow(goalPane, Priority.ALWAYS)
   GridPane.setHgrow(exprPane, Priority.ALWAYS)
+  GridPane.setHgrow(outputPane, Priority.ALWAYS)
   GridPane.setVgrow(goalPane, Priority.ALWAYS)
   GridPane.setVgrow(exprPane, Priority.ALWAYS)
+  GridPane.setVgrow(outputPane, Priority.ALWAYS)
 
   gridPane.add(parameterAnchor, 0, 0)
   gridPane.add(goalPane, 1, 0)
   gridPane.add(exprPane, 1, 1)
+  gridPane.add(outputPane, 1, 2)
 
   val tab = new Tab { thisTab =>
     text = defn.defnName
@@ -114,5 +127,11 @@ class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, shell : Shell, defn 
       }
     }
   }
+
+  //============================================================================================
+  // INITIALIZATION
+  //
+
+  displayOutput(referenceExpression)
 
 }
