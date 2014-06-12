@@ -60,7 +60,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
-          // case KeyCode.B => if (ev.isControlDown) onBind
+          case KeyCode.B => if (ev.isControlDown) onBind
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
           case KeyCode.N => if (ev.isControlDown) onNewModule else if (ev.isAltDown) onNewSubmodule
           case KeyCode.I => if (ev.isControlDown) onInstantiate
@@ -213,6 +213,14 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
         }
         case _ => ???
       }
+    }
+
+  def onBind : Unit =
+    for {
+      wksp <- activeWorkspace
+      instntr <- wksp.activeInstantiator
+    } {
+      instntr.bind
     }
 
   def onNewSheet : Unit =

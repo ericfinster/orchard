@@ -18,14 +18,49 @@ import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-class JavaFXDefinitionInstantiator(val owner : JavaFXWorkspace, val shell : Shell, val defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
+class JavaFXDefinitionInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
 
-  def this(owner : JavaFXWorkspace, defn : JavaFXDefinition) = this(owner, owner.emptyShell, defn)
+  def this(wksp : JavaFXWorkspace, defn : JavaFXDefinition) = this(wksp, wksp.emptyShell, defn)
 
-  // def goals : Seq[JavaFXModuleParameter] = 
-  //   (defn.parameters ++ defn.localParameters) map ((mp : JavaFXModuleParameter) =>
-  //     new JavaFXModuleParameter(defn, new Goal(mp.variable))
-  //   )
+  //============================================================================================
+  // SEMANTICS
+  //
+
+  var myActiveGoal : Option[Goal] = None
+
+  def activeGoal : Option[Goal] = myActiveGoal
+  def activeGoal_=(goalOpt : Option[Goal]) = {
+    myActiveGoal = goalOpt
+
+    for { goal <- goalOpt } {
+      val gallery = new FrameworkGallery(goal)
+      goalPane.content = gallery
+      gallery.refreshAll
+    }
+  }
+
+  var myActiveExpression : Option[Expression] = None
+
+  def activeExpression : Option[Expression] = myActiveExpression
+  def activeExpression_=(exprOpt : Option[Expression]) = {
+    myActiveExpression = exprOpt
+
+    for { expr <- exprOpt } {
+      val gallery = new FrameworkGallery(expr)
+      exprPane.content = gallery
+      gallery.refreshAll
+    }
+  }
+
+  def refreshPreview : Unit = {
+    // Refresh the list view
+    parameterView.items().clear
+    parameterView.items() ++= goals
+
+    val gallery = new FrameworkGallery(previewExpression)
+    outputPane.content = gallery
+    gallery.refreshAll
+  }
 
   //============================================================================================
   // UI ELEMENTS
@@ -33,33 +68,14 @@ class JavaFXDefinitionInstantiator(val owner : JavaFXWorkspace, val shell : Shel
 
   val parameterView = new ListView[Expression] {
     cellFactory = (_ => new ExpressionListCell)
-    items() ++= goals
   }
 
   parameterView.selectionModel().selectedItem onChange {
-    val entry = parameterView.selectionModel().selectedItem()
+    val goal = parameterView.selectionModel().selectedItem()
 
-    if (entry != null) {
-      displayGoal(entry)
+    if (goal != null) {
+      activeGoal = Some(goal.asInstanceOf[Goal])
     }
-  }
-
-  def displayGoal(expr : Expression) : Unit = {
-    val gallery = new FrameworkGallery(expr)
-    goalPane.content = gallery
-    gallery.refreshAll
-  }
-
-  def displayExpr(expr : Expression) : Unit = {
-    val gallery = new FrameworkGallery(expr)
-    exprPane.content = gallery
-    gallery.refreshAll
-  }
-
-  def displayOutput(expr : Expression) : Unit = {
-    val gallery = new FrameworkGallery(expr)
-    outputPane.content = gallery
-    gallery.refreshAll
   }
 
   val parameterPane = new TitledPane {
@@ -123,7 +139,7 @@ class JavaFXDefinitionInstantiator(val owner : JavaFXWorkspace, val shell : Shel
 
     onSelectionChanged = () => {
       if (selected()) {
-        owner.activeInstantiator = Some(thisInstantiator)
+        wksp.activeInstantiator = Some(thisInstantiator)
       }
     }
   }
@@ -132,6 +148,6 @@ class JavaFXDefinitionInstantiator(val owner : JavaFXWorkspace, val shell : Shel
   // INITIALIZATION
   //
 
-  displayOutput(referenceExpression)
+  refreshPreview
 
 }

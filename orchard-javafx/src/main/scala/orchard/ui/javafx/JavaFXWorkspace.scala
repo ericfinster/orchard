@@ -293,7 +293,7 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =
               instantiator <- activeInstantiator
               expr <- cell.expression
             } {
-              instantiator.displayExpr(expr)
+              instantiator.activeExpression = Some(expr)
             }
           } else {
             cmplx.deselectAll

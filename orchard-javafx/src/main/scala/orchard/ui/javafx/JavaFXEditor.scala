@@ -29,25 +29,17 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // CONSOLE ROUTINES
   //
 
-  def consoleWrite(str : String) : Unit = {
+  def consoleWrite(str : String) : Unit = 
     console.text = console.text() ++ str ++ "\n"
-    console.scrollTop = Double.MaxValue
-  }
 
-  def consoleMessage(str : String) : Unit = { 
+  def consoleMessage(str : String) : Unit =  
     console.text = console.text() ++ "INFO: " ++ str ++ "\n"
-    console.scrollTop = Double.MaxValue
-  }
 
-  def consoleError(str : String) : Unit = {
+  def consoleError(str : String) : Unit =
     console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
-    console.scrollTop = Double.MaxValue
-  }
 
-  def consoleDebug(str : String) : Unit = {
+  def consoleDebug(str : String) : Unit = 
     console.text = console.text() ++ "DEBUG: " ++ str ++ "\n"
-    console.scrollTop = Double.MaxValue
-  }
 
   //============================================================================================
   // IO CALLBACK ROUTINES
