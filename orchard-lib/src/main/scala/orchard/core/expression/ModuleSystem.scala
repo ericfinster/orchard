@@ -75,6 +75,9 @@ trait ModuleSystem {
 
     def liftDefinition : DefinitionType
 
+    def filler : Option[Filler]
+    def isComplete : Boolean = filler != None
+
   }
 
 }

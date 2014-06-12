@@ -143,8 +143,6 @@ object JavaFXModuleSystem extends ModuleSystem {
     def focusModule : JavaFXModule = owner
     def focusWorkspace : JavaFXWorkspace = thisDefinition
 
-    def isComplete : Boolean = filler != None
-
     override def styleString = if (isComplete) "defn-complete" else "defn-incomplete"
 
     object BoundaryEntry extends JavaFXEntryContainer { thisBdryEntry =>

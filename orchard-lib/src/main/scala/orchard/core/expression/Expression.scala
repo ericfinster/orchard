@@ -121,26 +121,58 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
 
 }
 
-// Okay, this can't simply be an expression.  It needs to keep the information
-// about where it can be found.  Make a new class called QualifiedExpression which
-// records this kind of information? Defined expression?
+case class Reference(defn : ModuleSystem#Definition, addr : CellAddress) extends Expression {
 
-// Now, we're going to need projection of addresses in cell trees I think
+  assert(defn.isComplete)
 
-case class Reference(expr : Expression) extends Expression {
+  def referencedExpression : Expression = 
+    defn.filler.get.ncell.seek(addr).get.value
 
-  def ident: Identifier = ???
-  def isThin: Boolean = ???
-  def ncell: NCell[Expression] = ???
-  def styleString: String = ???
+  def ident: Identifier = referencedExpression.ident
+  def isThin: Boolean = referencedExpression.isThin
+
+  // Perhaps some efficiency danger lurks here ...
+  def ncell: NCell[Expression] = {
+    val framework = new SimpleFramework(referencedExpression)
+    framework.topCell.skeleton map (cell => Reference(defn, cell.address))
+  }
+
+  def styleString: String = referencedExpression.styleString
 
 }
 
-case class Substitution(expr : Expression) extends Expression {
+case class Substitution(expr : Expression, bindings : Map[Int, Expression]) extends Expression {
 
-  def ident: Identifier = ???
+  def ident: Identifier = {
+    Identifier(
+      expr.ident.tokens map {
+        case et @ ExpressionToken(Variable(_, idx, _, _)) =>
+          if (bindings.isDefinedAt(idx)) {
+            ExpressionToken(bindings(idx))
+          } else et
+        case tok @ _ => tok
+      }
+    )
+  }
+
+  def ncell: NCell[Expression] = 
+    expr.ncell map (Substitution(_, bindings))
+
+  // This we can't tell until we reduce, I think ...
   def isThin: Boolean = ???
-  def ncell: NCell[Expression] = ???
-  def styleString: String = ???
+
+  // Right, this too.  We have to reduce the guy to find out what he 
+  // really will be.  Actually, no, I guess the only case that is difficult
+  // is the boundary case.  And same for is thin.  So you should do these
+  // guys after you have real reduction.
+  def styleString: String = 
+    expr match {
+      case v : Variable(_, idx, _, _) => 
+        if (bindings.isDefinedAt(idx))
+          bindings(idx).styleString
+        else
+          v.styleString
+      case _ => expr.styleString  // I think this will be wrong.
+    }
 
 }

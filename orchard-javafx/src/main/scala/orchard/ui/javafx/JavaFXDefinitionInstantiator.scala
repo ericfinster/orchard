@@ -13,11 +13,20 @@ import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import orchard.core.cell._
 import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
+class JavaFXDefinitionInstantiator(owner : JavaFXWorkspace, shell : Shell, defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
+
+  def this(owner : JavaFXWorkspace, defn : JavaFXDefinition) = this(owner, owner.emptyShell, defn)
+
+  //============================================================================================
+  // SEMANTICS
+  //
+
+  val referenceExpression = Reference(defn, Immediate)
 
   //============================================================================================
   // UI ELEMENTS

@@ -27,6 +27,8 @@ trait Workspace { thisWorkspace =>
   def variables : Seq[Variable]
   def appendVariable(variable : Variable) : Unit
 
+  def emptyShell : Shell = new Shell(new WorkspaceFramework(Object(None)))
+
   //============================================================================================
   // SEMANTIC ROUTINES
   //
@@ -237,6 +239,8 @@ trait Workspace { thisWorkspace =>
 
   class WorkspaceFramework(seed : NCell[Option[Expression]]) 
       extends ExpressionFramework(seed) {
+
+    def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
     type CellType = WorkspaceFrameworkCell
 

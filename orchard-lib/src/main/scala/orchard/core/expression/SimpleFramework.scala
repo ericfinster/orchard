@@ -11,24 +11,21 @@ import orchard.core.cell._
 import orchard.core.complex._
 
 class SimpleFramework(seed : NCell[Option[Expression]])
-    extends AbstractMutableComplex[Option[Expression]](seed)
-    with Framework[Option[Expression]] {
+    extends ExpressionFramework(seed) {
+
+  def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
   type CellType = SimpleFrameworkCell
 
   def newCell(item : Option[Expression]) = new SimpleFrameworkCell(item)
   def extract(cell : CellType) = new SimpleFramework(cell.skeleton map (_.item))
-  def emptyItem : Option[Expression] = None
 
   def stabilityLevel : Option[Int] = None
   def invertibilityLevel : Option[Int] = None
   def unicityLevel : Option[Int] = None
 
-  class SimpleFrameworkCell(var item : Option[Expression])
-      extends AbstractMutableCell
-      with FrameworkCell {
-
-    def expression : Option[Expression] = item
+  class SimpleFrameworkCell(var item : Option[Expression]) 
+      extends ExpressionFrameworkCell(item) {
 
     override def toString = item.toString
 
