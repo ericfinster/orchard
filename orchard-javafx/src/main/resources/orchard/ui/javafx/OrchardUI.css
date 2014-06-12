@@ -225,6 +225,12 @@
 .orch-list-cell-app:hover { -fx-background-color: app-hover }
 .orch-list-cell-app:selected { -fx-background-color: app-selected }
 
+
+.orch-list-cell-defn-complete { -fx-text-fill: -fx-text-inner-color }
+
+.orch-list-cell-defn-incomplete { -fx-text-fill: red }
+.orch-list-cell-defn-incomplete:selected { -fx-text-fill: red }
+
 /* I guess there are a couple more ... */
 
 

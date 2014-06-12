@@ -30,6 +30,8 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
     def expression : Option[Expression] = item
 
+    override def toString = item.toString
+
   }
 }
 

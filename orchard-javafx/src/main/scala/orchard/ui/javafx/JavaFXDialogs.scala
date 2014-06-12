@@ -244,10 +244,10 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
             } else None
 
 
-          val newModule = new JavaFXModule(name, None, thisEditor, stabilityLevel, invertibilityLevel, unicityLevel) 
+          val newModule = new JavaFXModule(name, None, stabilityLevel, invertibilityLevel, unicityLevel) 
           consoleMessage("Created new module named: " ++ name)
           topLevelModule = newModule
-          newModule.newSheet
+          onOpenWorkspace
         }
         case DialogCancel => ()
       }

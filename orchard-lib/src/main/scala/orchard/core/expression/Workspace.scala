@@ -15,7 +15,8 @@ import IdentParser.NoSuccess
 
 trait Workspace { thisWorkspace =>
 
-  def editor : Editor
+  type EditorType <: Editor
+  def editor : EditorType
 
   def activeWorksheet : Option[Worksheet]
 

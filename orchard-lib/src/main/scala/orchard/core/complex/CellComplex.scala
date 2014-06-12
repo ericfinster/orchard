@@ -207,27 +207,33 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
           Source(Immediate, List(topCell.sources.get indexOf thisCell))
         }
       } else {
-        // This should be the generic case.  We look at the base cell two dimensions higher,
-        // and get it's source tree.  Then we look for this guy as an edge in that rose tree
-
-        val refCell = baseCells(thisCell.dimension + 2)
-        val refSrcs = baseCells(thisCell.dimension + 1).sources.get
-
-        val ptr = new RoseZipper(refCell.sourceTree.get, Nil).find(
-          branchCell => {
-            branchCell.target == Some(thisCell)
-          },
-          roseIdx => {
-            refSrcs(roseIdx) == thisCell
-          }).get
 
         def buildPrefix(i : Int) : AddressPrefix =
           if (i <= 0) Immediate else Target(buildPrefix(i - 1))
 
-        val prefix : AddressPrefix = 
-          buildPrefix(thisComplex.dimension - thisCell.dimension - 1)
+        if (isBase) {
+          buildPrefix(thisComplex.dimension - thisCell.dimension)
+        } else {
+          // This should be the generic case.  We look at the base cell two dimensions higher,
+          // and get it's source tree.  Then we look for this guy as an edge in that rose tree
 
-        Source(prefix, ptr.toAddr)
+          val refCell = baseCells(thisCell.dimension + 2)
+          val refSrcs = baseCells(thisCell.dimension + 1).sources.get
+
+          val ptr = new RoseZipper(refCell.sourceTree.get, Nil).find(
+            branchCell => {
+              branchCell.target == Some(thisCell)
+            },
+            roseIdx => {
+              refSrcs(roseIdx) == thisCell
+            }).get
+
+
+          val prefix : AddressPrefix =
+            buildPrefix(thisComplex.dimension - thisCell.dimension - 1)
+
+          Source(prefix, ptr.toAddr)
+        }
       }
     }
 

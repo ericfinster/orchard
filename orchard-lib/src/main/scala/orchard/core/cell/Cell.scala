@@ -10,6 +10,7 @@ package orchard.core.cell
 import scala.language.implicitConversions
 
 import orchard.core.util._
+
 import Nats._
 
 sealed trait Cell[D <: Nat, +A]
@@ -19,7 +20,7 @@ case class ObjectCell[D <: Nat, +A](value : A)(implicit val isZero : IsZero[D]) 
 }
 
 case class CompositeCell[D <: Nat, +A](value : A, srcTree : CellTree[D#Pred, A], tgtValue : A)(implicit val hasPred : HasPred[D]) extends Cell[D, A] {
-  override def toString = value.toString // ++ " : " ++ (srcTree.cells map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
+  override def toString = value.toString ++ " : " ++ (srcTree.cells map (cell => cell.value.toString)).toString ++ " -> " ++ tgtValue.toString
 }
 
 object Object {
@@ -158,6 +159,12 @@ object Cell {
         case Composite(_, srcTree, _, _) => srcTree
       }
 
+    def srcTreeOption : Option[CellTree[D#Pred, A]] = 
+      cell match {
+        case Composite(_, srcTree, _, _) => Some(srcTree)
+        case _ => None
+      }
+
     def targetValue(implicit hasPred : HasPred[D]) : A =
       cell match {
         case Composite(_, _, tgtValue, _) => tgtValue
@@ -183,6 +190,15 @@ object Cell {
       }
 
     def target(implicit hasPred : HasPred[D]) : Cell[D#Pred, A] = srcTree.target(targetValue)
+
+    def targetOption : Option[Cell[D#Pred, A]] = 
+      cell match {
+        case Object(_, _) => None
+        case Composite(_, srcTree, tgtValue, ev) => {
+          implicit val hasPred = ev
+          Some(srcTree.target(tgtValue))
+        }
+      }
 
     def regenerateFrom[T >: A, B](generator : CellRegenerator[T, B]) : Cell[D, B] =
       cell match {
@@ -217,17 +233,39 @@ object Cell {
 //  For abstracting over the dimension
 //
 
-abstract class NCell[A] {
+abstract class NCell[A] { thisNCell =>
   type Dim <: Nat
 
   val dim : Dim
   val cell : Cell[dim.Self, A]
 
-  // def ev : Either[IsZero[dim.Self], HasPred[dim.Self]] =
-  //   dim match {
-  //     case Z => Left(new IsZero[dim.Self] { })
-  //     case S(p) => Right(new HasPred[dim.Self] { type Pred = p.Self })
-  //   }
+  // This function bumps the dimension by 1 so that the location
+  // is looking at the correct source tree
+  def seekPrefix(pref : AddressPrefix) : Option[NCell[A]] = 
+    pref match {
+      case Immediate => Some(cell.glob(cell.value, cell.value))
+      case Target(p) => 
+        for {
+          prefCell <- seekPrefix(p)
+          prefTgt <- prefCell.targetOption
+        } yield prefTgt
+    }
+
+  def seek(addr : CellAddress) : Option[NCell[A]] = 
+    addr match {
+      case pref : AddressPrefix =>
+        for {
+          prefCell <- seekPrefix(pref)
+          prefTgt <- prefCell.targetOption
+        } yield prefTgt
+      case Source(pref, loc) => 
+        for {
+          prefCell <- seekPrefix(pref)
+          prefSrcTree <- prefCell.srcTreeOption
+          ptr <- prefSrcTree.seek(loc)
+          result <- ptr.outputOption
+        } yield result
+    }
 
   override def toString = cell.toString
 

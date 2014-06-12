@@ -55,15 +55,15 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     showRoot = true
     cellFactory = (_ => 
       new TreeCell(new ModuleTreeCell) { thisCell =>
-        onMouseClicked = (ev : MouseEvent) => {
-          if (thisCell.item().isInstanceOf[JavaFXModuleParameter] && ev.clickCount > 1) {
-            for {
-              mod <- activeModule
-            } {
-              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
-            }
-          }
-        }
+        // onMouseClicked = (ev : MouseEvent) => {
+        //   if (thisCell.item().isInstanceOf[JavaFXModuleParameter] && ev.clickCount > 1) {
+        //     for {
+        //       wksp <- activeWorkspace
+        //     } {
+        //       mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
+        //     }
+        //   }
+        // }
       }
     )
   }
@@ -107,15 +107,15 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   val parameterView = new ListView[JavaFXModuleEntry] {
     cellFactory = (_ =>
       new ListCell(new ModuleListCell) { thisCell =>
-        onMouseClicked = (ev : MouseEvent) => { 
-          if (ev.clickCount > 1) {
-            for {
-              mod <- activeModule
-            } {
-              mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
-            }
-          }
-        }
+        // onMouseClicked = (ev : MouseEvent) => { 
+        //   if (ev.clickCount > 1) {
+        //     for {
+        //       mod <- activeModule
+        //     } {
+        //       mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
+        //     }
+        //   }
+        // }
       }
     )
   }

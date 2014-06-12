@@ -29,17 +29,25 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // CONSOLE ROUTINES
   //
 
-  def consoleWrite(str : String) : Unit = 
+  def consoleWrite(str : String) : Unit = {
     console.text = console.text() ++ str ++ "\n"
+    console.scrollTop = Double.MaxValue
+  }
 
-  def consoleMessage(str : String) : Unit = 
+  def consoleMessage(str : String) : Unit = { 
     console.text = console.text() ++ "INFO: " ++ str ++ "\n"
+    console.scrollTop = Double.MaxValue
+  }
 
-  def consoleError(str : String) : Unit = 
+  def consoleError(str : String) : Unit = {
     console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
+    console.scrollTop = Double.MaxValue
+  }
 
-  def consoleDebug(str : String) : Unit =
+  def consoleDebug(str : String) : Unit = {
     console.text = console.text() ++ "DEBUG: " ++ str ++ "\n"
+    console.scrollTop = Double.MaxValue
+  }
 
   //============================================================================================
   // IO CALLBACK ROUTINES
@@ -84,52 +92,44 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     moduleView.selectionModel().select(mod.treeItem)
   }
 
-  private var myActiveModule : Option[JavaFXModule] = None
+  private var myActiveWorkspace : Option[JavaFXWorkspace] = None
 
-  def activeModule : Option[JavaFXModule] = myActiveModule
-  def activeModule_=(mod : JavaFXModule) = {
-    myActiveModule = Some(mod)
-    workspacePane.content = mod.ui
-    consoleMessage("Set active module to: " ++ mod.name)
+  def activeWorkspace : Option[JavaFXWorkspace] = myActiveWorkspace
+  def activeWorkspace_=(wksp : JavaFXWorkspace) = {
+    if (myActiveWorkspace != Some(wksp)) {
+      myActiveWorkspace = Some(wksp)
+      workspacePane.content = wksp.ui
+    }
   }
+
+  var activeModule : Option[JavaFXModule] = None
 
   def displayParameters(entry : JavaFXModuleEntry) : Unit = {
     parameterView.items().clear
     parameterView.items() ++= (entry.parameters map (_.asInstanceOf[JavaFXModuleParameter]))
   }
 
-  moduleView.selectionModel().selectedItem onChange {
+  def activeEntry : Option[JavaFXModuleEntry] = {
     val item = moduleView.selectionModel().selectedItem()
 
     if (item != null) {
       val entry = item.value()
-      displayParameters(entry)
+      if (entry != null) Some(entry) else None
+    } else None
 
-      item.value() match {
-        case mod : JavaFXModule => activeModule = mod
-        case _ =>
-          for { 
-            p <- entry.parent 
-            mod <- activeModule 
-          } {
-            val parent = p
-
-            if (parent.isInstanceOf[JavaFXModule]) {
-              // When the parent is a module
-              if (mod != parent)
-                activeModule = parent.asInstanceOf[JavaFXModule]
-            } else {
-              // When the parent is a definition
-              val pMod = parent.parent.get
-
-              if (mod != pMod)
-                activeModule = pMod.asInstanceOf[JavaFXModule]
-            }
-          }
-      }
-
-    }
   }
+
+  // moduleView.selectionModel().selectedItem onChange {
+  //   val item = moduleView.selectionModel().selectedItem()
+
+  //   if (item != null) {
+  //     val entry = item.value()
+  //     displayParameters(entry)
+
+  //     activeWorkspace = entry.focusWorkspace
+  //     activeModule = Some(entry.focusModule)
+  //   }
+  // }
 
 }
 

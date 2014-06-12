@@ -121,3 +121,26 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
 
 }
 
+// Okay, this can't simply be an expression.  It needs to keep the information
+// about where it can be found.  Make a new class called QualifiedExpression which
+// records this kind of information? Defined expression?
+
+// Now, we're going to need projection of addresses in cell trees I think
+
+case class Reference(expr : Expression) extends Expression {
+
+  def ident: Identifier = ???
+  def isThin: Boolean = ???
+  def ncell: NCell[Expression] = ???
+  def styleString: String = ???
+
+}
+
+case class Substitution(expr : Expression) extends Expression {
+
+  def ident: Identifier = ???
+  def isThin: Boolean = ???
+  def ncell: NCell[Expression] = ???
+  def styleString: String = ???
+
+}

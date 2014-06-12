@@ -218,6 +218,31 @@ object CellTree {
         case Graft(cell, branches, _) => cell.target
       }
 
+    def outputOption : Option[Cell[D#Pred, A]] = 
+      tree match {
+        case Seed(_, _) => None
+        case Leaf(shape, _) => Some(shape)
+        case Graft(cell, branches, ev) => {
+          implicit val hasPred = ev
+          Some(cell.target)
+        }
+      }
+
+    def seek(loc : List[Int]) : Option[CellTree[D, A]] = 
+      loc match {
+        case Nil => Some(tree)
+        case i :: is => 
+          tree match {
+            case Seed(_, _) => None
+            case Leaf(_, _) => None
+            case Graft(_, branches, _) => {
+              if (branches.isDefinedAt(i)) {
+                branches(i).seek(is)
+              } else None
+            }
+          }
+      }
+
     def getUnit : CellTree[D, A] =
       tree match {
         case Graft(cell, branches, ev) => {

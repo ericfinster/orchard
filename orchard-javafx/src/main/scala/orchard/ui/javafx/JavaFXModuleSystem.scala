@@ -7,8 +7,6 @@
 
 package orchard.ui.javafx
 
-import scala.collection.mutable.Buffer
-
 import scalafx.Includes._
 import scalafx.scene.control._
 
@@ -33,6 +31,9 @@ object JavaFXModuleSystem extends ModuleSystem {
 
     val treeItem = new TreeItem[JavaFXModuleEntry](this)
 
+    def focusModule : JavaFXModule
+    def focusWorkspace : JavaFXWorkspace
+
   }
   
   //============================================================================================
@@ -50,6 +51,34 @@ object JavaFXModuleSystem extends ModuleSystem {
       treeItem.children map (_.getValue)
     
   }
+
+  //============================================================================================
+  // MODULE PARAMETERS
+  //
+
+  class JavaFXModuleParameter(val owner : JavaFXEntryContainer, val variable : Variable) 
+      extends JavaFXModuleEntry 
+      with ModuleParameter {
+  
+    def liftParameter : JavaFXModuleParameter = this
+
+    def name : String = variable.id
+    def parent : Option[JavaFXEntryContainer] = Some(owner)
+
+    override def styleString : String = if (variable.isThin) "var-thin" else "var"
+
+    def focusModule : JavaFXModule = 
+      owner match {
+        case mod : JavaFXModule => mod
+        case defn : JavaFXDefinition => defn.owner
+      }
+
+    def focusWorkspace : JavaFXWorkspace =
+      owner match {
+        case mod : JavaFXModule => mod
+        case defn : JavaFXDefinition => defn
+      }
+  }
   
   //============================================================================================
   // MODULES
@@ -58,41 +87,17 @@ object JavaFXModuleSystem extends ModuleSystem {
   class JavaFXModule(
       val name : String,
       val parent : Option[JavaFXEntryContainer],
-      val editor : JavaFXEditor,
       val stabilityLevel : Option[Int],
       val invertibilityLevel : Option[Int],
       val unicityLevel : Option[Int]
   ) extends JavaFXEntryContainer 
-      with JavaFXModuleUI
+      with JavaFXWorkspace
       with Module { thisModule =>
 
     def liftModule : JavaFXModule = this
 
-    def worksheets : Buffer[Worksheet] = Buffer.empty
-
-    def activeWorksheet : Option[Worksheet] =
-      for {
-        gallery <- activeGallery
-      } yield gallery.complex
-
-    def appendVariable(variable : Variable) : Unit = {
-      val newVar = new JavaFXModuleParameter(Some(thisModule), variable)
-      treeItem.children += newVar.treeItem
-      editor.moduleView.selectionModel().select(newVar.treeItem)
-    }
-
-    def appendDefinition(filler : Filler) : Unit = {
-      val defn = new JavaFXDefinition(Some(thisModule), filler)
-      treeItem.children += defn.treeItem
-      editor.moduleView.selectionModel().select(defn.treeItem)
-    }
-
-    def appendSubmodule(subName : String) : Unit = {
-      val subMod = new JavaFXModule(subName, Some(thisModule), editor, stabilityLevel, invertibilityLevel, unicityLevel)
-      treeItem.children += subMod.treeItem
-      editor.moduleView.selectionModel().select(subMod.treeItem)
-      subMod.newSheet
-    }
+    def focusModule : JavaFXModule = thisModule
+    def focusWorkspace : JavaFXWorkspace = thisModule
 
     //   def toXML : xml.NodeSeq =
     //     <module name={name}
@@ -105,32 +110,88 @@ object JavaFXModuleSystem extends ModuleSystem {
   }
 
   //============================================================================================
-  // MODULE PARAMETERS
-  //
-
-  class JavaFXModuleParameter(val parent : Option[JavaFXEntryContainer], val variable : Variable) 
-      extends JavaFXModuleEntry 
-      with ModuleParameter {
-  
-    def liftParameter : JavaFXModuleParameter = this
-
-    def name : String = variable.id
-    override def styleString : String = if (variable.isThin) "var-thin" else "var"
-
-  }
-
-  //============================================================================================
   // DEFINITIONS
   //
 
-  class JavaFXDefinition(val parent : Option[JavaFXEntryContainer], val filler : Filler)
+  class JavaFXDefinition(val defnName : String, val owner : JavaFXModule)
       extends JavaFXEntryContainer
+      with JavaFXWorkspace
       with Definition { thisDefinition =>
 
     def liftDefinition : JavaFXDefinition = this
 
-    def name : String = filler.Boundary.id
-    def localParameters : Seq[JavaFXModuleParameter] = Seq.empty
+    // Instead of this, you should style it with css somehow ..
+    def name : String = "Definition: " ++ defnName
+    def parent : Option[JavaFXEntryContainer] = Some(owner)
+
+    private var myFiller : Option[Filler] = None
+    
+    def filler : Option[Filler] = myFiller
+    def filler_=(fillerOpt : Option[Filler]) : Unit = {
+      myFiller = fillerOpt
+
+      fillerOpt match {
+        case None => treeItem.children -= BoundaryEntry.treeItem
+        case Some(_) => treeItem.children += BoundaryEntry.treeItem
+      }
+    }
+
+    val stabilityLevel : Option[Int] = owner.stabilityLevel
+    val invertibilityLevel : Option[Int] = owner.invertibilityLevel
+    val unicityLevel : Option[Int] = owner.unicityLevel
+
+    def focusModule : JavaFXModule = owner
+    def focusWorkspace : JavaFXWorkspace = thisDefinition
+
+    def isComplete : Boolean = filler != None
+
+    override def styleString = if (isComplete) "defn-complete" else "defn-incomplete"
+
+    object BoundaryEntry extends JavaFXEntryContainer { thisBdryEntry =>
+
+      def name : String =
+        (filler map (_.Boundary.id)) getOrElse "Unknown"
+
+      def parent = Some(thisDefinition)
+
+      def focusModule : JavaFXModule = owner
+      def focusWorkspace : JavaFXWorkspace = thisDefinition
+
+      override def styleString = 
+        (filler map (f => if (f.Boundary.isThin) "bdry-thin" else "bdry")) getOrElse "unknown"
+
+      object FillerEntry extends JavaFXModuleEntry {
+
+        def name : String =
+          (filler map (_.id)) getOrElse "Unknown"
+
+        def parent = Some(thisBdryEntry)
+
+        def focusModule : JavaFXModule = owner
+        def focusWorkspace : JavaFXWorkspace = thisDefinition
+
+        override def styleString = "filler"
+
+      }
+
+      treeItem.children += FillerEntry.treeItem
+    }
+
+    override def assumeAtSelection(thinHint : Boolean) : Unit = {
+      if (isComplete) {
+        editor.consoleError("Cannot assume new variable in a complete definition.")
+      } else {
+        super.assumeAtSelection(thinHint)
+      }
+    }
+
+    override def fillAtSelection : Unit = {
+      if (isComplete) {
+        editor.consoleError("Cannot create filler in a complete definition.")
+      } else {
+        super.fillAtSelection
+      }
+    }
 
   }
 

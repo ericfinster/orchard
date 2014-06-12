@@ -1,11 +1,13 @@
 /**
-  * JavaFXModuleUI.scala - User Interface routines for modules
+  * JavaFXWorkspace.scala - User Interface routines for workspaces
   * 
   * @author Eric Finster
   * @version 0.1 
   */
 
 package orchard.ui.javafx
+
+import scala.collection.mutable.Buffer
 
 import scalafx.Includes._
 import scalafx.scene.text._
@@ -22,7 +24,23 @@ import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-trait JavaFXModuleUI { thisModule : JavaFXModule =>
+trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =>
+
+  type EditorType = JavaFXEditor
+  def editor = OrchardEditor
+
+  override def variables : Seq[Variable] =
+    (parameters ++ localParameters) map (_.variable)
+
+  override def appendVariable(variable : Variable) : Unit = {
+    val newVar = new JavaFXModuleParameter(thisWorkspace, variable)
+    treeItem.children += newVar.treeItem
+    OrchardEditor.moduleView.selectionModel().select(newVar.treeItem)
+  }
+
+  //============================================================================================
+  // UI ELEMENTS
+  //
 
   val worksheetTabPane = new TabPane
 
@@ -47,9 +65,14 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
     styleClass += "orch-pane"
   }
 
-  val clipboardTab = new Tab {
+  val clipboardTab = new Tab { 
     text = "Clipboard"
     content = clipboardPane
+    onSelectionChanged = () => {
+      if (selected()) {
+        activeInstantiator = None
+      }
+    }
   }
 
   controlTabPane += clipboardTab
@@ -86,8 +109,15 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
   // WORKSHEET MANIPULATION
   //
 
-  var activeGallery : Option[WorksheetGallery] = None
   var sheetCount : Int = 1
+  def worksheets : Buffer[Worksheet] = Buffer.empty
+
+  var activeGallery : Option[WorksheetGallery] = None
+  def activeWorksheet : Option[Worksheet] =
+    for {
+      gallery <- activeGallery
+    } yield gallery.complex
+
 
   def newSheet : Unit = newSheet(CardinalComplex(Object(None)))
   // def newSheetWithExpression(ncell : NCell[Expression]) = newSheet(CardinalComplex(ncell map (Some(_))))
@@ -123,6 +153,12 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
     sheetCount += 1
     gallery.refreshAll
   }
+
+  //============================================================================================
+  // INSTATIATOR MANIPULATION
+  //
+
+  var activeInstantiator : Option[JavaFXDefinitionInstantiator] = None
 
   //============================================================================================
   // WORKSHEET PANEL IMPLEMENTATION
@@ -251,6 +287,14 @@ trait JavaFXModuleUI { thisModule : JavaFXModule =>
 
           if (cell.isNeutral) {
             cmplx.clearAndSelect(cell)
+
+            // If there is an instantiator active, send this cell to the expresison pane
+            for {
+              instantiator <- activeInstantiator
+              expr <- cell.expression
+            } {
+              instantiator.displayExpr(expr)
+            }
           } else {
             cmplx.deselectAll
           }

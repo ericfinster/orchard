@@ -39,7 +39,6 @@ trait ModuleSystem {
 
   }
 
-
   trait EntryContainer extends ModuleEntry { 
     thisContainer : ContainerType with EntryType =>
 
@@ -47,35 +46,11 @@ trait ModuleSystem {
 
     def entries : Seq[EntryType]
 
-  }
-
-  trait Module extends EntryContainer with Workspace { 
-    thisModule : ModuleType with ContainerType with EntryType =>
-
-    def liftModule : ModuleType
-
     def localParameters : Seq[ParameterType] =
       entries flatMap {
         case mp : ModuleParameter => Some(mp.liftParameter)
         case _ => None
       }
-
-    override def variables : Seq[Variable] = 
-      (parameters ++ localParameters) map (_.variable)
-
-  }
-
-  trait Definition extends EntryContainer { 
-    thisDefinition : DefinitionType with ContainerType with EntryType =>
-
-    def liftDefinition : DefinitionType
-
-    def localParameters : Seq[ParameterType]
-    // def expression : Option[ExpressionType]
-
-    override def entries = 
-      (localParameters map (_.liftEntry)) // ++ 
-        // (expression map (_.liftEntry))
 
   }
 
@@ -85,6 +60,20 @@ trait ModuleSystem {
     def liftParameter : ParameterType
 
     def variable : Variable
+
+  }
+
+  trait Module extends EntryContainer with Workspace { 
+    thisModule : ModuleType with ContainerType with EntryType =>
+
+    def liftModule : ModuleType
+
+  }
+
+  trait Definition extends EntryContainer with Workspace { 
+    thisDefinition : DefinitionType with ContainerType with EntryType =>
+
+    def liftDefinition : DefinitionType
 
   }
 

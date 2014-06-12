@@ -5,7 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.core.complex
+package orchard.core.cell
 
 sealed trait CellAddress
 sealed trait AddressPrefix extends CellAddress

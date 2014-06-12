@@ -20,6 +20,7 @@ import javafx.{scene => jfxs}
 class FrameworkGallery(val complex : Framework[Option[Expression]]) extends SpinnerGallery[Option[Expression]] { thisGallery =>
 
   def this(seed : NCell[Option[Expression]]) = this(new SimpleFramework(seed))
+  def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
   type PanelType = FrameworkPanel
 
@@ -28,6 +29,31 @@ class FrameworkGallery(val complex : Framework[Option[Expression]]) extends Spin
     reactTo(panel)
     panel
   }
+
+    //============================================================================================
+    // EVENTS
+    //
+
+    override def onEventEmitted(ev : CellEvent) = {
+      val cmplx = complex
+
+      ev match {
+        case CellClicked(c) => {
+          val cell = c.owner.asInstanceOf[cmplx.CellType]
+
+          OrchardEditor.consoleMessage("Clicked cell: " ++ cell.item.toString)
+          OrchardEditor.consoleMessage("Address of clicked cell: " ++ cell.address.toString)
+
+          for {
+            lookupCell <- cmplx.topCell.skeleton.seek(cell.address)
+          } {
+            OrchardEditor.consoleMessage("Lookup succeeded: " ++ lookupCell.value.item.toString)
+          }
+        }
+
+        case _ => super.onEventEmitted(ev)
+      }
+    }
 
   initialize
 
