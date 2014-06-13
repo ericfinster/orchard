@@ -98,7 +98,7 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =
     exprOpt match {
       case None => clipboardPane.content.clear
       case Some(expr) => {
-        val gallery = new FrameworkGallery(expr.ncell map (Some(_)))
+        val gallery = new FrameworkGallery(expr)
         clipboardPane.content = gallery
         gallery.refreshAll
       }

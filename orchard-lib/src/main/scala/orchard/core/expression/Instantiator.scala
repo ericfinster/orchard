@@ -25,6 +25,12 @@ trait Instantiator {
 
   var bindings : Map[Int, Expression] = Map.empty
 
+  def isComplete : Boolean = 
+    goals forall (_.isBound)
+
+  def completedExpression : Expression = 
+    Substitution(Reference(defn, Immediate), bindings)
+
   def wrapVariables(expr : Expression) : Expression = 
     expr match {
       case v : Variable => new Goal(v)
@@ -33,15 +39,18 @@ trait Instantiator {
 
   class Goal(v : Variable) extends Variable(v.shell map (wrapVariables(_)), v.index, v.ident, v.isThin) {
 
+    def isBound : Boolean = 
+      bindings.isDefinedAt(v.index)
+
     override def name : String = 
-      if (bindings.isDefinedAt(v.index)) {
+      if (isBound) {
         v.name ++ " -> " ++ bindings(v.index).name
       } else {
         v.name
       }
 
     override def styleString = 
-      if (bindings.isDefinedAt(v.index)) {
+      if (isBound) {
         bindings(v.index).styleString
       } else "app"
 

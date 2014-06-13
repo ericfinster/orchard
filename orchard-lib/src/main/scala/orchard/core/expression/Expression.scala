@@ -25,6 +25,9 @@ sealed trait Expression extends Stylable {
 
   def normalize : Expression = this.unfold.reduce
 
+  def convertsTo(other : Expression) : Boolean =
+    this.normalize == other.normalize
+
 }
 
 case class Variable(val shell : Shell, val index : Int, val ident : Identifier, val isThin : Boolean) extends Expression {
@@ -58,12 +61,12 @@ case class Variable(val shell : Shell, val index : Int, val ident : Identifier, 
       ) + index.hashCode
     )
 
-  override def toString = "Variable(" ++ id ++ ")"
+  override def toString = "Var(" ++ id ++ ")"
 }
 
 case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { thisFiller =>
 
-  val ident = Identifier(LiteralToken("def-") :: bdryIdent.tokens)
+  val ident = ExpressionIdentifier(LiteralToken("def-") :: bdryIdent.tokens)
   def isThin : Boolean = true
   def styleString = "filler"
 
@@ -90,7 +93,7 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
   override def hashCode : Int = 
     41 * ( 41 + nook.hashCode )
 
-  override def toString = "Filler(" ++ id ++ ")"
+  override def toString = "Fill(" ++ id ++ ")"
 
   //============================================================================================
   // BOUNDARY DEFINITION
@@ -133,7 +136,7 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
     override def hashCode : Int =
       41 * ( 41 + interior.hashCode )
 
-    override def toString = "Boundary(" ++ id ++ ")"
+    override def toString = "Bdry(" ++ id ++ ")"
 
   }
 
@@ -143,17 +146,22 @@ case class Reference(val defn : ModuleSystem#Definition, val addr : CellAddress)
 
   assert(defn.isComplete)
 
+  def addressDictionary : NCell[(Expression, CellAddress)] = {
+    val framework = new SimpleFramework(defn.filler.get)
+    framework.topCell.skeleton map (cell => (cell.expression.get, cell.address))
+  }
+
   def referencedExpression : Expression = 
-    defn.filler.get.ncell.seek(addr).get.value
+    addressDictionary.seek(addr).get.value._1
 
   def ident: Identifier = referencedExpression.ident
   def isThin: Boolean = referencedExpression.isThin
 
   // Perhaps some efficiency danger lurks here ...
-  def ncell: NCell[Expression] = {
-    val framework = new SimpleFramework(referencedExpression)
-    framework.topCell.skeleton map (cell => Reference(defn, cell.address))
-  }
+  def ncell: NCell[Expression] =
+    addressDictionary.seek(addr).get map {
+      case (_, localAddr) => Reference(defn, localAddr)
+    }
 
   def unfold : Expression = 
     referencedExpression.unfold
@@ -163,33 +171,37 @@ case class Reference(val defn : ModuleSystem#Definition, val addr : CellAddress)
 
   def styleString: String = referencedExpression.styleString
 
-  override def toString = "Reference(" ++ id ++ ")"
+  override def toString = "Ref(" ++ defn.name ++ ", " ++ addr.toString ++ ")"
 }
 
 case class Substitution(val expr : Expression, val bindings : Map[Int, Expression]) extends Expression {
 
+  def translateTokens(toks : List[IdentToken]) : List[IdentToken] =
+    toks map {
+      case et @ ExpressionToken(Variable(_, idx, _, _)) =>
+        if (bindings.isDefinedAt(idx)) {
+          ExpressionToken(bindings(idx))
+        } else et
+      case tok @ _ => tok
+    }
+
+  // Fix this to translate variable identifiers correctly ...
   def translateIdent(id : Identifier) : Identifier = {
-    Identifier(
-      expr.ident.tokens map {
-        case et @ ExpressionToken(Variable(_, idx, _, _)) =>
-          if (bindings.isDefinedAt(idx)) {
-            ExpressionToken(bindings(idx))
-          } else et
-        case tok @ _ => tok
-      }
-    )
+    id match {
+      case vIdent : VariableIdentifier =>
+        if (bindings.isDefinedAt(vIdent.index)) {
+          // We do not translate the resulting identifier here.  I think it's
+          // entries should be out of the scope of this substitution ....
+          bindings(vIdent.index).ident
+        } else {
+          VariableIdentifier(vIdent.index, translateTokens(vIdent.tokens))
+        }
+      case eIdent : ExpressionIdentifier => 
+        ExpressionIdentifier(translateTokens(eIdent.tokens))
+    }
   }
 
-  def ident: Identifier = 
-    expr match {
-      case v : Variable =>
-        if (bindings.isDefinedAt(v.index)) {
-          bindings(v.index).ident
-        } else {
-          translateIdent(v.ident)
-        }
-      case _ => translateIdent(expr.ident)
-    }
+  def ident : Identifier = translateIdent(expr.ident)
 
   def ncell: NCell[Expression] = 
     expr.ncell map (Substitution(_, bindings))
@@ -222,7 +234,23 @@ case class Substitution(val expr : Expression, val bindings : Map[Int, Expressio
         // Compose the two subtitutions by creating a new map
         // How does the map composition work????
 
-        ???
+        // The inner substitution may bind some variables to variables which might be
+        // rebound.  We compose where it is possible.  Do we need to keep the rest of
+        // the outer substitution?
+
+        val composedBindings : Map[Int, Expression] =
+          s.bindings map {
+            case (idx, v : Variable) => {
+              if (bindings.isDefinedAt(v.index)) {
+                (idx, bindings(v.index))
+              } else {
+                (idx, v)
+              }
+            }
+            case (idx, bExpr) => (idx, bExpr)
+          }
+
+        Substitution(s.expr, composedBindings)
       }
 
     }
@@ -251,5 +279,6 @@ case class Substitution(val expr : Expression, val bindings : Map[Int, Expressio
       case _ => expr.styleString
     }
 
-  override def toString = "Substitution(" ++ expr.toString ++ ")"
+  override def toString = "Subst(" ++ expr.toString ++ "," ++ bindings.toString ++ ")"
+
 }

@@ -60,10 +60,11 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
-          case KeyCode.B => if (ev.isControlDown) onBind
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
+          case KeyCode.B => if (ev.isControlDown) onBind
           case KeyCode.N => if (ev.isControlDown) onNewModule else if (ev.isAltDown) onNewSubmodule
           case KeyCode.I => if (ev.isControlDown) onInstantiate
+          case KeyCode.X => if (ev.isControlDown) onImportCompleted
           // case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
           // case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
           // case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
@@ -89,12 +90,9 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       wksp <- activeWorkspace
       worksheet <- wksp.activeWorksheet
       cell <- worksheet.selectionBase
+      expr <- cell.expression
     } {
-      val addr = cell.address
-      consoleMessage("Cell has address: " ++ addr.toString)
-      // val theCell = worksheet.seek(addr).get
-      val theCell = worksheet.topCell.skeleton.seek(addr).get.value
-      consoleMessage("Cell at that address is: " ++ theCell.expression.toString)
+      consoleDebug("Expression: " ++ expr.toString)
     }
 
   def onExit : Unit = 
@@ -210,6 +208,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
         case defn : JavaFXDefinition => {
           val instantiator = new JavaFXDefinitionInstantiator(wksp, defn)
           wksp.controlTabPane += instantiator.tab
+          wksp.controlTabPane.selectionModel().select(instantiator.tab)
         }
         case _ => ???
       }
@@ -221,6 +220,18 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       instntr <- wksp.activeInstantiator
     } {
       instntr.bind
+    }
+
+  def onImportCompleted : Unit = 
+    for {
+      wksp <- activeWorkspace
+      instntr <- wksp.activeInstantiator
+    } {
+      if (instntr.isComplete) {
+        wksp.newSheet(instntr.completedExpression)
+      } else {
+        consoleError("There are unbound variables.")
+      }
     }
 
   def onNewSheet : Unit =

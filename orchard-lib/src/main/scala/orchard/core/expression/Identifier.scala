@@ -9,15 +9,28 @@ package orchard.core.expression
 
 import scala.util.parsing.combinator.RegexParsers
 
-case class Identifier(val tokens : List[IdentToken]) {
+sealed trait Identifier {
+
+  def tokens : List[IdentToken]
 
   def exprRefs : List[Expression] = 
-    (tokens filter (_.isInstanceOf[ExpressionToken])) map 
-      (_.asInstanceOf[ExpressionToken].expr)
+    tokens flatMap {
+      case et : ExpressionToken => Some(et.expr)
+      case _ => None
+    }
 
   def rawStr = (tokens map (_.rawStr)).mkString
 
-  override def toString = (tokens map (_.value)).mkString
+  def idString = (tokens map (_.value)).mkString
+
+}
+
+case class VariableIdentifier(val index : Int, val tokens : List[IdentToken]) extends Identifier { 
+  override def toString = idString
+}
+
+case class ExpressionIdentifier(val tokens : List[IdentToken]) extends Identifier {
+  override def toString = idString
 }
 
 sealed trait IdentToken { def value : String ; def rawStr : String }
@@ -26,13 +39,9 @@ case class ExpressionToken(val expr : Expression) extends IdentToken { def value
 
 object Identifier {
 
-  def empty : Identifier = Identifier(List.empty)
+  def empty : Identifier = ExpressionIdentifier(List.empty)
 
 }
-
-// This is busted.  Now that we have a situation where names can repeat themselves,
-// referring just to the name may not be unique enough.  We're going to have to do
-// something else to have better name resolution ...
 
 case class RawIdentifier(val tokens : List[RawIdentToken]) {
   override def toString = (tokens map (_.value)).mkString

@@ -33,7 +33,7 @@ trait Workspace { thisWorkspace =>
   // SEMANTIC ROUTINES
   //
 
-  def processIdentifier(rawIdent : RawIdentifier) : Option[Identifier] = {
+  def processIdentifier(rawIdent : RawIdentifier) : Option[List[IdentToken]] = {
     val newTokens = rawIdent.tokens flatMap {
       case RawLiteral(lit) => Some(LiteralToken(lit))
       case RawReference(ref) =>
@@ -47,7 +47,7 @@ trait Workspace { thisWorkspace =>
       editor.consoleError("Identifier processing failed.")
       None
     } else {
-      Some(Identifier(newTokens))
+      Some(newTokens)
     }
   }
 
@@ -73,15 +73,18 @@ trait Workspace { thisWorkspace =>
               case Success(ident, _) => {
 
                 for {
-                  finalIdent <- processIdentifier(ident)
+                  identTokens <- processIdentifier(ident)
                 } {
+
+                  val index = variables.length
+                  val finalIdent = VariableIdentifier(index, identTokens)
 
                   // Make sure the identifier is unique
                   if (variables exists (_.id == finalIdent.toString)) {
                     editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
                   } else {
 
-                    val varExpr = Variable(shell, variables.length, finalIdent, isThin)
+                    val varExpr = Variable(shell, index, finalIdent, isThin)
 
                     worksheet.deselectAll
                     selectedCell.item = Neutral(Some(varExpr))
@@ -125,8 +128,10 @@ trait Workspace { thisWorkspace =>
               case Success(ident, _) => {
 
                 for {
-                  finalIdent <- processIdentifier(ident)
+                  identTokens <- processIdentifier(ident)
                 } {
+
+                  val finalIdent = ExpressionIdentifier(identTokens)
 
                   // Make sure the identifier is unique
                   if (variables exists (_.id == finalIdent.toString)) {
@@ -170,7 +175,7 @@ trait Workspace { thisWorkspace =>
               if (! cell.isEmpty) {
                 cell.item match {
                   case Neutral(Some(e)) => itFits &&= {
-                    if (e == expr) true else {
+                    if (e.convertsTo(expr)) true else {
                       editor.consoleError("Match error: expressions " ++ e.toString ++ 
                         " and " ++ expr.toString ++ " are not convertible.")
                       false

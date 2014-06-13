@@ -41,13 +41,10 @@ class FrameworkGallery(val complex : Framework[Option[Expression]]) extends Spin
         case CellClicked(c) => {
           val cell = c.owner.asInstanceOf[cmplx.CellType]
 
-          OrchardEditor.consoleMessage("Clicked cell: " ++ cell.item.toString)
-          OrchardEditor.consoleMessage("Address of clicked cell: " ++ cell.address.toString)
-
           for {
-            lookupCell <- cmplx.topCell.skeleton.seek(cell.address)
+            expr <- cell.expression
           } {
-            OrchardEditor.consoleMessage("Lookup succeeded: " ++ lookupCell.value.item.toString)
+            OrchardEditor.consoleMessage("Expression: " ++ expr.toString)
           }
         }
 
