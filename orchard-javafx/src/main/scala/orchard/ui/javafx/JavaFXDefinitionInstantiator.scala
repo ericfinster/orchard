@@ -33,7 +33,7 @@ class JavaFXDefinitionInstantiator(val wksp : JavaFXWorkspace, val shell : Shell
     myActiveGoal = goalOpt
 
     for { goal <- goalOpt } {
-      val gallery = new FrameworkGallery(goal)
+      val gallery = new FrameworkGallery(Substitution(goal, bindings))
       goalPane.content = gallery
       gallery.refreshAll
     }

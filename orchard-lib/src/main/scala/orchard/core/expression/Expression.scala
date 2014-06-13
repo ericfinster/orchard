@@ -163,6 +163,7 @@ case class Reference(val defn : ModuleSystem#Definition, val addr : CellAddress)
 
   def styleString: String = referencedExpression.styleString
 
+  override def toString = "Reference(" ++ id ++ ")"
 }
 
 case class Substitution(val expr : Expression, val bindings : Map[Int, Expression]) extends Expression {
@@ -179,7 +180,16 @@ case class Substitution(val expr : Expression, val bindings : Map[Int, Expressio
     )
   }
 
-  def ident: Identifier = translateIdent(expr.ident)
+  def ident: Identifier = 
+    expr match {
+      case v : Variable =>
+        if (bindings.isDefinedAt(v.index)) {
+          bindings(v.index).ident
+        } else {
+          translateIdent(v.ident)
+        }
+      case _ => translateIdent(expr.ident)
+    }
 
   def ncell: NCell[Expression] = 
     expr.ncell map (Substitution(_, bindings))
@@ -217,10 +227,29 @@ case class Substitution(val expr : Expression, val bindings : Map[Int, Expressio
 
     }
 
-  // Since these depend on filling parameters and whatnot, I'm going to
-  // do some overkill here and normalize them.  But this can clearly be
-  // sped up quite a bit with some more careful thought.
-  def isThin: Boolean = normalize.isThin
-  def styleString: String = normalize.styleString
+  def isThin: Boolean = 
+    expr match {
+      case v : Variable =>
+        if (bindings.isDefinedAt(v.index)) {
+          bindings(v.index).isThin
+        } else {
+          v.isThin
+        }
+      case b : Filler#BoundaryExpr => normalize.isThin
+      case _ => expr.isThin
+    }
 
+  def styleString: String =
+    expr match {
+      case v : Variable =>
+        if (bindings.isDefinedAt(v.index)) {
+          bindings(v.index).styleString
+        } else {
+          v.styleString
+        }
+      case b : Filler#BoundaryExpr => normalize.styleString
+      case _ => expr.styleString
+    }
+
+  override def toString = "Substitution(" ++ expr.toString ++ ")"
 }

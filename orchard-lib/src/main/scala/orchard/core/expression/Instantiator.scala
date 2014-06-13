@@ -19,7 +19,7 @@ trait Instantiator {
   def activeGoal : Option[Goal]
   def activeExpression : Option[Expression]
 
-  def goals : Seq[Goal] = 
+  val goals : Seq[Goal] = 
     (defn.parameters ++ defn.localParameters) map 
       ((mp : ModuleSystem#ModuleParameter) => new Goal(mp.variable))
 
@@ -44,6 +44,11 @@ trait Instantiator {
       if (bindings.isDefinedAt(v.index)) {
         bindings(v.index).styleString
       } else "app"
+
+    override def unfold = new Goal(super.unfold.asInstanceOf[Variable])
+    override def reduce = new Goal(super.reduce.asInstanceOf[Variable])
+
+    override def toString = "Goal(" ++ v.toString ++ ")"
 
   }
 
