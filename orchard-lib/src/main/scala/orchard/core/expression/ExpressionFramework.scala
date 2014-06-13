@@ -19,11 +19,9 @@ abstract class ExpressionFramework(seed : NCell[Option[Expression]])
 
   val emptyItem : Option[Expression] = None
 
-  abstract class ExpressionFrameworkCell(item : Option[Expression])
+  abstract class ExpressionFrameworkCell
       extends AbstractMutableCell
       with FrameworkCell { thisCell : CellType =>
-
-    def expression : Option[Expression] = item
 
   }
 

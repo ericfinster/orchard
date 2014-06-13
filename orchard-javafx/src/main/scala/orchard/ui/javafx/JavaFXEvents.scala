@@ -71,7 +71,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.R => if (ev.isControlDown) onRename
           // case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
           // case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
-          // case KeyCode.V => if (ev.isControlDown) onView
+          case KeyCode.V => if (ev.isControlDown) onViewNormalized else if (ev.isAltDown) onViewNook else if (ev.isShiftDown) onViewInterior
           case KeyCode.L => if (ev.isControlDown) onDefine
           // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           // case KeyCode.X => if (ev.isControlDown) onExtra
@@ -93,6 +93,45 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       expr <- cell.expression
     } {
       consoleDebug("Expression: " ++ expr.toString)
+      consoleDebug("Normalized expression:" ++ expr.normalize.toString)
+    }
+
+  def onViewNormalized : Unit = 
+    for {
+      wksp <- activeWorkspace
+      worksheet <- wksp.activeWorksheet
+      cell <- worksheet.selectionBase
+      expr <- cell.expression
+    } {
+      wksp.newSheet(expr.normalize)
+    }
+
+  def onViewNook : Unit = 
+    for {
+      wksp <- activeWorkspace
+      worksheet <- wksp.activeWorksheet
+      cell <- worksheet.selectionBase
+      expr <- cell.expression
+    } {
+      expr match {
+        case f : Filler => 
+          wksp.newSheet(f.nook.framework)
+        case _ => ()
+      }
+    }
+
+  def onViewInterior : Unit = 
+    for {
+      wksp <- activeWorkspace
+      worksheet <- wksp.activeWorksheet
+      cell <- worksheet.selectionBase
+      expr <- cell.expression
+    } {
+      expr match {
+        case b : Filler#BoundaryExpr => 
+          wksp.newSheet(b.interior)
+        case _ => ()
+      }
     }
 
   def onExit : Unit = 

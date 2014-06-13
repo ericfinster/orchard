@@ -207,7 +207,6 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
         target.get.isThin || thinByInvertibility
       }
     }
-
   }
 }
 

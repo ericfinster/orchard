@@ -61,7 +61,7 @@ case class Variable(val shell : Shell, val index : Int, val ident : Identifier, 
       ) + index.hashCode
     )
 
-  override def toString = "Var(" ++ id ++ ")"
+  override def toString = "Var(" ++ id ++ ", " ++ isThin.toString ++ ")"
 }
 
 case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { thisFiller =>
@@ -104,7 +104,7 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
     val ident = bdryIdent
     val interior = thisFiller
     def isThin = nook.isThinBoundary
-    def styleString = if (isThin) "bdry-thin" else "bdry"
+    def styleString = if (thisBdry.isThin) "bdry-thin" else "bdry"
 
     val ncell : NCell[Expression] =
       nook.withBoundary(thisBdry)
@@ -255,29 +255,11 @@ case class Substitution(val expr : Expression, val bindings : Map[Int, Expressio
 
     }
 
-  def isThin: Boolean = 
-    expr match {
-      case v : Variable =>
-        if (bindings.isDefinedAt(v.index)) {
-          bindings(v.index).isThin
-        } else {
-          v.isThin
-        }
-      case b : Filler#BoundaryExpr => normalize.isThin
-      case _ => expr.isThin
-    }
-
-  def styleString: String =
-    expr match {
-      case v : Variable =>
-        if (bindings.isDefinedAt(v.index)) {
-          bindings(v.index).styleString
-        } else {
-          v.styleString
-        }
-      case b : Filler#BoundaryExpr => normalize.styleString
-      case _ => expr.styleString
-    }
+  // Here we could definitely use some optimization.  But for 
+  // now let's do the obvious thing so that we can check out
+  // whether our reduction algorithm is giving the right answers
+  def isThin: Boolean = normalize.isThin
+  def styleString: String = normalize.styleString
 
   override def toString = "Subst(" ++ expr.toString ++ "," ++ bindings.toString ++ ")"
 

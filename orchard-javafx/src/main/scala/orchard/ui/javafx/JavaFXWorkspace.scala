@@ -128,6 +128,10 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =
     displayWorksheet(worksheet)
   }
 
+  def newSheet(seed : ExpressionFramework) : Unit = {
+    newSheet(CardinalComplex(seed.topCell.toNCell))
+  }
+
   def newSheet(expr : Expression) : Unit =
     newSheet(CardinalComplex(expr.ncell map (Some(_))))
 

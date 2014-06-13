@@ -262,7 +262,13 @@ trait Workspace { thisWorkspace =>
       new WorkspaceFramework(cell.skeleton map (_.item))
 
     class WorkspaceFrameworkCell(var item : Option[Expression])
-        extends ExpressionFrameworkCell(item)
+        extends ExpressionFrameworkCell {
+
+      def expression : Option[Expression] = item
+
+      override def toString = item.toString
+
+    }
 
   }
 

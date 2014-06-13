@@ -80,6 +80,9 @@ trait Instantiator {
 
           var newBindings : Map[Int, Expression] = Map.empty
 
+          // BUG!! - Does not require bindings to thin variables to be thin ...
+          // BUG!! - Thinness calculations appear to not be working ...
+
           try {
             zippedTree map {
               case (gExpr, bExpr) => {
@@ -99,6 +102,10 @@ trait Instantiator {
                           bindings(idx).toString ++ " which is not convertible to " ++ bExpr.toString)
                         throw new IllegalStateException
                       }
+                    } else if(g.isThin && (! bExpr.isThin)) {
+                      wksp.editor.consoleError("Match error: " ++ gExpr.toString ++ " is thin, but the expression " ++
+                        bExpr.toString ++ " is not.")
+                      throw new IllegalStateException
                     } else {
                       newBindings = (newBindings + (g.index -> bExpr))
                     }

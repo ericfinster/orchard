@@ -26,7 +26,9 @@ class SimpleFramework(seed : NCell[Option[Expression]])
   def unicityLevel : Option[Int] = None
 
   class SimpleFrameworkCell(var item : Option[Expression]) 
-      extends ExpressionFrameworkCell(item) {
+      extends ExpressionFrameworkCell {
+
+    def expression : Option[Expression] = item
 
     override def toString = item.toString
 
