@@ -13,23 +13,19 @@ trait Instantiator {
 
   def shell : Shell
 
-  def defn : ModuleSystem#Definition
+  def lift : ModuleSystem#Lift
   def wksp : Workspace
 
   def activeGoal : Option[Goal]
   def activeExpression : Option[Expression]
 
   val goals : Seq[Goal] = 
-    (defn.parameters ++ defn.localParameters) map 
-      ((mp : ModuleSystem#ModuleParameter) => new Goal(mp.variable))
+    lift.parameters map ((p : ModuleSystem#Parameter) => new Goal(p.variable))
 
   var bindings : Map[Int, Expression] = Map.empty
 
   def isComplete : Boolean = 
     goals forall (_.isBound)
-
-  def completedExpression : Expression = 
-    Substitution(Reference(defn, Immediate), bindings)
 
   def wrapVariables(expr : Expression) : Expression = 
     expr match {
@@ -57,6 +53,13 @@ trait Instantiator {
     override def unfold = new Goal(super.unfold.asInstanceOf[Variable])
     override def reduce = new Goal(super.reduce.asInstanceOf[Variable])
 
+    override def substituteAndReduce(bindings : Map[Int, Expression]) : Expression =
+      if (bindings.isDefinedAt(index)) {
+        bindings(index).reduce
+      } else {
+        new Goal(Variable(shell map (Substitution(_, bindings).reduce), index, ident, isThin))
+      }
+
     override def toString = "Goal(" ++ v.toString ++ ")"
 
   }
@@ -64,7 +67,7 @@ trait Instantiator {
   def refreshPreview : Unit
 
   def previewExpression : Expression = 
-    Substitution(defn.filler.get.Boundary, bindings)
+    Substitution(Filler(lift.filler.nook map (wrapVariables(_)), lift.filler.bdryIdent), bindings)
 
   def bind : Unit = 
     for {
@@ -79,9 +82,6 @@ trait Instantiator {
         case Some(zippedTree) => {
 
           var newBindings : Map[Int, Expression] = Map.empty
-
-          // BUG!! - Does not require bindings to thin variables to be thin ...
-          // BUG!! - Thinness calculations appear to not be working ...
 
           try {
             zippedTree map {
@@ -119,14 +119,20 @@ trait Instantiator {
                 }
               }
             }
+
+            // If no exception was thrown, we should have a collection of
+            // compatible bindings.  Add them to the current set and refresh
+            // the preview
+
+            bindings = bindings ++ newBindings
+            refreshPreview
+
           } catch {
-            case e : Exception => wksp.editor.consoleError("Binding failed.")
+            case e : IllegalStateException => {
+              e.printStackTrace
+              wksp.editor.consoleError("Binding failed.")
+            }
           }
-
-          // This should mean the guys are compatible ...
-          bindings = bindings ++ newBindings
-
-          refreshPreview
         }
       }
     }

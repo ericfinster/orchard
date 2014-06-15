@@ -18,9 +18,9 @@ import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-class JavaFXDefinitionInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val defn : JavaFXDefinition) extends Instantiator { thisInstantiator =>
+class JavaFXLiftInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val lift : JavaFXLift) extends Instantiator { thisInstantiator =>
 
-  def this(wksp : JavaFXWorkspace, defn : JavaFXDefinition) = this(wksp, wksp.emptyShell, defn)
+  def this(wksp : JavaFXWorkspace, lift : JavaFXLift) = this(wksp, wksp.emptyShell, lift)
 
   //============================================================================================
   // SEMANTICS
@@ -134,7 +134,7 @@ class JavaFXDefinitionInstantiator(val wksp : JavaFXWorkspace, val shell : Shell
   gridPane.add(outputPane, 1, 2)
 
   val tab = new Tab { thisTab =>
-    text = defn.defnName
+    text = lift.name
     content = gridPane
 
     onSelectionChanged = () => {

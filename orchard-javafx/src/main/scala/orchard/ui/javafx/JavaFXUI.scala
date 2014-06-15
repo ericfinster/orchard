@@ -94,51 +94,62 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     styleClass += "orch-pane"
   }
 
-  val noParametersPane = new StackPane {
-    content = new Label("No Parameters")
+  val noEnvironmentPane = new StackPane {
+    content = new Label("No Environment")
     styleClass += "orch-pane"
   }
 
-  AnchorPane.setTopAnchor(noParametersPane, 10)
-  AnchorPane.setRightAnchor(noParametersPane, 10)
-  AnchorPane.setBottomAnchor(noParametersPane, 10)
-  AnchorPane.setLeftAnchor(noParametersPane, 10)
+  AnchorPane.setTopAnchor(noEnvironmentPane, 10)
+  AnchorPane.setRightAnchor(noEnvironmentPane, 10)
+  AnchorPane.setBottomAnchor(noEnvironmentPane, 10)
+  AnchorPane.setLeftAnchor(noEnvironmentPane, 10)
 
-  val parameterView = new ListView[JavaFXModuleEntry] {
-    cellFactory = (_ =>
-      new ListCell(new ModuleListCell) { thisCell =>
-        // onMouseClicked = (ev : MouseEvent) => { 
-        //   if (ev.clickCount > 1) {
-        //     for {
-        //       mod <- activeModule
-        //     } {
-        //       mod.newSheet(thisCell.item().asInstanceOf[JavaFXModuleParameter].variable)
-        //     }
-        //   }
-        // }
-      }
-    )
+  val environmentRoot = new TreeItem[JavaFXModuleEntry]
+  val environmentView = new TreeView[JavaFXModuleEntry] {
+    cellFactory = (_ => new ModuleTreeCell)
+    showRoot = false
+    root = environmentRoot
   }
 
-  val parameterPane = new TitledPane {
-    text = "Parameters"
-    content = parameterView
+  environmentView.selectionModel().selectedItem onChange {
+    val item = environmentView.selectionModel().selectedItem()
+
+    if (item != null) {
+      val entry = item.value()
+
+      if (entry != null) {
+        entry match {
+          case ee : ExpressionEntry => 
+            for {
+              mod <- activeModule
+            } {
+              mod.clipboardExpression = Some(ee.expression)
+            }
+          case _ => ()
+        }
+      }
+    }
+  }
+
+  val environmentPane = new TitledPane {
+    text = "Environment"
+    content = environmentView
     collapsible = false
   }
 
-  AnchorPane.setTopAnchor(parameterPane, 10)
-  AnchorPane.setRightAnchor(parameterPane, 10)
-  AnchorPane.setBottomAnchor(parameterPane, 10)
-  AnchorPane.setLeftAnchor(parameterPane, 10)
+  AnchorPane.setTopAnchor(environmentPane, 10)
+  AnchorPane.setRightAnchor(environmentPane, 10)
+  AnchorPane.setBottomAnchor(environmentPane, 10)
+  AnchorPane.setLeftAnchor(environmentPane, 10)
 
-  val parameterAnchor = new AnchorPane {
-    content = noParametersPane
+  val environmentAnchor = new AnchorPane {
+    content = noEnvironmentPane
     styleClass += "orch-pane"
   }
 
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    items ++= List(moduleBrowserSplit, workspacePane, parameterAnchor)
+    items ++= List(moduleBrowserSplit, workspacePane, environmentAnchor)
   }
 
   horizontalSplit.setDividerPositions(0.1f, 0.8f)

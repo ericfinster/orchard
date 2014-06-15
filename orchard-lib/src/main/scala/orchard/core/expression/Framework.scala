@@ -7,8 +7,9 @@
 
 package orchard.core.expression
 
-import orchard.core.complex._
+import orchard.core.cell._
 import orchard.core.util._
+import orchard.core.complex._
 
 import Util._
 
@@ -62,6 +63,9 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
         target.get
       else
         emptySources.head
+
+    def boundaryAddress : CellAddress = 
+      boundaryFace.address
 
     def completeSources : Vector[CellType] =
       sources match {

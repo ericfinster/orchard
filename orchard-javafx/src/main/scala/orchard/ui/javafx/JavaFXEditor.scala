@@ -80,25 +80,37 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     myTopLevelModule = Some(mod)
     moduleView.root = mod.treeItem
     moduleAnchor.content = modulePane
-    parameterAnchor.content = parameterPane
+    environmentAnchor.content = environmentPane
     moduleView.selectionModel().select(mod.treeItem)
   }
 
-  private var myActiveWorkspace : Option[JavaFXWorkspace] = None
+  private var myActiveModule : Option[JavaFXModule] = None
 
-  def activeWorkspace : Option[JavaFXWorkspace] = myActiveWorkspace
-  def activeWorkspace_=(wksp : JavaFXWorkspace) = {
-    if (myActiveWorkspace != Some(wksp)) {
-      myActiveWorkspace = Some(wksp)
-      workspacePane.content = wksp.ui
+  def activeModule : Option[JavaFXModule] = myActiveModule
+  def activeModule_=(modOpt : Option[JavaFXModule]) = {
+    if (myActiveModule != modOpt) {
+      myActiveModule = modOpt
+
+      for { mod <- modOpt } {
+        workspacePane.content = mod.ui
+      }
     }
   }
 
-  var activeModule : Option[JavaFXModule] = None
+  def displayEnvironment : Unit = {
+    environmentRoot.children.clear
 
-  def displayParameters(entry : JavaFXModuleEntry) : Unit = {
-    parameterView.items().clear
-    parameterView.items() ++= (entry.parameters map (_.asInstanceOf[JavaFXModuleParameter]))
+    for {
+      mod <- activeModule
+    } {
+
+      // Problem: cannot use the same tree item in both cases.
+      // I think maybe what we should do is just have a method which
+      // builds the tree item for an entry instead of having a single one.
+      // Hmmm.  Or just have a method to clone it.
+
+      environmentRoot.children = (mod.localEnvironment map (_.cloneTreeItem))
+    }
   }
 
   def activeEntry : Option[JavaFXModuleEntry] = {
@@ -110,19 +122,6 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     } else None
 
   }
-
-  // moduleView.selectionModel().selectedItem onChange {
-  //   val item = moduleView.selectionModel().selectedItem()
-
-  //   if (item != null) {
-  //     val entry = item.value()
-  //     displayParameters(entry)
-
-  //     activeWorkspace = entry.focusWorkspace
-  //     activeModule = Some(entry.focusModule)
-  //   }
-  // }
-
 }
 
 

@@ -13,19 +13,19 @@ import orchard.core.complex._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait Workspace { thisWorkspace =>
+trait Workspace { thisWorkspace : ModuleSystem#Module =>
 
   type EditorType <: Editor
   def editor : EditorType
 
   def activeWorksheet : Option[Worksheet]
+  def activeInstantiator : Option[Instantiator] 
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]
   def unicityLevel : Option[Int]
 
   def variables : Seq[Variable]
-  def appendVariable(variable : Variable) : Unit
 
   def emptyShell : Shell = new Shell(new WorkspaceFramework(Object(None)))
 
@@ -91,7 +91,7 @@ trait Workspace { thisWorkspace =>
                     worksheet.selectAsBase(selectedCell)
 
                     // Add the variable to the environment
-                    appendVariable(varExpr)
+                    appendParameter(varExpr)
                   }
 
                 }
@@ -146,6 +146,7 @@ trait Workspace { thisWorkspace =>
                     boundaryCell.item = Neutral(Some(filler.Boundary))
                     worksheet.selectAsBase(selectedCell)
 
+                    appendLift(filler)
                   }
 
                 }
@@ -206,6 +207,19 @@ trait Workspace { thisWorkspace =>
         }
       }
     }
+
+  def importActiveInstantiation : Unit = 
+    for {
+      instntr <- activeInstantiator
+    } {
+      if (instntr.isComplete) {
+        appendInstantiation(Reference(instntr.lift, Immediate), instntr.bindings)
+        //newSheet(instntr.completedExpression)
+      } else {
+        editor.consoleError("There are unbound variables.")
+      }
+    }
+
 
   //============================================================================================
   // WORKSHEETS

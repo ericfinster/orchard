@@ -10,17 +10,18 @@ package orchard.core.expression
 trait ModuleSystem {
 
   type EntryType <: ModuleEntry
-  type ContainerType <: EntryContainer
+
+  type LiftType <: Lift
   type ModuleType <: Module
-  type DefinitionType <: Definition
-  type ParameterType <: ModuleParameter
+  type ParameterType <: Parameter
+  type InstantiationType <: Instantiation
 
   trait ModuleEntry { thisEntry : EntryType =>
 
     def liftEntry : EntryType
 
     def name : String
-    def parent : Option[ContainerType]
+    def parent : Option[Module]
 
     def parameters : Seq[ParameterType] =
       parent match {
@@ -29,7 +30,7 @@ trait ModuleSystem {
           val parentParams : Seq[ParameterType] = p.parameters
           val myIndex = p.entries.indexOf(thisEntry)
           val siblingParams : Seq[ParameterType] = p.entries.slice(0, myIndex) flatMap {
-            case mp : ModuleParameter => Some(mp.liftParameter)
+            case mp : Parameter => Some(mp.liftParameter)
             case _ => None
           }
 
@@ -37,24 +38,48 @@ trait ModuleSystem {
         }
       }
 
+    def environment : Seq[EntryType] =
+      parent match {
+        case None => Seq.empty[EntryType]
+        case Some(p) => {
+          val parentEnv = p.environment
+          val myIndex = p.entries.indexOf(thisEntry)
+          val siblingEnv = 
+            p.entries.slice(0, myIndex) flatMap {
+              case mod : Module => None
+              case entry @ _ => Some(entry.liftEntry)
+            }
+
+          parentEnv ++ siblingEnv
+        }
+      }
   }
 
-  trait EntryContainer extends ModuleEntry { 
-    thisContainer : ContainerType with EntryType =>
+  trait Module extends ModuleEntry with Workspace { 
+    thisModule : ModuleType with EntryType =>
 
-    def liftContainer : ContainerType
+    def liftModule : ModuleType
 
     def entries : Seq[EntryType]
 
-    def localParameters : Seq[ParameterType] =
-      entries flatMap {
-        case mp : ModuleParameter => Some(mp.liftParameter)
-        case _ => None
-      }
+    def localEnvironment : Seq[EntryType] = 
+      thisModule.environment ++ (entries filterNot (_.isInstanceOf[Module]))
+
+    def appendParameter(variable : Variable) 
+    def appendLift(filler : Filler)
+    def appendInstantiation(reference : Reference, bindings : Map[Int, Expression])
 
   }
 
-  trait ModuleParameter extends ModuleEntry { 
+
+  trait ExpressionEntry extends ModuleEntry { 
+    thisEntry : EntryType =>
+
+    def expression : Expression
+
+  }
+
+  trait Parameter extends ExpressionEntry { 
     thisParameter : ParameterType with EntryType =>
 
     def liftParameter : ParameterType
@@ -63,20 +88,22 @@ trait ModuleSystem {
 
   }
 
-  trait Module extends EntryContainer with Workspace { 
-    thisModule : ModuleType with ContainerType with EntryType =>
+  trait Lift extends ExpressionEntry { 
+    thisLift : LiftType with EntryType =>
 
-    def liftModule : ModuleType
+    def liftLift : LiftType
+
+    def filler : Filler
 
   }
 
-  trait Definition extends EntryContainer with Workspace { 
-    thisDefinition : DefinitionType with ContainerType with EntryType =>
+  trait Instantiation extends ExpressionEntry {
+    thisInstantiation : InstantiationType with EntryType =>
 
-    def liftDefinition : DefinitionType
+    def liftInstantiation : InstantiationType
 
-    def filler : Option[Filler]
-    def isComplete : Boolean = filler != None
+    def reference : Reference
+    def bindings : Map[Int, Expression]
 
   }
 

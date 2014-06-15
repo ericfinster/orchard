@@ -45,6 +45,7 @@ class FrameworkGallery(val complex : Framework[Option[Expression]]) extends Spin
             expr <- cell.expression
           } {
             OrchardEditor.consoleMessage("Expression: " ++ expr.toString)
+            OrchardEditor.consoleMessage("Normalized expression: " ++ expr.normalize.toString)
           }
         }
 

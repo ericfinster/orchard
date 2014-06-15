@@ -16,10 +16,11 @@ import orchard.core.ui.Stylable
 object JavaFXModuleSystem extends ModuleSystem {
 
   type EntryType = JavaFXModuleEntry
-  type ContainerType = JavaFXEntryContainer
+
+  type LiftType = JavaFXLift
   type ModuleType = JavaFXModule
-  type DefinitionType = JavaFXDefinition
-  type ParameterType = JavaFXModuleParameter
+  type ParameterType = JavaFXParameter
+  type InstantiationType = JavaFXInstantiation
 
   //============================================================================================
   // MODULE ENTRIES
@@ -27,78 +28,159 @@ object JavaFXModuleSystem extends ModuleSystem {
 
   abstract class JavaFXModuleEntry extends ModuleEntry with Stylable {
 
+    def owner = JavaFXModuleSystem
+
     def liftEntry = this
     def styleString : String = "unknown"
 
     val treeItem = new TreeItem[JavaFXModuleEntry](this)
 
     def focusModule : JavaFXModule
-    def focusWorkspace : JavaFXWorkspace
+
+    def cloneTreeItem : TreeItem[JavaFXModuleEntry] = {
+      val newTreeItem = new TreeItem[JavaFXModuleEntry](this)
+      newTreeItem.children = (treeItem.children map (_.value().cloneTreeItem))
+      newTreeItem
+    }
 
   }
   
   //============================================================================================
-  // ENTRY CONTAINERS
+  // PARAMETERS
   //
 
-  abstract class JavaFXEntryContainer 
-      extends JavaFXModuleEntry
-      with EntryContainer {
-
-    def liftContainer : JavaFXEntryContainer = this
-
-    // Not sure I really want this ...
-    def entries : Seq[JavaFXModuleEntry] =
-      treeItem.children map (_.getValue)
-    
-  }
-
-  //============================================================================================
-  // MODULE PARAMETERS
-  //
-
-  class JavaFXModuleParameter(val owner : JavaFXEntryContainer, val variable : Variable) 
-      extends JavaFXModuleEntry 
-      with ModuleParameter {
+  class JavaFXParameter(val variable : Variable, val module : JavaFXModule)
+      extends JavaFXModuleEntry with ExpressionEntry
+      with Parameter {
   
-    def liftParameter : JavaFXModuleParameter = this
+    def liftParameter : JavaFXParameter = this
+
+    def parent : Option[JavaFXModule] = Some(module)
 
     def name : String = variable.id
-    def parent : Option[JavaFXEntryContainer] = Some(owner)
+    def expression = variable
 
     override def styleString : String = if (variable.isThin) "var-thin" else "var"
 
-    def focusModule : JavaFXModule = 
-      owner match {
-        case mod : JavaFXModule => mod
-        case defn : JavaFXDefinition => defn.owner
-      }
+    def focusModule = module
 
-    def focusWorkspace : JavaFXWorkspace =
-      owner match {
-        case mod : JavaFXModule => mod
-        case defn : JavaFXDefinition => defn
-      }
   }
   
+  //============================================================================================
+  // LIFTS
+  //
+
+  class JavaFXLift(val filler : Filler, val module : JavaFXModule) 
+      extends JavaFXModuleEntry with ExpressionEntry with Lift { thisLift =>
+
+    def liftLift = this
+
+    def parent = Some(module)
+
+    def name = filler.Boundary.id
+    def expression = filler.Boundary
+
+    def focusModule = module
+
+    class JavaFXBoundary
+
+    override def styleString = 
+      if (filler.Boundary.isThin) "bdry-thin" else "bdry"
+
+    object FillerEntry extends JavaFXModuleEntry {
+
+      def parent = Some(module)  // This is suspicious ...
+
+      def name : String = filler.id
+      def expression = filler
+
+      def focusModule = module
+
+      override def styleString = "filler"
+
+    }
+
+    treeItem.children += FillerEntry.treeItem
+
+  }
+
+  //============================================================================================
+  // INSTANTIATIONS
+  //
+
+  class JavaFXInstantiation(val reference : Reference, val bindings : Map[Int, Expression], val module : JavaFXModule) 
+      extends JavaFXModuleEntry with ExpressionEntry with Instantiation {
+
+    def liftInstantiation = this
+
+    def liftLift = this
+
+    def name = expression.id
+    def parent = Some(module)
+
+    def focusModule = module
+
+    override def styleString = "app"
+
+    // calling ncell here unfolds the whole expression basically. It would
+    // be better to have a "substitution seek" or perhaps an "expression level"
+    // seek which was smarter about this ...
+    def expression : Expression =
+      FillerEntry.expression.ncell.seek(reference.lift.filler.bdryAddress).get.value
+
+    object FillerEntry extends JavaFXModuleEntry with ExpressionEntry {
+
+      def name : String = expression.id
+      def parent = Some(module)  // This is suspicious ...
+
+      def focusModule = module
+
+      override def styleString = "app"
+
+      def expression = Substitution(reference, bindings)
+
+    }
+
+    treeItem.children += FillerEntry.treeItem
+
+  }
+
   //============================================================================================
   // MODULES
   //
 
   class JavaFXModule(
       val name : String,
-      val parent : Option[JavaFXEntryContainer],
+      val parent : Option[JavaFXModule],
       val stabilityLevel : Option[Int],
       val invertibilityLevel : Option[Int],
       val unicityLevel : Option[Int]
-  ) extends JavaFXEntryContainer 
+  ) extends JavaFXModuleEntry
       with JavaFXWorkspace
       with Module { thisModule =>
 
     def liftModule : JavaFXModule = this
 
-    def focusModule : JavaFXModule = thisModule
-    def focusWorkspace : JavaFXWorkspace = thisModule
+    // Not sure I really want this ...
+    def entries : Seq[JavaFXModuleEntry] =
+      treeItem.children map (_.getValue)
+
+    def appendLift(filler : Filler) : Unit = {
+      treeItem.children += new JavaFXLift(filler, thisModule).treeItem
+      editor.displayEnvironment
+    }
+
+    def appendParameter(variable : Variable) : Unit = {
+      treeItem.children += new JavaFXParameter(variable, thisModule).treeItem
+      editor.displayEnvironment
+    }
+
+    def appendInstantiation(ref : Reference, bindings : Map[Int, Expression]) : Unit = {
+      treeItem.children += new JavaFXInstantiation(ref, bindings, thisModule).treeItem
+      editor.displayEnvironment
+    }
+
+    def focusModule = thisModule
 
     //   def toXML : xml.NodeSeq =
     //     <module name={name}
@@ -114,84 +196,84 @@ object JavaFXModuleSystem extends ModuleSystem {
   // DEFINITIONS
   //
 
-  class JavaFXDefinition(val defnName : String, val owner : JavaFXModule)
-      extends JavaFXEntryContainer
-      with JavaFXWorkspace
-      with Definition { thisDefinition =>
+  // class JavaFXDefinition(val defnName : String, val module : JavaFXModule)
+  //     extends JavaFXEntryContainer
+  //     with JavaFXWorkspace
+  //     with Definition { thisDefinition =>
 
-    def liftDefinition : JavaFXDefinition = this
+  //   def liftDefinition : JavaFXDefinition = this
 
-    // Instead of this, you should style it with css somehow ..
-    def name : String = "Definition: " ++ defnName
-    def parent : Option[JavaFXEntryContainer] = Some(owner)
+  //   // Instead of this, you should style it with css somehow ..
+  //   def name : String = "Definition: " ++ defnName
+  //   def parent : Option[JavaFXEntryContainer] = Some(module)
 
-    private var myFiller : Option[Filler] = None
+  //   private var myFiller : Option[Filler] = None
     
-    def filler : Option[Filler] = myFiller
-    def filler_=(fillerOpt : Option[Filler]) : Unit = {
-      myFiller = fillerOpt
+  //   def filler : Option[Filler] = myFiller
+  //   def filler_=(fillerOpt : Option[Filler]) : Unit = {
+  //     myFiller = fillerOpt
 
-      fillerOpt match {
-        case None => treeItem.children -= BoundaryEntry.treeItem
-        case Some(_) => treeItem.children += BoundaryEntry.treeItem
-      }
-    }
+  //     fillerOpt match {
+  //       case None => treeItem.children -= BoundaryEntry.treeItem
+  //       case Some(_) => treeItem.children += BoundaryEntry.treeItem
+  //     }
+  //   }
 
-    val stabilityLevel : Option[Int] = owner.stabilityLevel
-    val invertibilityLevel : Option[Int] = owner.invertibilityLevel
-    val unicityLevel : Option[Int] = owner.unicityLevel
+  //   val stabilityLevel : Option[Int] = module.stabilityLevel
+  //   val invertibilityLevel : Option[Int] = module.invertibilityLevel
+  //   val unicityLevel : Option[Int] = module.unicityLevel
 
-    def focusModule : JavaFXModule = owner
-    def focusWorkspace : JavaFXWorkspace = thisDefinition
+  //   def focusModule : JavaFXModule = module
+  //   def focusWorkspace : JavaFXWorkspace = thisDefinition
 
-    override def styleString = if (isComplete) "defn-complete" else "defn-incomplete"
+  //   override def styleString = if (isComplete) "defn-complete" else "defn-incomplete"
 
-    object BoundaryEntry extends JavaFXEntryContainer { thisBdryEntry =>
+  //   object BoundaryEntry extends JavaFXEntryContainer { thisBdryEntry =>
 
-      def name : String =
-        (filler map (_.Boundary.id)) getOrElse "Unknown"
+  //     def name : String =
+  //       (filler map (_.Boundary.id)) getOrElse "Unknown"
 
-      def parent = Some(thisDefinition)
+  //     def parent = Some(thisDefinition)
 
-      def focusModule : JavaFXModule = owner
-      def focusWorkspace : JavaFXWorkspace = thisDefinition
+  //     def focusModule : JavaFXModule = module
+  //     def focusWorkspace : JavaFXWorkspace = thisDefinition
 
-      override def styleString = 
-        (filler map (f => if (f.Boundary.isThin) "bdry-thin" else "bdry")) getOrElse "unknown"
+  //     override def styleString = 
+  //       (filler map (f => if (f.Boundary.isThin) "bdry-thin" else "bdry")) getOrElse "unknown"
 
-      object FillerEntry extends JavaFXModuleEntry {
+  //     object FillerEntry extends JavaFXModuleEntry {
 
-        def name : String =
-          (filler map (_.id)) getOrElse "Unknown"
+  //       def name : String =
+  //         (filler map (_.id)) getOrElse "Unknown"
 
-        def parent = Some(thisBdryEntry)
+  //       def parent = Some(thisBdryEntry)
 
-        def focusModule : JavaFXModule = owner
-        def focusWorkspace : JavaFXWorkspace = thisDefinition
+  //       def focusModule : JavaFXModule = module
+  //       def focusWorkspace : JavaFXWorkspace = thisDefinition
 
-        override def styleString = "filler"
+  //       override def styleString = "filler"
 
-      }
+  //     }
 
-      treeItem.children += FillerEntry.treeItem
-    }
+  //     treeItem.children += FillerEntry.treeItem
+  //   }
 
-    override def assumeAtSelection(thinHint : Boolean) : Unit = {
-      if (isComplete) {
-        editor.consoleError("Cannot assume new variable in a complete definition.")
-      } else {
-        super.assumeAtSelection(thinHint)
-      }
-    }
+  //   override def assumeAtSelection(thinHint : Boolean) : Unit = {
+  //     if (isComplete) {
+  //       editor.consoleError("Cannot assume new variable in a complete definition.")
+  //     } else {
+  //       super.assumeAtSelection(thinHint)
+  //     }
+  //   }
 
-    override def fillAtSelection : Unit = {
-      if (isComplete) {
-        editor.consoleError("Cannot create filler in a complete definition.")
-      } else {
-        super.fillAtSelection
-      }
-    }
+  //   override def fillAtSelection : Unit = {
+  //     if (isComplete) {
+  //       editor.consoleError("Cannot create filler in a complete definition.")
+  //     } else {
+  //       super.fillAtSelection
+  //     }
+  //   }
 
-  }
+  // }
 
 }

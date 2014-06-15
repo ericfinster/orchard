@@ -33,8 +33,8 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
               //   previewGallery.prev
             } else
               for { 
-                wksp <- activeWorkspace
-                gallery <- wksp.activeGallery 
+                mod <- activeModule
+                gallery <- mod.activeGallery 
               } gallery.prev
 
             ev.consume
@@ -46,14 +46,14 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
               //   previewGallery.next
             } else 
               for { 
-                wksp <- activeWorkspace
-                gallery <- wksp.activeGallery 
+                mod <- activeModule
+                gallery <- mod.activeGallery 
               } gallery.next
 
             ev.consume
           }
           case KeyCode.E => if (ev.isControlDown) onExtrude
-          case KeyCode.D => if (ev.isControlDown) onDrop else if (ev.isAltDown) onNewDefinition
+          case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.P => if (ev.isControlDown) onPaste
@@ -72,13 +72,12 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
           // case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
           case KeyCode.V => if (ev.isControlDown) onViewNormalized else if (ev.isAltDown) onViewNook else if (ev.isShiftDown) onViewInterior
-          case KeyCode.L => if (ev.isControlDown) onDefine
           // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           // case KeyCode.X => if (ev.isControlDown) onExtra
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
           case KeyCode.W => if (ev.isControlDown) onOpenWorkspace
           case KeyCode.Z => if (ev.isControlDown) onDebug
-          case KeyCode.SPACE => if (ev.isControlDown) onMarkExpression
+          case KeyCode.SPACE => if (ev.isControlDown) onMarkExpression(ev.isShiftDown)
           case _ => ()
         }
       }
@@ -87,8 +86,8 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   def onDebug : Unit =
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
       cell <- worksheet.selectionBase
       expr <- cell.expression
     } {
@@ -98,38 +97,38 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   def onViewNormalized : Unit = 
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
       cell <- worksheet.selectionBase
       expr <- cell.expression
     } {
-      wksp.newSheet(expr.normalize)
+      mod.newSheet(expr.normalize)
     }
 
   def onViewNook : Unit = 
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
       cell <- worksheet.selectionBase
       expr <- cell.expression
     } {
       expr match {
         case f : Filler => 
-          wksp.newSheet(f.nook.framework)
+          mod.newSheet(f.nook.framework)
         case _ => ()
       }
     }
 
   def onViewInterior : Unit = 
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
       cell <- worksheet.selectionBase
       expr <- cell.expression
     } {
       expr match {
         case b : Filler#BoundaryExpr => 
-          wksp.newSheet(b.interior)
+          mod.newSheet(b.interior)
         case _ => ()
       }
     }
@@ -141,9 +140,8 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     for {
       entry <- activeEntry
     } {
-      displayParameters(entry)
-      activeWorkspace = entry.focusWorkspace
       activeModule = Some(entry.focusModule)
+      displayEnvironment
     }
 
   def onNewModule : Unit = 
@@ -166,88 +164,90 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
           mod.treeItem.children += subMod.treeItem
           moduleView.selectionModel().select(subMod.treeItem)
+          onOpenWorkspace
+          subMod.newSheet
         })
 
       idDialog.setHeading("New Submodule")
       idDialog.run
     }
 
-  def onNewDefinition : Unit =
-    for {
-      mod <- activeModule
-    } {
-      val idDialog = 
-        new SimpleIdentifierDialog(name => {
-          val defn = new JavaFXDefinition(name, mod)
-          mod.treeItem.children += defn.treeItem
-          moduleView.selectionModel().select(defn.treeItem)
-          defn.newSheet
-          onOpenWorkspace
-        })
+  // def onNewDefinition : Unit =
+  //   for {
+  //     mod <- activeModule
+  //   } {
+  //     val idDialog = 
+  //       new SimpleIdentifierDialog(name => {
+  //         val defn = new JavaFXDefinition(name, mod)
+  //         mod.treeItem.children += defn.treeItem
+  //         moduleView.selectionModel().select(defn.treeItem)
+  //         defn.newSheet
+  //         onOpenWorkspace
+  //       })
 
-      idDialog.setHeading("New Definition")
-      idDialog.run
-    }
+  //     idDialog.setHeading("New Definition")
+  //     idDialog.run
+  //   }
 
-  def onDefine : Unit =
-    for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
-      if worksheet.selectionIsUnique
-      selectedCell <- worksheet.selectionBase
-    } {
+  // def onDefine : Unit =
+  //   for {
+  //     wksp <- activeModule
+  //     worksheet <- wksp.activeWorksheet
+  //     if worksheet.selectionIsUnique
+  //     selectedCell <- worksheet.selectionBase
+  //   } {
 
-      val fillerOpt = 
-        selectedCell.expression match {
-          case Some(f : Filler) => Some(f)
-          case Some(b : Filler#BoundaryExpr) => Some(b.interior)
-          case _ => {
-            consoleError("Selected cell cannot be used as a definition.")
-            None
-          }
-        }
+  //     val fillerOpt = 
+  //       selectedCell.expression match {
+  //         case Some(f : Filler) => Some(f)
+  //         case Some(b : Filler#BoundaryExpr) => Some(b.interior)
+  //         case _ => {
+  //           consoleError("Selected cell cannot be used as a definition.")
+  //           None
+  //         }
+  //       }
 
-      for { filler <- fillerOpt } {
-        wksp match {
-          case mod : JavaFXModule => {
-            // Create a new definition with an empty parameter list ...
+  //     for { filler <- fillerOpt } {
+  //       wksp match {
+  //         case mod : JavaFXModule => {
+  //           // Create a new definition with an empty parameter list ...
 
-            val idDialog =
-              new SimpleIdentifierDialog(name => {
-                val defn = new JavaFXDefinition(name, mod)
-                defn.filler = Some(filler)
-                mod.treeItem.children += defn.treeItem
-                moduleView.selectionModel().select(defn.treeItem)
-              })
+  //           val idDialog =
+  //             new SimpleIdentifierDialog(name => {
+  //               val defn = new JavaFXDefinition(name, mod)
+  //               defn.filler = Some(filler)
+  //               mod.treeItem.children += defn.treeItem
+  //               moduleView.selectionModel().select(defn.treeItem)
+  //             })
 
-            idDialog.setHeading("New Definition")
-            idDialog.run
+  //           idDialog.setHeading("New Definition")
+  //           idDialog.run
 
-          }
-          case defn : JavaFXDefinition => {
-            // Close the current definition with the selected cell
-            defn.filler = Some(filler)
+  //         }
+  //         case defn : JavaFXDefinition => {
+  //           // Close the current definition with the selected cell
+  //           defn.filler = Some(filler)
 
-            // Now we need to get the tree cell to fix it's style.  Hmmm ....
-            // Ahhh ... and we need to update the definition with some subcells
-            // to show that the definition is ready ...  Maybe this will trigger
-            // a redraw of the cell?
+  //           // Now we need to get the tree cell to fix it's style.  Hmmm ....
+  //           // Ahhh ... and we need to update the definition with some subcells
+  //           // to show that the definition is ready ...  Maybe this will trigger
+  //           // a redraw of the cell?
 
-          }
-        }
-      }
-    }
+  //         }
+  //       }
+  //     }
+  //   }
 
   def onInstantiate : Unit = 
     for {
-      wksp <- activeWorkspace
+      mod <- activeModule
       entry <- activeEntry
     } {
-      entry.focusWorkspace match {
-        case defn : JavaFXDefinition => {
-          val instantiator = new JavaFXDefinitionInstantiator(wksp, defn)
-          wksp.controlTabPane += instantiator.tab
-          wksp.controlTabPane.selectionModel().select(instantiator.tab)
+      entry match {
+        case lift : JavaFXLift => {
+          val instantiator = new JavaFXLiftInstantiator(mod, lift)
+          mod.controlTabPane += instantiator.tab
+          mod.controlTabPane.selectionModel().select(instantiator.tab)
         }
         case _ => ???
       }
@@ -255,76 +255,87 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   def onBind : Unit =
     for {
-      wksp <- activeWorkspace
-      instntr <- wksp.activeInstantiator
+      mod <- activeModule
+      instntr <- mod.activeInstantiator
     } {
       instntr.bind
     }
 
   def onImportCompleted : Unit = 
     for {
-      wksp <- activeWorkspace
-      instntr <- wksp.activeInstantiator
+      mod <- activeModule
     } {
-      if (instntr.isComplete) {
-        wksp.newSheet(instntr.completedExpression)
-      } else {
-        consoleError("There are unbound variables.")
-      }
+      mod.importActiveInstantiation
     }
 
   def onNewSheet : Unit =
     for {
-      wksp <- activeWorkspace
+      mod <- activeModule
     } {
-      wksp.newSheet
+      mod.newSheet
     }
 
   def onExtrude : Unit =
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
     } {
       worksheet.extrude
     }
 
   def onDrop : Unit =
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
     } {
       worksheet.drop
     }
 
   def onAssume(thinHint : Boolean) : Unit = 
     for {
-      wksp <- activeWorkspace
+      mod <- activeModule
     } {
-      wksp.assumeAtSelection(thinHint)
+      mod.assumeAtSelection(thinHint)
     }
 
   def onFill : Unit =
     for {
-      wksp <- activeWorkspace
+      mod <- activeModule
     } {
-      wksp.fillAtSelection
+      mod.fillAtSelection
     }
 
-  def onMarkExpression : Unit = 
+  def onMarkExpression(markFiller : Boolean) : Unit = 
     for {
-      wksp <- activeWorkspace
-      worksheet <- wksp.activeWorksheet
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
       selectedCell <- worksheet.selectionBase
+      expr <- selectedCell.expression
     } {
-      wksp.clipboardExpression = selectedCell.expression
+      if (markFiller) {
+        expr match {
+          case b : Filler#BoundaryExpr => mod.clipboardExpression = Some(b.interior)
+          case s : Substitution => {
+            if (s.normalizationStore.resultType == BoundaryType) {
+              mod.clipboardExpression = Some(Unfolding(s, orchard.core.cell.Immediate))
+            } else {
+              consoleError("Cell does not reduce to a boundary")
+            }
+          }
+
+          case _ => consoleError("Expression is not a boundary")
+        }
+      } else {
+        mod.clipboardExpression = Some(expr)
+      }
     }
 
   def onPaste : Unit = 
     for {
-      wksp <- activeWorkspace
-      pasteExpr <- wksp.clipboardExpression
+      mod <- activeModule
+      pasteExpr <- mod.clipboardExpression
     } {
-      wksp.pasteToSelection(pasteExpr)
+      mod.pasteToSelection(pasteExpr)
     }
 
 }

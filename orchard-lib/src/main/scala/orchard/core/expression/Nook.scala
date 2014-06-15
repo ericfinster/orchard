@@ -35,13 +35,6 @@ class Nook(val framework : ExpressionFramework) {
     frameworkCopy.topCell.toNCell map (_.get)
   }
 
-  // Instead of doing this twice, implement the addressing system ...
-  def withBoundary(bdry : Filler#BoundaryExpr) : NCell[Expression] = {
-    val boundaryFramework = framework.extract(framework.topCell.boundaryFace)
-    boundaryFramework.topCell.item = Some(bdry)
-    boundaryFramework.topCell.toNCell map (_.get)
-  }
-
   def canEqual(other : Any) : Boolean = 
     other.isInstanceOf[Nook]
 

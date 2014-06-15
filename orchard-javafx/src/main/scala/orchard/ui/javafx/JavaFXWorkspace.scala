@@ -24,19 +24,16 @@ import orchard.core.expression._
 
 import JavaFXModuleSystem._
 
-trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =>
+trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXModule =>
 
   type EditorType = JavaFXEditor
   def editor = OrchardEditor
 
   override def variables : Seq[Variable] =
-    (parameters ++ localParameters) map (_.variable)
-
-  override def appendVariable(variable : Variable) : Unit = {
-    val newVar = new JavaFXModuleParameter(thisWorkspace, variable)
-    treeItem.children += newVar.treeItem
-    OrchardEditor.moduleView.selectionModel().select(newVar.treeItem)
-  }
+    localEnvironment flatMap {
+      case p : JavaFXParameter => Some(p.variable)
+      case _ => None
+    }
 
   //============================================================================================
   // UI ELEMENTS
@@ -120,7 +117,6 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =
 
 
   def newSheet : Unit = newSheet(CardinalComplex(Object(None)))
-  // def newSheetWithExpression(ncell : NCell[Expression]) = newSheet(CardinalComplex(ncell map (Some(_))))
 
   def newSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
     val worksheet = new Worksheet(seed)
@@ -162,7 +158,7 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXEntryContainer =
   // INSTATIATOR MANIPULATION
   //
 
-  var activeInstantiator : Option[JavaFXDefinitionInstantiator] = None
+  var activeInstantiator : Option[JavaFXLiftInstantiator] = None
 
   //============================================================================================
   // WORKSHEET PANEL IMPLEMENTATION
