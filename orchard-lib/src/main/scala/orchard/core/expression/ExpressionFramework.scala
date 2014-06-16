@@ -23,6 +23,18 @@ abstract class ExpressionFramework(seed : NCell[Option[Expression]])
       extends AbstractMutableCell
       with FrameworkCell { thisCell : CellType =>
 
+    // If there is an expression here, read the values of its faces back into
+    // the lower dimensional part of this framework ...
+    def promoteFaces : Unit = 
+      for {
+        expr <- expression
+      } {
+        expr.ncell.zip(skeleton).get map {
+          case (faceValue, cell) => {
+            cell.item = Some(faceValue)
+          }
+        }
+      }
   }
 
 }

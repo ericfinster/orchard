@@ -283,8 +283,14 @@ abstract class NCell[A] { thisNCell =>
 
   override def equals(other : Any) = 
     other match {
-      case that : NCell[A] => 
+      case that : NCell[A] => {
+
+        if (Util.debug) {
+          throw new IllegalStateException("Why did I do this?")
+        }
+
         (that.cell == this.cell)
+      }
       case _ => false
     }
 

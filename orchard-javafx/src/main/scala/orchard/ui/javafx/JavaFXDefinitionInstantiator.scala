@@ -33,7 +33,7 @@ class JavaFXLiftInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val 
     myActiveGoal = goalOpt
 
     for { goal <- goalOpt } {
-      val gallery = new FrameworkGallery(Substitution(goal, bindings))
+      val gallery = new FrameworkGallery(Substitution(shell, InternalReference(goal), bindings))
       goalPane.content = gallery
       gallery.refreshAll
     }
@@ -55,7 +55,7 @@ class JavaFXLiftInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val 
   def refreshPreview : Unit = {
     // Refresh the list view
     parameterView.items().clear
-    parameterView.items() ++= goals
+    parameterView.items() ++= (goals map (new ExpressionWrapper(_)))
 
     val gallery = new FrameworkGallery(previewExpression)
     outputPane.content = gallery
@@ -66,15 +66,16 @@ class JavaFXLiftInstantiator(val wksp : JavaFXWorkspace, val shell : Shell, val 
   // UI ELEMENTS
   //
 
-  val parameterView = new ListView[Expression] {
+
+  val parameterView = new ListView[ExpressionWrapper] {
     cellFactory = (_ => new ExpressionListCell)
   }
 
   parameterView.selectionModel().selectedItem onChange {
-    val goal = parameterView.selectionModel().selectedItem()
+    val goalWrapper = parameterView.selectionModel().selectedItem()
 
-    if (goal != null) {
-      activeGoal = Some(goal.asInstanceOf[Goal])
+    if (goalWrapper != null) {
+      activeGoal = Some(goalWrapper.expr.asInstanceOf[Goal])
     }
   }
 

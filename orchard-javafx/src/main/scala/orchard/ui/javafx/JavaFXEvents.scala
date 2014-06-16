@@ -56,10 +56,10 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.F => if (ev.isControlDown) onFill  
-          case KeyCode.P => if (ev.isControlDown) onPaste
+          case KeyCode.P => if (ev.isControlDown) { if (ev.isShiftDown) onPasteToNewSheet else onPaste }
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
-          // case KeyCode.S => if (ev.isControlDown) onSaveModule
+          case KeyCode.S => if (ev.isControlDown) onViewShell
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
           case KeyCode.B => if (ev.isControlDown) onBind
           case KeyCode.N => if (ev.isControlDown) onNewModule else if (ev.isAltDown) onNewSubmodule
@@ -76,7 +76,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.X => if (ev.isControlDown) onExtra
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
           case KeyCode.W => if (ev.isControlDown) onOpenWorkspace
-          case KeyCode.Z => if (ev.isControlDown) onDebug
+          case KeyCode.Z => if (ev.isControlDown) { if (ev.isShiftDown) onSetDebugFlag else onDebug }
           case KeyCode.SPACE => if (ev.isControlDown) onMarkExpression(ev.isShiftDown)
           case _ => ()
         }
@@ -94,6 +94,12 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       consoleDebug("Expression: " ++ expr.toString)
       consoleDebug("Normalized expression:" ++ expr.normalize.toString)
     }
+
+  def onSetDebugFlag : Unit = {
+    import orchard.core.util._
+    Util.debug = ! Util.debug
+    consoleMessage("Debug is " ++ (if (Util.debug) "on" else "off"))
+  }
 
   def onViewNormalized : Unit = 
     for {
@@ -129,6 +135,20 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       expr match {
         case b : Filler#BoundaryExpr => 
           mod.newSheet(b.interior)
+        case _ => ()
+      }
+    }
+
+  def onViewShell : Unit = 
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+      cell <- worksheet.selectionBase
+      expr <- cell.expression
+    } {
+      expr match {
+        case v : Variable => 
+          mod.newSheet(v.shell.framework)
         case _ => ()
       }
     }
@@ -313,18 +333,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       expr <- selectedCell.expression
     } {
       if (markFiller) {
-        expr match {
-          case b : Filler#BoundaryExpr => mod.clipboardExpression = Some(b.interior)
-          case s : Substitution => {
-            if (s.normalizationStore.resultType == BoundaryType) {
-              mod.clipboardExpression = Some(Unfolding(s, orchard.core.cell.Immediate))
-            } else {
-              consoleError("Cell does not reduce to a boundary")
-            }
-          }
-
-          case _ => consoleError("Expression is not a boundary")
-        }
+        mod.clipboardExpression = Some(Unfolding(expr, orchard.core.cell.Immediate))
       } else {
         mod.clipboardExpression = Some(expr)
       }
@@ -336,6 +345,14 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       pasteExpr <- mod.clipboardExpression
     } {
       mod.pasteToSelection(pasteExpr)
+    }
+
+  def onPasteToNewSheet : Unit = 
+    for {
+      mod <- activeModule
+      pasteExpr <- mod.clipboardExpression
+    } {
+      mod.newSheet(pasteExpr)
     }
 
 }

@@ -22,13 +22,23 @@ sealed trait CellTree[D <: Nat, +A]
 case class SeedClass[D <: Nat, +A](obj : ObjectCell[D, A])(implicit val isZero : IsZero[D]) extends CellTree[D, A]
 case class LeafClass[D <: Nat, +A](shape : Cell[D#Pred, A])(implicit val hasPred : HasPred[D]) extends CellTree[D, A]
 case class GraftClass[D <: Nat, +A](cell : Cell[D, A], branches : Vector[CellTree[D, A]])(implicit val hasPred : HasPred[D]) extends CellTree[D, A] {
-  if (cell.srcTree.cells != branches.map(t => t.output)) {
-    throw new IllegalArgumentException("\nCells are not compatible:\n" ++ 
-      cell.srcTree.cells.toString ++ 
-      "\n" ++ branches.map(t => t.output).toString ++ "\n")
-  }
+
+  // WARNING!!! - With the following lines commented out, cells and celltrees are not checked to have the correct 
+  // compatibilities.  Based on experimentation with the editor, this does not seem to be a problem, since the
+  // visual constraints essentially guarantee it.  Moreover, even with extensive testing, I have yet to see a
+  // problem with this.
+
+  // On the other hand, it might be a good idea to add this back, but just skip the check for equality on the decoration.
+  // That is, verify that the shapes are compatible and leave it to the user to make sure the values are consistent ...
+
+  // if (cell.srcTree.cells != branches map (_.output)) {
+  //   throw new IllegalArgumentException("\nCells are not compatible:\n" ++ 
+  //     cell.srcTree.cells.toString ++ 
+  //     "\n" ++ branches.map(t => t.output).toString ++ "\n")
+  // }
 
   // require(cell.srcTree.cellList == (branches map (tr => tr.output)))
+
 }
 
 object Seed {

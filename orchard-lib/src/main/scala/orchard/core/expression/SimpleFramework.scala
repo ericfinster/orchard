@@ -20,6 +20,7 @@ class SimpleFramework(seed : NCell[Option[Expression]])
 
   def newCell(item : Option[Expression]) = new SimpleFrameworkCell(item)
   def extract(cell : CellType) = new SimpleFramework(cell.skeleton map (_.item))
+  def newFromExpression(expr : Expression) = new SimpleFramework(expr)
 
   def stabilityLevel : Option[Int] = None
   def invertibilityLevel : Option[Int] = None

@@ -67,7 +67,7 @@ trait ModuleSystem {
 
     def appendParameter(variable : Variable) 
     def appendLift(filler : Filler)
-    def appendInstantiation(reference : Reference, bindings : Map[Int, Expression])
+    def appendInstantiation(shell : Shell, reference : ExternalReference, bindings : Map[Int, Expression])
 
   }
 
@@ -102,7 +102,7 @@ trait ModuleSystem {
 
     def liftInstantiation : InstantiationType
 
-    def reference : Reference
+    def reference : ExternalReference
     def bindings : Map[Int, Expression]
 
   }

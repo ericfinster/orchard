@@ -176,7 +176,7 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
               if (! cell.isEmpty) {
                 cell.item match {
                   case Neutral(Some(e)) => itFits &&= {
-                    if (e.convertsTo(expr)) true else {
+                    if (e convertsTo expr) true else {
                       editor.consoleError("Match error: expressions " ++ e.toString ++ 
                         " and " ++ expr.toString ++ " are not convertible.")
                       false
@@ -213,7 +213,7 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
       instntr <- activeInstantiator
     } {
       if (instntr.isComplete) {
-        appendInstantiation(Reference(instntr.lift, Immediate), instntr.bindings)
+        appendInstantiation(instntr.shell, ExternalReference(instntr.lift), instntr.bindings)
         //newSheet(instntr.completedExpression)
       } else {
         editor.consoleError("There are unbound variables.")
@@ -231,6 +231,8 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
     type FrameworkType = Worksheet
     type CellType = WorksheetCell
 
+    def this(expr : Expression) = this(CardinalComplex(expr.ncell map (Some(_))))
+
     def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
     def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
     def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
@@ -240,6 +242,9 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
 
     def extract(cell : CellType) =
       new Worksheet(cell.skeleton map (_.item))
+
+    def newFromExpression(expr : Expression) = 
+      new Worksheet(expr)
 
     class WorksheetCell(itm : Polarity[Option[Expression]]) 
         extends AbstractWorksheetCell(itm) {
@@ -274,6 +279,9 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
 
     def extract(cell : CellType) =
       new WorkspaceFramework(cell.skeleton map (_.item))
+
+    def newFromExpression(expr : Expression) = 
+      new WorkspaceFramework(expr)
 
     class WorkspaceFrameworkCell(var item : Option[Expression])
         extends ExpressionFrameworkCell {

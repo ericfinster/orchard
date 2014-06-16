@@ -50,15 +50,8 @@ trait Instantiator {
         bindings(v.index).styleString
       } else "app"
 
-    override def unfold = new Goal(super.unfold.asInstanceOf[Variable])
-    override def reduce = new Goal(super.reduce.asInstanceOf[Variable])
-
-    override def substituteAndReduce(bindings : Map[Int, Expression]) : Expression =
-      if (bindings.isDefinedAt(index)) {
-        bindings(index).reduce
-      } else {
-        new Goal(Variable(shell map (Substitution(_, bindings).reduce), index, ident, isThin))
-      }
+    override def newVariable(s : Shell, i : Int, idnt : Identifier, isThn : Boolean) =
+      new Goal(super.newVariable(s, i, idnt, isThn))
 
     override def toString = "Goal(" ++ v.toString ++ ")"
 
@@ -66,8 +59,8 @@ trait Instantiator {
 
   def refreshPreview : Unit
 
-  def previewExpression : Expression = 
-    Substitution(Filler(lift.filler.nook map (wrapVariables(_)), lift.filler.bdryIdent), bindings)
+  def previewExpression : Expression =
+    Substitution(shell, InternalReference(Filler(lift.filler.nook map (wrapVariables(_)), lift.filler.bdryIdent)), bindings)
 
   def bind : Unit = 
     for {

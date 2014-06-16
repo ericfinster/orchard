@@ -160,6 +160,16 @@ trait JavaFXWorkspace extends Workspace { thisWorkspace : JavaFXModule =>
 
   var activeInstantiator : Option[JavaFXLiftInstantiator] = None
 
+  override def importActiveInstantiation : Unit =  
+    for {
+      instantiator <- activeInstantiator
+    } {
+      super.importActiveInstantiation
+      controlTabPane.tabs.remove(instantiator.tab)
+      activeInstantiator = None
+    }
+
+
   //============================================================================================
   // WORKSHEET PANEL IMPLEMENTATION
   //

@@ -108,11 +108,10 @@ object JavaFXModuleSystem extends ModuleSystem {
   // INSTANTIATIONS
   //
 
-  class JavaFXInstantiation(val reference : Reference, val bindings : Map[Int, Expression], val module : JavaFXModule) 
+  class JavaFXInstantiation(val shell : Shell, val reference : ExternalReference, val bindings : Map[Int, Expression], val module : JavaFXModule) 
       extends JavaFXModuleEntry with ExpressionEntry with Instantiation {
 
     def liftInstantiation = this
-
     def liftLift = this
 
     def name = expression.id
@@ -122,11 +121,10 @@ object JavaFXModuleSystem extends ModuleSystem {
 
     override def styleString = "app"
 
-    // calling ncell here unfolds the whole expression basically. It would
-    // be better to have a "substitution seek" or perhaps an "expression level"
-    // seek which was smarter about this ...
-    def expression : Expression =
-      FillerEntry.expression.ncell.seek(reference.lift.filler.bdryAddress).get.value
+    def expression : Expression = {
+      val bdryAddr = reference.expression.asInstanceOf[Filler].bdryAddress
+      FillerEntry.expression.ncell.seek(bdryAddr).get.value
+    }
 
     object FillerEntry extends JavaFXModuleEntry with ExpressionEntry {
 
@@ -137,7 +135,7 @@ object JavaFXModuleSystem extends ModuleSystem {
 
       override def styleString = "app"
 
-      def expression = Substitution(reference, bindings)
+      def expression = Substitution(shell, reference, bindings)
 
     }
 
@@ -175,8 +173,8 @@ object JavaFXModuleSystem extends ModuleSystem {
       editor.displayEnvironment
     }
 
-    def appendInstantiation(ref : Reference, bindings : Map[Int, Expression]) : Unit = {
-      treeItem.children += new JavaFXInstantiation(ref, bindings, thisModule).treeItem
+    def appendInstantiation(shell : Shell, reference : ExternalReference, bindings : Map[Int, Expression]) {
+      treeItem.children += new JavaFXInstantiation(shell, reference, bindings, thisModule).treeItem
       editor.displayEnvironment
     }
 

@@ -40,6 +40,10 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     forAllCells(0, dimension, action)
   }
 
+  def forAllFaces(action : CellType => Unit) : Unit = 
+    if (dimension > 0)
+      baseCells(dimension - 1) foreachCell action
+
   def seek(addr : CellAddress) : Option[CellType] = 
     addr match {
       case Immediate => Some(topCell)

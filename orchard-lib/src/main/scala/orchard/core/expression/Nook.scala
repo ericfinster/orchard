@@ -25,6 +25,21 @@ class Nook(val framework : ExpressionFramework) {
     new Nook(duplicate)
   }
 
+  def normalize : Nook = {
+    val duplicate = framework.duplicate
+
+    duplicate forAllFaces (cell => {
+      cell.item foreach (e => {
+        cell.item = Some(e.normalize)
+        cell.promoteFaces
+      })
+    })
+
+    new Nook(duplicate)
+
+    // map (_.normalize)
+  }
+
   def isThinBoundary : Boolean = 
     framework.topCell.isThinBoundary
 

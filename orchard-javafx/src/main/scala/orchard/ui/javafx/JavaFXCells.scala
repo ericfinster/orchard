@@ -50,8 +50,19 @@ class ModuleListCell extends jfxsc.ListCell[JavaFXModuleEntry] with JavaFXCell[J
   }
 }
 
-class ExpressionListCell extends jfxsc.ListCell[Expression] with JavaFXCell[Expression] {
-  override def updateItem(item : Expression, empty : Boolean) = {
+
+// Do this so that we don't compare expressions in
+// the list view ui.  Of course, we're going to have to
+// have a faster comparison of expressions at some point ...
+class ExpressionWrapper(val expr : Expression) extends Stylable {
+
+  def name : String = expr.name
+  def styleString : String = expr.styleString
+
+}
+
+class ExpressionListCell extends jfxsc.ListCell[ExpressionWrapper] with JavaFXCell[ExpressionWrapper] {
+  override def updateItem(item : ExpressionWrapper, empty : Boolean) = {
     super.updateItem(item, empty)
 
     if (! empty)
