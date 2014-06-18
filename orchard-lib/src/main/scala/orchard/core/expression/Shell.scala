@@ -26,18 +26,18 @@ class Shell(val framework : ExpressionFramework) {
   }
 
   def normalize : Shell = {
-    val duplicate = framework.duplicate
+    // val duplicate = framework.duplicate
 
-    duplicate forAllFaces (cell => {
-      cell.item foreach (e => {
-        cell.item = Some(e.normalize)
-        cell.promoteFaces
-      })
-    })
+    // duplicate forAllFaces (cell => {
+    //   cell.item foreach (e => {
+    //     cell.item = Some(e.normalize)
+    //     cell.promoteFaces
+    //   })
+    // })
 
-    new Shell(duplicate)
+    // new Shell(duplicate)
 
-    // map (_.normalize)
+    map (_.normalize)
   }
 
   def withFillingExpression(expr : Expression) : NCell[Expression] =

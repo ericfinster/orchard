@@ -333,7 +333,14 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       expr <- selectedCell.expression
     } {
       if (markFiller) {
-        mod.clipboardExpression = Some(Unfolding(expr, orchard.core.cell.Immediate))
+        expr.normalizationResult match {
+          case BoundaryResult => {
+            consoleMessage("Okay to unfold.")
+            mod.clipboardExpression = Some(Unfolding(expr, orchard.core.cell.Immediate))
+          }
+          case _ =>
+            consoleError("Expression does not reduce to a boundary.")
+        }
       } else {
         mod.clipboardExpression = Some(expr)
       }

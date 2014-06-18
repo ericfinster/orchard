@@ -11,34 +11,54 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.ui.Stylable
 
+sealed trait NormalizationResult
+case object VariableResult extends NormalizationResult
+case object FillerResult extends NormalizationResult
+case object BoundaryResult extends NormalizationResult
+
 sealed trait Expression extends Stylable {
 
   def ident : Identifier
   def isThin : Boolean
 
-  def id = ident.toString
+  def id = {
+    if (Util.debug) {
+      println("Expanding identifier ...")
+    }
+
+    ident.expand
+  }
+
   def name = id
 
   def ncell : NCell[Expression]
 
-  def normalize : Expression
+  def normalize : Expression = headNormalize.normalize
+  def headNormalize : Expression
+  def normalizationResult : NormalizationResult
 
   def convertsTo(other : Expression) : Boolean =
     this.normalize == other.normalize
 
 }
 
-case class Variable(val shell : Shell, val index : Int, val ident : Identifier, val isThin : Boolean) extends Expression {
+case class Variable(val shell : Shell, val index : Int, val varIdent : Identifier, val isThin : Boolean) extends Expression {
 
+  def ident = VariableIdentifier(index, varIdent)
   def styleString = if (isThin) "var-thin" else "var"
 
   val ncell : NCell[Expression] =
     shell.withFillingExpression(this)
 
-  def normalize : Expression = {
+  override def normalize : Expression = {
     if (Util.debug) println("Normalizing a variable")
     Variable(shell.normalize, index, ident, isThin)
   }
+
+  def headNormalize : Expression = this
+
+  def normalizationResult : NormalizationResult =
+    VariableResult
 
   def newVariable(s : Shell, i : Int, idnt : Identifier, isThn : Boolean) = 
     Variable(s, i, idnt, isThn)
@@ -69,7 +89,8 @@ case class Variable(val shell : Shell, val index : Int, val ident : Identifier, 
 
 case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { thisFiller =>
 
-  val ident = ExpressionIdentifier(LiteralToken("def-") :: bdryIdent.tokens)
+  val ident = CompoundIdentifier(List(LiteralIdentifier("def-"), bdryIdent))
+
   def isThin : Boolean = true
   def styleString = "filler"
 
@@ -79,10 +100,15 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
   def bdryAddress : CellAddress = 
     nook.framework.topCell.boundaryAddress
 
-  def normalize : Expression = {
+  override def normalize : Expression = {
     if (Util.debug) println("Normalizing a filler")
     Filler(nook.normalize, bdryIdent)
   }
+
+  def headNormalize : Expression = thisFiller
+
+  def normalizationResult : NormalizationResult = 
+    FillerResult
 
   //============================================================================================
   // DEFINITIONAL EQUALITY
@@ -117,10 +143,15 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
     def ncell : NCell[Expression] =
       thisFiller.ncell.seek(bdryAddress).get
 
-    def normalize : Expression = {
+    override def normalize : Expression = {
       if (Util.debug) println("Normalizing a boundary")
       interior.normalize.asInstanceOf[Filler].Boundary
     }
+
+    def headNormalize : Expression = thisBdry
+
+    def normalizationResult : NormalizationResult =
+      BoundaryResult
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Filler#BoundaryExpr]
@@ -152,8 +183,8 @@ case class Filler(val nook : Nook, bdryIdent : Identifier) extends Expression { 
 case class Unfolding(bdryExpr : Expression, addr : CellAddress) extends Expression {
 
   val addressDictionary : NCell[(Expression, CellAddress)] = {
-    val normalizedExpression = bdryExpr.normalize.asInstanceOf[Filler#BoundaryExpr].interior
-    val framework = new SimpleFramework(normalizedExpression)
+    val headNormalExpr = bdryExpr.headNormalize.asInstanceOf[Filler#BoundaryExpr].interior
+    val framework = new SimpleFramework(headNormalExpr)
 
     framework.topCell.skeleton map (cell => {
       (cell.expression.get, cell.address)
@@ -170,10 +201,16 @@ case class Unfolding(bdryExpr : Expression, addr : CellAddress) extends Expressi
   def ncell : NCell[Expression] =
     addressDictionary.seek(addr).get map {case (_, localAddr) => Unfolding(bdryExpr, localAddr) }
 
-  def normalize = {
+  override def normalize = {
     if (Util.debug) println("Normalizing an unfolding")
-    referencedExpression
+    referencedExpression.normalize
   }
+
+  def headNormalize =
+    referencedExpression.headNormalize
+
+  def normalizationResult =
+    referencedExpression.normalizationResult
 
   override def toString = "Unfolding(" ++ bdryExpr.toString ++ ", " ++ addr.toString ++ ")"
 
@@ -198,109 +235,109 @@ case class Substitution(val shell : Shell, val exprRef : ExpressionReference, va
 
   def expr : Expression = exprRef.expression
 
-  def ident : Identifier = translateIdent(expr.ident)
-  def isThin : Boolean = normalizedExpression.isThin
-  def styleString : String = normalizedExpression.styleString
+  val topMarker = SubstitutionMarker(expr, Immediate)
 
-  def ncell : NCell[Expression] = {
+  val ncell : NCell[Expression] = {
     val shellFramework = shell.framework.duplicate
     val shellDimension = shellFramework.dimension
     val fillerFramework = shellFramework.newFromExpression(expr)
     shellFramework.stablyAppend(fillerFramework)
 
-    shellFramework forAllCells (cell => {
+    shellFramework.topCell.item = Some(topMarker)
+
+    shellFramework foreachProperFace (cell => {
       cell.item =
         if (cell.dimension < shellDimension) {
           cell.item
         } else {
-          Some(SubstitutionMarker(cell.address))
+          Some(SubstitutionMarker(cell.expression.get, cell.address))
         }
     })
 
     shellFramework.toCell map (_.get)
   }
 
+  def ident : Identifier = topMarker.ident
+  def isThin : Boolean = topMarker.isThin
+  def styleString : String = topMarker.styleString
+
   def postCompose(compBindings : Map[Int, Expression]) : Substitution =
     new Substitution(shell, InternalReference(expr), compositeBindings(compBindings))
 
-  def normalize : Expression = 
-    expr match {
-      case v : Variable => 
-        if (isBound(v)) {
-          getBinding(v).normalize
-        } else {
-          // Ummm... should we translate the identifier as well???
-          // Well, yes.  And anyway this is already a bit fishy ....
-          v.newVariable((v.shell map ((e : Expression) => new Substitution(shell, InternalReference(e), bindings))).normalize,
-            v.index, v.ident, v.isThin)
-        }
+  def headNormalize : Expression =
+    topMarker.headNormalize
 
-      case f : Filler =>
-        Filler((f.nook map ((e : Expression) => new Substitution(shell, InternalReference(e), bindings))).normalize, 
-          translateIdent(f.bdryIdent))
+  def normalizationResult : NormalizationResult =
+    topMarker.normalizationResult
 
-      case b : Filler#BoundaryExpr => 
-        new Substitution(shell, InternalReference(b.interior), bindings).normalize.asInstanceOf[Filler].Boundary
+  class SubstitutionIdentifier(body : Identifier) extends ClosureIdentifier(body) {
+    def identMap = bindings mapValues (_.ident)
+    def wrap(i : Identifier) = new SubstitutionIdentifier(i)
+  }
 
-      case s : Substitution#SubstitutionMarker => {
-
-        // Here's the explanation: if we see a marker associated to a substitution,
-        // we re-instantiate that substitutions with the composite bindings and then seek back
-        // to the position of the cell we were looking at.  We can now normalize that cell
-        // and we have effectively done a composition!!
-
-        s.substitution.postCompose(bindings).ncell.seek(s.offset).get.value.normalize
-      }
-
-      case _ => ???
-    }
-
-  case class SubstitutionMarker(val offset : CellAddress) extends Expression {
+  case class SubstitutionMarker(val localExpression : Expression, val offset : CellAddress) extends Expression { thisMarker =>
 
     def substitution = thisSubst
 
-    def referencedExpression : Expression = 
-      normalizedExpression.ncell.seek(offset).get.value
-
     // For now, these use reduction.  We can be smarter about it later ...
-    def ident : Identifier = referencedExpression.ident
-    def isThin : Boolean = referencedExpression.isThin
-    def styleString : String = referencedExpression.styleString
+    def ident : Identifier = 
+      new SubstitutionIdentifier(localExpression.ident)
+
+    def isThin : Boolean = headNormalize.isThin
+    def styleString : String = headNormalize.styleString
 
     // The ncell of this substitution guy simply picks out the subcell
     // of the instantiation ....
     def ncell: NCell[Expression] = 
       thisSubst.ncell.seek(offset).get
 
-    def substExpr : Expression = 
-      expr.ncell.seek(offset).get.value
+    def headNormalize : Expression = 
+      localExpression match {
+        case v : Variable =>
+          if (isBound(v)) {
+            getBinding(v).headNormalize
+          } else {
+            // Ummm... should we translate the identifier as well???
+            // Well, yes.  And anyway this is already a bit fishy ....
+            v.newVariable((v.shell map ((e : Expression) => new Substitution(shell, InternalReference(e), bindings))),
+              v.index, thisMarker.ident, v.isThin)
+          }
 
-    def normalize : Expression = {
-      if (Util.debug) println("Normalizing a substitution")
+        case f : Filler =>
+          Filler((f.nook map ((e : Expression) => new Substitution(shell, InternalReference(e), bindings))),
+            thisMarker.ident)
 
-      offset match {
-        case Immediate => thisSubst.normalize
-        case _ => new Substitution(shell, InternalReference(substExpr), bindings).normalize
+        case b : Filler#BoundaryExpr =>
+          new Substitution(shell, InternalReference(b.interior), bindings).headNormalize.asInstanceOf[Filler].Boundary
+
+        case s : Substitution#SubstitutionMarker => {
+
+          // Here's the explanation: if we see a marker associated to a substitution,
+          // we re-instantiate that substitutions with the composite bindings and then seek back
+          // to the position of the cell we were looking at.  We can now normalize that cell
+          // and we have effectively done a composition!!
+
+          // Here is my idea for the bug: when you compose bindings, there needs to be some kind of
+          // translation of identifiers as well and this is the step that is missing.
+          s.substitution.postCompose(bindings).ncell.seek(s.offset).get.value.headNormalize
+        }
+
+        case _ => ???
       }
-    }
 
-    override def toString = "SubstMkr(" ++ offset.toString ++ ", " ++ exprRef.toString ++ ")"
+    def normalizationResult : NormalizationResult =
+      localExpression match {
+        case v : Variable => 
+          if (isBound(v)) getBinding(v).normalizationResult else VariableResult
+        case _ => localExpression.normalizationResult
+      }
+
+    override def toString = "SubstMkr(" ++ offset.toString ++ ", " ++ exprRef.toString ++ 
+      ", " ++ localExpression.toString ++ ", " ++ normalizationResult.toString ++ ", " ++ bindings.toString ++ ")"
   }
 }
 
 trait SubstitutionOps { thisSubst : Expression => 
-
-  var myNormalizedExpression : Option[Expression] = None
-
-  def normalizedExpression : Expression = 
-    myNormalizedExpression match {
-      case None => {
-        val ne = normalize
-        myNormalizedExpression = Some(ne)
-        ne
-      }
-      case Some(ne) => ne
-    }
 
   def bindings : Map[Int, Expression]
 
@@ -310,45 +347,31 @@ trait SubstitutionOps { thisSubst : Expression =>
   def getBinding(v : Variable) : Expression =
     bindings(v.index)
 
-  def translateTokens(toks : List[IdentToken]) : List[IdentToken] =
-    toks map {
-      case et @ ExpressionToken(Variable(_, idx, _, _)) =>
-        if (bindings.isDefinedAt(idx)) {
-          ExpressionToken(bindings(idx))
-        } else et
-      case tok @ _ => tok
+  def compositeBindings(outerBindings : Map[Int, Expression]) : Map[Int, Expression] = {
+    if (Util.debug) {
+      println("Composing bindings:")
+      println("Inner: " ++ bindings.toString)
+      println("Outer: " ++ outerBindings.toString)
     }
 
-  // Fix this to translate variable identifiers correctly ...
-  def translateIdent(id : Identifier) : Identifier = {
-    val resultIdent = 
-      id match {
-        case vIdent : VariableIdentifier =>
-          if (bindings.isDefinedAt(vIdent.index)) {
-            bindings(vIdent.index).ident
-          } else {
-            if (Util.debug) println("Translating an unbound variable!")
-            VariableIdentifier(vIdent.index, translateTokens(vIdent.tokens))
+    bindings map {
+      case (idx, bExpr) => {
+        bExpr.normalizationResult match {
+          case VariableResult => {
+            val headVariable = bExpr.headNormalize.asInstanceOf[Variable]
+            if (outerBindings.isDefinedAt(headVariable.index)) {
+              if (Util.debug)
+                println("Head variable " ++ headVariable.toString ++ " is rebound to " ++ outerBindings(headVariable.index).toString)
+              (idx, outerBindings(headVariable.index))
+            } else {
+              (idx, bExpr)
+            }
           }
-        case eIdent : ExpressionIdentifier =>
-          ExpressionIdentifier(translateTokens(eIdent.tokens))
+          case _ => (idx, bExpr)
+        }
       }
-
-    if (Util.debug)
-      println("Tralating identifier " ++ id.toString ++ " to " ++ resultIdent.toString)
-
-    resultIdent
+    }
   }
 
-  def compositeBindings(outerBindings : Map[Int, Expression]) : Map[Int, Expression] = 
-    bindings map {
-      case (idx, v : Variable) => {
-        if (outerBindings.isDefinedAt(v.index))
-          (idx, outerBindings(v.index))
-        else
-          (idx, v)
-      }
-      case (idx, bExpr) => (idx, bExpr)
-    }
-
 }
+

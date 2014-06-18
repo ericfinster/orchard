@@ -33,21 +33,21 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
   // SEMANTIC ROUTINES
   //
 
-  def processIdentifier(rawIdent : RawIdentifier) : Option[List[IdentToken]] = {
-    val newTokens = rawIdent.tokens flatMap {
-      case RawLiteral(lit) => Some(LiteralToken(lit))
+  def processIdentifier(rawIdent : RawIdentifier) : Option[List[Identifier]] = {
+    val idents = rawIdent.tokens flatMap {
+      case RawLiteral(lit) => Some(LiteralIdentifier(lit))
       case RawReference(ref) =>
         variables find (p => p.id == ref) match {
           case None => { editor.consoleError("Unresolved reference: " ++ ref) ; None }
-          case Some(v) => Some(ExpressionToken(v))
+          case Some(v) => Some(v.ident)
         }
     }
 
-    if (newTokens.length < rawIdent.tokens.length) {
+    if (idents.length < rawIdent.tokens.length) {
       editor.consoleError("Identifier processing failed.")
       None
     } else {
-      Some(newTokens)
+      Some(idents)
     }
   }
 
@@ -73,11 +73,11 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
               case Success(ident, _) => {
 
                 for {
-                  identTokens <- processIdentifier(ident)
+                  idents <- processIdentifier(ident)
                 } {
 
                   val index = variables.length
-                  val finalIdent = VariableIdentifier(index, identTokens)
+                  val finalIdent = CompoundIdentifier(idents)
 
                   // Make sure the identifier is unique
                   if (variables exists (_.id == finalIdent.toString)) {
@@ -128,10 +128,10 @@ trait Workspace { thisWorkspace : ModuleSystem#Module =>
               case Success(ident, _) => {
 
                 for {
-                  identTokens <- processIdentifier(ident)
+                  idents <- processIdentifier(ident)
                 } {
 
-                  val finalIdent = ExpressionIdentifier(identTokens)
+                  val finalIdent = CompoundIdentifier(idents)
 
                   // Make sure the identifier is unique
                   if (variables exists (_.id == finalIdent.toString)) {

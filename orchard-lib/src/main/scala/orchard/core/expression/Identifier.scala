@@ -7,39 +7,72 @@
 
 package orchard.core.expression
 
+import orchard.core.util.Util
+
 import scala.util.parsing.combinator.RegexParsers
+
+// The distinction between tokens and terms is annoying ...
 
 sealed trait Identifier {
 
-  def tokens : List[IdentToken]
+  def expand : String
 
-  def exprRefs : List[Expression] = 
-    tokens flatMap {
-      case et : ExpressionToken => Some(et.expr)
-      case _ => None
+}
+
+case class LiteralIdentifier(val literal : String) extends Identifier {
+  def expand : String = literal
+  override def toString : String = "Lit(" ++ literal ++ ")"
+}
+
+case class CompoundIdentifier(val components : List[Identifier]) extends Identifier {
+  def expand : String = (components map (_.expand)).mkString
+  override def toString : String = (components map (_.toString)).toString
+}
+
+case class VariableIdentifier(val index : Int, val varIdent : Identifier) extends Identifier {
+  def expand = varIdent.expand
+  override def toString : String = "Var(" ++ index.toString ++ ", " ++ varIdent.toString ++ ")"
+}
+
+abstract case class ClosureIdentifier(val body : Identifier) extends Identifier {
+
+  def identMap : Map[Int, Identifier]
+
+  def wrap(i : Identifier) : ClosureIdentifier
+
+  // Below we seem to perform a rewrite, but not continue to reduce ...
+  def reduce : Identifier = {
+
+    if (Util.debug) {
+      println(toString)
     }
 
-  def rawStr = (tokens map (_.rawStr)).mkString
+    body match {
+      case li : LiteralIdentifier => li
+      case ci : CompoundIdentifier => 
+        CompoundIdentifier(ci.components map (wrap(_).reduce))
+      case vi : VariableIdentifier => {
+        if (identMap.isDefinedAt(vi.index)) {
+          identMap(vi.index)
+        } else {
+          VariableIdentifier(vi.index, wrap(vi.varIdent))
+        }
+      }
+      case ci : ClosureIdentifier => {
+        wrap(ci.reduce)
+      }
+    }
+  }
 
-  def idString = (tokens map (_.value)).mkString
+  def expand = reduce.expand
+
+  override def toString : String = "Closure(" ++ body.toString ++ ", " ++ identMap.mapValues(_.toString).toString ++ ")"
 
 }
-
-case class VariableIdentifier(val index : Int, val tokens : List[IdentToken]) extends Identifier { 
-  override def toString = idString
-}
-
-case class ExpressionIdentifier(val tokens : List[IdentToken]) extends Identifier {
-  override def toString = idString
-}
-
-sealed trait IdentToken { def value : String ; def rawStr : String }
-case class LiteralToken(val lit : String) extends IdentToken { def value = lit ; def rawStr = lit }
-case class ExpressionToken(val expr : Expression) extends IdentToken { def value = expr.ident.toString ; def rawStr = "${" ++ expr.ident.rawStr ++ "}" }
 
 object Identifier {
 
-  def empty : Identifier = ExpressionIdentifier(List.empty)
+  def empty : Identifier = CompoundIdentifier(List.empty)
 
 }
 
