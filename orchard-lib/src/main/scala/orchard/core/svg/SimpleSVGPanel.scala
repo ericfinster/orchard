@@ -7,7 +7,8 @@
 
 package orchard.core.svg
 
-import orchard.core._
+import orchard.core.complex._
+
 import xml._
 
 class SimpleSVGPanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) extends SVGPanel[A] { thisPanel =>

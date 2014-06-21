@@ -87,7 +87,7 @@ object JavaFXModuleSystem extends ModuleSystem {
     override def styleString = 
       if (filler.Boundary.isThin) "bdry-thin" else "bdry"
 
-    object FillerEntry extends JavaFXModuleEntry {
+    object FillerEntry extends JavaFXModuleEntry with ExpressionEntry {
 
       def parent = Some(module)  // This is suspicious ...
 

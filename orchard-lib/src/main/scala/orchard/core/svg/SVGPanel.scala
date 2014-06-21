@@ -7,7 +7,9 @@
 
 package orchard.core.svg
 
-import orchard.core._
+import orchard.core.ui._
+import orchard.core.complex._
+
 import xml._
 
 case class BBox(val x : Int, val y : Int, val width : Int, val height : Int)

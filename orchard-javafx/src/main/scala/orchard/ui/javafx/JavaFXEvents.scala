@@ -59,23 +59,17 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.P => if (ev.isControlDown) { if (ev.isShiftDown) onPasteToNewSheet else onPaste }
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
-          case KeyCode.S => if (ev.isControlDown) onViewShell
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
+          // case KeyCode.S => if (ev.isControlDown) onSaveModule
+          case KeyCode.F1 => onViewShell
+          case KeyCode.F2 => onViewNook
+          case KeyCode.F3 => onViewInterior
+          case KeyCode.F4 => onViewNormalized
           case KeyCode.B => if (ev.isControlDown) onBind
           case KeyCode.N => if (ev.isControlDown) onNewModule else if (ev.isAltDown) onNewSubmodule
           case KeyCode.I => if (ev.isControlDown) onInstantiate
-          case KeyCode.X => if (ev.isControlDown) onImportCompleted
-          // case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
-          // case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
-          // case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
-          // case KeyCode.R => if (ev.isControlDown) onRename
-          // case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
-          // case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
-          case KeyCode.V => if (ev.isControlDown) onViewNormalized else if (ev.isAltDown) onViewNook else if (ev.isShiftDown) onViewInterior
-          // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
-          // case KeyCode.X => if (ev.isControlDown) onExtra
-          // case KeyCode.P => if (ev.isControlDown) onPrintScreen
           case KeyCode.W => if (ev.isControlDown) onOpenWorkspace
+          case KeyCode.X => if (ev.isControlDown) onImportCompleted
           case KeyCode.Z => if (ev.isControlDown) { if (ev.isShiftDown) onSetDebugFlag else onDebug }
           case KeyCode.SPACE => if (ev.isControlDown) onMarkExpression(ev.isShiftDown)
           case _ => ()
@@ -92,7 +86,6 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       expr <- cell.expression
     } {
       consoleDebug("Expression: " ++ expr.toString)
-      consoleDebug("Normalized expression:" ++ expr.normalize.toString)
     }
 
   def onSetDebugFlag : Unit = {

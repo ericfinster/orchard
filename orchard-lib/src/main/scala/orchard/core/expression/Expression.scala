@@ -317,8 +317,6 @@ case class Substitution(val shell : Shell, val exprRef : ExpressionReference, va
           // to the position of the cell we were looking at.  We can now normalize that cell
           // and we have effectively done a composition!!
 
-          // Here is my idea for the bug: when you compose bindings, there needs to be some kind of
-          // translation of identifiers as well and this is the step that is missing.
           s.substitution.postCompose(bindings).ncell.seek(s.offset).get.value.headNormalize
         }
 
