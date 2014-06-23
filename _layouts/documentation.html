@@ -1,0 +1,32 @@
+---
+layout: default
+doc-sections:
+  - Introduction
+  - Basic Notions
+---
+<div class="row">
+
+  <div class="col-sm-8">
+    {{ content }}
+  </div>
+
+  <div class="col-sm-3">
+    <div class="panel panel-default">
+      <ul class="nav panel-body">
+	{% for section in page.doc-sections %}
+	<li>
+	  <h4>{{ section }}</h4>
+	  <ul class="nav nav-pills nav-stacked">
+	    {% for p in site.pages %}
+	    {% if p.doc-section == section %}
+	    <li><a href="{{ p.url }}">{{ p.title }}</a></li>
+	    {% endif %}
+	    {% endfor %}
+	  </ul>
+	</li>
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
