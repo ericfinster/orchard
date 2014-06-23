@@ -20,23 +20,31 @@ class FrameworkSVGGallery(labelEngine : WebEngine, seed : NCell[Option[Expressio
 
   val complex : SimpleFramework = new SimpleFramework(seed)
 
-  def newPanel(i : Int) = new FrameworkSVGPanel(labelEngine, complex, i)
+  def newPanel(i : Int) = new FrameworkSVGPanel(labelEngine, this, i)
 
-  // For each cell, we want to add a member to the gallery object ...
+  // We would like to instead keep a gallery array in which we can have multiple galleries.  This way,
+  // we can have more than one active gallery on a page.  Right now, more recent galleries overwrite the
+  // previous ones ....
+
+  // Also, you should split the css into a separate main stylesheet which is common to all opetopic renderings ...
+  // (This way, you can set global font information and share it so that they can be easily embedded in other
+  // webpages)
+
   def initStr : String = {
-    var str : String = "document.gallery = { };\n"
+    var str : String = "document." ++ svgId ++ " = { };"
     forallCells (cell => str ++= cell.initStr)
     str ++= faceIterator
-    str ++= "alert('Initialization Finished.');\n"
     str
   }
 
   def faceIterator : String =
-    "function foreachFace(c, f) {\n" ++
-      "for (var i = 0; i < c.faces.length; i++) {\n" ++
-      "  f(c.faces[i])\n" ++
-      "}\n" ++
-      "}\n"
+    "function foreachFace(c, f) {" ++
+      "for (var i = 0; i < c.faces.length; i++) {" ++
+      "  f(c.faces[i])" ++
+      "}" ++
+      "}"
+
+  def svgId : String = "gallery" ++ this.hashCode.toString
 
   def toSVG : Node = {
     // Okay.  We need to layout the panels correctly....
@@ -46,94 +54,61 @@ class FrameworkSVGGallery(labelEngine : WebEngine, seed : NCell[Option[Expressio
 
     <svg width={w.toString} height={h.toString} viewBox={viewBoxStr} xmlns="http://www.w3.org/2000/svg" version="1.1">
       <script type="text/javascript">
-        window.onload = function() {{ 
-          {initStr}
-        }}
+        window.addEventListener('load', function() {{ {initStr} }}, false)
       </script>
       <style>
-        .root {{
-          blue-2: #838EAF;
-          blue-5: #D3D9EC;
-
-          peach-2: #E4CFA3;
-          peach-5: #FFF5E0;
-
-          violet-2: #9D7FAE;
-          violet-5: #E2D1EC;
-
-          red-2: #E4A3A3;
-          red-5: #FFE0E0;
-
-          empty-base: white;
-          empty-hover: blue-2;
-
-          var-base: peach-5;
-          var-hover: peach-2;
-
-          var-thin-base: violet-5;
-          var-thin-hover: violet-2;
-
-          filler-base: blue-5;
-          filler-hover: blue-2;
-              
-          filler-tgt-base: red-5;
-          filler-tgt-hover: red-2;
-
-          filler-tgt-thin-base: blue-5;
-          filler-tgt-thin-hover: blue-2;
-        }}
-
         path {{
           stroke: black;
           stroke-width: 2;
         }}
-
         .orch-rect {{ 
           stroke: black; 
           stroke-width: 2; 
           fill: white 
         }} 
-      
         .orch-edge {{
           stroke: black;
           stroke-width: 2;
           fill: none;
         }}
-
+        text {{
+          font-family: "Liberation Sans", Helvetica, sans-serif;
+          font-size: 13px;
+          font-style: normal;
+        }}
         .orch-edge-hover {{
           stroke: red;
           stroke-width: 2;
           fill: none;
         }}
-
-        .orch-extra text {{ fill: black; }}
-        .orch-extra-hover text {{ fill: red; }}
-        .orch-extra path {{ stroke: black; fill: black; }}
-        .orch-extra-hover path {{ stroke: red; fill: red; }}
-
-        .expr-cell-empty {{ fill: white; }}
-        .expr-cell-var {{ fill: #FFF5E0; }}
-        .expr-cell-var-thin {{ fill: #9D7FAE; }}
-        .expr-cell-filler {{ fill: #D3D9EC; }}
-        .expr-cell-filler-tgt {{ fill: #FFE0E0; }}
-        .expr-cell-filler-tgt-thin {{ fill: #D3D9EC; }}
-
-        .expr-cell-empty-hover {{ fill: red; }}
-        .expr-cell-var-hover {{ fill: #E4CFA3; }}
-        .expr-cell-var-thin-hover {{ fill: #9D7FAE; }}
-        .expr-cell-filler-hover {{ fill: #838EAF; }}
-        .expr-cell-filler-tgt-hover {{ fill: #E4A3A3; }}
-        .expr-cell-filler-tgt-thin-hover {{ fill: #838EAF; }}
-
         .orch-label {{ 
           pointer-events: none; 
         }}
-
         .orch-label-filler {{
           pointer-events: none;
           stroke: white;
           fill white;
         }}
+        .orch-extra text {{ fill: black; }}
+        .orch-extra-hover text {{ fill: red; }}
+        .orch-extra path {{ stroke: black; fill: black; }}
+        .orch-extra-hover path {{ stroke: red; fill: red; }}
+        .orch-cell-empty {{ fill: white }}
+        .orch-cell-exposed {{ fill: #F0FBDC }}
+        .orch-cell-variable {{ fill: #FFF5E0 }}
+        .orch-cell-variable-thin {{ fill: #E2D1EC }}
+        .orch-cell-filler {{ fill: #D3D9EC }}
+        .orch-cell-bdry {{ fill: #FFE0E0 }}
+        .orch-cell-bdry-thin {{ fill: #D3D9EC }}
+        .orch-cell-app {{ fill: #F5D7E6 }}
+        .orch-cell-empty-hovered {{ fill: #838EAF }}
+        .orch-cell-exposed-hovered {{ fill: #C1D89B }}
+        .orch-cell-variable-hovered {{ fill:  #E4CFA3 }}
+        .orch-cell-variable-thin-hovered {{ fill: #9D7FAE }}
+        .orch-cell-filler-hovered {{ fill: #838EAF }}
+        .orch-cell-bdry-hovered {{ fill: #E4A3A3 }}
+        .orch-cell-bdry-thin-hovered {{ fill: #838EAF }}
+        .orch-cell-app-hovered {{ fill: #C78EAB }}
       </style>
       {panelData map (pInfo => {
         val (panel, x, y) = pInfo

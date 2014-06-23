@@ -90,13 +90,13 @@
     exposed-hover: lime-2;
     exposed-selected: lime-3;
 
-    var-base: peach-5;
-    var-hover: peach-2;
-    var-selected: peach-3;
+    variable-base: peach-5;
+    variable-hover: peach-2;
+    variable-selected: peach-3;
 
-    var-thin-base: violet-5;
-    var-thin-hover: violet-2;
-    var-thin-selected: violet-3;
+    variable-thin-base: violet-5;
+    variable-thin-hover: violet-2;
+    variable-thin-selected: violet-3;
 
     filler-base: blue-5;
     filler-hover: blue-2;
@@ -201,13 +201,13 @@
     -fx-text-fill: -fx-text-inner-color;
 }
 
-.orch-list-cell-var { -fx-background-color: var-base; -fx-border-color: var-selected; -fx-border-width: 1; }
-.orch-list-cell-var:hover { -fx-background-color: var-hover; }
-.orch-list-cell-var:selected { -fx-background-color: var-selected; }
+.orch-list-cell-variable { -fx-background-color: variable-base; -fx-border-color: variable-selected; -fx-border-width: 1; }
+.orch-list-cell-variable:hover { -fx-background-color: variable-hover; }
+.orch-list-cell-variable:selected { -fx-background-color: variable-selected; }
 
-.orch-list-cell-var-thin { -fx-background-color: var-thin-base; -fx-border-color: var-thin-selected; -fx-border-width: 1; }
-.orch-list-cell-var-thin:hover { -fx-background-color: var-thin-hover; }
-.orch-list-cell-var-thin:selected { -fx-background-color: var-thin-selected; }
+.orch-list-cell-variable-thin { -fx-background-color: variable-thin-base; -fx-border-color: variable-thin-selected; -fx-border-width: 1; }
+.orch-list-cell-variable-thin:hover { -fx-background-color: variable-thin-hover; }
+.orch-list-cell-variable-thin:selected { -fx-background-color: variable-thin-selected; }
 
 .orch-list-cell-filler { -fx-background-color: filler-base; -fx-border-color: filler-selected; -fx-border-width: 1; }
 .orch-list-cell-filler:hover { -fx-background-color: filler-hover }
@@ -354,8 +354,8 @@
 
 .orch-cell-empty { -fx-background-color: empty-base }
 .orch-cell-exposed { -fx-background-color: exposed-base }
-.orch-cell-var { -fx-background-color: var-base }
-.orch-cell-var-thin { -fx-background-color: var-thin-base }
+.orch-cell-variable { -fx-background-color: variable-base }
+.orch-cell-variable-thin { -fx-background-color: variable-thin-base }
 .orch-cell-filler { -fx-background-color: filler-base }
 .orch-cell-bdry { -fx-background-color: bdry-base }
 .orch-cell-bdry-thin { -fx-background-color: bdry-thin-base }
@@ -363,8 +363,8 @@
 
 .orch-cell-empty-hovered { -fx-background-color: empty-hover }
 .orch-cell-exposed-hovered { -fx-background-color: exposed-hover }
-.orch-cell-var-hovered { -fx-background-color:  var-hover }
-.orch-cell-var-thin-hovered { -fx-background-color: var-thin-hover }
+.orch-cell-variable-hovered { -fx-background-color:  variable-hover }
+.orch-cell-variable-thin-hovered { -fx-background-color: variable-thin-hover }
 .orch-cell-filler-hovered { -fx-background-color: filler-hover }
 .orch-cell-bdry-hovered { -fx-background-color: bdry-hover }
 .orch-cell-bdry-thin-hovered { -fx-background-color: bdry-thin-hover }
@@ -372,8 +372,8 @@
 
 .orch-cell-empty-selected { -fx-background-color: empty-selected }
 .orch-cell-exposed-selected { -fx-background-color: exposed-selected }
-.orch-cell-var-selected { -fx-background-color: var-selected }
-.orch-cell-var-thin-selected { -fx-background-color: var-thin-selected }
+.orch-cell-variable-selected { -fx-background-color: variable-selected }
+.orch-cell-variable-thin-selected { -fx-background-color: variable-thin-selected }
 .orch-cell-filler-selected { -fx-background-color: filler-selected }
 .orch-cell-bdry-selected { -fx-background-color: bdry-selected }
 .orch-cell-bdry-thin-selected { -fx-background-color: bdry-thin-selected }

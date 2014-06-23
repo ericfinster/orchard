@@ -13,7 +13,7 @@ import orchard.core.expression._
 
 import xml._
 
-class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, baseIndex : Int)
+class FrameworkSVGPanel(labelEngine : WebEngine, val gallery : FrameworkSVGGallery, baseIndex : Int)
     extends JavaFXSVGPanel[Option[Expression]](labelEngine) { thisPanel =>
 
   type CellType = FrameworkSVGCell
@@ -22,6 +22,8 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
   override type ComplexType = SimpleFramework
 
   override def refresh = ()
+
+  val complex = gallery.complex
 
   class FrameworkSVGCell(val owner : complex.CellType) extends JavaFXSVGCell {
 
@@ -41,7 +43,7 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
 
 
     def hoverClassStr : String = 
-      classStr ++ "-hover"
+      classStr ++ "-hovered"
 
     def toSVG : NodeSeq = {
       val myRect : NodeSeq = <rect id={"cell-" ++ svgId} class={classStr} x={x.toString} y={y.toString} 
@@ -64,10 +66,11 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
       }
     }
 
-    def cellInfoExpr : String = "document.gallery['cell-" ++ svgId ++ "']"
+    def cellInfoExpr : String = "document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "']"
+
     def initStr : String = 
-      "document.gallery['cell-" ++ svgId ++ "'] = " ++ objStr ++ 
-        cellInfoExpr ++ ".cell.onclick = function () { document.gallery['cell-" ++ svgId ++ "'].doAlert(); };\n" ++
+      "document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'] = " ++ objStr ++ 
+        cellInfoExpr ++ ".cell.onclick = function () { document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'].doAlert(); };\n" ++
         cellInfoExpr ++ ".cell.onmouseover = " ++ mouseoverStr ++
         cellInfoExpr ++ ".cell.onmouseout = " ++ mouseoutStr ++
         faceArrayInitStr
@@ -88,31 +91,31 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
 
     def hoverStr : String = 
       "function() {\n" ++
-        "var cellInfo = document.gallery['cell-" ++ svgId ++ "'];\n" ++
+        "var cellInfo = document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'];\n" ++
         "cellInfo.cell.setAttribute('class', '" ++ hoverClassStr ++ "');\n" ++
         "if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra-hover'); };\n" ++
       "},\n"
 
     def unhoverStr : String = 
       "function() {\n" ++
-        "var cellInfo = document.gallery['cell-" ++ svgId ++ "'];\n" ++
+        "var cellInfo = document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'];\n" ++
         "cellInfo.cell.setAttribute('class', '" ++ classStr ++ "');\n" ++
         "if (cellInfo.extra != null) { cellInfo.extra.setAttribute('class', 'orch-extra'); };\n" ++
       "},\n"
 
     def mouseoverStr : String = 
       "function () {\n" ++
-        "var cellInfo = document.gallery['cell-" ++ svgId ++ "'];\n" ++
+        "var cellInfo = document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'];\n" ++
         "cellInfo.doHover();\n" ++
-        // "foreachFace(cellInfo, function(fc) { fc.doHover() });\n" ++
+        "foreachFace(cellInfo, function(fc) { fc.doHover() });\n" ++
         "if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge-hover'); };\n" ++
       "};\n"
 
     def mouseoutStr : String = 
       "function () {\n" ++
-        "var cellInfo = document.gallery['cell-" ++ svgId ++ "'];\n" ++
+        "var cellInfo = document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'];\n" ++
         "cellInfo.doUnhover();\n" ++
-        // "foreachFace(cellInfo, function(fc) { fc.doUnhover() });\n" ++
+        "foreachFace(cellInfo, function(fc) { fc.doUnhover() });\n" ++
         "if (cellInfo.edge != null) { cellInfo.edge.setAttribute('class', 'orch-edge'); };\n" ++
       "};\n"
 
@@ -121,7 +124,7 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
       var idx : Int = 0
 
       owner.skeleton map (face => {
-        faceStr ++= "document.gallery['cell-" ++ svgId ++ "'].faces[" ++ idx.toString ++ "] = document.gallery['cell-" ++ face.hashCode.toString ++ "'];\n"
+        faceStr ++= "document." ++ gallery.svgId ++ "['cell-" ++ svgId ++ "'].faces[" ++ idx.toString ++ "] = document." ++ gallery.svgId ++ "['cell-" ++ face.hashCode.toString ++ "'];\n"
         idx += 1
       })
 

@@ -63,7 +63,17 @@ abstract class JavaFXSVGGallery[A](labelEngine : WebEngine) extends Gallery[A] {
   override def renderAll = {
 
     val doSuperRenderAll : Unit => Unit = (_ => super.renderAll )
-    val galleryProofSheet = <svg>{panels map (p => p.labelProofSheet)}</svg>
+    val galleryProofSheet = 
+      <svg>
+        <style>
+          text {{
+            font-family: "Liberation Sans", Helvetica, sans-serif;
+            font-size: 13px;
+            font-style: normal;
+          }}
+        </style>{
+          panels map (p => p.labelProofSheet)
+        }</svg>
 
     labelEngine.getLoadWorker.stateProperty.addListener(
       new ChangeListener[State]{

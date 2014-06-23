@@ -12,7 +12,22 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry._
 
+import scalafx.scene.web.WebView
+import scalafx.scene.web.WebEngine
+
 import controls._
+import svg._
+
+import orchard.core.cell._
+import orchard.core.expression._
+
+import javafx.event.Event
+import javafx.event.EventHandler
+
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
+import javafx.scene.input.MouseEvent
+
 import JavaFXModuleSystem._
 
 trait JavaFXDialogs { thisEditor : JavaFXEditor =>
@@ -254,4 +269,47 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
   }
 
+
+  object WebViewDialog extends Dialog {
+
+    heading.text = "Web Viewer"
+
+    val webView = new WebView
+    borderPane.center = webView
+
+    var labelEngine : WebEngine = null
+    var gallery : FrameworkSVGGallery = null
+
+    def renderAsSVG[A](seed : NCell[Option[Expression]]) = {
+      labelEngine = new WebEngine
+      gallery = new FrameworkSVGGallery(labelEngine, seed)
+      gallery.onRenderFinished = (_ => {
+        webView.engine.loadContent(gallery.toSVG.toString)
+      })
+      gallery.renderAll
+    }
+
+    def onHide = ()
+    def onShow = ()
+
+    addEventFilter(KeyEvent.KEY_PRESSED,
+      new EventHandler[KeyEvent] {
+        def handle(ev : KeyEvent) {
+          ev.getCode match {
+            case KeyCode.S => if (ev.isControlDown) onWrite
+            case _ => ()
+          }
+        }
+      })
+
+    def onWrite = {
+      fileChooser.setTitle("Export SVG")
+
+      val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+      if (file != null) {
+        xml.XML.save(file.getAbsolutePath, gallery.toSVG)
+      }
+    }
+  }
 }

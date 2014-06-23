@@ -12,6 +12,7 @@ import scalafx.scene.Node
 import scalafx.scene.layout._
 
 import controls._
+
 import JavaFXModuleSystem._
 
 import orchard.core.expression.Editor

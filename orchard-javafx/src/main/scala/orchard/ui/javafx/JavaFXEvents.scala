@@ -65,6 +65,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.F2 => onViewNook
           case KeyCode.F3 => onViewInterior
           case KeyCode.F4 => onViewNormalized
+          case KeyCode.F10 => onWebView
           case KeyCode.B => if (ev.isControlDown) onBind
           case KeyCode.N => if (ev.isControlDown) onNewModule else if (ev.isAltDown) onNewSubmodule
           case KeyCode.I => if (ev.isControlDown) onInstantiate
@@ -354,5 +355,16 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     } {
       mod.newSheet(pasteExpr)
     }
+
+  def onWebView : Unit =
+    for {
+      mod <- activeModule
+      worksheet <- mod.activeWorksheet
+      selectedCell <- worksheet.selectionBase
+    } {
+      WebViewDialog.renderAsSVG(selectedCell.neutralNCell)
+      WebViewDialog.run
+    }
+
 
 }

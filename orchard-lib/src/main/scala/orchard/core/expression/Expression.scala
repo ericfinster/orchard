@@ -45,7 +45,7 @@ sealed trait Expression extends Stylable {
 case class Variable(val shell : Shell, val index : Int, val varIdent : Identifier, val isThin : Boolean) extends Expression {
 
   def ident = VariableIdentifier(index, varIdent)
-  def styleString = if (isThin) "var-thin" else "var"
+  def styleString = if (isThin) "variable-thin" else "variable"
 
   val ncell : NCell[Expression] =
     shell.withFillingExpression(this)

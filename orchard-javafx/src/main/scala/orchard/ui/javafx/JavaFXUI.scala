@@ -14,9 +14,13 @@ import scalafx.scene.input._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import scalafx.stage.FileChooser
+
 import JavaFXModuleSystem._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
+
+  val fileChooser = new FileChooser
 
   val importRoot = new TreeItem[JavaFXModuleEntry]
   val importView = new TreeView[JavaFXModuleEntry] {

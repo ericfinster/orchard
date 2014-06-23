@@ -69,7 +69,7 @@ abstract class JavaFXSVGPanel[A](engine : WebEngine) extends SVGPanel[A] { thisP
     def setLabelSize = {
       // Should use a separate method which looks up the svgId, since we may want
       // to override it in subclasses
-      val scriptStr = "document.getElementById(\"cell-label-" ++ svgId ++ "\").getBBox();"
+      val scriptStr = "document.getElementById(\"cell-label-" ++ svgId ++ "\").getBoundingClientRect();"
 
       // This should return the bounding box of the element in the proof sheet ...
       val bbox = engine.executeScript(scriptStr).asInstanceOf[JSObject]
