@@ -26,27 +26,13 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   //
 
   def consoleWrite(str : String) : Unit = 
-    console.text = console.text() ++ str ++ "\n"
+    console.appendText(str ++ "\n")
 
   def consoleMessage(str : String) : Unit = 
-    console.text = console.text() ++ "INFO: " ++ str ++ "\n"
+    console.appendText("INFO: " ++ str ++ "\n")
 
   def consoleError(str : String) : Unit = 
-    console.text = console.text() ++ "ERROR: " ++ str ++ "\n"
-
-
-  //============================================================================================
-  // MODULE HANDLING
-  //
-
-  // private var currentModule : Option[JavaFXModule] = None
-
-  // def activeModule : Option[JavaFXModule] = currentModule
-  // def activeModule_=(mod : JavaFXModule) = {
-  //   currentModule = Some(mod)
-  //   moduleDisplayPane.content = mod.ui
-  //   consoleMessage("Set active module to: " ++ mod.name)
-  // }
+    console.appendText("ERROR: " ++ str ++ "\n")
 
 }
 
