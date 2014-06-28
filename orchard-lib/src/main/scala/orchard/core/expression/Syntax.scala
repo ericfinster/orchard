@@ -27,3 +27,14 @@ case class Import(moduleName : String) extends Statement
 // Or is there some kind of difference between giving a unique identifier to a lift or
 // an expression, and rather having it depend on some kind of parameters.  This is the
 // problem of how you want to treat abstraction.
+
+// Right. I definitely think and expression should be either an identifier, an application
+// of a substitution to an identifier, or an address thereof.  Ah, or an unfolding ...
+
+sealed trait SyntaxExpression
+case class IdentExpression(id : Identifier)
+
+sealed trait Identifier
+
+class Nook
+class Shell
