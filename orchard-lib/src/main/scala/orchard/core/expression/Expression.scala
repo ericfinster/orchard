@@ -37,6 +37,8 @@ sealed trait Expression extends Stylable {
   def headNormalize : Expression
   def normalizationResult : NormalizationResult
 
+  var entry : Option[ModuleSystem#ModuleEntry] = None
+
   def convertsTo(other : Expression) : Boolean =
     this.normalize == other.normalize
 

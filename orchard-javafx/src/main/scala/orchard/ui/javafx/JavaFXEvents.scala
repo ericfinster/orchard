@@ -78,7 +78,6 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       }
     })
 
-
   def onDebug : Unit =
     for {
       mod <- activeModule

@@ -43,6 +43,8 @@ object JavaFXModuleSystem extends ModuleSystem {
       newTreeItem
     }
 
+    def toXML : xml.NodeSeq
+
   }
   
   //============================================================================================
@@ -60,9 +62,11 @@ object JavaFXModuleSystem extends ModuleSystem {
     def name : String = variable.id
     def expression = variable
 
-    override def styleString : String = if (variable.isThin) "var-thin" else "var"
+    override def styleString : String = if (variable.isThin) "variable-thin" else "variable"
 
     def focusModule = module
+
+    def toXML : xml.NodeSeq = ???
 
   }
   
@@ -82,10 +86,10 @@ object JavaFXModuleSystem extends ModuleSystem {
 
     def focusModule = module
 
-    class JavaFXBoundary
-
     override def styleString = 
       if (filler.Boundary.isThin) "bdry-thin" else "bdry"
+
+    def toXML : xml.NodeSeq = ???
 
     object FillerEntry extends JavaFXModuleEntry with ExpressionEntry {
 
@@ -97,6 +101,8 @@ object JavaFXModuleSystem extends ModuleSystem {
       def focusModule = module
 
       override def styleString = "filler"
+
+      def toXML : xml.NodeSeq = ???
 
     }
 
@@ -121,10 +127,12 @@ object JavaFXModuleSystem extends ModuleSystem {
 
     override def styleString = "app"
 
-    def expression : Expression = {
+    val expression : Expression = {
       val bdryAddr = reference.expression.asInstanceOf[Filler].bdryAddress
       FillerEntry.expression.ncell.seek(bdryAddr).get.value
     }
+
+    def toXML : xml.NodeSeq = ???
 
     object FillerEntry extends JavaFXModuleEntry with ExpressionEntry {
 
@@ -135,7 +143,13 @@ object JavaFXModuleSystem extends ModuleSystem {
 
       override def styleString = "app"
 
-      def expression = Substitution(shell, reference, bindings)
+      val expression = {
+        val subst = Substitution(shell, reference, bindings)
+        subst.entry = Some(this)
+        subst
+      }
+
+      def toXML : xml.NodeSeq = ???
 
     }
 
@@ -164,12 +178,16 @@ object JavaFXModuleSystem extends ModuleSystem {
       treeItem.children map (_.getValue)
 
     def appendLift(filler : Filler) : Unit = {
-      treeItem.children += new JavaFXLift(filler, thisModule).treeItem
+      val liftEntry = new JavaFXLift(filler, thisModule)
+      filler.entry = Some(liftEntry)
+      treeItem.children += liftEntry.treeItem
       editor.displayEnvironment
     }
 
     def appendParameter(variable : Variable) : Unit = {
-      treeItem.children += new JavaFXParameter(variable, thisModule).treeItem
+      val paramEntry = new JavaFXParameter(variable, thisModule)
+      variable.entry = Some(paramEntry)
+      treeItem.children += paramEntry.treeItem
       editor.displayEnvironment
     }
 
@@ -180,14 +198,13 @@ object JavaFXModuleSystem extends ModuleSystem {
 
     def focusModule = thisModule
 
-    //   def toXML : xml.NodeSeq =
-    //     <module name={name}
-    //   slevel={(stabilityLevel getOrElse -1).toString}
-    //   ilevel={(invertibilityLevel getOrElse -1).toString}
-    //   ulevel={(unicityLevel getOrElse -1).toString}>{
-    //     entries flatMap (_.toXML)
-    //   }</module>
-
+    def toXML : xml.NodeSeq =
+        <module name={name}
+          slevel={(stabilityLevel getOrElse -1).toString}
+          ilevel={(invertibilityLevel getOrElse -1).toString}
+          ulevel={(unicityLevel getOrElse -1).toString}>{
+            entries flatMap (_.toXML)
+          }</module>
   }
 
   //============================================================================================
