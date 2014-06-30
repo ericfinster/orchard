@@ -15,11 +15,30 @@ import scalafx.scene.control._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
-  val noModuleLabel = new Label("No Module Loaded")
+  val nothing = new Label("Nothing")
 
-  val moduleDisplayPane = new StackPane {
-    content = noModuleLabel
+  val secondPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    content = nothing
     styleClass += "orch-pane"
+  }
+
+  val moduleRoot = new TreeItem[ModuleItem]
+  val moduleView = new TreeView[ModuleItem] {
+    root = moduleRoot
+    showRoot = false
+  }
+
+  val modulePane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    content = moduleView
+    styleClass += "orch-pane"
+  }
+
+  val horizontalSplit = new SplitPane {
+    orientation = Orientation.HORIZONTAL
+    items ++= List(modulePane, secondPane)
+    dividerPositions = 0.2f
   }
 
   val console = new TextArea {
@@ -28,7 +47,7 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val verticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items ++= List(moduleDisplayPane, console)
+    items ++= List(horizontalSplit, console)
     dividerPositions = 0.8f
   }
 
