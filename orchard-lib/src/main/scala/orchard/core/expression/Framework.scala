@@ -13,12 +13,37 @@ import orchard.core.complex._
 
 import Util._
 
-trait Framework[A] extends MutableComplex[A] { thisFramework =>
+trait ExpressionLike[A] {
+
+  def empty : A
+
+  def isThin(a : A) : Boolean
+  def isEmpty(a : A) : Boolean
+
+}
+
+object ExpressionLike {
+
+  implicit def markerIsExpressionLike : ExpressionLike[ExpressionMarker] =
+    new ExpressionLike[ExpressionMarker] {
+
+      def empty : ExpressionMarker = Empty
+
+      def isEmpty(mkr : ExpressionMarker) = mkr == Empty
+      def isThin(mkr : ExpressionMarker) =
+        mkr match {
+          case Empty => false
+          case m : Marker => m.isThin
+        }
+    }
+
+}
+
+abstract class Framework[A : ExpressionLike] extends MutableComplex[A] { thisFramework =>
 
   type FrameworkType <: Framework[A]
   type CellType <: FrameworkCell
 
-  def emptyItem : A
   def extract(cell : CellType) : FrameworkType
   def duplicate : FrameworkType = extract(topCell)
   def newFromExpression(expr : Expression) : FrameworkType
@@ -29,15 +54,12 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
 
   trait FrameworkCell extends MutableCell { thisCell : CellType =>
 
-    def expression : Option[Expression]
-
     def isThin : Boolean =
-      expression match {
-        case None => false
-        case Some(expr) => expr.isThin
-      }
+      implicitly[ExpressionLike[A]].isThin(item)
 
-    def isEmpty : Boolean = expression == None
+    def isEmpty : Boolean = 
+      implicitly[ExpressionLike[A]].isEmpty(item)
+
     def isFull : Boolean = ! isEmpty
 
     def emptySources : Vector[CellType] =
@@ -121,8 +143,8 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
 
           def getDerivedOutNook(cell : framework.CellType) : Framework[A] = {
             val derivedFramework = framework.extract(cell)
-            derivedFramework.topCell.item = emptyItem
-            derivedFramework.topCell.target.force.item = emptyItem
+            derivedFramework.topCell.item = implicitly[ExpressionLike[A]].empty
+            derivedFramework.topCell.target.force.item = implicitly[ExpressionLike[A]].empty
             derivedFramework
           }
 
@@ -156,8 +178,8 @@ trait Framework[A] extends MutableComplex[A] { thisFramework =>
                 val faceSave = incomingFace.item
                 val sourceSave = value.item
 
-                incomingFace.item = emptyItem
-                value.item = emptyItem
+                incomingFace.item = implicitly[ExpressionLike[A]].empty
+                value.item = implicitly[ExpressionLike[A]].empty
 
                 val derivedNook = framework.extract(value)
                 status &&= derivedNook.topCell.isExposedNook

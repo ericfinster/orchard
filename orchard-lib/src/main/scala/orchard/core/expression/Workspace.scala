@@ -25,7 +25,7 @@ trait Workspace { thisWorkspace =>
   def invertibilityLevel : Option[Int]
   def unicityLevel : Option[Int]
 
-  def variables : Seq[Variable]
+  //def variables : Seq[Variable]
 
   def emptyShell : Shell = new Shell(new WorkspaceFramework(Object(None)))
 
@@ -208,17 +208,17 @@ trait Workspace { thisWorkspace =>
       }
     }
 
-  def importActiveInstantiation : Unit = 
-    for {
-      instntr <- activeInstantiator
-    } {
-      if (instntr.isComplete) {
-        appendInstantiation(instntr.shell, ExternalReference(instntr.lift), instntr.bindings)
-        //newSheet(instntr.completedExpression)
-      } else {
-        editor.consoleError("There are unbound variables.")
-      }
-    }
+  // def importActiveInstantiation : Unit = 
+  //   for {
+  //     instntr <- activeInstantiator
+  //   } {
+  //     if (instntr.isComplete) {
+  //       appendInstantiation(instntr.shell, ExternalReference(instntr.lift), instntr.bindings)
+  //       //newSheet(instntr.completedExpression)
+  //     } else {
+  //       editor.consoleError("There are unbound variables.")
+  //     }
+  //   }
 
 
   //============================================================================================
