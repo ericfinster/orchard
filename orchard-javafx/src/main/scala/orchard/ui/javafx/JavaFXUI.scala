@@ -24,7 +24,7 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
   }
 
   val moduleRoot = new TreeItem[ModuleItem] {
-    value = new ModuleItem
+    value = new ModuleItem(???)
   }
 
   val moduleView = new TreeView[ModuleItem] {

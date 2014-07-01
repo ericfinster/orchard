@@ -9,10 +9,8 @@ package orchard.ui.javafx
 
 import orchard.core.expression._
 
-class ModuleItem(entry : ModuleEntry) {
-
+class ModuleItem(entry : ModuleEntry) extends Stylable {
 
 
 }
 
-class ModuleTreeCell
