@@ -13,13 +13,13 @@ import orchard.core.complex._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait Workspace { 
+trait Workspace { thisWorkspace =>
 
   type EditorType <: Editor
   def editor : EditorType
 
   def activeWorksheet : Option[Worksheet]
-  def activeInstantiator : Option[Instantiator] 
+  //def activeInstantiator : Option[Instantiator]
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]
