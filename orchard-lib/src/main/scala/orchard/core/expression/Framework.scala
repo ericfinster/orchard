@@ -37,22 +37,36 @@ object ExpressionLike {
         }
     }
 
+  implicit def polarityIsExpressionLike : ExpressionLike[Polarity[ExpressionMarker]] =
+    new ExpressionLike[Polarity[ExpressionMarker]] {
+
+      def empty : Polarity[ExpressionMarker] = Neutral(Empty)
+
+      def isEmpty(mkr : Polarity[ExpressionMarker]) = mkr == this.empty
+      def isThin(mkr : Polarity[ExpressionMarker]) =
+        mkr match {
+          case Neutral(m : Marker) => m.isThin
+          case _ => false
+        }
+    }
+
 }
 
-abstract class Framework[A : ExpressionLike] extends MutableComplex[A] { thisFramework =>
+abstract class Framework[A : ExpressionLike](seed : NCell[A]) 
+    extends AbstractMutableComplex[A](seed) { thisFramework =>
 
   type FrameworkType <: Framework[A]
   type CellType <: FrameworkCell
 
   def extract(cell : CellType) : FrameworkType
   def duplicate : FrameworkType = extract(topCell)
-  def newFromExpression(expr : Expression) : FrameworkType
+  // def newFromExpression(expr : Expression) : FrameworkType
 
   def stabilityLevel : Option[Int]
   def invertibilityLevel : Option[Int]
   def unicityLevel : Option[Int]
 
-  trait FrameworkCell extends MutableCell { thisCell : CellType =>
+  trait FrameworkCell extends AbstractMutableCell { thisCell : CellType =>
 
     def isThin : Boolean =
       implicitly[ExpressionLike[A]].isThin(item)

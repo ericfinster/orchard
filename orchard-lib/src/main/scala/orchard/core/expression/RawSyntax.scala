@@ -21,7 +21,7 @@ sealed trait ExpressionMarker
 case object Empty extends ExpressionMarker
 case class Marker(id : String, isThin : Boolean) extends ExpressionMarker
 
-class Nook(ncell : NCell[ExpressionMarker])
-class Shell(ncell : NCell[ExpressionMarker])
+class Nook(framework : Framework[ExpressionMarker])
+class Shell(framework : Framework[ExpressionMarker])
 
 

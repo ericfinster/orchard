@@ -4,5 +4,5 @@ scalaVersion := "2.10.2"
 
 scalacOptions += "-feature"
 
-excludeFilter in unmanagedSources ~= { _ || "Workspace.scala" || "ExpressionFramework.scala" }
+excludeFilter in unmanagedSources ~= { _ || "ExpressionFramework.scala" }
 
