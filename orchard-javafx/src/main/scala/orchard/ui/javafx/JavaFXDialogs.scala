@@ -12,11 +12,13 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry._
 
+import JavaFXModuleSystem._
+
 import controls._
 
 trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
-  object NewModuleDialog extends CancellableDialog {
+  class NewModuleDialog(parent : Option[JavaFXModule]) extends CancellableDialog {
 
     heading.text = "New Module"
 
@@ -192,9 +194,19 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
             } else None
 
 
-          // val newModule = new JavaFXModule(name, stabilityLevel, invertibilityLevel, unicityLevel) 
-          // consoleMessage("Created new module named: " ++ name)
-          // activeModule = newModule
+          val newModule = new JavaFXModule(name)
+
+          parent match {
+            case None => {
+              moduleView.root = newModule
+              activeModule = Some(newModule)
+            }
+            case Some(m) => {
+              m.appendSubmodule(newModule)
+            }
+          }
+
+          moduleView.selectionModel().select(newModule)
         }
         case DialogCancel => ()
       }

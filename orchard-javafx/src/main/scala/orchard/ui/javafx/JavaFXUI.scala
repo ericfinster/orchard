@@ -13,6 +13,8 @@ import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import JavaFXModuleSystem._
+
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val nothing = new Label("Nothing")
@@ -23,12 +25,26 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     styleClass += "orch-pane"
   }
 
-  val moduleRoot = new TreeItem[ModuleItem] {
-    value = new ModuleItem(???)
+  // This construction should go elsewhere ...
+  val moduleRoot = new JavaFXModule("Untitled")
+  val moduleView = new TreeView[JavaFXModuleEntry] {
+    root = moduleRoot
+    cellFactory = (_ => new ModuleTreeCell)
   }
 
-  val moduleView = new TreeView[ModuleItem] {
-    root = moduleRoot
+  moduleView.selectionModel().selectedItem onChange {
+    val item = moduleView.selectionModel().selectedItem()
+
+    if (item != null) {
+      item.value() match {
+        case mod : JavaFXModule => focusedModule = Some(mod)
+        case _ => 
+          item.value().parentModule match {
+            case None => focusedModule = activeModule
+            case Some(m) => focusedModule = Some(m)
+          }
+      }
+    }
   }
 
   val modulePane = new StackPane {

@@ -14,6 +14,8 @@ import javafx.scene.{control => jfxsc}
 import orchard.core.ui.Stylable
 import orchard.core.expression._
 
+import JavaFXModuleSystem._
+
 trait JavaFXCell[A <: Stylable] { thisCell : jfxsc.Cell[A] => 
 
   getStyleClass add "orch-list-cell"
@@ -30,8 +32,8 @@ trait JavaFXCell[A <: Stylable] { thisCell : jfxsc.Cell[A] =>
 
 }
 
-class ModuleTreeCell extends jfxsc.TreeCell[ModuleItem] with JavaFXCell[ModuleItem] {
-  override def updateItem(item : ModuleItem, empty : Boolean) = {
+class ModuleTreeCell extends jfxsc.TreeCell[JavaFXModuleEntry] with JavaFXCell[JavaFXModuleEntry] {
+  override def updateItem(item : JavaFXModuleEntry, empty : Boolean) = {
     super.updateItem(item, empty)
 
     if (! empty)
@@ -39,11 +41,11 @@ class ModuleTreeCell extends jfxsc.TreeCell[ModuleItem] with JavaFXCell[ModuleIt
   }
 }
 
-class ModuleListCell extends jfxsc.ListCell[ModuleItem] with JavaFXCell[ModuleItem] {
-  override def updateItem(item : ModuleItem, empty : Boolean) = {
-    super.updateItem(item, empty)
+// class ModuleListCell extends jfxsc.ListCell[ModuleEntry] with JavaFXCell[ModuleEntry] {
+//   override def updateItem(item : ModuleEntry, empty : Boolean) = {
+//     super.updateItem(item, empty)
 
-    if (! empty)
-      renderCell(item)
-  }
-}
+//     if (! empty)
+//       renderCell(item)
+//   }
+// }

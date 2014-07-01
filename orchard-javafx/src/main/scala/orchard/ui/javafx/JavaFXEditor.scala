@@ -11,6 +11,8 @@ import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.layout._
 
+import JavaFXModuleSystem._
+
 import controls._
 
 abstract class JavaFXEditor extends PopupManager(new VBox) 
@@ -33,6 +35,15 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
   def consoleError(str : String) : Unit = 
     console.appendText("ERROR: " ++ str ++ "\n")
+
+  //============================================================================================
+  // MODULE MANIPULATION
+  //
+
+  var activeModule : Option[JavaFXModule] = None
+  var focusedModule : Option[JavaFXModule] = None
+
+  def refreshModuleView(mod : Module) : Unit = ()
 
 }
 

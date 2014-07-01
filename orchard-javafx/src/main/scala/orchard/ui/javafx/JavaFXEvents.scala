@@ -50,7 +50,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
           // case KeyCode.B => if (ev.isControlDown) onBind
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
-          case KeyCode.N => if (ev.isControlDown) onNewModule
+          case KeyCode.N => if (ev.isControlDown) { if (ev.isShiftDown) onNewModule else onNewSubmodule }
           // case KeyCode.I => if (ev.isControlDown) onImportSubstitution
           // case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
           // case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
@@ -76,7 +76,12 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
   def onExit : Unit = 
     scalafx.application.Platform.exit
 
+  def onNewSubmodule : Unit = {
+    val newModDialog = new NewModuleDialog(focusedModule)
+    newModDialog.run
+  }
+
   def onNewModule : Unit = 
-    NewModuleDialog.run
+    new NewModuleDialog(None).run
 
 }
