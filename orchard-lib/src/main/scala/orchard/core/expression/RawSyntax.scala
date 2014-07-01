@@ -16,7 +16,6 @@ case class ParameterDefinition(ident : Identifier, shell : Shell) extends Statem
 case class LiftDefinition(ident : Identifier, nook : Nook) extends Statement
 
 sealed trait Expression
-sealed trait Identifier
 
 class Nook(ncell : NCell[Option[Expression]])
 class Shell(ncell : NCell[Option[Expression]])

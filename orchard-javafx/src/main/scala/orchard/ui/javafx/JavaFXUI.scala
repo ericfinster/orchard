@@ -23,10 +23,12 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     styleClass += "orch-pane"
   }
 
-  val moduleRoot = new TreeItem[ModuleItem]
+  val moduleRoot = new TreeItem[ModuleItem] {
+    value = new ModuleItem
+  }
+
   val moduleView = new TreeView[ModuleItem] {
     root = moduleRoot
-    showRoot = false
   }
 
   val modulePane = new StackPane {

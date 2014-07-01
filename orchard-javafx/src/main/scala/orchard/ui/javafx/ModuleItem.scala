@@ -7,4 +7,12 @@
 
 package orchard.ui.javafx
 
-class ModuleItem
+import orchard.core.expression._
+
+class ModuleItem(entry : ModuleEntry) {
+
+
+
+}
+
+class ModuleTreeCell
