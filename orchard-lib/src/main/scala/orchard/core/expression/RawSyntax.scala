@@ -1,5 +1,5 @@
 /**
-  * Syntax.scala - Definitions of Syntactic Elements
+  * RawSyntax.scala - Raw serializable syntax
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -20,7 +20,5 @@ sealed trait Identifier
 
 class Nook(ncell : NCell[Option[Expression]])
 class Shell(ncell : NCell[Option[Expression]])
-
-
 
 
