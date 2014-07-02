@@ -13,13 +13,16 @@ import scalafx.scene.layout._
 
 import JavaFXModuleSystem._
 
+import orchard.core.expression.Editor
+
 import controls._
 
 abstract class JavaFXEditor extends PopupManager(new VBox) 
     with JavaFXEvents 
     with JavaFXDialogs
     with JavaFXUI
-    with JavaFXMenus {
+    with JavaFXMenus 
+    with Editor {
 
   implicit def pm : PopupManager = this
 
@@ -35,6 +38,16 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
   def consoleError(str : String) : Unit = 
     console.appendText("ERROR: " ++ str ++ "\n")
+
+  def consoleDebug(str: String): Unit =
+    console.appendText("DEBUG: " ++ str ++ "\n")
+
+  //============================================================================================
+  // INPUT CALLBACKS
+  //
+
+  def withAssumptionInfo(thinHint : Boolean, forceThin : Boolean, handler : (String, Boolean) => Unit) : Unit = ???
+  def withFillerIdentifier(handler : String => Unit) : Unit = ???
 
   //============================================================================================
   // MODULE MANIPULATION
