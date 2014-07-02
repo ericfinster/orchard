@@ -28,6 +28,13 @@ trait ModuleSystem {
 
     def appendSubmodule(subMod : ModuleType) : Unit
 
+    def environment : Environment = 
+      parentModule match {
+        case None => ???
+        case Some(prnt) => {
+          // select the entries of the parent up the this guy.
+        }
+
   }
 
   trait Parameter extends ModuleEntry {
