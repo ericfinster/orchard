@@ -19,7 +19,11 @@ sealed trait Expression
 
 sealed trait ExpressionMarker
 case object Empty extends ExpressionMarker
-case class Marker(id : String, isThin : Boolean) extends ExpressionMarker
+case class Marker(id : String, isThin : Boolean) extends ExpressionMarker {
+
+  def styleString : String = "unknown"
+
+}
 
 class Nook(framework : Framework[ExpressionMarker])
 class Shell(framework : Framework[ExpressionMarker])
