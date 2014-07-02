@@ -15,17 +15,4 @@ case class ModuleInstantiation(moduleIdent : String, moduleName : String, bindin
 case class ParameterDefinition(ident : Identifier, shell : Shell) extends Statement
 case class LiftDefinition(ident : Identifier, nook : Nook) extends Statement
 
-sealed trait Expression 
-
-sealed trait ExpressionMarker
-case object Empty extends ExpressionMarker
-case class Marker(id : String, isThin : Boolean) extends ExpressionMarker {
-
-  def styleString : String = "unknown"
-
-}
-
-class Nook(framework : Framework[ExpressionMarker])
-class Shell(framework : Framework[ExpressionMarker])
-
 

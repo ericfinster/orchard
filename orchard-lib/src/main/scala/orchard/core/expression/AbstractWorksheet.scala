@@ -11,14 +11,14 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
-abstract class AbstractWorksheet(seed : NCell[Polarity[ExpressionMarker]])
-    extends Framework[Polarity[ExpressionMarker]](seed)
-    with SelectableComplex[Polarity[ExpressionMarker]]
-    with CardinalComplex[ExpressionMarker] {
+abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
+    extends Framework[Polarity[Option[Expression]]](seed)
+    with SelectableComplex[Polarity[Option[Expression]]]
+    with CardinalComplex[Option[Expression]] {
 
   type CellType <: AbstractWorksheetCell
 
-  abstract class AbstractWorksheetCell(itm : Polarity[ExpressionMarker])
+  abstract class AbstractWorksheetCell(itm : Polarity[Option[Expression]])
       extends AbstractMutableCell
       with FrameworkCell
       with CardinalCell { thisCell : CellType => 
@@ -26,7 +26,7 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[ExpressionMarker]])
       protected var myItem = itm
 
       def item = myItem
-      def item_=(newItm : Polarity[ExpressionMarker]) = {
+      def item_=(newItm : Polarity[Option[Expression]]) = {
         val oldItem = item
         myItem = newItm
         emit(ChangeEvents.ItemChangedEvent(oldItem))
@@ -103,9 +103,9 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[ExpressionMarker]])
     }
   }
 
-  def emptyExtrusion = extrudeAtSelection(Empty, Empty)
+  def emptyExtrusion = extrudeAtSelection(None, None)
 
-  def extrudeAtSelection(targetExpr : ExpressionMarker, fillerExpr : ExpressionMarker) =
+  def extrudeAtSelection(targetExpr : Option[Expression], fillerExpr : Option[Expression]) =
     selectionBase match {
       case None => ()
       case Some(base) => {
@@ -128,9 +128,9 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[ExpressionMarker]])
       }
     }
 
-  def emptyDrop = dropAtSelection(Empty, Empty)
+  def emptyDrop = dropAtSelection(None, None)
 
-  def dropAtSelection(compositeExpr : ExpressionMarker, fillerExpr : ExpressionMarker) =
+  def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) =
     selectionBase match {
       case None => ()
       case Some(base) => {

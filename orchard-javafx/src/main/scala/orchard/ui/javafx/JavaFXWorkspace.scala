@@ -7,9 +7,13 @@
 
 package orchard.ui.javafx
 
+import scala.collection.mutable.Buffer
+
 import scalafx.Includes._
 import scalafx.scene.text._
 import scalafx.scene.layout._
+import scalafx.scene.control._
+import scalafx.geometry._
 
 import orchard.core.cell._
 import orchard.core.complex._
@@ -24,19 +28,128 @@ class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
   type EditorType = JavaFXEditor
   def editor = OrchardEditor
 
-  def activeWorksheet: Option[Worksheet] = ???
-
   def invertibilityLevel: Option[Int] = None
   def stabilityLevel: Option[Int] = None
   def unicityLevel: Option[Int] = None
 
+  //============================================================================================
+  // UI ELEMENTS
+  //
+
+  val worksheetTabPane = new TabPane
+
+  val worksheetPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    styleClass += "orch-pane"
+    content = worksheetTabPane
+  }
+
+  // val controlTabPane = new TabPane {
+  //   side = Side.BOTTOM
+  // }
+
+  // val controlPane = new StackPane {
+  //   padding = Insets(10, 10, 10, 10)
+  //   styleClass += "orch-pane"
+  //   content = controlTabPane
+  // }
+
+  // val clipboardPane = new StackPane {
+  //   padding = Insets(10, 10, 10, 10)
+  //   styleClass += "orch-pane"
+  // }
+
+  // val clipboardTab = new Tab { 
+  //   text = "Clipboard"
+  //   content = clipboardPane
+  //   onSelectionChanged = () => {
+  //     if (selected()) {
+  //       activeInstantiator = None
+  //     }
+  //   }
+  // }
+
+  // controlTabPane += clipboardTab
+
+  // val moduleSplit = new SplitPane {
+  //   orientation = Orientation.VERTICAL
+  //   items ++= List(worksheetPane, controlPane)
+  //   dividerPositions = 0.6f
+  // }
+
+  val ui = worksheetPane
+
+  // //============================================================================================
+  // // CLIPBOARD MANIPULATION
+  // //
+
+  // private var theClipboardExpression : Option[Expression] = None
+
+  // def clipboardExpression : Option[Expression] = theClipboardExpression
+  // def clipboardExpression_=(exprOpt : Option[Expression]) = {
+  //   theClipboardExpression = exprOpt
+
+  //   exprOpt match {
+  //     case None => clipboardPane.content.clear
+  //     case Some(expr) => {
+  //       val gallery = new FrameworkGallery(expr)
+  //       clipboardPane.content = gallery
+  //       gallery.refreshAll
+  //     }
+  //   }
+  // }
+
+  //============================================================================================
+  // WORKSHEET MANIPULATION
+  //
+
+  var sheetCount : Int = 1
+  def worksheets : Buffer[Worksheet] = Buffer.empty
+
+  var activeGallery : Option[WorksheetGallery] = None
+  def activeWorksheet : Option[Worksheet] =
+    for {
+      gallery <- activeGallery
+    } yield gallery.complex
+
+
+  def newSheet : Unit = newSheet(CardinalComplex(Object(None)))
+
+  def newSheet(seed : NCell[Polarity[Option[Expression]]]) : Unit = {
+    val worksheet = new Worksheet(seed)
+    worksheets += worksheet
+    displayWorksheet(worksheet)
+  }
+
+  def displayWorksheet(worksheet : Worksheet) : Unit = {
+    val gallery = new WorksheetGallery(worksheet)
+
+    val tab = new Tab {
+      text = "Sheet " ++ sheetCount.toString
+      content = gallery
+
+      onClosed = () => {
+        worksheets -= gallery.complex
+      }
+
+      onSelectionChanged = () => {
+        if (selected())
+          activeGallery = Some(gallery)
+      }
+    }
+
+    worksheetTabPane += tab
+    worksheetTabPane.selectionModel().select(tab)
+    sheetCount += 1
+    gallery.refreshAll
+  }
 
   //============================================================================================
   // WORKSHEET PANEL IMPLEMENTATION
   //
 
   class WorksheetPanel(val complex : Worksheet, val baseIndex : Int) 
-      extends ZoomPanel[Polarity[ExpressionMarker]] { thisPanel =>
+      extends ZoomPanel[Polarity[Option[Expression]]] { thisPanel =>
 
     type ComplexType = Worksheet
 
@@ -56,8 +169,8 @@ class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
           item match {
             case Positive => new Text("+")
             case Negative => new Text("-")
-            case Neutral(Empty) => new Region { prefWidth = 10 ; prefHeight = 10 }
-            case Neutral(mkr : Marker) => new Text(mkr.id)
+            case Neutral(None) => new Region { prefWidth = 10 ; prefHeight = 10 }
+            case Neutral(Some(expr)) => new Text(expr.name)
           }
 
         labelNode.layoutBounds onChange { thisPanel.refresh }
@@ -69,8 +182,8 @@ class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
         item match {
           case Positive => "polarized"
           case Negative => "polarized"
-          case Neutral(Empty) => if (owner.isFillable) "exposed" else "empty"
-          case Neutral(mkr : Marker) => mkr.styleString
+          case Neutral(None) => if (owner.isFillable) "exposed" else "empty"
+          case Neutral(Some(expr)) => expr.styleString
         }
 
       override def onEventEmitted(ev : CellEvent) = {
@@ -111,9 +224,9 @@ class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
   // WORKSHEET GALLERY IMPLEMENTATION
   //
 
-  class WorksheetGallery(val complex : Worksheet) extends SpinnerGallery[Polarity[ExpressionMarker]] { thisGallery =>
+  class WorksheetGallery(val complex : Worksheet) extends SpinnerGallery[Polarity[Option[Expression]]] { thisGallery =>
 
-    def this(seed : NCell[Polarity[ExpressionMarker]]) = this(new Worksheet(seed))
+    def this(seed : NCell[Polarity[Option[Expression]]]) = this(new Worksheet(seed))
 
     type PanelType = WorksheetPanel
 

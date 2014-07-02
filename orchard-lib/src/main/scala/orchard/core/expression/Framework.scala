@@ -24,28 +24,29 @@ trait ExpressionLike[A] {
 
 object ExpressionLike {
 
-  implicit def markerIsExpressionLike : ExpressionLike[ExpressionMarker] =
-    new ExpressionLike[ExpressionMarker] {
+  implicit def optExprIsExpressionLike : ExpressionLike[Option[Expression]] =
+    new ExpressionLike[Option[Expression]] {
 
-      def empty : ExpressionMarker = Empty
+      def empty : Option[Expression] = None
 
-      def isEmpty(mkr : ExpressionMarker) = mkr == Empty
-      def isThin(mkr : ExpressionMarker) =
-        mkr match {
-          case Empty => false
-          case m : Marker => m.isThin
+      def isEmpty(exprOpt : Option[Expression]) = exprOpt == None
+      def isThin(exprOpt : Option[Expression]) = 
+        exprOpt match {
+          case None => false
+          case Some(expr) => expr.isThin
         }
+
     }
 
-  implicit def polarityIsExpressionLike : ExpressionLike[Polarity[ExpressionMarker]] =
-    new ExpressionLike[Polarity[ExpressionMarker]] {
+  implicit def polarityIsExpressionLike : ExpressionLike[Polarity[Option[Expression]]] =
+    new ExpressionLike[Polarity[Option[Expression]]] {
 
-      def empty : Polarity[ExpressionMarker] = Neutral(Empty)
+      def empty : Polarity[Option[Expression]] = Neutral(None)
 
-      def isEmpty(mkr : Polarity[ExpressionMarker]) = mkr == this.empty
-      def isThin(mkr : Polarity[ExpressionMarker]) =
-        mkr match {
-          case Neutral(m : Marker) => m.isThin
+      def isEmpty(p : Polarity[Option[Expression]]) = p == Neutral(None)
+      def isThin(p : Polarity[Option[Expression]]) =
+        p match {
+          case Neutral(Some(expr)) => expr.isThin
           case _ => false
         }
     }

@@ -85,6 +85,13 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
                     selectedCell.item = ???
                     worksheet.selectAsBase(selectedCell)
 
+                  // The idea here is to submit the shell to the module and request back a marker
+                  // which points to the parameter.
+
+                  // But the parsing of identifiers needs to return something, and so we need to think
+                  // about what this something actually is.
+
+
                     // Add the variable to the environment
                     // appendParameter(varExpr)
                   // }
@@ -220,7 +227,7 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
   // WORKSHEETS
   //
 
-  class Worksheet(seed : NCell[Polarity[ExpressionMarker]])
+  class Worksheet(seed : NCell[Polarity[Option[Expression]]])
       extends AbstractWorksheet(seed) {
 
     type FrameworkType = Worksheet
@@ -230,13 +237,13 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
     def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
     def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
-    def newCell(item : Polarity[ExpressionMarker]) = 
+    def newCell(item : Polarity[Option[Expression]]) = 
       new WorksheetCell(item)
 
     def extract(cell : CellType) =
       new Worksheet(cell.skeleton map (_.item))
 
-    class WorksheetCell(itm : Polarity[ExpressionMarker]) 
+    class WorksheetCell(itm : Polarity[Option[Expression]]) 
         extends AbstractWorksheetCell(itm) {
 
     }
@@ -246,7 +253,7 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
   // FRAMEWORKS
   //
 
-  class WorkspaceFramework(seed : NCell[ExpressionMarker]) 
+  class WorkspaceFramework(seed : NCell[Option[Expression]]) 
       extends Framework(seed) {
 
     type FrameworkType = WorkspaceFramework
@@ -256,16 +263,16 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
     def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
     def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
-    def newCell(item : ExpressionMarker) =
+    def newCell(item : Option[Expression]) =
       new WorkspaceFrameworkCell(item)
 
     def extract(cell : CellType) =
       new WorkspaceFramework(cell.skeleton map (_.item))
 
-    class WorkspaceFrameworkCell(var item : ExpressionMarker)
+    class WorkspaceFrameworkCell(var item : Option[Expression])
         extends FrameworkCell {
 
-      def expression : ExpressionMarker = item
+      def expression : Option[Expression] = item
 
       override def toString = item.toString
 
