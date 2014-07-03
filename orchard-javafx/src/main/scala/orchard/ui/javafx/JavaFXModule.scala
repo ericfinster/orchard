@@ -53,7 +53,7 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
   case class JavaFXParameter(val ident : Identifier, val shell : Shell, val isThin : Boolean) 
       extends JavaFXModuleEntry with Parameter
 
-  case class JavaFXLift(filler : Filler) extends JavaFXModuleEntry with Lift
+  case class JavaFXLift(val ident : Identifier, val nook : Nook) extends JavaFXModuleEntry with Lift
 
   case class JavaFXImport(override val name : String) extends JavaFXModuleEntry with Import {
 
@@ -68,7 +68,8 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
   protected def newImport(name : String) : JavaFXImport = JavaFXImport(name)
   protected def newParameter(ident : Identifier, shell : Shell, isThin : Boolean) : JavaFXParameter = 
     JavaFXParameter(ident, shell, isThin)
-  protected def newLift(filler : Filler) : JavaFXLift = JavaFXLift(filler)
+  protected def newLift(ident : Identifier, nook : Nook) : JavaFXLift = 
+    JavaFXLift(ident, nook)
 
 
 }

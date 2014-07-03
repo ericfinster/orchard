@@ -76,12 +76,29 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
   def onExit : Unit = 
     scalafx.application.Platform.exit
 
-  def onNewSubmodule : Unit = {
-    val newModDialog = new NewModuleDialog(focusedModule)
-    newModDialog.run
-  }
+  def onNewSubmodule : Unit =
+    for {
+      checker <- typeChecker
+      mod <- checker.focusedModule
+    } {
+      new NewModuleDialog(
+        (name, _, _, _) => {
+          executeCheckerCommand(
+            for {
+              subMod <- checker.appendSubmodule(mod, name)
+            } yield {
+              checker.moduleView.selectionModel().select(subMod)
+            }
+          )
+        }
+      ).run
+    }
 
-  def onNewModule : Unit = 
-    new NewModuleDialog(None).run
+  def onNewModule : Unit =
+    new NewModuleDialog(
+      (name, _, _, _) => {
+        typeChecker = new JavaFXTypeChecker(thisEditor, name)
+      }
+    ).run
 
 }

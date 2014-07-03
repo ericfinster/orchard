@@ -76,6 +76,11 @@ trait ModuleModule { thisChecker : TypeChecker =>
   trait Lift extends ModuleEntry {
     thisLift : LiftType =>
 
+    def ident : Identifier
+    def nook : Nook
+
+    val filler : Filler = Filler(ident, nook)
+
     def liftLift : LiftType = this
 
   }
@@ -107,6 +112,6 @@ trait ModuleModule { thisChecker : TypeChecker =>
   protected def newModule(name : String) : ModuleType
   protected def newImport(name : String) : ImportType
   protected def newParameter(ident : Identifier, shell : Shell, isThin : Boolean) : ParameterType
-  protected def newLift(filler : Filler) : LiftType
+  protected def newLift(ident : Identifier, nook : Nook) : LiftType
 
 }

@@ -18,9 +18,9 @@ abstract class TypeChecker
   type EditorType <: Editor
   def editor : EditorType
 
-  def rootModule : CheckerResult[Module]
+  def rootModule : ModuleType
 
-  def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[Module] = {
+  def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[ModuleType] = {
     ModuleIdentParser(rawModuleId) match {
       case ModuleIdentParser.Success(moduleId, _) => {
         if (qualifiedModules(getEnvironment(module)) contains moduleId) {
@@ -36,7 +36,7 @@ abstract class TypeChecker
     }
   }
 
-  def appendParameter(module : ModuleType, rawVarId : String, shell : Shell, isThin : Boolean) : CheckerResult[Parameter] = {
+  def appendParameter(module : ModuleType, rawVarId : String, shell : Shell, isThin : Boolean) : CheckerResult[ParameterType] = {
     IdentParser(rawVarId) match {
       case IdentParser.Success(rawIdent, _) => {
         if (qualifiedIdents(getEnvironment(module)) contains rawIdent.toString) {
@@ -53,6 +53,26 @@ abstract class TypeChecker
       }
       case _ : IdentParser.NoSuccess =>
         CheckerFailure("Invalid variable identifier: " ++ rawVarId)
+    }
+  }
+
+  def appendLift(module : ModuleType, rawBdryId : String, nook : Nook) : CheckerResult[LiftType] = {
+    IdentParser(rawBdryId) match {
+      case IdentParser.Success(rawIdent, _) => {
+        if (qualifiedIdents(getEnvironment(module)) contains rawIdent.toString) {
+          CheckerFailure("Identifier " ++ rawIdent.toString ++ " exists in current scope.")
+        } else {
+          for {
+            ident <- processRawIdentifier(module, rawIdent)
+          } yield {
+            val lift = newLift(ident, nook)
+            module.appendEntry(lift)
+            lift
+          }
+        }
+      }
+      case _ : IdentParser.NoSuccess =>
+        CheckerFailure("Invalid variable identifier: " ++ rawBdryId)
     }
   }
 

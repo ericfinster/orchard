@@ -31,6 +31,17 @@ trait ExpressionModule { thisChecker : TypeChecker =>
     def isThin = true
     def styleString = "filler"
 
+    trait BoundaryExpr extends Expression {
+
+      def name = bdryIdent.toString
+      def styleString = if (isThin) "bdry-thin" else "bdry"
+      def isThin = ???
+
+    }
+
+    object Boundary extends BoundaryExpr {
+
+    }
   }
 
   case class Reference(qualId : String, exprType : ExpressionType, isThin : Boolean) extends Expression {

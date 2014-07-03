@@ -14,38 +14,40 @@ import javafx.scene.{control => jfxsc}
 import orchard.core.ui.Styleable
 import orchard.core.expression._
 
-import JavaFXTypeChecker._
+trait CellDefinitions { thisChecker : JavaFXTypeCheckerMixin =>
 
-trait JavaFXCell[A <: Styleable] { thisCell : jfxsc.Cell[A] => 
+  trait JavaFXCell[A <: Styleable] { thisCell : jfxsc.Cell[A] =>
 
-  getStyleClass add "orch-list-cell"
-  val cellStyleIndex = getStyleClass.length
-  getStyleClass add "orch-list-cell-unknown"
+    getStyleClass add "orch-list-cell"
+    val cellStyleIndex = getStyleClass.length
+    getStyleClass add "orch-list-cell-unknown"
 
-  def setCellStyle(style : String) = getStyleClass(cellStyleIndex) = "orch-list-cell-" ++ style
-  def removeCellStyle = setCellStyle("orch-list-cell-unknown")
+    def setCellStyle(style : String) = getStyleClass(cellStyleIndex) = "orch-list-cell-" ++ style
+    def removeCellStyle = setCellStyle("orch-list-cell-unknown")
 
-  def renderCell(item : A) {
-    setCellStyle(item.styleString)
-    setText(item.name)
+    def renderCell(item : A) {
+      setCellStyle(item.styleString)
+      setText(item.name)
+    }
+
   }
 
-}
+  class ModuleTreeCell extends jfxsc.TreeCell[JavaFXModuleEntry] with JavaFXCell[JavaFXModuleEntry] {
+    override def updateItem(item : JavaFXModuleEntry, empty : Boolean) = {
+      super.updateItem(item, empty)
 
-class ModuleTreeCell extends jfxsc.TreeCell[JavaFXModuleEntry] with JavaFXCell[JavaFXModuleEntry] {
-  override def updateItem(item : JavaFXModuleEntry, empty : Boolean) = {
-    super.updateItem(item, empty)
-
-    if (! empty)
-      renderCell(item)
+      if (! empty)
+        renderCell(item)
+    }
   }
+
+  // class ModuleListCell extends jfxsc.ListCell[ModuleEntry] with JavaFXCell[ModuleEntry] {
+  //   override def updateItem(item : ModuleEntry, empty : Boolean) = {
+  //     super.updateItem(item, empty)
+
+  //     if (! empty)
+  //       renderCell(item)
+  //   }
+  // }
+
 }
-
-// class ModuleListCell extends jfxsc.ListCell[ModuleEntry] with JavaFXCell[ModuleEntry] {
-//   override def updateItem(item : ModuleEntry, empty : Boolean) = {
-//     super.updateItem(item, empty)
-
-//     if (! empty)
-//       renderCell(item)
-//   }
-// }

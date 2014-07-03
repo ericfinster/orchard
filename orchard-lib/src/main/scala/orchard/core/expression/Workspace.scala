@@ -33,6 +33,10 @@ trait WorkspaceModule { thisModule : TypeChecker =>
         selectedCell <- worksheet.selectionBase
       } {
 
+        // This try clause should be removed by changing the type to
+        // a monadic error handler.  Question: should these routines be
+        // checker results, or some other class of workspace results?
+
         try {
 
           val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
@@ -42,6 +46,9 @@ trait WorkspaceModule { thisModule : TypeChecker =>
               case None => false
               case Some(l) => selectedCell.dimension > l
             }
+
+          // Hmmm.  Right.  This kind of thing should be covered by an IO type
+          // monad guy which is indicated by a kind of delayed monad type dealy.
 
           editor.withAssumptionInfo(thinHint, forceThin,
             (identString, isThin) => {
@@ -80,21 +87,21 @@ trait WorkspaceModule { thisModule : TypeChecker =>
 
           editor.withFillerIdentifier(
             identString => {
+              for {
+                lift <- appendLift(module, identString, nook)
+              } {
 
-              // module.appendLift(nook, identString) match {
-              //   case None => editor.consoleError("Failed to create lift.")
-              //   case Some((fillerRef, bdryRef)) => {
+                val fillerRef = Reference(lift.name, FillerType, true)
+                val bdryRef = Reference(lift.name, BoundaryType, lift.filler.Boundary.isThin)
 
-              //     val boundaryCell = selectedCell.boundaryFace
+                val boundaryCell = selectedCell.boundaryFace
 
-              //     worksheet.deselectAll
-              //     selectedCell.item = Neutral(Some(fillerRef))
-              //     boundaryCell.item = Neutral(Some(bdryRef))
-              //     worksheet.selectAsBase(selectedCell)
+                worksheet.deselectAll
+                selectedCell.item = Neutral(Some(fillerRef))
+                boundaryCell.item = Neutral(Some(bdryRef))
+                worksheet.selectAsBase(selectedCell)
 
-              //   }
-              // }
-
+              }
             })
         } else {
           editor.consoleError("Selection is not fillable.")

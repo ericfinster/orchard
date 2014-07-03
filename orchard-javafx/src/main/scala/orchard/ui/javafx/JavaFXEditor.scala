@@ -11,8 +11,6 @@ import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.layout._
 
-import JavaFXTypeChecker._
-
 import orchard.core.expression.Editor
 
 import controls._
@@ -50,13 +48,26 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def withFillerIdentifier(handler : String => Unit) : Unit = ???
 
   //============================================================================================
-  // MODULE MANIPULATION
+  // THE TYPE CHECKER
   //
 
-  var activeModule : Option[JavaFXModule] = None
-  var focusedModule : Option[JavaFXModule] = None
+  var currentTypeChecker : Option[JavaFXTypeChecker] = Some(new JavaFXTypeChecker(this, "Prelude"))
 
-  def refreshModuleView(mod : Module) : Unit = ()
+  def typeChecker : Option[JavaFXTypeChecker] = currentTypeChecker
+  def typeChecker_=(checker : JavaFXTypeChecker) = {
+    currentTypeChecker = Some(checker)
+    displayTypeChecker
+  }
+
+  def displayTypeChecker : Unit = 
+    for {
+      checker <- typeChecker
+    } {
+      horizontalSplit.items.clear
+      horizontalSplit.items ++= List(checker.modulePane, secondPane)
+    }
+
+  displayTypeChecker
 
 }
 
