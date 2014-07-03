@@ -84,17 +84,28 @@ sealed trait RawIdentToken { def value : String }
 case class RawLiteral(val value : String) extends RawIdentToken
 case class RawReference(val value : String) extends RawIdentToken
 
-object IdentParser extends RegexParsers {
 
-  def cleanString : Parser[String] = """[^\${}]+""".r
+abstract class IdentifierParser extends RegexParsers {
+
+  def cleanString : Parser[String] = """[^\${}/]+""".r
 
   def literal : Parser[RawLiteral] = cleanString ^^ { tok => RawLiteral(tok) }
   def variable : Parser[RawReference] = "${" ~> cleanString <~ "}" ^^ { tok => RawReference(tok) }
 
   def tokenSeq : Parser[RawIdentifier] = rep( literal | variable ) ^^ { toks => RawIdentifier(toks) }
 
+  override def skipWhitespace = false
+
+}
+
+object IdentParser extends IdentifierParser {
+
   def apply(input : String) = parseAll(tokenSeq, input)
 
-  override def skipWhitespace = false
+}
+
+object ModuleIdentParser extends IdentifierParser {
+
+  def apply(input : String) = parseAll(cleanString, input)
 
 }

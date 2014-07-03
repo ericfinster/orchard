@@ -13,227 +13,210 @@ import orchard.core.complex._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
+trait WorkspaceModule { thisModule : TypeChecker =>
 
-  type EditorType <: Editor
-  def editor : EditorType
+  abstract class Workspace(val module : ModuleType) { thisWorkspace =>
 
-  def activeWorksheet : Option[Worksheet]
+    def activeWorksheet : Option[Worksheet]
 
-  def stabilityLevel : Option[Int]
-  def invertibilityLevel : Option[Int]
-  def unicityLevel : Option[Int]
+    def stabilityLevel : Option[Int]
+    def invertibilityLevel : Option[Int]
+    def unicityLevel : Option[Int]
 
-  //============================================================================================
-  // SEMANTIC ROUTINES
-  //
+    //============================================================================================
+    // SEMANTIC ROUTINES
+    //
 
-  def processIdentifier(rawIdent : RawIdentifier) : Option[List[Identifier]] = {
-    // val idents = rawIdent.tokens flatMap {
-    //   case RawLiteral(lit) => Some(LiteralIdentifier(lit))
-    //   case RawReference(ref) =>
-    //     variables find (p => p.id == ref) match {
-    //       case None => { editor.consoleError("Unresolved reference: " ++ ref) ; None }
-    //       case Some(v) => Some(v.ident)
+    def assumeAtSelection(thinHint : Boolean) : Unit =
+      for {
+        worksheet <- activeWorksheet
+        selectedCell <- worksheet.selectionBase
+      } {
+
+        try {
+
+          val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
+
+          val forceThin =
+            invertibilityLevel match {
+              case None => false
+              case Some(l) => selectedCell.dimension > l
+            }
+
+          editor.withAssumptionInfo(thinHint, forceThin,
+            (identString, isThin) => {
+              for {
+                param <- appendParameter(module, identString, shell, isThin)
+              } {
+
+                val varRef = Reference(param.name, VariableType, param.isThin)
+
+                worksheet.deselectAll
+                selectedCell.item = Neutral(Some(varRef))
+                worksheet.selectAsBase(selectedCell)
+
+              }
+            }
+          )
+        } catch {
+          case e : java.lang.AssertionError =>
+            editor.consoleError("Cannot assume here: selection is not a shell.")
+        }
+      }
+
+
+    def fillAtSelection =
+      for {
+        worksheet <- activeWorksheet
+        selectedCell <- worksheet.selectionBase
+      } {
+        if (selectedCell.isUnicityFillable) {
+
+          ???
+
+        } else if (selectedCell.isExposedNook) {
+
+          val nook = new Nook(new WorkspaceFramework(selectedCell.neutralNCell))
+
+          editor.withFillerIdentifier(
+            identString => {
+
+              // module.appendLift(nook, identString) match {
+              //   case None => editor.consoleError("Failed to create lift.")
+              //   case Some((fillerRef, bdryRef)) => {
+
+              //     val boundaryCell = selectedCell.boundaryFace
+
+              //     worksheet.deselectAll
+              //     selectedCell.item = Neutral(Some(fillerRef))
+              //     boundaryCell.item = Neutral(Some(bdryRef))
+              //     worksheet.selectAsBase(selectedCell)
+
+              //   }
+              // }
+
+            })
+        } else {
+          editor.consoleError("Selection is not fillable.")
+        }
+      }
+    
+    // def pasteToSelection(pasteExpr : Expression) =
+    //   for {
+    //     worksheet <- activeWorksheet
+    //     if (worksheet.selectionIsUnique)
+    //     selectedCell <- worksheet.selectionBase
+    //   } {
+    //     selectedCell.skeleton.zip(pasteExpr.ncell) match {
+    //       case None => editor.consoleError("Selected cell has incompatible shape.")
+    //       case Some(zippedTree) => {
+
+    //         var itFits = true
+
+    //         zippedTree map {
+    //           case (cell, expr) => {
+    //             if (! cell.isEmpty) {
+    //               cell.item match {
+    //                 case Neutral(Some(e)) => itFits &&= {
+    //                   if (e convertsTo expr) true else {
+    //                     editor.consoleError("Match error: expressions " ++ e.toString ++
+    //                       " and " ++ expr.toString ++ " are not convertible.")
+    //                     false
+    //                   }
+    //                 }
+    //                 case _ => itFits = false
+    //               }
+    //             }
+    //           }
+    //         }
+
+    //         if (itFits) {
+    //           worksheet.deselectAll
+
+    //           // BUG!!! - This refreshes the gallery on *every* assignment.  Need to delay that
+    //           // somehow ....
+
+    //           zippedTree map {
+    //             case (cell, expr) => {
+    //               if (cell.isEmpty) {
+    //                 cell.item = Neutral(Some(expr))
+    //               }
+    //             }
+    //           }
+    //         } else {
+    //           editor.consoleError("Pasting failed.")
+    //         }
+    //       }
     //     }
-    // }
+    //   }
 
-    // if (idents.length < rawIdent.tokens.length) {
-    //   editor.consoleError("Identifier processing failed.")
-    //   None
-    // } else {
-    //   Some(idents)
-    // }
-    ???
-  }
+    // def importActiveInstantiation : Unit =
+    //   for {
+    //     instntr <- activeInstantiator
+    //   } {
+    //     if (instntr.isComplete) {
+    //       appendInstantiation(instntr.shell, ExternalReference(instntr.lift), instntr.bindings)
+    //       //newSheet(instntr.completedExpression)
+    //     } else {
+    //       editor.consoleError("There are unbound variables.")
+    //     }
+    //   }
 
-  def assumeAtSelection(thinHint : Boolean) : Unit =
-    for {
-      worksheet <- activeWorksheet
-      selectedCell <- worksheet.selectionBase
-    } {
 
-      try {
+    //============================================================================================
+    // WORKSHEETS
+    //
 
-        val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
+    class Worksheet(seed : NCell[Polarity[Option[Expression]]])
+        extends AbstractWorksheet(seed) {
 
-        val forceThin =
-          invertibilityLevel match {
-            case None => false
-            case Some(l) => selectedCell.dimension > l
-          }
+      type FrameworkType = Worksheet
+      type CellType = WorksheetCell
 
-        editor.withAssumptionInfo(thinHint, forceThin,
-          (identString, isThin) => {
-            // module.appendParameter(shell, identString) match {
-            //   case None => editor.consoleError("Parameter creating failed.")
-            //   case Some(varRef) => {
+      def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+      def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+      def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
-            //     worksheet.deselectAll
-            //     selectedCell.item = Neutral(Some(varRef))
-            //     worksheet.selectAsBase(selectedCell)
+      def newCell(item : Polarity[Option[Expression]]) =
+        new WorksheetCell(item)
 
-            //   }
-            // }
-          }
-        )
-      } catch {
-        case e : java.lang.AssertionError => 
-          editor.consoleError("Cannot assume here: selection is not a shell.")
+      def extract(cell : CellType) =
+        new Worksheet(cell.skeleton map (_.item))
+
+      class WorksheetCell(itm : Polarity[Option[Expression]])
+          extends AbstractWorksheetCell(itm) {
+
       }
     }
 
+    //============================================================================================
+    // FRAMEWORKS
+    //
 
-  def fillAtSelection = 
-    for {
-      worksheet <- activeWorksheet
-      selectedCell <- worksheet.selectionBase
-    } {
-      if (selectedCell.isUnicityFillable) {
+    class WorkspaceFramework(seed : NCell[Option[Expression]])
+        extends Framework(seed) {
 
-        ???
+      type FrameworkType = WorkspaceFramework
+      type CellType = WorkspaceFrameworkCell
 
-      } else if (selectedCell.isExposedNook) {
+      def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
+      def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
+      def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
 
-        val nook = new Nook(new WorkspaceFramework(selectedCell.neutralNCell))
+      def newCell(item : Option[Expression]) =
+        new WorkspaceFrameworkCell(item)
 
-        editor.withFillerIdentifier(
-          identString => {
+      def extract(cell : CellType) =
+        new WorkspaceFramework(cell.skeleton map (_.item))
 
-            // module.appendLift(nook, identString) match {
-            //   case None => editor.consoleError("Failed to create lift.")
-            //   case Some((fillerRef, bdryRef)) => {
+      class WorkspaceFrameworkCell(var item : Option[Expression])
+          extends FrameworkCell {
 
-            //     val boundaryCell = selectedCell.boundaryFace
+        def expression : Option[Expression] = item
 
-            //     worksheet.deselectAll
-            //     selectedCell.item = Neutral(Some(fillerRef))
-            //     boundaryCell.item = Neutral(Some(bdryRef))
-            //     worksheet.selectAsBase(selectedCell)
+        override def toString = item.toString
 
-            //   }
-            // }
-
-          })
-      } else {
-        editor.consoleError("Selection is not fillable.")
       }
-    }
-  
-  // def pasteToSelection(pasteExpr : Expression) =
-  //   for {
-  //     worksheet <- activeWorksheet
-  //     if (worksheet.selectionIsUnique)
-  //     selectedCell <- worksheet.selectionBase
-  //   } {
-  //     selectedCell.skeleton.zip(pasteExpr.ncell) match {
-  //       case None => editor.consoleError("Selected cell has incompatible shape.")
-  //       case Some(zippedTree) => {
-
-  //         var itFits = true
-
-  //         zippedTree map {
-  //           case (cell, expr) => {
-  //             if (! cell.isEmpty) {
-  //               cell.item match {
-  //                 case Neutral(Some(e)) => itFits &&= {
-  //                   if (e convertsTo expr) true else {
-  //                     editor.consoleError("Match error: expressions " ++ e.toString ++ 
-  //                       " and " ++ expr.toString ++ " are not convertible.")
-  //                     false
-  //                   }
-  //                 }
-  //                 case _ => itFits = false
-  //               }
-  //             }
-  //           }
-  //         }
-
-  //         if (itFits) {
-  //           worksheet.deselectAll
-
-  //           // BUG!!! - This refreshes the gallery on *every* assignment.  Need to delay that
-  //           // somehow ....
-
-  //           zippedTree map {
-  //             case (cell, expr) => {
-  //               if (cell.isEmpty) {
-  //                 cell.item = Neutral(Some(expr))
-  //               }
-  //             }
-  //           }
-  //         } else {
-  //           editor.consoleError("Pasting failed.")
-  //         }
-  //       }
-  //     }
-  //   }
-
-  // def importActiveInstantiation : Unit = 
-  //   for {
-  //     instntr <- activeInstantiator
-  //   } {
-  //     if (instntr.isComplete) {
-  //       appendInstantiation(instntr.shell, ExternalReference(instntr.lift), instntr.bindings)
-  //       //newSheet(instntr.completedExpression)
-  //     } else {
-  //       editor.consoleError("There are unbound variables.")
-  //     }
-  //   }
-
-
-  //============================================================================================
-  // WORKSHEETS
-  //
-
-  class Worksheet(seed : NCell[Polarity[Option[Expression]]])
-      extends AbstractWorksheet(seed) {
-
-    type FrameworkType = Worksheet
-    type CellType = WorksheetCell
-
-    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
-    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
-    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
-
-    def newCell(item : Polarity[Option[Expression]]) = 
-      new WorksheetCell(item)
-
-    def extract(cell : CellType) =
-      new Worksheet(cell.skeleton map (_.item))
-
-    class WorksheetCell(itm : Polarity[Option[Expression]]) 
-        extends AbstractWorksheetCell(itm) {
-
-    }
-  }
-
-  //============================================================================================
-  // FRAMEWORKS
-  //
-
-  class WorkspaceFramework(seed : NCell[Option[Expression]]) 
-      extends Framework(seed) {
-
-    type FrameworkType = WorkspaceFramework
-    type CellType = WorkspaceFrameworkCell
-
-    def stabilityLevel : Option[Int] = thisWorkspace.stabilityLevel
-    def invertibilityLevel : Option[Int] = thisWorkspace.invertibilityLevel
-    def unicityLevel : Option[Int] = thisWorkspace.unicityLevel
-
-    def newCell(item : Option[Expression]) =
-      new WorkspaceFrameworkCell(item)
-
-    def extract(cell : CellType) =
-      new WorkspaceFramework(cell.skeleton map (_.item))
-
-    class WorkspaceFrameworkCell(var item : Option[Expression])
-        extends FrameworkCell {
-
-      def expression : Option[Expression] = item
-
-      override def toString = item.toString
 
     }
 

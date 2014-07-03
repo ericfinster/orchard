@@ -25,9 +25,6 @@ import JavaFXTypeChecker._
 
 class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
 
-  type EditorType = JavaFXEditor
-  def editor = OrchardEditor
-
   def invertibilityLevel: Option[Int] = None
   def stabilityLevel: Option[Int] = None
   def unicityLevel: Option[Int] = None

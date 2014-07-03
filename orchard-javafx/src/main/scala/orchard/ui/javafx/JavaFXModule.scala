@@ -1,5 +1,5 @@
 /**
-  * JavaFXModuleSystem.scala - UI Elements for the module system
+  * JavaFXModule.scala - UI Elements for the module system
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -12,7 +12,7 @@ import scalafx.scene.control._
 
 import orchard.core.expression._
 
-trait JavaFXModuleSystem extends ModuleSystem { thisSystem : TypeChecker =>
+trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMixin =>
 
   type ModuleEntryType = JavaFXModuleEntry
   type ModuleType = JavaFXModule
@@ -50,7 +50,9 @@ trait JavaFXModuleSystem extends ModuleSystem { thisSystem : TypeChecker =>
 
   }
 
-  case class JavaFXParameter(variable : Variable) extends JavaFXModuleEntry with Parameter
+  case class JavaFXParameter(val ident : Identifier, val shell : Shell, val isThin : Boolean) 
+      extends JavaFXModuleEntry with Parameter
+
   case class JavaFXLift(filler : Filler) extends JavaFXModuleEntry with Lift
 
   case class JavaFXImport(override val name : String) extends JavaFXModuleEntry with Import {
@@ -64,7 +66,8 @@ trait JavaFXModuleSystem extends ModuleSystem { thisSystem : TypeChecker =>
 
   protected def newModule(name : String) : JavaFXModule = JavaFXModule(name)
   protected def newImport(name : String) : JavaFXImport = JavaFXImport(name)
-  protected def newParameter(variable : Variable) : JavaFXParameter = JavaFXParameter(variable)
+  protected def newParameter(ident : Identifier, shell : Shell, isThin : Boolean) : JavaFXParameter = 
+    JavaFXParameter(ident, shell, isThin)
   protected def newLift(filler : Filler) : JavaFXLift = JavaFXLift(filler)
 
 

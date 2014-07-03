@@ -23,4 +23,11 @@ trait Editor {
   def consoleError(str : String) : Unit
   def consoleDebug(str : String) : Unit
 
+  def executeCheckerCommand[A](cmd : CheckerResult[A]) : Unit = 
+    cmd match {
+      case CheckerSuccess(_) => ()
+      case CheckerFailure(cause) =>
+        consoleError(cause)
+    }
+
 }

@@ -13,10 +13,15 @@ import scalafx.scene.control._
 import orchard.core.expression._
 
 // I don't think you reall want this to be an object ...
-object JavaFXTypeChecker
+trait JavaFXTypeCheckerMixin 
     extends TypeChecker
-    with JavaFXModuleSystem 
-    with JavaFXEnvironmentSystem {
+    with JavaFXModuleModule
+    with JavaFXEnvironmentModule
+
+object JavaFXTypeChecker extends JavaFXTypeCheckerMixin {
+
+  type EditorType = JavaFXEditor
+  def editor = OrchardEditor
 
   def rootModule : CheckerResult[Module] = ???
 

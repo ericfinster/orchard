@@ -7,31 +7,78 @@
 
 package orchard.core.expression
 
-abstract class TypeChecker {
-  thisChecker : ModuleSystem with EnvironmentSystem =>
+abstract class TypeChecker 
+    extends ModuleModule
+    with EnvironmentModule
+    with ExpressionModule 
+    with WorkspaceModule
+    with FrameworkModule
+    with WorksheetModule {
+
+  type EditorType <: Editor
+  def editor : EditorType
 
   def rootModule : CheckerResult[Module]
 
-  def appendSubmodule(module : Module, name : String) : CheckerResult[Module] = {
-    if (qualifiedModules(getLocalEnvironment(module)) contains name) {
-      CheckerFailure("Submodule " ++ name ++ " already exists.")
-    } else {
-      val subMod = newModule(name)
-      module.appendEntry(subMod)
-      CheckerSuccess(subMod)
+  def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[Module] = {
+    ModuleIdentParser(rawModuleId) match {
+      case ModuleIdentParser.Success(moduleId, _) => {
+        if (qualifiedModules(getEnvironment(module)) contains moduleId) {
+          CheckerFailure("Submodule " ++ moduleId ++ " already exists.")
+        } else {
+          val subMod = newModule(moduleId)
+          module.appendEntry(subMod)
+          CheckerSuccess(subMod)
+        }
+      }
+      case _ : ModuleIdentParser.NoSuccess => 
+        CheckerFailure("Invalid module identifier: " ++ rawModuleId)
     }
   }
 
-  def appendParameter(module : Module, variable : Variable) : CheckerResult[Parameter] = {
-    // This should parse an identifier string instead of just taking the variable as a
-    // parameter to the function.  So the shell should be included as well ...
-
-    if (qualifiedIdents(getEnvironment(module)) contains variable.ident.toString) {
-      CheckerFailure("Identifier " ++ variable.ident.toString ++ " already exists in the current scope.")
-    } else {
-      ???
+  def appendParameter(module : ModuleType, rawVarId : String, shell : Shell, isThin : Boolean) : CheckerResult[Parameter] = {
+    IdentParser(rawVarId) match {
+      case IdentParser.Success(rawIdent, _) => {
+        if (qualifiedIdents(getEnvironment(module)) contains rawIdent.toString) {
+          CheckerFailure("Identifier " ++ rawIdent.toString ++ " exists in current scope.")
+        } else {
+          for {
+            ident <- processRawIdentifier(module, rawIdent)
+          } yield {
+            val param = newParameter(ident, shell, isThin)
+            module.appendEntry(param)
+            param
+          }
+        }
+      }
+      case _ : IdentParser.NoSuccess =>
+        CheckerFailure("Invalid variable identifier: " ++ rawVarId)
     }
   }
+
+  def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
+    // In this routine, references in the raw identifier should be resolved to 
+    // actual references in the current scope ...
+
+
+    // val idents = rawIdent.tokens flatMap {
+    //   case RawLiteral(lit) => Some(LiteralIdentifier(lit))
+    //   case RawReference(ref) =>
+    //     variables find (p => p.id == ref) match {
+    //       case None => { editor.consoleError("Unresolved reference: " ++ ref) ; None }
+    //       case Some(v) => Some(v.ident)
+    //     }
+    // }
+
+    // if (idents.length < rawIdent.tokens.length) {
+    //   editor.consoleError("Identifier processing failed.")
+    //   None
+    // } else {
+    //   Some(idents)
+    // }
+    ???
+  }
+
 
   //============================================================================================
   // ENVIRONMENT MANAGEMENT
@@ -39,20 +86,20 @@ abstract class TypeChecker {
 
   def getLocalEnvironment(scope : Scope) : Seq[EnvironmentEntryType] = {
     scope.entries flatMap {
-      case param : Parameter => Seq(newIdentifierEntry(param.name))
-      case lift : Lift => Seq(newIdentifierEntry(lift.name))
+      case param : Parameter => Seq(newIdentifierEntry(param.name, param))
+      case lift : Lift => Seq(newIdentifierEntry(lift.name, lift))
       case imprt : Import => {
         val importEnv = getLocalEnvironment(imprt)
 
         if (imprt.isOpen) {
           importEnv
         } else {
-          Seq(newGroupEntry(imprt.name, importEnv))
+          Seq(newGroupEntry(imprt.name, imprt, importEnv))
         }
       }
       case subMod : Module => {
         val subModEnv = getLocalEnvironment(subMod)
-        Seq(newGroupEntry(subMod.name, subModEnv))
+        Seq(newGroupEntry(subMod.name, subMod, subModEnv))
       }
     }
   }
@@ -68,15 +115,15 @@ abstract class TypeChecker {
 
         val siblingEnv =
           mySiblings flatMap {
-            case param : Parameter => Seq(newIdentifierEntry(param.name))
-            case lift : Lift => Seq(newIdentifierEntry(lift.name))
+            case param : Parameter => Seq(newIdentifierEntry(param.name, param))
+            case lift : Lift => Seq(newIdentifierEntry(lift.name, lift))
             case imprt : Import => {
               val importEnv = getLocalEnvironment(imprt)
 
               if (imprt.isOpen) {
                 importEnv
               } else {
-                Seq(newGroupEntry(imprt.name, importEnv))
+                Seq(newGroupEntry(imprt.name, imprt, importEnv))
               }
             }
             case module : Module => Seq.empty
@@ -110,6 +157,7 @@ sealed trait CheckerResult[+A] {
   def map[B](f : A => B) : CheckerResult[B]
   def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B]
   def filter(f : A => Boolean) : CheckerResult[A]
+  def foreach(f : A => Unit) : Unit
 
 }
 
@@ -124,6 +172,9 @@ case class CheckerSuccess[+A](result : A) extends CheckerResult[A] {
   def filter(f : A => Boolean) : CheckerResult[A] = 
     if (f(result)) this else CheckerFailure("Result was filtered")
 
+  def foreach(f : A => Unit) : Unit = 
+    f(result)
+
 }
 
 case class CheckerFailure(cause : String) extends CheckerResult[Nothing] {
@@ -131,5 +182,6 @@ case class CheckerFailure(cause : String) extends CheckerResult[Nothing] {
   def map[B](f : Nothing => B) : CheckerResult[B] = this
   def flatMap[B](f : Nothing => CheckerResult[B]) : CheckerResult[B] = this
   def filter(f : Nothing => Boolean) : CheckerResult[Nothing] = this
+  def foreach(f : Nothing => Unit) : Unit = ()
 
 }

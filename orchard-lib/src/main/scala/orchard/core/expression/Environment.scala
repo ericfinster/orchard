@@ -9,7 +9,7 @@ package orchard.core.expression
 
 import orchard.core.ui.Styleable
 
-trait EnvironmentSystem { thisSystem : TypeChecker =>
+trait EnvironmentModule { thisChecker : TypeChecker =>
 
   type EnvironmentEntryType <: EnvironmentEntry
   type IdentifierType <: EnvironmentEntryType with IdentifierEntry
@@ -25,6 +25,9 @@ trait EnvironmentSystem { thisSystem : TypeChecker =>
         case None => name
         case Some(grp) => grp.qualifiedName ++ "/" ++ name
       }
+
+    def moduleEntry : ModuleEntry
+
   }
 
   trait IdentifierEntry {
@@ -43,7 +46,7 @@ trait EnvironmentSystem { thisSystem : TypeChecker =>
   // CONSTRUCTORS
   //
 
-  def newIdentifierEntry(name : String) : IdentifierType
-  def newGroupEntry(name : String, entries : Seq[EnvironmentEntryType]) : GroupType
+  def newIdentifierEntry(name : String, moduleEntry : ModuleEntryType) : IdentifierType
+  def newGroupEntry(name : String, moduleEntry : ModuleEntryType, entries : Seq[EnvironmentEntryType]) : GroupType
 
 }

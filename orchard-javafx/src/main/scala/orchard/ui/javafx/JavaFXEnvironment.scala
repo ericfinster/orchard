@@ -1,5 +1,5 @@
 /**
-  * JavaFXEnvironmentSystem.scala - UI elements for environments
+  * JavaFXEnvironment.scala - UI elements for environments
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -12,7 +12,7 @@ import scalafx.scene.control._
 
 import orchard.core.expression._
 
-trait JavaFXEnvironmentSystem extends EnvironmentSystem { thisSystem : TypeChecker =>
+trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTypeCheckerMixin =>
 
   type EnvironmentEntryType = JavaFXEnvironmentEntry
   type IdentifierType = JavaFXIdentifierEntry
@@ -36,17 +36,25 @@ trait JavaFXEnvironmentSystem extends EnvironmentSystem { thisSystem : TypeCheck
 
   }
 
-  case class JavaFXIdentifierEntry(val name : String) extends JavaFXEnvironmentEntry with IdentifierEntry 
-  case class JavaFXGroupEntry(val name : String, val entries : Seq[JavaFXEnvironmentEntry]) 
-      extends JavaFXEnvironmentEntry with GroupEntry 
+  case class JavaFXIdentifierEntry(
+    val name : String, 
+    val moduleEntry : JavaFXModuleEntry
+  ) extends JavaFXEnvironmentEntry with IdentifierEntry
+
+  case class JavaFXGroupEntry(
+    val name : String, 
+    val moduleEntry : JavaFXModuleEntry, 
+    val entries : Seq[JavaFXEnvironmentEntry]
+  ) extends JavaFXEnvironmentEntry with GroupEntry 
 
   //============================================================================================
   // CONSTRUCTORS
   //
 
-  def newIdentifierEntry(name : String) : JavaFXIdentifierEntry = JavaFXIdentifierEntry(name)
-  def newGroupEntry(name : String, entries : Seq[JavaFXEnvironmentEntry]) : JavaFXGroupEntry = 
-    JavaFXGroupEntry(name, entries)
+  def newIdentifierEntry(name : String, moduleEntry : JavaFXModuleEntry) : JavaFXIdentifierEntry = 
+    JavaFXIdentifierEntry(name, moduleEntry)
 
+  def newGroupEntry(name : String, moduleEntry : JavaFXModuleEntry, entries : Seq[JavaFXEnvironmentEntry]) : JavaFXGroupEntry = 
+    JavaFXGroupEntry(name, moduleEntry, entries)
 
 }
