@@ -13,7 +13,7 @@ import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
-import JavaFXModuleSystem._
+import JavaFXTypeChecker._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
@@ -36,14 +36,14 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     val item = moduleView.selectionModel().selectedItem()
 
     if (item != null) {
-      item.value() match {
-        case mod : JavaFXModule => focusedModule = Some(mod)
-        case _ => 
-          item.value().parentModule match {
-            case None => focusedModule = activeModule
-            case Some(m) => focusedModule = Some(m)
-          }
-      }
+      // item.value() match {
+      //   case mod : JavaFXModule => focusedModule = Some(mod)
+      //   case _ => 
+      //     item.value().parentModule match {
+      //       case None => focusedModule = activeModule
+      //       case Some(m) => focusedModule = Some(m)
+      //     }
+      // }
     }
   }
 

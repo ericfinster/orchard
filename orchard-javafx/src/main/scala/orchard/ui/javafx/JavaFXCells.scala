@@ -11,12 +11,12 @@ import scala.collection.JavaConversions._
 
 import javafx.scene.{control => jfxsc}
 
-import orchard.core.ui.Stylable
+import orchard.core.ui.Styleable
 import orchard.core.expression._
 
-import JavaFXModuleSystem._
+import JavaFXTypeChecker._
 
-trait JavaFXCell[A <: Stylable] { thisCell : jfxsc.Cell[A] => 
+trait JavaFXCell[A <: Styleable] { thisCell : jfxsc.Cell[A] => 
 
   getStyleClass add "orch-list-cell"
   val cellStyleIndex = getStyleClass.length

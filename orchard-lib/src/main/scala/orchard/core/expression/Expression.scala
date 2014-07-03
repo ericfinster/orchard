@@ -7,15 +7,15 @@
 
 package orchard.core.expression
 
-import orchard.core.ui.Stylable
+import orchard.core.ui.Styleable
 
-sealed trait Expression extends Stylable {
+sealed trait Expression extends Styleable {
 
   def isThin : Boolean
 
 }
 
-case class Variable(ident : Identifier, shell : Shell, val isThin : Boolean) extends Expression {
+case class Variable(val ident : Identifier, shell : Shell, val isThin : Boolean) extends Expression {
 
   def name = ident.toString
   def styleString = if (isThin) "variable-thin" else "variable"
@@ -30,7 +30,7 @@ case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression {
 
 }
 
-case class Reference(val name : String, exprType : ExpressionType, isThin : Boolean) extends Expression with Stylable {
+case class Reference(val name : String, exprType : ExpressionType, isThin : Boolean) extends Expression {
 
   def styleString : String =
     exprType match {

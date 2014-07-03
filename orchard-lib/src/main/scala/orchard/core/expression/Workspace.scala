@@ -65,44 +65,18 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
 
         editor.withAssumptionInfo(thinHint, forceThin,
           (identString, isThin) => {
-            IdentParser(identString) match {
-              case Success(ident, _) => {
+            // module.appendParameter(shell, identString) match {
+            //   case None => editor.consoleError("Parameter creating failed.")
+            //   case Some(varRef) => {
 
-                for {
-                  idents <- processIdentifier(ident)
-                } {
+            //     worksheet.deselectAll
+            //     selectedCell.item = Neutral(Some(varRef))
+            //     worksheet.selectAsBase(selectedCell)
 
-                  val finalIdent = CompoundIdentifier(idents)
-
-                  // Make sure the identifier is unique
-                  // if (variables exists (_.id == finalIdent.toString)) {
-                  //   editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
-                  // } else {
-
-                    val varExpr = ??? //Variable(shell, index, finalIdent, isThin)
-
-                    worksheet.deselectAll
-                    selectedCell.item = ???
-                    worksheet.selectAsBase(selectedCell)
-
-                  // The idea here is to submit the shell to the module and request back a marker
-                  // which points to the parameter.
-
-                  // But the parsing of identifiers needs to return something, and so we need to think
-                  // about what this something actually is.
-
-
-                    // Add the variable to the environment
-                    // appendParameter(varExpr)
-                  // }
-
-                }
-              }
-
-              case _ : NoSuccess => editor.consoleError("Identifier parse failed.")
-            }
-          })
-
+            //   }
+            // }
+          }
+        )
       } catch {
         case e : java.lang.AssertionError => 
           editor.consoleError("Cannot assume here: selection is not a shell.")
@@ -126,35 +100,20 @@ abstract class Workspace(val module : ModuleSystem#Module) { thisWorkspace =>
         editor.withFillerIdentifier(
           identString => {
 
-            IdentParser(identString) match {
-              case Success(ident, _) => {
+            // module.appendLift(nook, identString) match {
+            //   case None => editor.consoleError("Failed to create lift.")
+            //   case Some((fillerRef, bdryRef)) => {
 
-                for {
-                  idents <- processIdentifier(ident)
-                } {
+            //     val boundaryCell = selectedCell.boundaryFace
 
-                  val finalIdent = CompoundIdentifier(idents)
+            //     worksheet.deselectAll
+            //     selectedCell.item = Neutral(Some(fillerRef))
+            //     boundaryCell.item = Neutral(Some(bdryRef))
+            //     worksheet.selectAsBase(selectedCell)
 
-                  // Make sure the identifier is unique
-                  // if (variables exists (_.id == finalIdent.toString)) {
-                  //   editor.consoleError("Duplicate Identifier: " ++ finalIdent.toString)
-                  // } else {
+            //   }
+            // }
 
-                    val boundaryCell = selectedCell.boundaryFace
-                    val filler = ??? //Filler(nook, finalIdent)
-
-                    worksheet.deselectAll
-                    selectedCell.item = ??? // Neutral(Some(filler))
-                    boundaryCell.item = ??? // Neutral(Some(filler.Boundary))
-                    worksheet.selectAsBase(selectedCell)
-
-                  //appendLift(filler)
-                  // }
-
-                }
-              }
-              case _ : NoSuccess => editor.consoleError("Compose parse failed.")
-            }
           })
       } else {
         editor.consoleError("Selection is not fillable.")

@@ -7,49 +7,62 @@
 
 package orchard.core.expression
 
-trait ModuleSystem {
+import orchard.core.ui.Styleable
 
-  type EntryType <: ModuleEntry
-  type ModuleType <: Module
-  type ParameterType <: Parameter
-  type LiftType <: Lift
-  type InstantiationType <: Instantiation
+trait ModuleSystem { thisSystem : TypeChecker => 
 
-  trait ModuleEntry { thisEntry : EntryType =>
+  type ModuleEntryType <: ModuleEntry
+  type ModuleType <: ModuleEntryType with Module
+  type ImportType <: ModuleEntryType with Import
+  type ParameterType <: ModuleEntryType with Parameter
+  type LiftType <: ModuleEntryType with Lift
 
-    def parentModule : Option[ModuleType]
+  trait ModuleEntry extends Styleable { 
+    thisEntry : ModuleEntryType =>
+
+    def parentScope : Option[Scope]
 
   }
 
-  trait Module extends ModuleEntry {
-    thisModule : EntryType with ModuleType =>
+  trait Scope extends ModuleEntry {
+    thisScope : ModuleEntryType =>
 
-    def entries : Seq[EntryType]
+    def entries : Seq[ModuleEntryType]
 
-    def appendSubmodule(subMod : ModuleType) : Unit
+  }
 
-    def environment : Environment = 
-      parentModule match {
-        case None => ???
-        case Some(prnt) => {
-          // select the entries of the parent up the this guy.
-        }
+  trait Module extends Scope {
+    thisModule : ModuleType =>
+
+    // This should be protected to the type checker class
+    def appendEntry(entry : ModuleEntryType) : Unit
+
+  }
+
+  trait Import extends Scope {
+    thisImport : ImportType =>
+
+    def isOpen : Boolean
 
   }
 
   trait Parameter extends ModuleEntry {
-    thisParameter : EntryType with ParameterType =>
+    thisParameter : ParameterType =>
 
   }
 
   trait Lift extends ModuleEntry {
-    thisLift : EntryType with LiftType =>
+    thisLift : LiftType =>
 
   }
 
-  trait Instantiation extends ModuleEntry {
-    thisInstantiation : EntryType with InstantiationType =>
+  //============================================================================================
+  // CONSTRUCTORS
+  //
 
-  }
+  protected def newModule(name : String) : ModuleType
+  protected def newImport(name : String) : ImportType
+  protected def newParameter(variable : Variable) : ParameterType
+  protected def newLift(filler : Filler) : LiftType
 
 }

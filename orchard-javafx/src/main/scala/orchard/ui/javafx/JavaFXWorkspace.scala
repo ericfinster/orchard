@@ -21,7 +21,7 @@ import orchard.core.expression._
 
 import javafx.{scene => jfxs}
 
-import JavaFXModuleSystem._
+import JavaFXTypeChecker._
 
 class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
 

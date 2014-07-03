@@ -11,7 +11,7 @@ import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.layout._
 
-import JavaFXModuleSystem._
+import JavaFXTypeChecker._
 
 import orchard.core.expression.Editor
 

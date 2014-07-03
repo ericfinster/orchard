@@ -10,66 +10,62 @@ package orchard.ui.javafx
 import scalafx.Includes._
 import scalafx.scene.control._
 
-import orchard.core.ui.Stylable
 import orchard.core.expression._
 
-object JavaFXModuleSystem extends ModuleSystem {
+trait JavaFXModuleSystem extends ModuleSystem { thisSystem : TypeChecker =>
 
-  type EntryType = JavaFXModuleEntry
+  type ModuleEntryType = JavaFXModuleEntry
   type ModuleType = JavaFXModule
   type ParameterType = JavaFXParameter
   type LiftType = JavaFXLift
-  type InstantiationType = JavaFXInstantiation
+  type ImportType = JavaFXImport
 
-  abstract class JavaFXModuleEntry extends TreeItem[JavaFXModuleEntry] with ModuleEntry with Stylable {
+  abstract class JavaFXModuleEntry extends TreeItem[JavaFXModuleEntry] with ModuleEntry {
 
-    def parentModule : Option[JavaFXModule] = {
+    def parentScope : Option[Scope] = {
       val parentItem = parent()
 
       if (parentItem == null) None else 
         parentItem.value() match {
           case mod : JavaFXModule => Some(mod)
+          case imprt : JavaFXImport => Some(imprt)
           case _ => None
         }
     }
 
-    // Initialization
     value = this
+
+    def styleString = "unknown"
+    def name = "unknown"
 
   }
 
-  class JavaFXModule(val name : String) extends JavaFXModuleEntry with Module {
+  case class JavaFXModule(override val name : String) extends JavaFXModuleEntry with Module {
 
     def entries : Seq[JavaFXModuleEntry] =
       children map (_.value())
 
-    def appendSubmodule(subMod : JavaFXModule) : Unit =
-      children += subMod
-
-    def styleString : String = "unknown"
-
-    override def toString = name
-  }
-
-  class JavaFXParameter extends JavaFXModuleEntry with Parameter {
-
-    def name : String = "Untitled"
-    def styleString : String = "unknown"
+    def appendEntry(entry : JavaFXModuleEntry) : Unit = 
+      children += entry
 
   }
 
-  class JavaFXLift extends JavaFXModuleEntry with Lift {
+  case class JavaFXParameter(variable : Variable) extends JavaFXModuleEntry with Parameter
+  case class JavaFXLift(filler : Filler) extends JavaFXModuleEntry with Lift
 
-    def name : String = "Untitled"
-    def styleString : String = "unknown"
+  case class JavaFXImport(override val name : String) extends JavaFXModuleEntry with Import {
 
-  }
+    def entries : Seq[JavaFXModuleEntry] =
+      children map (_.value())
 
-  class JavaFXInstantiation extends JavaFXModuleEntry with Instantiation {
-
-    def name : String = "Untitled"
-    def styleString : String = "unknown"
+    def isOpen : Boolean = ???
 
   }
+
+  protected def newModule(name : String) : JavaFXModule = JavaFXModule(name)
+  protected def newImport(name : String) : JavaFXImport = JavaFXImport(name)
+  protected def newParameter(variable : Variable) : JavaFXParameter = JavaFXParameter(variable)
+  protected def newLift(filler : Filler) : JavaFXLift = JavaFXLift(filler)
+
 
 }
