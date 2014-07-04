@@ -63,8 +63,8 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     for {
       checker <- typeChecker
     } {
-      horizontalSplit.items.clear
-      horizontalSplit.items ++= List(checker.modulePane, secondPane)
+      modulePane.content = checker.moduleView
+      environmentPane.content = checker.environmentView
     }
 
   displayTypeChecker

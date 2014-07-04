@@ -40,8 +40,8 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
           //   ev.consume
           // }
-          // case KeyCode.E => if (ev.isControlDown) onExtrude
-          // case KeyCode.D => if (ev.isControlDown) onDrop
+          case KeyCode.E => if (ev.isControlDown) onExtrude
+          case KeyCode.D => if (ev.isControlDown) onDrop
           // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
@@ -64,7 +64,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
           // case KeyCode.X => if (ev.isControlDown) onExtra
           // case KeyCode.P => if (ev.isControlDown) onPrintScreen
-          // case KeyCode.W => if (ev.isControlDown) onWebView
+          case KeyCode.W => if (ev.isControlDown) onNewWorkspace
           // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
           // case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
           case _ => ()
@@ -100,5 +100,31 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
         typeChecker = new JavaFXTypeChecker(thisEditor, name)
       }
     ).run
+
+  def onNewWorkspace : Unit = 
+    for {
+      checker <- typeChecker
+    } {
+      checker.newWorkspace
+    }
+
+  // The next two should be written to be monadic commands ....
+  def onExtrude : Unit =
+    for {
+      checker <- typeChecker
+      wksp <- checker.activeWorkspace
+      sheet <- wksp.activeWorksheet
+    } {
+      executeCheckerCommand(sheet.extrude)
+    }
+
+  def onDrop : Unit = 
+    for {
+      checker <- typeChecker
+      wksp <- checker.activeWorkspace
+      sheet <- wksp.activeWorksheet
+    } {
+      executeCheckerCommand(sheet.drop)
+    }
 
 }

@@ -15,18 +15,30 @@ import scalafx.scene.control._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
-  val nothing = new Label("Nothing")
+  val noWorkspaceLabel = new Label("No Workspace")
 
-  val secondPane = new StackPane {
+  val modulePane = new StackPane {
     padding = Insets(10, 10, 10, 10)
-    content = nothing
+    styleClass += "orch-pane"
+  }
+
+  val workspacePane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
+    content = noWorkspaceLabel
+    styleClass += "orch-pane"
+  }
+
+  val environmentPane = new StackPane {
+    padding = Insets(10, 10, 10, 10)
     styleClass += "orch-pane"
   }
 
   val horizontalSplit = new SplitPane {
     orientation = Orientation.HORIZONTAL
-    dividerPositions = 0.2f
+    items ++= List(modulePane, workspacePane, environmentPane)
   }
+
+  horizontalSplit.setDividerPositions(0.2f, 0.8f)
 
   val console = new TextArea {
     editable = false

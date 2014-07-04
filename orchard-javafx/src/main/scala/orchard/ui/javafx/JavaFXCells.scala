@@ -41,6 +41,16 @@ trait CellDefinitions { thisChecker : JavaFXTypeCheckerMixin =>
     }
   }
 
+  class EnvironmentTreeCell extends jfxsc.TreeCell[JavaFXEnvironmentEntry] with JavaFXCell[JavaFXEnvironmentEntry] {
+    override def updateItem(item : JavaFXEnvironmentEntry, empty : Boolean) = {
+      super.updateItem(item, empty)
+
+      if (! empty)
+        renderCell(item)
+    }
+  }
+
+
   // class ModuleListCell extends jfxsc.ListCell[ModuleEntry] with JavaFXCell[ModuleEntry] {
   //   override def updateItem(item : ModuleEntry, empty : Boolean) = {
   //     super.updateItem(item, empty)

@@ -14,7 +14,6 @@ import scalafx.scene.control._
 
 import orchard.core.expression._
 
-// I don't think you reall want this to be an object ...
 trait JavaFXTypeCheckerMixin 
     extends TypeChecker
     with JavaFXModuleModule
@@ -33,7 +32,53 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   //
 
   var activeModule : Option[JavaFXModule] = None
-  var focusedModule : Option[JavaFXModule] = None
+
+  var myFocusedModule : Option[JavaFXModule] = None
+
+  def focusedModule : Option[JavaFXModule] = myFocusedModule
+  def focusedModule_=(modOpt : Option[JavaFXModule]) = {
+    myFocusedModule = modOpt
+
+    for {
+      mod <- modOpt
+    } {
+      val environmentRoot = new TreeItem[JavaFXEnvironmentEntry] {
+        children ++= (getEnvironment(mod) map (_.delegate))
+      }
+
+      environmentView.root = environmentRoot
+    }
+  }
+
+  //============================================================================================
+  // WORKSPACE MANIPULATION
+  //
+
+  var myActiveWorkspace : Option[JavaFXWorkspace] = None
+
+  def activeWorkspace : Option[JavaFXWorkspace] = myActiveWorkspace
+  def activeWorkspace_=(wkspOpt : Option[JavaFXWorkspace]) : Unit = {
+    myActiveWorkspace = wkspOpt
+
+    // Now display it ...
+    displayWorkspace
+  }
+
+  def displayWorkspace : Unit = 
+    for {
+      wksp <- activeWorkspace
+    } {
+      editor.workspacePane.content = wksp.ui
+    }
+
+  def newWorkspace : Unit = 
+    for {
+      mod <- focusedModule
+    } {
+      val wksp = new JavaFXWorkspace(mod)
+      activeWorkspace = Some(wksp)
+      wksp.newSheet
+    }
 
   //============================================================================================
   // UI ELEMENTS
@@ -60,10 +105,10 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
     }
   }
 
-  val modulePane = new StackPane {
-    padding = Insets(10, 10, 10, 10)
-    content = moduleView
-    styleClass += "orch-pane"
+
+  val environmentView = new TreeView[JavaFXEnvironmentEntry] {
+    showRoot = false
+    cellFactory = (_ => new EnvironmentTreeCell)
   }
 
 }

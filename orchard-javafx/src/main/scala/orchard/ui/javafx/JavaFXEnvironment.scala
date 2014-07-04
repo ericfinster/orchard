@@ -39,13 +39,23 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
   case class JavaFXIdentifierEntry(
     val name : String, 
     val moduleEntry : JavaFXModuleEntry
-  ) extends JavaFXEnvironmentEntry with IdentifierEntry
+  ) extends JavaFXEnvironmentEntry with IdentifierEntry {
+
+    override def toString = name
+
+  }
 
   case class JavaFXGroupEntry(
     val name : String, 
     val moduleEntry : JavaFXModuleEntry, 
     val entries : Seq[JavaFXEnvironmentEntry]
-  ) extends JavaFXEnvironmentEntry with GroupEntry 
+  ) extends JavaFXEnvironmentEntry with GroupEntry {
+
+    children ++= entries map (_.delegate)
+
+    override def toString = name
+
+  }
 
   //============================================================================================
   // CONSTRUCTORS

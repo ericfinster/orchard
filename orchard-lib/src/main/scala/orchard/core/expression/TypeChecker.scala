@@ -19,6 +19,7 @@ abstract class TypeChecker
   def editor : EditorType
 
   def rootModule : ModuleType
+  def activeWorkspace : Option[Workspace]
 
   def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[ModuleType] = {
     ModuleIdentParser(rawModuleId) match {
@@ -124,7 +125,7 @@ abstract class TypeChecker
     }
   }
 
-  def getEnclosingEnvironment(scope : Scope) : Seq[EnvironmentEntry] = {
+  def getEnclosingEnvironment(scope : Scope) : Seq[EnvironmentEntryType] = {
     scope.parentScope match {
       case None => Seq.empty
       case Some(prnt) => {
@@ -154,7 +155,7 @@ abstract class TypeChecker
     }
   }
 
-  def getEnvironment(scope : Scope) : Seq[EnvironmentEntry] =
+  def getEnvironment(scope : Scope) : Seq[EnvironmentEntryType] =
     getEnclosingEnvironment(scope) ++ getLocalEnvironment(scope)
 
   def qualifiedIdents(env : Seq[EnvironmentEntry]) : Seq[String] = 

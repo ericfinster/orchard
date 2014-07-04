@@ -89,37 +89,35 @@ trait WorksheetModule { thisChecker : TypeChecker =>
       }
     }
 
-    def extrude = {
+    def extrude : CheckerResult[Unit] = {
       if (selectionIsExtrudable) {
         emptyExtrusion
       } else {
-        println("Selection is not extrudable.")
+        CheckerFailure("Selection is not extrudable.")
       }
     }
 
-    def drop = {
+    def drop : CheckerResult[Unit] = {
       if (selectionIsDroppable) {
         emptyDrop
       } else {
-        println("Selection is not droppable.")
+        CheckerFailure("Selection is not droppable.")
       }
     }
 
-    def emptyExtrusion = extrudeAtSelection(None, None)
+    def emptyExtrusion : CheckerResult[Unit] = 
+      extrudeAtSelection(None, None)
 
-    def extrudeAtSelection(targetExpr : Option[Expression], fillerExpr : Option[Expression]) =
+    def extrudeAtSelection(targetExpr : Option[Expression], fillerExpr : Option[Expression]) : CheckerResult[Unit] = {
       selectionBase match {
-        case None => ()
+        case None => CheckerFailure("Nothing selected")
         case Some(base) => {
 
           // Make sure we have enough space
           if (base.dimension >= dimension - 1)
             extend
 
-          // I think the casting is unnecessary: you know that you're looking
-          // for the positive container, which you can get by hand ... see below
           val baseContainer = base.container.get
-
           val basePtr = (new RoseZipper(baseContainer.canopy.get, Nil))
             .lookup(base).get
 
@@ -127,14 +125,18 @@ trait WorksheetModule { thisChecker : TypeChecker =>
             baseContainer.insertComposite(Neutral(targetExpr), Neutral(fillerExpr), basePtr, (cell => selectedCells contains cell))
 
           clearAndSelect(targetCell)
+
+          CheckerSuccess(())
         }
       }
+    }
 
-    def emptyDrop = dropAtSelection(None, None)
+    def emptyDrop : CheckerResult[Unit] = 
+      dropAtSelection(None, None)
 
-    def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) =
+    def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) : CheckerResult[Unit] =
       selectionBase match {
-        case None => ()
+        case None => CheckerFailure("Nothing selected")
         case Some(base) => {
           if (base.dimension == dimension - 2) {
             extend
@@ -171,6 +173,8 @@ trait WorksheetModule { thisChecker : TypeChecker =>
             positiveBase.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (_ => false))
 
           clearAndSelect(targetCell)
+
+          CheckerSuccess(())
         }
       }
   }
