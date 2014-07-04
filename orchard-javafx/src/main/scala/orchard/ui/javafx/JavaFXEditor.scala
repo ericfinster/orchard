@@ -44,7 +44,10 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // INPUT CALLBACKS
   //
 
-  def withAssumptionInfo(thinHint : Boolean, forceThin : Boolean, handler : (String, Boolean) => Unit) : Unit = ???
+  def withAssumptionInfo(thinHint : Boolean, forceThin : Boolean, handler : (String, Boolean) => Unit) : Unit = {
+    
+  }
+
   def withFillerIdentifier(handler : String => Unit) : Unit = ???
 
   //============================================================================================
