@@ -15,7 +15,7 @@ import scalafx.scene.control._
 import orchard.core.expression._
 
 trait JavaFXTypeCheckerMixin 
-    extends TypeChecker
+    extends InteractiveTypeChecker
     with JavaFXModuleModule
     with JavaFXEnvironmentModule
     with JavaFXWorkspaceModule
@@ -24,6 +24,7 @@ trait JavaFXTypeCheckerMixin
 class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) extends JavaFXTypeCheckerMixin {
 
   type EditorType = JavaFXEditor
+  type WorkspaceType = JavaFXWorkspace
 
   def rootModule : JavaFXModule = new JavaFXModule(rootModuleName)
 
@@ -54,6 +55,7 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   // WORKSPACE MANIPULATION
   //
 
+  // Right.  Some of this shit is redudant now ...
   var myActiveWorkspace : Option[JavaFXWorkspace] = None
 
   def activeWorkspace : Option[JavaFXWorkspace] = myActiveWorkspace
@@ -80,6 +82,17 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
       wksp.newSheet
     }
 
+  def getActiveWorkspace : CheckerResult[JavaFXWorkspace] = 
+    myActiveWorkspace match {
+      case None => CheckerFailure("No active workspace.")
+      case Some(wksp) => CheckerSuccess(wksp)
+    }
+
+  def setActiveWorkspace(wksp : JavaFXWorkspace) : CheckerResult[Unit] = {
+    activeWorkspace = Some(wksp)
+    CheckerSuccess(())
+  }
+  
   //============================================================================================
   // UI ELEMENTS
   //

@@ -11,15 +11,12 @@ abstract class TypeChecker
     extends ModuleModule
     with EnvironmentModule
     with ExpressionModule 
-    with WorkspaceModule
-    with FrameworkModule
-    with WorksheetModule {
+    with FrameworkModule {
 
   type EditorType <: Editor
   def editor : EditorType
 
   def rootModule : ModuleType
-  def activeWorkspace : Option[Workspace]
 
   def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[ModuleType] = {
     ModuleIdentParser(rawModuleId) match {
@@ -171,6 +168,16 @@ abstract class TypeChecker
         Seq(grpEntry.name) ++ qualifiedModules(grpEntry.entries)
     }
 
+  //============================================================================================
+  // UTILS
+  //
+
+  def verify(condition : Boolean, message : String) : CheckerResult[Unit] = 
+    if (condition) {
+      CheckerSuccess(())
+    } else {
+      CheckerFailure(message)
+    }
 }
 
 sealed trait CheckerResult[+A] {

@@ -13,9 +13,12 @@ import orchard.core.complex._
 import IdentParser.Success
 import IdentParser.NoSuccess
 
-trait WorkspaceModule { thisModule : TypeChecker =>
+trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
 
   abstract class Workspace(val module : ModuleType) { thisWorkspace =>
+
+    def getActiveWorksheet : CheckerResult[Worksheet]
+    def setActiveWorksheet(sheet : Worksheet) : CheckerResult[Unit]
 
     def activeWorksheet : Option[Worksheet]
 
@@ -27,50 +30,41 @@ trait WorkspaceModule { thisModule : TypeChecker =>
     // SEMANTIC ROUTINES
     //
 
-    def assumeAtSelection(thinHint : Boolean) : Unit =
+    def assumeAtSelection(thinHint : Boolean) : CheckerResult[Unit] =
       for {
-        worksheet <- activeWorksheet
-        selectedCell <- worksheet.selectionBase
-      } {
+        worksheet <- getActiveWorksheet
+        selectedCell <- worksheet.getSelectionBase
+        _ <- verify(worksheet.selectionIsUnique, "Selection is not unique")
+        _ <- verify(worksheet.selectionIsShell, "Selection is not a shell")
+      } yield {
+        
+        val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
 
-        // This try clause should be removed by changing the type to
-        // a monadic error handler.  Question: should these routines be
-        // checker results, or some other class of workspace results?
+        val forceThin =
+          invertibilityLevel match {
+            case None => false
+            case Some(l) => selectedCell.dimension > l
+          }
 
-        try {
+        // What you want here is scala's Future monad.  But I don't really know how to
+        // use the execution contexts correctly in javafx, so this will have to wait 
+        // just a bit ...
+        editor.withAssumptionInfo(thinHint, forceThin,
+          (identString, isThin) => {
+            for {
+              param <- appendParameter(module, identString, shell, isThin)
+            } {
 
-          val shell = new Shell(new WorkspaceFramework(selectedCell.neutralNCell))
+              val varRef = Reference(param.name, VariableType, param.isThin)
 
-          val forceThin =
-            invertibilityLevel match {
-              case None => false
-              case Some(l) => selectedCell.dimension > l
+              worksheet.deselectAll
+              selectedCell.item = Neutral(Some(varRef))
+              worksheet.selectAsBase(selectedCell)
+
             }
-
-          // Hmmm.  Right.  This kind of thing should be covered by an IO type
-          // monad guy which is indicated by a kind of delayed monad type dealy.
-
-          editor.withAssumptionInfo(thinHint, forceThin,
-            (identString, isThin) => {
-              for {
-                param <- appendParameter(module, identString, shell, isThin)
-              } {
-
-                val varRef = Reference(param.name, VariableType, param.isThin)
-
-                worksheet.deselectAll
-                selectedCell.item = Neutral(Some(varRef))
-                worksheet.selectAsBase(selectedCell)
-
-              }
-            }
-          )
-        } catch {
-          case e : java.lang.AssertionError =>
-            editor.consoleError("Cannot assume here: selection is not a shell.")
-        }
+          }
+        )
       }
-
 
     def fillAtSelection =
       for {

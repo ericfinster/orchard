@@ -25,6 +25,14 @@ trait JavaFXWorkspaceModule { thisModule : JavaFXTypeCheckerMixin =>
 
   class JavaFXWorkspace(module : JavaFXModule) extends Workspace(module) {
 
+    def getActiveWorksheet : CheckerResult[Worksheet] = 
+      activeWorksheet match {
+        case None => CheckerFailure("No active worksheet")
+        case Some(sheet) => CheckerSuccess(sheet)
+      }
+
+    def setActiveWorksheet(sheet : Worksheet) : CheckerResult[Unit] = ???
+
     def invertibilityLevel: Option[Int] = None
     def stabilityLevel: Option[Int] = None
     def unicityLevel: Option[Int] = None

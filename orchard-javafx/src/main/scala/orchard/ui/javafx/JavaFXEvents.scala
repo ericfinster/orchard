@@ -42,7 +42,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // }
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
-          // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
+          case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
           // case KeyCode.T => if (ev.isControlDown) onNewSheet
@@ -108,7 +108,6 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       checker.newWorkspace
     }
 
-  // The next two should be written to be monadic commands ....
   def onExtrude : Unit =
     for {
       checker <- typeChecker
@@ -127,4 +126,11 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       executeCheckerCommand(sheet.drop)
     }
 
+  def onAssume(thinHint : Boolean) : Unit = 
+    for {
+      checker <- typeChecker
+      wksp <- checker.activeWorkspace
+    } {
+      wksp.assumeAtSelection(thinHint)
+    }
 }

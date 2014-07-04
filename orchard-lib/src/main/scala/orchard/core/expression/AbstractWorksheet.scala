@@ -11,7 +11,7 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
-trait WorksheetModule { thisChecker : TypeChecker =>
+trait WorksheetModule { thisChecker : InteractiveTypeChecker =>
 
   abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
       extends Framework[Polarity[Option[Expression]]](seed)
@@ -34,6 +34,12 @@ trait WorksheetModule { thisChecker : TypeChecker =>
         emit(ChangeEvents.ItemChangedEvent(oldItem))
       }
     }
+
+    def getSelectionBase : CheckerResult[CellType] = 
+      selectionBase match {
+        case None => CheckerFailure("No selection")
+        case Some(base) => CheckerSuccess(base)
+      }
 
     def extend = glob(Negative, Positive)
 
