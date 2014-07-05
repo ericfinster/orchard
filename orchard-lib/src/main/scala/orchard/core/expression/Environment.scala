@@ -22,15 +22,10 @@ trait EnvironmentModule { thisChecker : TypeChecker =>
 
     def parentGroup : Option[GroupType]
 
-    def qualifiedName : String = 
-      parentGroup match {
-        case None => name
-        case Some(grp) => grp.qualifiedName ++ "/" ++ name
-      }
-
-    def moduleEntry : ModuleEntry
+    def moduleEntry : ModuleEntryType
 
     def name : String = moduleEntry.name
+    def qualifiedName : String = moduleEntry.qualifiedName
     def styleString : String = moduleEntry.styleString
 
   }

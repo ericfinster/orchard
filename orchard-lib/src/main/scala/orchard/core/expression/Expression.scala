@@ -29,19 +29,24 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   }
 
-  case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression {
+  case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression { thisFiller =>
 
     def name = "def-" ++ bdryIdent.expand
     def ncell = nook.withFiller(this)
     def isThin = true
     def styleString = "filler"
 
+    def bdryAddress : CellAddress =
+      nook.framework.topCell.boundaryAddress
+
     trait BoundaryExpr extends Expression {
 
       def name = bdryIdent.expand
-      def styleString = if (isThin) "bdry-thin" else "bdry"
       def isThin = nook.isThinBoundary
-      def ncell = ???
+      def styleString = if (isThin) "bdry-thin" else "bdry"
+
+      def interior = thisFiller
+      def ncell = interior.ncell.seek(bdryAddress).get
 
     }
 

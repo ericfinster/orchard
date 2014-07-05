@@ -32,6 +32,12 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def parentScope : Option[Scope]
 
+    def qualifiedName : String = 
+      parentScope match {
+        case None => name
+        case Some(scope) => scope.qualifiedName ++ "/" ++ name
+      }
+
   }
 
   trait Scope extends ModuleEntry {
