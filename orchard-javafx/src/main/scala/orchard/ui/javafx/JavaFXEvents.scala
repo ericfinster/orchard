@@ -43,7 +43,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
-          // case KeyCode.F => if (ev.isControlDown) onFill  
+          case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
           // case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
@@ -131,6 +131,15 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       checker <- typeChecker
       wksp <- checker.activeWorkspace
     } {
-      wksp.assumeAtSelection(thinHint)
+      executeCheckerCommand(wksp.assumeAtSelection(thinHint))
     }
+
+  def onFill : Unit = 
+    for {
+      checker <- typeChecker
+      wksp <- checker.activeWorkspace
+    } {
+      executeCheckerCommand(wksp.fillAtSelection)
+    }
+
 }

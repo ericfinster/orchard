@@ -92,7 +92,14 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
     activeWorkspace = Some(wksp)
     CheckerSuccess(())
   }
-  
+
+  //============================================================================================
+  // PREVIEWING
+  //
+
+  def previewExpression(expr : Expression) : Unit = {
+  }
+
   //============================================================================================
   // UI ELEMENTS
   //

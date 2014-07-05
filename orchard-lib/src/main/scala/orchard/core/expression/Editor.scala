@@ -9,11 +9,15 @@ package orchard.core.expression
 
 trait Editor {
 
-  def withAssumptionInfo(thinHint : Boolean,
-                         forceThin : Boolean,
-                         handler : (String, Boolean) => Unit) : Unit 
+  def withAssumptionInfo[A](
+    thinHint : Boolean,
+    forceThin : Boolean,
+    handler : (String, Boolean) => CheckerResult[A]
+  ) : Unit
 
-  def withFillerIdentifier(handler : String => Unit) : Unit
+  def withFillerIdentifier[A](
+    handler : String => CheckerResult[A]
+  ) : Unit
 
   // def withFillerIdentifiers(handler : (String, String) => Unit) : Unit
   // def withRenameIdentifier(expr : Expression, handler : String => Unit) : Unit

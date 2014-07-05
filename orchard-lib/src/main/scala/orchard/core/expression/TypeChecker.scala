@@ -43,7 +43,7 @@ abstract class TypeChecker
           for {
             ident <- processRawIdentifier(module, rawIdent)
           } yield {
-            val param = newParameter(ident, shell, isThin)
+            val param = newParameter(Variable(ident, shell, isThin))
             module.appendEntry(param)
             param
           }
@@ -63,7 +63,7 @@ abstract class TypeChecker
           for {
             ident <- processRawIdentifier(module, rawIdent)
           } yield {
-            val lift = newLift(ident, nook)
+            val lift = newLift(Filler(ident, nook))
             module.appendEntry(lift)
             lift
           }
@@ -75,28 +75,19 @@ abstract class TypeChecker
   }
 
   def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
-    // In this routine, references in the raw identifier should be resolved to 
-    // actual references in the current scope ...
+    val idents : List[CheckerResult[Identifier]] = 
+      rawIdent.tokens map {
+        case RawLiteral(lit) => CheckerSuccess(LiteralIdentifier(lit))
+        case RawReference(ref) =>
+          for {
+            resultRef <- lookupIdentifier(ref, scope)
+          } yield ReferenceIdentifier(resultRef)
+      }
 
-
-    // val idents = rawIdent.tokens flatMap {
-    //   case RawLiteral(lit) => Some(LiteralIdentifier(lit))
-    //   case RawReference(ref) =>
-    //     variables find (p => p.id == ref) match {
-    //       case None => { editor.consoleError("Unresolved reference: " ++ ref) ; None }
-    //       case Some(v) => Some(v.ident)
-    //     }
-    // }
-
-    // if (idents.length < rawIdent.tokens.length) {
-    //   editor.consoleError("Identifier processing failed.")
-    //   None
-    // } else {
-    //   Some(idents)
-    // }
-    ???
+    for {
+      newIdents <- sequence(idents)
+    } yield CompoundIdentifier(newIdents)
   }
-
 
   //============================================================================================
   // ENVIRONMENT MANAGEMENT
@@ -104,20 +95,22 @@ abstract class TypeChecker
 
   def getLocalEnvironment(scope : Scope) : Seq[EnvironmentEntryType] = {
     scope.entries flatMap {
-      case param : Parameter => Seq(newIdentifierEntry(param.name, param))
-      case lift : Lift => Seq(newIdentifierEntry(lift.name, lift))
+      case param : Parameter => Seq(newIdentifierEntry(param))
+      case lift : Lift => 
+        Seq(newIdentifierEntry(lift),
+          newIdentifierEntry(lift.fillerEntry))
       case imprt : Import => {
         val importEnv = getLocalEnvironment(imprt)
 
         if (imprt.isOpen) {
           importEnv
         } else {
-          Seq(newGroupEntry(imprt.name, imprt, importEnv))
+          Seq(newGroupEntry(imprt, importEnv))
         }
       }
       case subMod : Module => {
         val subModEnv = getLocalEnvironment(subMod)
-        Seq(newGroupEntry(subMod.name, subMod, subModEnv))
+        Seq(newGroupEntry(subMod, subModEnv))
       }
     }
   }
@@ -133,15 +126,18 @@ abstract class TypeChecker
 
         val siblingEnv =
           mySiblings flatMap {
-            case param : Parameter => Seq(newIdentifierEntry(param.name, param))
-            case lift : Lift => Seq(newIdentifierEntry(lift.name, lift))
+            case param : Parameter => Seq(newIdentifierEntry(param))
+            // Here you just add a second identifier entry for the boundary
+            case lift : Lift => 
+              Seq(newIdentifierEntry(lift),
+              newIdentifierEntry(lift.fillerEntry))
             case imprt : Import => {
               val importEnv = getLocalEnvironment(imprt)
 
               if (imprt.isOpen) {
                 importEnv
               } else {
-                Seq(newGroupEntry(imprt.name, imprt, importEnv))
+                Seq(newGroupEntry(imprt, importEnv))
               }
             }
             case module : Module => Seq.empty
@@ -154,6 +150,19 @@ abstract class TypeChecker
 
   def getEnvironment(scope : Scope) : Seq[EnvironmentEntryType] =
     getEnclosingEnvironment(scope) ++ getLocalEnvironment(scope)
+
+  def lookupIdentifier(name : String, scope : Scope) : CheckerResult[IdentifierType] = {
+    (identifierSeq(getEnvironment(scope)) find (entry => entry.name == name)) match {
+      case None => CheckerFailure("Identifier lookup failed.")
+      case Some(e) => CheckerSuccess(e)
+    }
+  }
+
+  def identifierSeq(env : Seq[EnvironmentEntry]) : Seq[IdentifierType] =
+    env flatMap {
+      case idEntry : IdentifierEntry => Seq(idEntry.liftIdentifier)  // why the explicit lift here?
+      case grpEntry : GroupEntry => identifierSeq(grpEntry.entries)
+    }
 
   def qualifiedIdents(env : Seq[EnvironmentEntry]) : Seq[String] = 
     env flatMap {
@@ -178,38 +187,16 @@ abstract class TypeChecker
     } else {
       CheckerFailure(message)
     }
-}
 
-sealed trait CheckerResult[+A] {
-
-  def map[B](f : A => B) : CheckerResult[B]
-  def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B]
-  def filter(f : A => Boolean) : CheckerResult[A]
-  def foreach(f : A => Unit) : Unit
-
-}
-
-case class CheckerSuccess[+A](result : A) extends CheckerResult[A] {
-
-  def map[B](f : A => B) : CheckerResult[B] =
-    CheckerSuccess(f(result))
-
-  def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B] =
-    f(result)
-
-  def filter(f : A => Boolean) : CheckerResult[A] = 
-    if (f(result)) this else CheckerFailure("Result was filtered")
-
-  def foreach(f : A => Unit) : Unit = 
-    f(result)
+  def sequence[A](steps : List[CheckerResult[A]]) : CheckerResult[List[A]] =
+    steps match {
+      case Nil => CheckerSuccess(Nil)
+      case s :: ss =>
+        for {
+          prevSteps <- sequence(ss)
+          curStep <- s
+        } yield (curStep :: prevSteps)
+    }
 
 }
 
-case class CheckerFailure(cause : String) extends CheckerResult[Nothing] {
-
-  def map[B](f : Nothing => B) : CheckerResult[B] = this
-  def flatMap[B](f : Nothing => CheckerResult[B]) : CheckerResult[B] = this
-  def filter(f : Nothing => Boolean) : CheckerResult[Nothing] = this
-  def foreach(f : Nothing => Unit) : Unit = ()
-
-}

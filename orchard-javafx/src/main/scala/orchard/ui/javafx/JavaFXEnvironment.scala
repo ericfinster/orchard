@@ -32,12 +32,9 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
 
     value = this
 
-    def styleString = "unknown"
-
   }
 
   case class JavaFXIdentifierEntry(
-    val name : String, 
     val moduleEntry : JavaFXModuleEntry
   ) extends JavaFXEnvironmentEntry with IdentifierEntry {
 
@@ -46,7 +43,6 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
   }
 
   case class JavaFXGroupEntry(
-    val name : String, 
     val moduleEntry : JavaFXModuleEntry, 
     val entries : Seq[JavaFXEnvironmentEntry]
   ) extends JavaFXEnvironmentEntry with GroupEntry {
@@ -61,10 +57,10 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
   // CONSTRUCTORS
   //
 
-  def newIdentifierEntry(name : String, moduleEntry : JavaFXModuleEntry) : JavaFXIdentifierEntry = 
-    JavaFXIdentifierEntry(name, moduleEntry)
+  def newIdentifierEntry(moduleEntry : JavaFXModuleEntry) : JavaFXIdentifierEntry = 
+    JavaFXIdentifierEntry(moduleEntry)
 
-  def newGroupEntry(name : String, moduleEntry : JavaFXModuleEntry, entries : Seq[JavaFXEnvironmentEntry]) : JavaFXGroupEntry = 
-    JavaFXGroupEntry(name, moduleEntry, entries)
+  def newGroupEntry(moduleEntry : JavaFXModuleEntry, entries : Seq[JavaFXEnvironmentEntry]) : JavaFXGroupEntry = 
+    JavaFXGroupEntry(moduleEntry, entries)
 
 }

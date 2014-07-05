@@ -24,6 +24,10 @@ case class LiteralIdentifier(val literal : String) extends Identifier {
   override def toString : String = "Lit(" ++ literal ++ ")"
 }
 
+case class ReferenceIdentifier(ref : TypeChecker#IdentifierType) extends Identifier {
+  def expand = ref.name
+}
+
 case class CompoundIdentifier(val components : List[Identifier]) extends Identifier {
   def expand : String = (components map (_.expand)).mkString
   override def toString : String = (components map (_.toString)).toString
@@ -61,6 +65,7 @@ abstract case class ClosureIdentifier(val body : Identifier) extends Identifier 
       case ci : ClosureIdentifier => {
         wrap(ci.reduce)
       }
+      case _ => ???
     }
   }
 

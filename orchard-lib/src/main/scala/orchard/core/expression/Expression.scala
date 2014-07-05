@@ -20,22 +20,22 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   case class Variable(val ident : Identifier, shell : Shell, val isThin : Boolean) extends Expression {
 
-    def name = ident.toString
+    def name = ident.expand
     def styleString = if (isThin) "variable-thin" else "variable"
 
   }
 
   case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression {
 
-    def name = "def-" ++ bdryIdent.toString
+    def name = "def-" ++ bdryIdent.expand
     def isThin = true
     def styleString = "filler"
 
     trait BoundaryExpr extends Expression {
 
-      def name = bdryIdent.toString
+      def name = bdryIdent.expand
       def styleString = if (isThin) "bdry-thin" else "bdry"
-      def isThin = ???
+      def isThin = nook.isThinBoundary
 
     }
 
@@ -44,25 +44,25 @@ trait ExpressionModule { thisChecker : TypeChecker =>
     }
   }
 
-  case class Reference(qualId : String, exprType : ExpressionType, isThin : Boolean) extends Expression {
+  case class Reference(entry : ExpressionEntry) extends Expression {
 
-    def name = qualId
+    def name : String = entry.name
+    def qualifiedId : String = ???
+    def isThin : Boolean = entry.isThin
 
-    def styleString : String =
-      exprType match {
-        case VariableType => if (isThin) "variable-thin" else "variable"
-        case FillerType => "filler"
-        case BoundaryType => if (isThin) "bdry-thin" else "bdry"
-      }
+    def styleString : String = entry.styleString
 
   }
 
-  sealed trait ExpressionType
-  case object VariableType extends ExpressionType
-  case object FillerType extends ExpressionType
-  case object BoundaryType extends ExpressionType
+  // sealed trait ExpressionType
+  // case object VariableType extends ExpressionType
+  // case object FillerType extends ExpressionType
+  // case object BoundaryType extends ExpressionType
 
-  class Nook(framework : Framework[Option[Expression]])
+  class Nook(framework : Framework[Option[Expression]]) {
+    def isThinBoundary : Boolean = framework.topCell.isThinBoundary
+  }
+
   class Shell(framework : Framework[Option[Expression]])
 
   //============================================================================================

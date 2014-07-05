@@ -7,6 +7,8 @@
 
 package orchard.core.expression
 
+import scala.language.implicitConversions
+
 import orchard.core.ui.Styleable
 
 trait EnvironmentModule { thisChecker : TypeChecker =>
@@ -28,25 +30,40 @@ trait EnvironmentModule { thisChecker : TypeChecker =>
 
     def moduleEntry : ModuleEntry
 
+    def name : String = moduleEntry.name
+    def styleString : String = moduleEntry.styleString
+
   }
 
   trait IdentifierEntry {
     thisEntry : IdentifierType =>
+
+    def liftIdentifier : IdentifierType = this
 
   }
 
   trait GroupEntry {
     thisEntry : GroupType =>
 
+    def liftGroup : GroupType = this
+
     def entries : Seq[EnvironmentEntryType]
 
+  }
+
+  object IdentifierEntry {
+    implicit def idIsIdentType(idEntry : IdentifierEntry) : IdentifierType = idEntry.liftIdentifier
+  }
+
+  object GroupEntry {
+    implicit def grpIsGrpType(grpEntry : GroupEntry) : GroupType = grpEntry.liftGroup
   }
 
   //============================================================================================
   // CONSTRUCTORS
   //
 
-  def newIdentifierEntry(name : String, moduleEntry : ModuleEntryType) : IdentifierType
-  def newGroupEntry(name : String, moduleEntry : ModuleEntryType, entries : Seq[EnvironmentEntryType]) : GroupType
+  def newIdentifierEntry(moduleEntry : ModuleEntryType) : IdentifierType
+  def newGroupEntry(moduleEntry : ModuleEntryType, entries : Seq[EnvironmentEntryType]) : GroupType
 
 }

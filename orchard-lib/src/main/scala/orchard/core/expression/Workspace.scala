@@ -53,53 +53,51 @@ trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
           (identString, isThin) => {
             for {
               param <- appendParameter(module, identString, shell, isThin)
-            } {
+            } yield {
 
-              val varRef = Reference(param.name, VariableType, param.isThin)
+              val varRef = Reference(param)
 
               worksheet.deselectAll
               selectedCell.item = Neutral(Some(varRef))
               worksheet.selectAsBase(selectedCell)
 
+              CheckerSuccess(())
             }
           }
         )
       }
 
-    def fillAtSelection =
+    def fillAtSelection : CheckerResult[Unit] =
       for {
-        worksheet <- activeWorksheet
-        selectedCell <- worksheet.selectionBase
-      } {
-        if (selectedCell.isUnicityFillable) {
+        worksheet <- getActiveWorksheet
+        selectedCell <- worksheet.getSelectionBase
+        _ <- verify(worksheet.selectionIsExposedNook, "Selection is not an exposed nook")
+      } yield {
 
-          ???
+        val nook = new Nook(new WorkspaceFramework(selectedCell.neutralNCell))
 
-        } else if (selectedCell.isExposedNook) {
+        // Oops.  This guy should resolve to a checker command, which the handler
+        // then executes ...
+        editor.withFillerIdentifier(
+          identString => {
+            for {
+              lift <- appendLift(module, identString, nook)
+            } yield {
 
-          val nook = new Nook(new WorkspaceFramework(selectedCell.neutralNCell))
+              val fillerRef = Reference(lift.fillerEntry)
+              val bdryRef = Reference(lift)
 
-          editor.withFillerIdentifier(
-            identString => {
-              for {
-                lift <- appendLift(module, identString, nook)
-              } {
+              val boundaryCell = selectedCell.boundaryFace
 
-                val fillerRef = Reference(lift.name, FillerType, true)
-                val bdryRef = Reference(lift.name, BoundaryType, lift.filler.Boundary.isThin)
+              worksheet.deselectAll
+              selectedCell.item = Neutral(Some(fillerRef))
+              boundaryCell.item = Neutral(Some(bdryRef))
+              worksheet.selectAsBase(selectedCell)
 
-                val boundaryCell = selectedCell.boundaryFace
+              CheckerSuccess(())
+            }
+          })
 
-                worksheet.deselectAll
-                selectedCell.item = Neutral(Some(fillerRef))
-                boundaryCell.item = Neutral(Some(bdryRef))
-                worksheet.selectAsBase(selectedCell)
-
-              }
-            })
-        } else {
-          editor.consoleError("Selection is not fillable.")
-        }
       }
     
     // def pasteToSelection(pasteExpr : Expression) =

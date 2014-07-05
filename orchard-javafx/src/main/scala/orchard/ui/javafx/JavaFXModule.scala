@@ -35,12 +35,9 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
     value = this
 
-    def styleString = "unknown"
-    def name = "unknown"
-
   }
 
-  case class JavaFXModule(override val name : String) extends JavaFXModuleEntry with Module {
+  case class JavaFXModule(val name : String) extends JavaFXModuleEntry with Module {
 
     def entries : Seq[JavaFXModuleEntry] =
       children map (_.value())
@@ -50,10 +47,23 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
   }
 
-  case class JavaFXParameter(val ident : Identifier, val shell : Shell, val isThin : Boolean) 
-      extends JavaFXModuleEntry with Parameter
+  case class JavaFXParameter(val variable : Variable)
+      extends JavaFXModuleEntry with Parameter {
+    def expression = variable
+  }
 
-  case class JavaFXLift(val ident : Identifier, val nook : Nook) extends JavaFXModuleEntry with Lift
+  case class JavaFXLift(val filler : Filler) extends JavaFXModuleEntry with Lift {
+
+    def fillerEntry = LiftFillerEntry
+    def expression = filler.Boundary
+
+    object LiftFillerEntry extends JavaFXModuleEntry with FillerEntry {
+      def expression = filler
+    }
+
+    children += LiftFillerEntry
+
+  }
 
   case class JavaFXImport(override val name : String) extends JavaFXModuleEntry with Import {
 
@@ -66,10 +76,7 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
   protected def newModule(name : String) : JavaFXModule = JavaFXModule(name)
   protected def newImport(name : String) : JavaFXImport = JavaFXImport(name)
-  protected def newParameter(ident : Identifier, shell : Shell, isThin : Boolean) : JavaFXParameter = 
-    JavaFXParameter(ident, shell, isThin)
-  protected def newLift(ident : Identifier, nook : Nook) : JavaFXLift = 
-    JavaFXLift(ident, nook)
-
+  protected def newParameter(variable : Variable) : JavaFXParameter = JavaFXParameter(variable)
+  protected def newLift(filler : Filler) : JavaFXLift = JavaFXLift(filler)
 
 }

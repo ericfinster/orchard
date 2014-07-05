@@ -49,6 +49,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
     // This should be protected to the type checker class
     def appendEntry(entry : ModuleEntryType) : Unit
 
+    def styleString = "unknown"
+
   }
 
   trait Import extends Scope {
@@ -58,30 +60,53 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def isOpen : Boolean
 
+    def name = "unknown"
+    def styleString = "unknown"
+
   }
 
-  trait Parameter extends ModuleEntry {
+  trait ExpressionEntry extends ModuleEntry {
+    thisEntry : ModuleEntryType =>
+
+    type ExpressionType <: Expression
+
+    def expression : ExpressionType
+
+    def name : String = expression.name
+    def isThin : Boolean = expression.isThin
+    def styleString : String = expression.styleString
+
+  }
+
+  trait Parameter extends ExpressionEntry {
     thisParameter : ParameterType =>
+
+    type ExpressionType = Variable
 
     def liftParameter : ParameterType = this
 
-    def ident : Identifier
-    def isThin : Boolean
-    def shell : Shell
-
-    val variable : Variable = Variable(ident, shell, isThin)
-
   }
 
-  trait Lift extends ModuleEntry {
+  trait Lift extends ExpressionEntry {
     thisLift : LiftType =>
 
-    def ident : Identifier
-    def nook : Nook
-
-    val filler : Filler = Filler(ident, nook)
+    type ExpressionType = Filler#BoundaryExpr
 
     def liftLift : LiftType = this
+    def fillerEntry : FillerEntry
+
+    trait FillerEntry extends ExpressionEntry {
+      thisFillerEntry : ModuleEntryType =>
+
+      type ExpressionType = Filler
+
+      def liftFillerEntry : ModuleEntryType = this
+
+    }
+
+    object FillerEntry {
+      implicit def fillerEntryIsEntry(f : FillerEntry) : ModuleEntryType = f.liftFillerEntry
+    }
 
   }
 
@@ -111,7 +136,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
   protected def newModule(name : String) : ModuleType
   protected def newImport(name : String) : ImportType
-  protected def newParameter(ident : Identifier, shell : Shell, isThin : Boolean) : ParameterType
-  protected def newLift(ident : Identifier, nook : Nook) : LiftType
+  protected def newParameter(varaible : Variable) : ParameterType
+  protected def newLift(filler : Filler) : LiftType
 
 }

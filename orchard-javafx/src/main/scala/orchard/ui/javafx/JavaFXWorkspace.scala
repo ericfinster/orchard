@@ -53,6 +53,11 @@ trait JavaFXWorkspaceModule { thisModule : JavaFXTypeCheckerMixin =>
     //   side = Side.BOTTOM
     // }
 
+    val previewPane = new StackPane {
+      padding = Insets(10, 10, 10, 10)
+      styleClass += "orch-pane"
+    }
+
     // val controlPane = new StackPane {
     //   padding = Insets(10, 10, 10, 10)
     //   styleClass += "orch-pane"
@@ -76,13 +81,13 @@ trait JavaFXWorkspaceModule { thisModule : JavaFXTypeCheckerMixin =>
 
     // controlTabPane += clipboardTab
 
-    // val moduleSplit = new SplitPane {
-    //   orientation = Orientation.VERTICAL
-    //   items ++= List(worksheetPane, controlPane)
-    //   dividerPositions = 0.6f
-    // }
+    val moduleSplit = new SplitPane {
+      orientation = Orientation.VERTICAL
+      items ++= List(worksheetPane, previewPane)
+      dividerPositions = 0.6f
+    }
 
-    val ui = worksheetPane
+    val ui = moduleSplit
 
     // //============================================================================================
     // // CLIPBOARD MANIPULATION

@@ -64,6 +64,14 @@ trait WorksheetModule { thisChecker : InteractiveTypeChecker =>
         }
     }
 
+    def selectionIsExposedNook : Boolean = {
+      if (! selectionIsUnique) false else 
+        selectionBase match {
+          case None => false
+          case Some(cell) => cell.isExposedNook
+        }
+    }
+
     def selectionIsExtrudable : Boolean = {
       selectionBase match {
         case None => false

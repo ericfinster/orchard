@@ -12,6 +12,7 @@ import scalafx.scene.Node
 import scalafx.scene.layout._
 
 import orchard.core.expression.Editor
+import orchard.core.expression.CheckerResult
 
 import controls._
 
@@ -44,11 +45,32 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // INPUT CALLBACKS
   //
 
-  def withAssumptionInfo(thinHint : Boolean, forceThin : Boolean, handler : (String, Boolean) => Unit) : Unit = {
-    
+  def withAssumptionInfo[A](
+    thinHint : Boolean,
+    forceThin : Boolean,
+    handler : (String, Boolean) => CheckerResult[A]
+  ) : Unit = {
+
+    val varDialog = new VariableDialog(handler)
+
+    varDialog.thinCheckBox.selected = thinHint
+
+    if (forceThin) {
+      varDialog.thinCheckBox.selected = true
+      varDialog.thinCheckBox.disable = true
+    }
+
+    varDialog.run
+
   }
 
-  def withFillerIdentifier(handler : String => Unit) : Unit = ???
+  def withFillerIdentifier[A](
+    handler : String => CheckerResult[A]
+  ) : Unit = {
+    val idDialog = new SimpleIdentifierDialog(handler)
+    idDialog.setHeading("Fill Nook")
+    idDialog.run
+  }
 
   //============================================================================================
   // THE TYPE CHECKER
