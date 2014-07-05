@@ -7,20 +7,24 @@
 
 package orchard.core.expression
 
-import orchard.core.ui.Styleable
+import orchard.core.cell._
 import orchard.core.complex._
+
+import orchard.core.ui.Styleable
 
 trait ExpressionModule { thisChecker : TypeChecker =>
 
   sealed trait Expression extends Styleable {
 
     def isThin : Boolean
+    def ncell : NCell[Expression]
 
   }
 
   case class Variable(val ident : Identifier, shell : Shell, val isThin : Boolean) extends Expression {
 
     def name = ident.expand
+    def ncell = shell.withFillingExpression(this)
     def styleString = if (isThin) "variable-thin" else "variable"
 
   }
@@ -28,6 +32,7 @@ trait ExpressionModule { thisChecker : TypeChecker =>
   case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression {
 
     def name = "def-" ++ bdryIdent.expand
+    def ncell = nook.withFiller(this)
     def isThin = true
     def styleString = "filler"
 
@@ -36,6 +41,7 @@ trait ExpressionModule { thisChecker : TypeChecker =>
       def name = bdryIdent.expand
       def styleString = if (isThin) "bdry-thin" else "bdry"
       def isThin = nook.isThinBoundary
+      def ncell = ???
 
     }
 
@@ -46,7 +52,8 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   case class Reference(entry : ExpressionEntry) extends Expression {
 
-    def name : String = entry.name
+    def name = entry.name
+    def ncell = entry.expression.ncell
     def qualifiedId : String = ???
     def isThin : Boolean = entry.isThin
 
@@ -54,19 +61,126 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   }
 
-  // sealed trait ExpressionType
-  // case object VariableType extends ExpressionType
-  // case object FillerType extends ExpressionType
-  // case object BoundaryType extends ExpressionType
+  //============================================================================================
+  // NOOKS
+  //
 
-  class Nook(framework : Framework[Option[Expression]]) {
-    def isThinBoundary : Boolean = framework.topCell.isThinBoundary
+  class Nook(val framework : Framework[Option[Expression]]) {
+
+    assert(framework.topCell.isNook)
+
+    val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
+
+    def map(f : Expression => Expression) : Nook = {
+      val duplicate = framework.duplicate
+
+      duplicate forAllCells (cell => {
+        cell.item = cell.item map f
+      })
+
+      new Nook(duplicate)
+    }
+
+    // def normalize : Nook = {
+    //   // val duplicate = framework.duplicate
+
+    //   // duplicate forAllFaces (cell => {
+    //   //   cell.item foreach (e => {
+    //   //     cell.item = Some(e.normalize)
+    //   //     cell.promoteFaces
+    //   //   })
+    //   // })
+
+    //   // new Nook(duplicate)
+
+    //   map (_.normalize)
+    // }
+
+    def isThinBoundary : Boolean =
+      framework.topCell.isThinBoundary
+
+    def withFiller(filler : Filler) : NCell[Expression] = {
+      val frameworkCopy = framework.extract(framework.topCell)
+      frameworkCopy.topCell.item = Some(filler)
+      frameworkCopy.topCell.boundaryFace.item = Some(filler.Boundary)
+      frameworkCopy.topCell.toNCell map (_.get)
+    }
+
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Nook]
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Nook =>
+          (that canEqual this) && (that.ncell == this.ncell)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * (41 + ncell.hashCode)
+
   }
 
-  class Shell(framework : Framework[Option[Expression]])
+  //============================================================================================
+  // SHELLS
+  //
+
+  class Shell(val framework : Framework[Option[Expression]]) {
+
+    assert(framework.topCell.isShell)
+
+    val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
+
+    def map(f : Expression => Expression) : Shell = {
+      val duplicate = framework.duplicate
+
+      duplicate forAllCells (cell => {
+        cell.item = cell.item map f
+      })
+
+      new Shell(duplicate)
+    }
+
+    // def normalize : Shell = {
+    //   // val duplicate = framework.duplicate
+
+    //   // duplicate forAllFaces (cell => {
+    //   //   cell.item foreach (e => {
+    //   //     cell.item = Some(e.normalize)
+    //   //     cell.promoteFaces
+    //   //   })
+    //   // })
+
+    //   // new Shell(duplicate)
+
+    //   map (_.normalize)
+    // }
+
+    def withFillingExpression(expr : Expression) : NCell[Expression] =
+      framework.topCell.skeleton map (cell => {
+        cell.item match {
+          case None => expr
+          case Some(e) => e
+        }
+      })
+
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Shell]
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Shell =>
+          (that canEqual this) && (that.ncell == this.ncell)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * (41 + ncell.hashCode)
+
+  }
 
   //============================================================================================
-  // EXPRESSIONLIKE DEFINITIONS
+  // EXPRESSIONLIKE TYPECLASS
   //
 
   trait ExpressionLike[A] {
@@ -108,6 +222,5 @@ trait ExpressionModule { thisChecker : TypeChecker =>
       }
 
   }
-
 
 }
