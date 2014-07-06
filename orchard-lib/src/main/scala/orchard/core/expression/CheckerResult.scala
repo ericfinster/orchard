@@ -26,7 +26,6 @@ sealed abstract class CheckerResult[+A] { self =>
       case NonFatal(e) => CheckerFailure(e.getMessage)
     }
 
-
   def foreach[U](f : A => U) : Unit 
 
   def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B]
@@ -63,20 +62,25 @@ case class CheckerSuccess[+A](result : A) extends CheckerResult[A] {
   def get : A = result
 
   def map[B](f : A => B) : CheckerResult[B] =
-    CheckerSuccess(f(result))
+    CheckerResult[B](f(result))
 
   def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B] =
-    f(result)
+    try f(result)
+    catch {
+      case NonFatal(e) => CheckerFailure(e.getMessage)
+    }
 
   def filter(f : A => Boolean) : CheckerResult[A] = 
-    if (f(result)) this else CheckerFailure("Result was filtered")
+    try {
+      if (f(result)) this else CheckerFailure("Predicate failed for value " + result)
+    } catch {
+      case NonFatal(e) => CheckerFailure(e.getMessage)
+    }
 
-  def foreach[U](f : A => U) : Unit = { 
-    f(result)
-  }
+  def foreach[U](f : A => U) : Unit = f(result)
 
   def flatten[B](implicit ev : A <:< CheckerResult[B]): CheckerResult[B] =
-    ???
+    result
 
   def iterator : Iterator[A] = 
     collection.Iterator.single(result)
@@ -110,5 +114,10 @@ case class CheckerFailure[+A](cause : String) extends CheckerResult[A] {
 object CheckerResult {
 
   implicit def checker2Iterable[A](cr: CheckerResult[A]): Iterable[A] = cr.toList
+
+  def apply[A](r : => A) : CheckerResult[A] = 
+    try CheckerSuccess(r) catch {
+      case NonFatal(e) => CheckerFailure(e.getMessage)
+    }
 
 }

@@ -97,8 +97,12 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   // PREVIEWING
   //
 
-  def previewExpression(expr : Expression) : Unit = {
-  }
+  def previewExpression(expr : Expression) : Unit =
+    for {
+      wksp <- activeWorkspace
+    } {
+      // Hmm.  We don't have the framework gallery anymore ... we're gonna need this guy back ...
+    }
 
   //============================================================================================
   // UI ELEMENTS
@@ -129,6 +133,21 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   val environmentView = new TreeView[JavaFXEnvironmentEntry] {
     showRoot = false
     cellFactory = (_ => new EnvironmentTreeCell)
+  }
+
+  environmentView.selectionModel().selectedItem onChange {
+    val item = environmentView.selectionModel().selectedItem()
+
+    if (item != null) {
+      for {
+        wksp <- activeWorkspace
+      } {
+        item.value() match {
+          case idEntry : JavaFXIdentifierEntry => ???
+          case _ => wksp.previewPane.content.clear
+        }
+      }
+    }
   }
 
 }

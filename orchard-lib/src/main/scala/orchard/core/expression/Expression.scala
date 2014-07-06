@@ -21,15 +21,34 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   }
 
-  case class Variable(val ident : Identifier, shell : Shell, val isThin : Boolean) extends Expression {
+  case class Variable(val ident : Identifier, val shell : Shell, val isThin : Boolean) extends Expression {
 
     def name = ident.expand
     def ncell = shell.withFillingExpression(this)
     def styleString = if (isThin) "variable-thin" else "variable"
 
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Variable]
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Variable =>
+          (that canEqual this) && 
+          (that.shell == this.shell) &&
+          (that.ident.expand == this.ident.expand)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * (
+        41 * (
+          41 + shell.hashCode
+        ) + ident.expand.hashCode
+      )
+
   }
 
-  case class Filler(bdryIdent : Identifier, nook : Nook) extends Expression { thisFiller =>
+  case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expression { thisFiller =>
 
     def name = "def-" ++ bdryIdent.expand
     def ncell = nook.withFiller(this)
@@ -38,6 +57,19 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     def bdryAddress : CellAddress =
       nook.framework.topCell.boundaryAddress
+
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Filler]
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Filler =>
+          (that canEqual this) && (that.nook == this.nook)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * ( 41 + nook.hashCode )
 
     trait BoundaryExpr extends Expression {
 
@@ -48,21 +80,48 @@ trait ExpressionModule { thisChecker : TypeChecker =>
       def interior = thisFiller
       def ncell = interior.ncell.seek(bdryAddress).get
 
+      def canEqual(other : Any) : Boolean =
+        other.isInstanceOf[Filler#BoundaryExpr]
+
     }
 
     object Boundary extends BoundaryExpr {
 
+      override def equals(other : Any) : Boolean =
+        other match {
+          case that : Filler#BoundaryExpr =>
+            (that canEqual this) && (that.interior == this.interior)
+          case _ => false
+        }
+
+      override def hashCode : Int =
+        41 * ( 41 + interior.hashCode )
+
     }
   }
 
-  case class Reference(entry : ExpressionEntry) extends Expression {
+  case class Reference(val entry : ExpressionEntry) extends Expression {
 
     def name = entry.name
-    def ncell = entry.expression.ncell
-    def qualifiedId : String = ???
+    def ncell = entry.referenceNCell
+    def qualifiedName : String = entry.qualifiedName
     def isThin : Boolean = entry.isThin
 
     def styleString : String = entry.styleString
+
+    def canEqual(other : Any) : Boolean =
+      other.isInstanceOf[Reference]
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Reference =>
+          (that canEqual this) && 
+          (that.entry.qualifiedName == this.entry.qualifiedName)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * ( 41 + this.entry.qualifiedName.hashCode)
 
   }
 
@@ -104,10 +163,13 @@ trait ExpressionModule { thisChecker : TypeChecker =>
     def isThinBoundary : Boolean =
       framework.topCell.isThinBoundary
 
-    def withFiller(filler : Filler) : NCell[Expression] = {
-      val frameworkCopy = framework.extract(framework.topCell)
+    def withFiller(filler : Filler) : NCell[Expression] =
+      withFillerAndBoundary(filler, filler.Boundary)
+
+    def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
+      val frameworkCopy = framework.duplicate
       frameworkCopy.topCell.item = Some(filler)
-      frameworkCopy.topCell.boundaryFace.item = Some(filler.Boundary)
+      frameworkCopy.topCell.boundaryFace.item = Some(boundary)
       frameworkCopy.topCell.toNCell map (_.get)
     }
 

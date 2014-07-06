@@ -15,6 +15,8 @@ import orchard.core.expression._
 trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMixin =>
 
   type ModuleEntryType = JavaFXModuleEntry
+  type ScopeType = JavaFXScope
+  type ExpressionEntryType = JavaFXExpressionEntry
   type ModuleType = JavaFXModule
   type ParameterType = JavaFXParameter
   type LiftType = JavaFXLift
@@ -37,7 +39,10 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
   }
 
-  case class JavaFXModule(val name : String) extends JavaFXModuleEntry with Module {
+  abstract class JavaFXScope extends JavaFXModuleEntry with Scope
+  abstract class JavaFXExpressionEntry extends JavaFXModuleEntry with ExpressionEntry
+
+  case class JavaFXModule(val name : String) extends JavaFXScope with Module {
 
     def entries : Seq[JavaFXModuleEntry] =
       children map (_.value())
@@ -47,30 +52,30 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
   }
 
-  case class JavaFXParameter(val variable : Variable)
-      extends JavaFXModuleEntry with Parameter {
-    def expression = variable
-  }
-
-  case class JavaFXLift(val filler : Filler) extends JavaFXModuleEntry with Lift {
-
-    def fillerEntry = LiftFillerEntry
-    def expression = filler.Boundary
-
-    object LiftFillerEntry extends JavaFXModuleEntry with FillerEntry {
-      def expression = filler
-    }
-
-    children += LiftFillerEntry
-
-  }
-
-  case class JavaFXImport(override val name : String) extends JavaFXModuleEntry with Import {
+  case class JavaFXImport(override val name : String) extends JavaFXScope with Import {
 
     def entries : Seq[JavaFXModuleEntry] =
       children map (_.value())
 
     def isOpen : Boolean = ???
+
+  }
+
+  case class JavaFXParameter(val variable : Variable)
+      extends JavaFXExpressionEntry with Parameter {
+    def expression = variable
+  }
+
+  case class JavaFXLift(val filler : Filler) extends JavaFXExpressionEntry with Lift {
+
+    def fillerEntry = LiftFillerEntry
+    def expression = filler.Boundary
+
+    object LiftFillerEntry extends JavaFXExpressionEntry with FillerEntry {
+      def expression = filler
+    }
+
+    children += LiftFillerEntry
 
   }
 

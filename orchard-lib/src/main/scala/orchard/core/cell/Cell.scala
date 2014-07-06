@@ -112,6 +112,12 @@ object Cell {
         }
       }
 
+    def forall(p : A => Boolean) : Boolean = {
+      var allTrue = true
+      map (value => if (p(value)) () else { allTrue = false })
+      allTrue
+    }
+
     def finalObject : Cell[_0, A] =
       cell match {
         case Object(value, _) => Object(value)

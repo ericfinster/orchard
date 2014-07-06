@@ -20,9 +20,11 @@ trait EnvironmentModule { thisChecker : TypeChecker =>
   trait EnvironmentEntry extends Styleable {
     thisEntry : EnvironmentEntryType =>
 
+    type LocalEntryType <: ModuleEntryType
+
     def parentGroup : Option[GroupType]
 
-    def moduleEntry : ModuleEntryType
+    def moduleEntry : LocalEntryType
 
     def name : String = moduleEntry.name
     def qualifiedName : String = moduleEntry.qualifiedName
@@ -33,16 +35,24 @@ trait EnvironmentModule { thisChecker : TypeChecker =>
   trait IdentifierEntry {
     thisEntry : IdentifierType =>
 
+    type LocalEntryType = ExpressionEntryType
+
     def liftIdentifier : IdentifierType = this
+
+    def moduleEntry : ExpressionEntry
 
   }
 
   trait GroupEntry {
     thisEntry : GroupType =>
 
+    type LocalEntryType = ScopeType
+
     def liftGroup : GroupType = this
 
     def entries : Seq[EnvironmentEntryType]
+
+    def moduleEntry : Scope
 
   }
 
@@ -58,7 +68,7 @@ trait EnvironmentModule { thisChecker : TypeChecker =>
   // CONSTRUCTORS
   //
 
-  def newIdentifierEntry(moduleEntry : ModuleEntryType) : IdentifierType
-  def newGroupEntry(moduleEntry : ModuleEntryType, entries : Seq[EnvironmentEntryType]) : GroupType
+  def newIdentifierEntry(exprEntry : ExpressionEntryType) : IdentifierType
+  def newGroupEntry(scope : ScopeType, entries : Seq[EnvironmentEntryType]) : GroupType
 
 }

@@ -38,7 +38,7 @@ trait WorksheetModule { thisChecker : InteractiveTypeChecker =>
     def getSelectionBase : CheckerResult[CellType] = 
       selectionBase match {
         case None => CheckerFailure("No selection")
-        case Some(base) => CheckerSuccess(base)
+        case Some(base) => CheckerResult(base)
       }
 
     def extend = glob(Negative, Positive)
@@ -140,7 +140,7 @@ trait WorksheetModule { thisChecker : InteractiveTypeChecker =>
 
           clearAndSelect(targetCell)
 
-          CheckerSuccess(())
+          CheckerResult(())
         }
       }
     }
@@ -188,7 +188,7 @@ trait WorksheetModule { thisChecker : InteractiveTypeChecker =>
 
           clearAndSelect(targetCell)
 
-          CheckerSuccess(())
+          CheckerResult(())
         }
       }
   }

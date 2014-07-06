@@ -9,6 +9,7 @@ package orchard.core.expression
 
 import scala.language.implicitConversions
 
+import orchard.core.cell._
 import orchard.core.ui.Styleable
 
 trait ModuleModule { thisChecker : TypeChecker => 
@@ -18,10 +19,12 @@ trait ModuleModule { thisChecker : TypeChecker =>
   //
 
   type ModuleEntryType <: ModuleEntry
-  type ModuleType <: ModuleEntryType with Module
-  type ImportType <: ModuleEntryType with Import
-  type ParameterType <: ModuleEntryType with Parameter
-  type LiftType <: ModuleEntryType with Lift
+  type ScopeType <: ModuleEntryType with Scope
+  type ExpressionEntryType <: ModuleEntryType with ExpressionEntry
+  type ModuleType <: ScopeType with Module
+  type ImportType <: ScopeType with Import
+  type ParameterType <: ExpressionEntryType with Parameter
+  type LiftType <: ExpressionEntryType with Lift
 
   //============================================================================================
   // MODULE TRAITS
@@ -41,7 +44,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
   }
 
   trait Scope extends ModuleEntry {
-    thisScope : ModuleEntryType =>
+    thisScope : ScopeType =>
 
     def entries : Seq[ModuleEntryType]
 
@@ -72,7 +75,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
   }
 
   trait ExpressionEntry extends ModuleEntry {
-    thisEntry : ModuleEntryType =>
+    thisEntry : ExpressionEntryType =>
 
     type ExpressionType <: Expression
 
@@ -81,6 +84,9 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def name : String = expression.name
     def isThin : Boolean = expression.isThin
     def styleString : String = expression.styleString
+
+    // This could be typed better ...
+    def referenceNCell : NCell[Expression]
 
   }
 
@@ -91,6 +97,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def liftParameter : ParameterType = this
 
+    def referenceNCell = 
+      expression.shell.withFillingExpression(Reference(thisParameter))
   }
 
   trait Lift extends ExpressionEntry {
@@ -101,17 +109,25 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def liftLift : LiftType = this
     def fillerEntry : FillerEntry
 
+    def referenceNCell =
+      expression.interior.nook.withFillerAndBoundary(
+        Reference(fillerEntry),
+        Reference(thisLift)
+      )
+
     trait FillerEntry extends ExpressionEntry {
-      thisFillerEntry : ModuleEntryType =>
+      thisFillerEntry : ExpressionEntryType =>
 
       type ExpressionType = Filler
 
-      def liftFillerEntry : ModuleEntryType = this
+      def liftFillerEntry : ExpressionEntryType = this
 
+      def referenceNCell =
+        thisLift.referenceNCell.seek(expression.bdryAddress).get
     }
 
     object FillerEntry {
-      implicit def fillerEntryIsEntry(f : FillerEntry) : ModuleEntryType = f.liftFillerEntry
+      implicit def fillerEntryIsEntry(f : FillerEntry) : ExpressionEntryType = f.liftFillerEntry
     }
 
   }

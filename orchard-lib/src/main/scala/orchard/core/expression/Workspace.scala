@@ -61,7 +61,7 @@ trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
               selectedCell.item = Neutral(Some(varRef))
               worksheet.selectAsBase(selectedCell)
 
-              CheckerSuccess(())
+              CheckerResult(())
             }
           }
         )
@@ -94,60 +94,46 @@ trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
               boundaryCell.item = Neutral(Some(bdryRef))
               worksheet.selectAsBase(selectedCell)
 
-              CheckerSuccess(())
+              CheckerResult(())
             }
           })
 
       }
     
-    // def pasteToSelection(pasteExpr : Expression) =
-    //   for {
-    //     worksheet <- activeWorksheet
-    //     if (worksheet.selectionIsUnique)
-    //     selectedCell <- worksheet.selectionBase
-    //   } {
-    //     selectedCell.skeleton.zip(pasteExpr.ncell) match {
-    //       case None => editor.consoleError("Selected cell has incompatible shape.")
-    //       case Some(zippedTree) => {
+    // !!! BUG !!! - Remember you need to keep track of some kind of bindings
+    // because this will allow for f : x -> y to be pasted into a loop
+    def pasteToSelection(pasteExpr : Expression) : CheckerResult[Unit] = 
+      for {
+        worksheet <- getActiveWorksheet
+        selectedCell <- worksheet.getSelectionBase
+        _ <- verify(worksheet.selectionIsUnique, "Selection is not unique")
+        zippedTree <- zipShapes(selectedCell.skeleton, pasteExpr.ncell)
+        okToPaste <- shapeSequence(
+          zippedTree map {
+            case (cell, expr) =>
+              if (cell.isEmpty) CheckerResult(true) else {
+                cell.item match {
+                  case Neutral(Some(tgtExpr)) => 
+                    if (convertsTo(tgtExpr, expr))
+                      CheckerResult(true)
+                    else
+                      CheckerFailure("Expression " ++ tgtExpr.toString ++ " does not convert to " ++ expr.toString)
+                  case _ => CheckerFailure("Unexpected value encountered ...")
+                }
+              }
+          }
+        )
+      } yield {
+        worksheet.deselectAll
 
-    //         var itFits = true
-
-    //         zippedTree map {
-    //           case (cell, expr) => {
-    //             if (! cell.isEmpty) {
-    //               cell.item match {
-    //                 case Neutral(Some(e)) => itFits &&= {
-    //                   if (e convertsTo expr) true else {
-    //                     editor.consoleError("Match error: expressions " ++ e.toString ++
-    //                       " and " ++ expr.toString ++ " are not convertible.")
-    //                     false
-    //                   }
-    //                 }
-    //                 case _ => itFits = false
-    //               }
-    //             }
-    //           }
-    //         }
-
-    //         if (itFits) {
-    //           worksheet.deselectAll
-
-    //           // BUG!!! - This refreshes the gallery on *every* assignment.  Need to delay that
-    //           // somehow ....
-
-    //           zippedTree map {
-    //             case (cell, expr) => {
-    //               if (cell.isEmpty) {
-    //                 cell.item = Neutral(Some(expr))
-    //               }
-    //             }
-    //           }
-    //         } else {
-    //           editor.consoleError("Pasting failed.")
-    //         }
-    //       }
-    //     }
-    //   }
+        zippedTree map {
+          case (cell, expr) => {
+            if (cell.isEmpty) {
+              cell.item = Neutral(Some(expr))
+            }
+          }
+        }
+      }
 
     // def importActiveInstantiation : Unit =
     //   for {

@@ -7,6 +7,8 @@
 
 package orchard.core.expression
 
+import orchard.core.cell._
+
 abstract class TypeChecker 
     extends ModuleModule
     with EnvironmentModule
@@ -18,6 +20,40 @@ abstract class TypeChecker
 
   def rootModule : ModuleType
 
+  //============================================================================================
+  // BINDING ROUTINES
+  //
+
+  def zipShapes[A, B](leftShape : NCell[A], rightShape : NCell[B]) : CheckerResult[NCell[(A, B)]] = 
+    leftShape.zip(rightShape) match {
+      case None => CheckerFailure("Incompatible shape.")
+      case Some(zipped) => CheckerResult(zipped)
+    }
+
+  def canPaste(target : NCell[Option[Expression]], expr : NCell[Expression]) : CheckerResult[Boolean] =
+    for {
+      pairs <- zipShapes(target, expr)
+      okToPasteShape <- shapeSequence(
+        pairs map {
+          case (None, _) => CheckerResult(true)
+          case (Some(e0), e1) => 
+            if (convertsTo(e0, e1))
+              CheckerResult(true)
+            else
+              CheckerFailure("Expression " ++ e0.toString ++ " does not convert to " ++ e1.toString)
+        }
+      )
+    } yield true
+
+  def convertsTo(expr1 : Expression, expr2 : Expression) : Boolean = {
+    // obviously, this will need to be more complicated in the future
+    expr1 == expr2
+  }
+
+  //============================================================================================
+  // MODULE MANAGEMENT
+  //
+
   def appendSubmodule(module : ModuleType, rawModuleId : String) : CheckerResult[ModuleType] = {
     ModuleIdentParser(rawModuleId) match {
       case ModuleIdentParser.Success(moduleId, _) => {
@@ -26,7 +62,7 @@ abstract class TypeChecker
         } else {
           val subMod = newModule(moduleId)
           module.appendEntry(subMod)
-          CheckerSuccess(subMod)
+          CheckerResult(subMod)
         }
       }
       case _ : ModuleIdentParser.NoSuccess => 
@@ -77,7 +113,7 @@ abstract class TypeChecker
   def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
     val idents : List[CheckerResult[Identifier]] = 
       rawIdent.tokens map {
-        case RawLiteral(lit) => CheckerSuccess(LiteralIdentifier(lit))
+        case RawLiteral(lit) => CheckerResult(LiteralIdentifier(lit))
         case RawReference(ref) =>
           for {
             resultRef <- lookupIdentifier(ref, scope)
@@ -154,7 +190,7 @@ abstract class TypeChecker
   def lookupIdentifier(name : String, scope : Scope) : CheckerResult[IdentifierType] = {
     (identifierSeq(getEnvironment(scope)) find (entry => entry.name == name)) match {
       case None => CheckerFailure("Identifier lookup failed.")
-      case Some(e) => CheckerSuccess(e)
+      case Some(e) => CheckerResult(e)
     }
   }
 
@@ -183,14 +219,14 @@ abstract class TypeChecker
 
   def verify(condition : Boolean, message : String) : CheckerResult[Unit] = 
     if (condition) {
-      CheckerSuccess(())
+      CheckerResult(())
     } else {
       CheckerFailure(message)
     }
 
   def sequence[A](steps : List[CheckerResult[A]]) : CheckerResult[List[A]] =
     steps match {
-      case Nil => CheckerSuccess(Nil)
+      case Nil => CheckerResult(Nil)
       case s :: ss =>
         for {
           prevSteps <- sequence(ss)
@@ -198,5 +234,12 @@ abstract class TypeChecker
         } yield (curStep :: prevSteps)
     }
 
+  def shapeSequence[A](shape : NCell[CheckerResult[A]]) : CheckerResult[NCell[A]] =
+    CheckerResult(
+      shape map {
+        case CheckerSuccess(a) => a
+        case CheckerFailure(cause) => throw new RuntimeException(cause)
+      }
+    )
 }
 
