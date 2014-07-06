@@ -10,6 +10,10 @@ package orchard.ui.javafx
 import scalafx.Includes._
 import scalafx.scene.control._
 
+import scala.collection.JavaConversions._
+
+import javafx.scene.{control => jfxsc}
+
 import orchard.core.expression._
 
 trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTypeCheckerMixin =>
@@ -18,19 +22,23 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
   type IdentifierType = JavaFXIdentifierEntry
   type GroupType = JavaFXGroupEntry
 
-  abstract class JavaFXEnvironmentEntry extends TreeItem[JavaFXEnvironmentEntry] with EnvironmentEntry {
+  abstract class JavaFXEnvironmentEntry 
+      extends jfxsc.TreeItem[JavaFXEnvironmentEntry] 
+      with EnvironmentEntry {
 
     def parentGroup : Option[GroupType] = {
-      val parentItem = parent()
+      val parentItem = getParent
 
       if (parentItem == null) None else 
-        parentItem.value() match {
+        parentItem.getValue match {
           case grp : JavaFXGroupEntry => Some(grp)
           case _ => None
         }
     }
 
-    value = this
+    setValue(this)
+
+    override def toString = name
 
   }
 
@@ -38,7 +46,7 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
     val moduleEntry : JavaFXExpressionEntry
   ) extends JavaFXEnvironmentEntry with IdentifierEntry {
 
-    override def toString = name
+    // override def toString = name
 
   }
 
@@ -47,9 +55,9 @@ trait JavaFXEnvironmentModule extends EnvironmentModule { thisSystem : JavaFXTyp
     val entries : Seq[JavaFXEnvironmentEntry]
   ) extends JavaFXEnvironmentEntry with GroupEntry {
 
-    children ++= entries map (_.delegate)
+    getChildren.addAll(entries)
 
-    override def toString = name
+    // override def toString = name
 
   }
 

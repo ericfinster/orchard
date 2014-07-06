@@ -14,7 +14,7 @@ abstract class InteractiveTypeChecker
 
   type WorkspaceType <: Workspace
 
-  def getActiveWorkspace : CheckerResult[WorkspaceType]
+  def getActiveWorkspace : CheckerResult[Workspace]
   def setActiveWorkspace(wksp : WorkspaceType) : CheckerResult[Unit]
 
 

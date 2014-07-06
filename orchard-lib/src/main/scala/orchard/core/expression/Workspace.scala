@@ -117,7 +117,7 @@ trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
                     if (convertsTo(tgtExpr, expr))
                       CheckerResult(true)
                     else
-                      CheckerFailure("Expression " ++ tgtExpr.toString ++ " does not convert to " ++ expr.toString)
+                      CheckerFailure("Expression " ++ tgtExpr.name ++ " does not convert to " ++ expr.name)
                   case _ => CheckerFailure("Unexpected value encountered ...")
                 }
               }
@@ -180,6 +180,8 @@ trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
 
     class WorkspaceFramework(seed : NCell[Option[Expression]])
         extends Framework(seed) {
+
+      def this(expr : Expression) = this(expr.ncell map (Some(_)))
 
       type FrameworkType = WorkspaceFramework
       type CellType = WorkspaceFrameworkCell

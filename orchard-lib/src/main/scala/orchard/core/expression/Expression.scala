@@ -102,9 +102,14 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   case class Reference(val entry : ExpressionEntry) extends Expression {
 
-    def name = entry.name
+    val name = entry.name
     def ncell = entry.referenceNCell
-    def qualifiedName : String = entry.qualifiedName
+
+    def qualifiedName : String = {
+      println("Getting qualified name for: " ++ name)
+      entry.qualifiedName
+    }
+
     def isThin : Boolean = entry.isThin
 
     def styleString : String = entry.styleString

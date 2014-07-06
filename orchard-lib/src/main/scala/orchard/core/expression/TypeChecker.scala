@@ -40,13 +40,14 @@ abstract class TypeChecker
             if (convertsTo(e0, e1))
               CheckerResult(true)
             else
-              CheckerFailure("Expression " ++ e0.toString ++ " does not convert to " ++ e1.toString)
+              CheckerFailure("Expression " ++ e0.name ++ " does not convert to " ++ e1.name)
         }
       )
     } yield true
 
   def convertsTo(expr1 : Expression, expr2 : Expression) : Boolean = {
     // obviously, this will need to be more complicated in the future
+    println("Checking conversion between " ++ expr1.name ++ " and " ++ expr2.name)
     expr1 == expr2
   }
 

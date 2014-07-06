@@ -30,8 +30,12 @@ trait Editor {
   def executeCheckerCommand[A](cmd : CheckerResult[A]) : Unit = 
     cmd match {
       case CheckerSuccess(_) => ()
-      case CheckerFailure(cause) =>
-        consoleError(cause)
+      case CheckerFailure(e) => {
+        if (e.getMessage == null) {
+          consoleError(e.getStackTraceString)
+        } else
+          consoleError(e.getMessage)
+      }
     }
 
   // I don't quite see how to set up the IO mechanism yet.  Let's move on with the

@@ -19,6 +19,7 @@ trait JavaFXTypeCheckerMixin
     with JavaFXModuleModule
     with JavaFXEnvironmentModule
     with JavaFXWorkspaceModule
+    with JavaFXFrameworkModule
     with CellDefinitions
 
 class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) extends JavaFXTypeCheckerMixin {
@@ -97,11 +98,25 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   // PREVIEWING
   //
 
+  var myActiveExpression : Option[Expression] = None
+
+  def activeExpression : Option[Expression] = myActiveExpression
+  def activeExpression_=(exprOpt : Option[Expression]) = {
+    myActiveExpression = exprOpt
+
+    exprOpt match {
+      case None => for { wksp <- activeWorkspace } { wksp.previewPane.content.clear}
+      case Some(expr) => previewExpression(expr)
+    }
+  }
+
   def previewExpression(expr : Expression) : Unit =
     for {
       wksp <- activeWorkspace
     } {
-      // Hmm.  We don't have the framework gallery anymore ... we're gonna need this guy back ...
+      val gallery = new FrameworkGallery(new wksp.WorkspaceFramework(expr))
+      wksp.previewPane.content = gallery
+      gallery.refreshAll
     }
 
   //============================================================================================
@@ -143,8 +158,9 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
         wksp <- activeWorkspace
       } {
         item.value() match {
-          case idEntry : JavaFXIdentifierEntry => ???
-          case _ => wksp.previewPane.content.clear
+          case idEntry : JavaFXIdentifierEntry => 
+            activeExpression = Some(idEntry.moduleEntry.reference)
+          case _ => activeExpression = None
         }
       }
     }

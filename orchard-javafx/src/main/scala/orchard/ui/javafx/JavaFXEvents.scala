@@ -20,32 +20,30 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     new EventHandler[KeyEvent] {
       def handle(ev : KeyEvent) {
         ev.getCode match {
-          // case KeyCode.LEFT => {
-          //   if (ev.isControlDown) {
-          //     val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-          //     if (previewGallery != null)
-          //       previewGallery.prev
-          //   } else
-          //     for { gallery <- activeGallery } gallery.prev
+          case KeyCode.LEFT => {
+            for { 
+              checker <- typeChecker
+              wksp <- checker.activeWorkspace
+              gallery <- wksp.activeGallery 
+            } gallery.prev
 
-          //   ev.consume
-          // }
-          // case KeyCode.RIGHT => {
-          //   if (ev.isControlDown) {
-          //     val previewGallery = previewPane.content.head.asInstanceOf[SpinnerGallery[Any]]
-          //     if (previewGallery != null)
-          //       previewGallery.next
-          //   } else 
-          //     for { gallery <- activeGallery } gallery.next
+            ev.consume
+          }
+          case KeyCode.RIGHT => {
+            for { 
+              checker <- typeChecker
+              wksp <- checker.activeWorkspace
+              gallery <- wksp.activeGallery 
+            } gallery.next
 
-          //   ev.consume
-          // }
+            ev.consume
+          }
           case KeyCode.E => if (ev.isControlDown) onExtrude
           case KeyCode.D => if (ev.isControlDown) onDrop
           case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           case KeyCode.F => if (ev.isControlDown) onFill  
           case KeyCode.P => if (ev.isControlDown) onPaste
-          // case KeyCode.T => if (ev.isControlDown) onNewSheet
+          case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
           // case KeyCode.B => if (ev.isControlDown) onBind
@@ -108,6 +106,14 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       checker.newWorkspace
     }
 
+  def onNewSheet : Unit =
+    for {
+      checker <- typeChecker
+      wksp <- checker.activeWorkspace
+    } {
+      wksp.newSheet
+    }
+
   def onExtrude : Unit =
     for {
       checker <- typeChecker
@@ -145,7 +151,9 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
   def onPaste : Unit = 
     for {
       checker <- typeChecker
+      expr <- checker.activeExpression
       wksp <- checker.activeWorkspace
     } {
+      executeCheckerCommand(wksp.pasteToSelection(expr))
     }
 }

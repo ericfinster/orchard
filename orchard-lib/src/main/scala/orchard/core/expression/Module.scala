@@ -35,11 +35,13 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def parentScope : Option[Scope]
 
-    def qualifiedName : String = 
+    def qualifiedName : String = {
+      println("Module qualified name for: " ++ name)
       parentScope match {
         case None => name
         case Some(scope) => scope.qualifiedName ++ "/" ++ name
       }
+    }
 
   }
 
@@ -81,11 +83,12 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def expression : ExpressionType
 
-    def name : String = expression.name
-    def isThin : Boolean = expression.isThin
-    def styleString : String = expression.styleString
+    val name : String = expression.name
+    val isThin : Boolean = expression.isThin
+    val styleString : String = expression.styleString
 
     // This could be typed better ...
+    val reference : Reference = Reference(thisEntry)
     def referenceNCell : NCell[Expression]
 
   }
@@ -98,7 +101,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def liftParameter : ParameterType = this
 
     def referenceNCell = 
-      expression.shell.withFillingExpression(Reference(thisParameter))
+      expression.shell.withFillingExpression(thisParameter.reference)
   }
 
   trait Lift extends ExpressionEntry {
@@ -110,10 +113,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def fillerEntry : FillerEntry
 
     def referenceNCell =
-      expression.interior.nook.withFillerAndBoundary(
-        Reference(fillerEntry),
-        Reference(thisLift)
-      )
+      fillerEntry.referenceNCell.seek(fillerEntry.expression.bdryAddress).get
 
     trait FillerEntry extends ExpressionEntry {
       thisFillerEntry : ExpressionEntryType =>
@@ -123,7 +123,11 @@ trait ModuleModule { thisChecker : TypeChecker =>
       def liftFillerEntry : ExpressionEntryType = this
 
       def referenceNCell =
-        thisLift.referenceNCell.seek(expression.bdryAddress).get
+        expression.nook.withFillerAndBoundary(
+          thisFillerEntry.reference,
+          thisLift.reference
+        )
+
     }
 
     object FillerEntry {

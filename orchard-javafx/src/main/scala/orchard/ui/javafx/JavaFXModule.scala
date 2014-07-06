@@ -10,7 +10,11 @@ package orchard.ui.javafx
 import scalafx.Includes._
 import scalafx.scene.control._
 
+import scala.collection.JavaConversions._
+import javafx.scene.{control => jfxsc}
+
 import orchard.core.expression._
+
 
 trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMixin =>
 
@@ -22,20 +26,20 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
   type LiftType = JavaFXLift
   type ImportType = JavaFXImport
 
-  abstract class JavaFXModuleEntry extends TreeItem[JavaFXModuleEntry] with ModuleEntry {
+  abstract class JavaFXModuleEntry extends jfxsc.TreeItem[JavaFXModuleEntry] with ModuleEntry {
 
     def parentScope : Option[Scope] = {
-      val parentItem = parent()
+      val parentItem = getParent
 
       if (parentItem == null) None else 
-        parentItem.value() match {
+        parentItem.getValue match {
           case mod : JavaFXModule => Some(mod)
           case imprt : JavaFXImport => Some(imprt)
           case _ => None
         }
     }
 
-    value = this
+    setValue(this)
 
   }
 
@@ -45,17 +49,17 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
   case class JavaFXModule(val name : String) extends JavaFXScope with Module {
 
     def entries : Seq[JavaFXModuleEntry] =
-      children map (_.value())
+      getChildren map (_.getValue)
 
     def appendEntry(entry : JavaFXModuleEntry) : Unit = 
-      children += entry
+      getChildren add entry
 
   }
 
   case class JavaFXImport(override val name : String) extends JavaFXScope with Import {
 
     def entries : Seq[JavaFXModuleEntry] =
-      children map (_.value())
+      getChildren map (_.getValue)
 
     def isOpen : Boolean = ???
 
@@ -75,7 +79,7 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
       def expression = filler
     }
 
-    children += LiftFillerEntry
+    getChildren add LiftFillerEntry
 
   }
 

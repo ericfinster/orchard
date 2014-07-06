@@ -23,7 +23,7 @@ sealed abstract class CheckerResult[+A] { self =>
   def orElse[B >: A](default : => CheckerResult[B]) : CheckerResult[B] = 
     try if (isSuccess) this else default
     catch {
-      case NonFatal(e) => CheckerFailure(e.getMessage)
+      case NonFatal(e) => CheckerFailure(e)
     }
 
   def foreach[U](f : A => U) : Unit 
@@ -67,14 +67,15 @@ case class CheckerSuccess[+A](result : A) extends CheckerResult[A] {
   def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B] =
     try f(result)
     catch {
-      case NonFatal(e) => CheckerFailure(e.getMessage)
+      case NonFatal(e) => CheckerFailure(e)
     }
 
   def filter(f : A => Boolean) : CheckerResult[A] = 
     try {
-      if (f(result)) this else CheckerFailure("Predicate failed for value " + result)
+      if (f(result)) this else 
+        CheckerFailure("Predicate failed for value " + result)
     } catch {
-      case NonFatal(e) => CheckerFailure(e.getMessage)
+      case NonFatal(e) => CheckerFailure(e)
     }
 
   def foreach[U](f : A => U) : Unit = f(result)
@@ -89,12 +90,22 @@ case class CheckerSuccess[+A](result : A) extends CheckerResult[A] {
 
 }
 
-case class CheckerFailure[+A](cause : String) extends CheckerResult[A] {
+//import java.lang.RuntimeException
+
+object CheckerFailure {
+
+  def apply(cause : String) = new CheckerFailure(cause)
+
+}
+
+case class CheckerFailure[+A](val exception : Throwable) extends CheckerResult[A] {
+
+  def this(cause : String) = this(new RuntimeException(cause))
 
   def isSuccess : Boolean = false
   def isFailure : Boolean = true
 
-  def get : A = throw new NoSuchElementException("CheckerFailure.get")
+  def get : A = throw exception
 
   def map[B](f : A => B) : CheckerResult[B] = this.asInstanceOf[CheckerResult[B]]
   def flatMap[B](f : A => CheckerResult[B]) : CheckerResult[B] = this.asInstanceOf[CheckerResult[B]]
@@ -117,7 +128,7 @@ object CheckerResult {
 
   def apply[A](r : => A) : CheckerResult[A] = 
     try CheckerSuccess(r) catch {
-      case NonFatal(e) => CheckerFailure(e.getMessage)
+      case NonFatal(e) => CheckerFailure(e)
     }
 
 }
