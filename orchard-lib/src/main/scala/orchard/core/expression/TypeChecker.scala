@@ -7,6 +7,8 @@
 
 package orchard.core.expression
 
+import scala.language.higherKinds
+
 import orchard.core.cell._
 
 abstract class TypeChecker 
@@ -226,6 +228,7 @@ abstract class TypeChecker
       CheckerFailure(message)
     }
 
+  // Please make these monadic ...
   def sequence[A](steps : List[CheckerResult[A]]) : CheckerResult[List[A]] =
     steps match {
       case Nil => CheckerResult(Nil)
@@ -235,6 +238,17 @@ abstract class TypeChecker
           curStep <- s
         } yield (curStep :: prevSteps)
     }
+
+  def seqSeq[A](steps : Seq[CheckerResult[A]]) : CheckerResult[Seq[A]] = {
+    if (steps.isEmpty) {
+      CheckerSuccess(Seq.empty)
+    } else {
+      for {
+        tailResult <- seqSeq(steps.tail)
+        headResult <- steps.head
+      } yield { headResult +: tailResult }
+    }
+  }
 
   def shapeSequence[A](shape : NCell[CheckerResult[A]]) : CheckerResult[NCell[A]] =
     CheckerResult(
