@@ -13,7 +13,8 @@ abstract class TypeChecker
     extends ModuleModule
     with EnvironmentModule
     with ExpressionModule 
-    with FrameworkModule {
+    with FrameworkModule 
+    with SyntaxModule {
 
   type EditorType <: Editor
   def editor : EditorType

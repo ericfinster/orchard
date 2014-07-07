@@ -41,6 +41,8 @@ trait JavaFXModuleModule extends ModuleModule { thisSystem : JavaFXTypeCheckerMi
 
     setValue(this)
 
+    override def toString = qualifiedName
+
   }
 
   abstract class JavaFXScope extends JavaFXModuleEntry with Scope

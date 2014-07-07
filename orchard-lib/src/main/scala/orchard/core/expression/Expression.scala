@@ -46,6 +46,8 @@ trait ExpressionModule { thisChecker : TypeChecker =>
         ) + ident.expand.hashCode
       )
 
+    override def toString : String = "Var(" ++ name ++ ")"
+
   }
 
   case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expression { thisFiller =>
@@ -70,6 +72,8 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     override def hashCode : Int =
       41 * ( 41 + nook.hashCode )
+
+    override def toString : String = "Filler(" ++ name ++ ")"
 
     trait BoundaryExpr extends Expression {
 
@@ -97,6 +101,7 @@ trait ExpressionModule { thisChecker : TypeChecker =>
       override def hashCode : Int =
         41 * ( 41 + interior.hashCode )
 
+      override def toString = "Boundary(" ++ name ++ ")"
     }
   }
 
@@ -104,11 +109,7 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     val name = entry.name
     def ncell = entry.referenceNCell
-
-    def qualifiedName : String = {
-      println("Getting qualified name for: " ++ name)
-      entry.qualifiedName
-    }
+    def qualifiedName : String = entry.qualifiedName
 
     def isThin : Boolean = entry.isThin
 
@@ -127,6 +128,9 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     override def hashCode : Int =
       41 * ( 41 + this.entry.qualifiedName.hashCode)
+
+    override def toString : String = 
+      "Ref(" ++ name ++ ")"
 
   }
 

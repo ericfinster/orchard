@@ -35,13 +35,13 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def parentScope : Option[Scope]
 
-    def qualifiedName : String = {
-      println("Module qualified name for: " ++ name)
+    def qualifiedName : String =
       parentScope match {
         case None => name
         case Some(scope) => scope.qualifiedName ++ "/" ++ name
       }
-    }
+
+    def toRawSyntax : Statement
 
   }
 
@@ -62,6 +62,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def styleString = "unknown"
 
+    def toRawSyntax = ModuleDefinition(name, entries map (_.toRawSyntax))
+
   }
 
   trait Import extends Scope {
@@ -73,6 +75,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def name = "unknown"
     def styleString = "unknown"
+
+    def toRawSyntax = ???
 
   }
 
@@ -102,6 +106,9 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def referenceNCell = 
       expression.shell.withFillingExpression(thisParameter.reference)
+
+    def toRawSyntax = ParameterDefinition(expression)
+
   }
 
   trait Lift extends ExpressionEntry {
@@ -115,6 +122,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def referenceNCell =
       fillerEntry.referenceNCell.seek(fillerEntry.expression.bdryAddress).get
 
+    def toRawSyntax = LiftDefinition(fillerEntry.expression)
+
     trait FillerEntry extends ExpressionEntry {
       thisFillerEntry : ExpressionEntryType =>
 
@@ -127,6 +136,8 @@ trait ModuleModule { thisChecker : TypeChecker =>
           thisFillerEntry.reference,
           thisLift.reference
         )
+
+      def toRawSyntax = ???
 
     }
 
