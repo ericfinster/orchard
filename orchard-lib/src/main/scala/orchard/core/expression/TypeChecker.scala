@@ -12,11 +12,13 @@ import scala.language.higherKinds
 import orchard.core.cell._
 
 abstract class TypeChecker 
-    extends ModuleModule
-    with EnvironmentModule
+    extends SyntaxModule
+    with IdentifierModule 
     with ExpressionModule 
+    with ModuleModule
+    with EnvironmentModule
     with FrameworkModule 
-    with SyntaxModule {
+    with SerializationModule {
 
   type EditorType <: Editor
   def editor : EditorType

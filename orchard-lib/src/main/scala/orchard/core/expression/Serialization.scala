@@ -24,17 +24,56 @@ trait SerializationModule { thisModule : TypeChecker =>
           <module name={name}>{ bodyXML }</module>
         }
       case ModuleImport(_, _, _) => CheckerFailure("Module import serialization not implemented")
-      case ParameterDefinition(variable) => ???
-      case LiftDefinition(filler) => ???
+      case ParameterDefinition(variable) =>
+        for {
+          variableXML <- expressionToXML(variable)
+        } yield {
+          <parameter>{variableXML}</parameter>
+        }
+      case LiftDefinition(filler) => 
+        for {
+          fillerXML <- expressionToXML(filler)
+        } yield {
+          <lift>{fillerXML}</lift>
+        }
     }
 
   def expressionToXML(expr : Expression) : CheckerResult[Node] = 
     expr match {
+      case Variable(ident, shell, isThin) => {
+        for {
+          identXML <- identifierToXML(ident)
+          shellXML <- shellToXML(shell)
+        } yield {
+          <variable isThin={isThin.toString}>{identXML ++ shellXML}</variable>
+        }
+      }
+      case Filler(bdryIdent, nook) => {
+        for {
+          identXML <- identifierToXML(bdryIdent)
+          nookXML <- nookToXML(nook)
+        } yield {
+          <filler>{identXML ++ nookXML}</filler>
+        }
+      }
+      // Not quite sure what to do here ....
+      case _ : Filler#BoundaryExpr => CheckerFailure("Attempt to serialize a boundary ...")
       case Reference(entry) => CheckerSuccess(<reference>{ entry.qualifiedName }</reference>)
-      case _ => CheckerFailure("Refusing to serialize non-reference ...")
     }
 
   def expressionFromXML(node : Node) : CheckerResult[Expression] = ???
+
+  def identifierToXML(ident : Identifier) : CheckerResult[Node] = 
+    ident match {
+      case LiteralIdentifier(lit) => CheckerResult(<literal>{lit}</literal>)
+      case ReferenceIdentifier(ref) => CheckerResult(<reference>{ ref.qualifiedName }</reference>)
+      case CompoundIdentifier(components) => 
+        for {
+          componentsXML <- sequence (components map (identifierToXML(_)))
+        } yield {
+          <identifier>{ componentsXML }</identifier>
+        }
+    }
 
   def nookToXML(nook : Nook) : CheckerResult[Node] = {
     val frameworkSerializer = implicitly[XmlSerializable[NCell[Option[Expression]]]]
@@ -82,7 +121,12 @@ trait SerializationModule { thisModule : TypeChecker =>
   implicit def expressionSerializable : XmlSerializable[Expression] = 
     new XmlSerializable[Expression] {
 
-      def toXML(expr : Expression) : Node = ???
+      def toXML(expr : Expression) : Node =
+        expressionToXML(expr) match {
+          case CheckerSuccess(node) => node
+          case _ => throw new RuntimeException("Serialization failed")
+        }
+
       def fromXML(node : Node) : Expression = ???
 
     }
@@ -99,7 +143,6 @@ trait SerializationModule { thisModule : TypeChecker =>
       def fromXML(node : Node) : NCell[Option[Expression]] = {
         cellSerializer.fromXML(node)
       }
-
     }
 
 }

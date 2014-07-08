@@ -10,10 +10,10 @@ package orchard.core.expression
 import orchard.core.cell._
 import orchard.core.complex._
 
-import IdentParser.Success
-import IdentParser.NoSuccess
-
 trait WorkspaceModule { thisModule : InteractiveTypeChecker =>
+
+  import IdentParser.Success
+  import IdentParser.NoSuccess
 
   abstract class Workspace(val module : ModuleType) { thisWorkspace =>
 

@@ -45,7 +45,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           case KeyCode.P => if (ev.isControlDown) onPaste
           case KeyCode.T => if (ev.isControlDown) onNewSheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
-          // case KeyCode.S => if (ev.isControlDown) onSaveModule
+          case KeyCode.S => if (ev.isControlDown) onSaveModule
           // case KeyCode.B => if (ev.isControlDown) onBind
           // case KeyCode.N => if (ev.isControlDown) onNewWorkspace
           case KeyCode.N => if (ev.isControlDown) { if (ev.isShiftDown) onNewModule else onNewSubmodule }
@@ -156,4 +156,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     } {
       executeCheckerCommand(wksp.pasteToSelection(expr))
     }
+
+  def onSaveModule : Unit = ???
+
 }
