@@ -102,6 +102,14 @@ object XmlSerializable {
         }
     }
 
+  implicit def ncellSerializable[A : XmlSerializable] : XmlSerializable[NCell[A]] = 
+    new XmlSerializable[NCell[A]] {
+      val ev = implicitly[XmlSerializable[Cell[_ <: Nat, A]]]
+
+      def toXML(ncell : NCell[A]) : xml.Node = ev.toXML(ncell)
+      def fromXML(node : xml.Node) : NCell[A] = ev.fromXML(node)
+    }
+
   implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =
     new XmlSerializable[Cell[_ <: Nat, A]] {
       val ev = implicitly[XmlSerializable[A]]

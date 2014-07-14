@@ -9,68 +9,50 @@ package orchard.core.expression
 
 import orchard.core.util.Util
 
-import scala.util.parsing.combinator.RegexParsers
-
 trait IdentifierModule { thisModule : TypeChecker =>
 
-  sealed trait Identifier {
+  case class Identifier(val tokens : List[IdentifierToken]) {
 
-    def expand : String
+    def expand : String = (tokens map (_.expand)).mkString
 
   }
 
-  case class LiteralIdentifier(val literal : String) extends Identifier {
+  sealed trait IdentifierToken {
+    def expand : String
+  }
+
+  case class LiteralToken(val literal : String) extends IdentifierToken {
     def expand : String = literal
     override def toString : String = "Lit(" ++ literal ++ ")"
   }
 
-  case class ReferenceIdentifier(ref : TypeChecker#IdentifierType) extends Identifier {
+  case class ReferenceToken(ref : TypeChecker#IdentifierType) extends IdentifierToken {
     def expand = ref.name
+    override def toString : String = "Ref(" ++ ref.name ++ ")"
   }
 
-  case class CompoundIdentifier(val components : List[Identifier]) extends Identifier {
-    def expand : String = (components map (_.expand)).mkString
-    override def toString : String = (components map (_.toString)).toString
+  def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
+    val idents : List[CheckerResult[IdentifierToken]] = 
+      rawIdent.tokens map {
+        case RawLiteralToken(lit) => CheckerResult(LiteralToken(lit))
+        case RawReferenceToken(ref) =>
+          for {
+            resultRef <- lookupIdentifier(ref, scope)
+          } yield ReferenceToken(resultRef)
+      }
+
+    for {
+      newIdents <- sequence(idents)
+    } yield Identifier(newIdents)
   }
 
-  object Identifier {
+  def identifierToRaw(ident : Identifier) : RawIdentifier = {
+    val rawTokens = ident.tokens map {
+      case LiteralToken(lit) => RawLiteralToken(lit)
+      case ReferenceToken(ref) => RawReferenceToken(ref.qualifiedName)
+    }
 
-    def empty : Identifier = CompoundIdentifier(List.empty)
-
-  }
-
-  case class RawIdentifier(val tokens : List[RawIdentToken]) {
-    override def toString = (tokens map (_.value)).mkString
-  }
-
-  sealed trait RawIdentToken { def value : String }
-  case class RawLiteral(val value : String) extends RawIdentToken
-  case class RawReference(val value : String) extends RawIdentToken
-
-
-  abstract class IdentifierParser extends RegexParsers {
-
-    def cleanString : Parser[String] = """[^\${}/]+""".r
-
-    def literal : Parser[RawLiteral] = cleanString ^^ { tok => RawLiteral(tok) }
-    def variable : Parser[RawReference] = "${" ~> cleanString <~ "}" ^^ { tok => RawReference(tok) }
-
-    def tokenSeq : Parser[RawIdentifier] = rep( literal | variable ) ^^ { toks => RawIdentifier(toks) }
-
-    override def skipWhitespace = false
-
-  }
-
-  object IdentParser extends IdentifierParser {
-
-    def apply(input : String) = parseAll(tokenSeq, input)
-
-  }
-
-  object ModuleIdentParser extends IdentifierParser {
-
-    def apply(input : String) = parseAll(cleanString, input)
-
+    RawIdentifier(rawTokens)
   }
 
 }

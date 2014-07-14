@@ -10,6 +10,7 @@ package orchard.ui.javafx
 import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.layout._
+import scalafx.stage.FileChooser
 
 import orchard.core.expression.Editor
 import orchard.core.expression.CheckerResult
@@ -24,6 +25,8 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     with Editor {
 
   implicit def pm : PopupManager = this
+
+  val fileChooser = new FileChooser
 
   //============================================================================================
   // CONSOLE ROUTINES

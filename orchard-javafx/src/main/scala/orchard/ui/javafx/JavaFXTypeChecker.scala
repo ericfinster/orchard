@@ -27,13 +27,13 @@ class JavaFXTypeChecker(val editor : JavaFXEditor, val rootModuleName : String) 
   type EditorType = JavaFXEditor
   type WorkspaceType = JavaFXWorkspace
 
-  def rootModule : JavaFXModule = new JavaFXModule(rootModuleName)
+  val rootModule : JavaFXModule = new JavaFXModule(rootModuleName)
 
   //============================================================================================
   // MODULE MANIPULATION
   //
 
-  var activeModule : Option[JavaFXModule] = None
+  var activeModule : Option[JavaFXModule] = Some(rootModule)
 
   var myFocusedModule : Option[JavaFXModule] = None
 

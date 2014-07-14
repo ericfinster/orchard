@@ -157,6 +157,18 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
       executeCheckerCommand(wksp.pasteToSelection(expr))
     }
 
-  def onSaveModule : Unit = ???
+  def onSaveModule = {
+    fileChooser.setTitle("Save")
+
+    val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+    if (file != null) {
+      for {
+        checker <- typeChecker
+      } {
+        executeCheckerCommand(checker.writeToFile(file))
+      }
+    }
+  }
 
 }

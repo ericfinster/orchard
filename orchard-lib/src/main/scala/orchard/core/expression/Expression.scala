@@ -138,49 +138,19 @@ trait ExpressionModule { thisChecker : TypeChecker =>
   // NOOKS
   //
 
-  class Nook(val framework : Framework[Option[Expression]]) {
+  abstract class AbstractNook[A : ExpressionLike] {
 
-    assert(framework.topCell.isNook)
+    val isExpressionLike = implicitly[ExpressionLike[A]]
+    type ExpressionType = isExpressionLike.NonEmptyType
 
-    val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
+    assert(framework.topCell.isExposedNook)
 
-    def map(f : Expression => Expression) : Nook = {
-      val duplicate = framework.duplicate
+    def framework : Framework[A]
 
-      duplicate forAllCells (cell => {
-        cell.item = cell.item map f
-      })
-
-      new Nook(duplicate)
-    }
-
-    // def normalize : Nook = {
-    //   // val duplicate = framework.duplicate
-
-    //   // duplicate forAllFaces (cell => {
-    //   //   cell.item foreach (e => {
-    //   //     cell.item = Some(e.normalize)
-    //   //     cell.promoteFaces
-    //   //   })
-    //   // })
-
-    //   // new Nook(duplicate)
-
-    //   map (_.normalize)
-    // }
+    val ncell : NCell[A] = framework.topCell.toNCell
 
     def isThinBoundary : Boolean =
       framework.topCell.isThinBoundary
-
-    def withFiller(filler : Filler) : NCell[Expression] =
-      withFillerAndBoundary(filler, filler.Boundary)
-
-    def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
-      val frameworkCopy = framework.duplicate
-      frameworkCopy.topCell.item = Some(filler)
-      frameworkCopy.topCell.boundaryFace.item = Some(boundary)
-      frameworkCopy.topCell.toNCell map (_.get)
-    }
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Nook]
@@ -197,48 +167,48 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   }
 
-  //============================================================================================
-  // SHELLS
-  //
+  class Nook(val framework : Framework[Option[Expression]]) extends AbstractNook[Option[Expression]] {
 
-  class Shell(val framework : Framework[Option[Expression]]) {
-
-    assert(framework.topCell.isShell)
-
-    val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
-
-    def map(f : Expression => Expression) : Shell = {
+    def map(f : Expression => Expression) : Nook = {
       val duplicate = framework.duplicate
 
       duplicate forAllCells (cell => {
         cell.item = cell.item map f
       })
 
-      new Shell(duplicate)
+      new Nook(duplicate)
     }
 
-    // def normalize : Shell = {
-    //   // val duplicate = framework.duplicate
+    def withFiller(filler : Filler) : NCell[Expression] =
+      withFillerAndBoundary(filler, filler.Boundary)
 
-    //   // duplicate forAllFaces (cell => {
-    //   //   cell.item foreach (e => {
-    //   //     cell.item = Some(e.normalize)
-    //   //     cell.promoteFaces
-    //   //   })
-    //   // })
+    def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
+      val frameworkCopy = framework.duplicate
+      frameworkCopy.topCell.item = Some(filler)
+      frameworkCopy.topCell.boundaryFace.item = Some(boundary)
+      frameworkCopy.topCell.toNCell map (_.get)
+    }
 
-    //   // new Shell(duplicate)
 
-    //   map (_.normalize)
-    // }
+  }
 
-    def withFillingExpression(expr : Expression) : NCell[Expression] =
-      framework.topCell.skeleton map (cell => {
-        cell.item match {
-          case None => expr
-          case Some(e) => e
-        }
-      })
+  //============================================================================================
+  // SHELLS
+  //
+
+  abstract class AbstractShell[A : ExpressionLike] {
+
+    val isExpressionLike = implicitly[ExpressionLike[A]]
+    type ExpressionType = isExpressionLike.NonEmptyType
+
+    assert(framework.topCell.isShell)
+
+    def framework : Framework[A]
+
+    val ncell : NCell[A] = framework.topCell.toNCell
+
+    def isThinBoundary : Boolean =
+      framework.topCell.isThinBoundary
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Shell]
@@ -255,11 +225,35 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
   }
 
+  class Shell(val framework : Framework[Option[Expression]]) extends AbstractShell[Option[Expression]] {
+
+    def map(f : Expression => Expression) : Shell = {
+      val duplicate = framework.duplicate
+
+      duplicate forAllCells (cell => {
+        cell.item = cell.item map f
+      })
+
+      new Shell(duplicate)
+    }
+
+    def withFillingExpression(expr : Expression) : NCell[Expression] =
+      framework.topCell.skeleton map (cell => {
+        cell.item match {
+          case None => expr
+          case Some(e) => e
+        }
+      })
+
+  }
+
   //============================================================================================
   // EXPRESSIONLIKE TYPECLASS
   //
 
   trait ExpressionLike[A] {
+
+    type NonEmptyType
 
     def empty : A
 
@@ -272,6 +266,8 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     implicit def optExprIsExpressionLike : ExpressionLike[Option[Expression]] =
       new ExpressionLike[Option[Expression]] {
+
+        type NonEmptyType = Expression
 
         def empty : Option[Expression] = None
 
@@ -286,6 +282,8 @@ trait ExpressionModule { thisChecker : TypeChecker =>
 
     implicit def polarityIsExpressionLike : ExpressionLike[Polarity[Option[Expression]]] =
       new ExpressionLike[Polarity[Option[Expression]]] {
+
+        type NonEmptyType = Expression
 
         def empty : Polarity[Option[Expression]] = Neutral(None)
 

@@ -57,6 +57,79 @@ abstract class TypeChecker
   }
 
   //============================================================================================
+  // RAW SYNTAX COMPILATION
+  //
+
+  import scalaz._
+  import std.list._
+
+  type Error[+A] = \/[String, A]
+  type BuilderState = Map[String, ModuleEntryType]
+  type Builder[A] = StateT[Error, BuilderState, A]
+  type BuilderM[S, A] = StateT[Error, S , A]
+
+  val M = MonadState[BuilderM, BuilderState]
+  import M._
+
+  val T = Traverse[List]
+
+  def builderSuccess[A](a : A) : Error[A] = \/-(a)
+  def builderFailure(cause : String) : Error[Nothing] = -\/(cause)
+
+  def insertState[A](st : BuilderState, e : Error[A]) : Error[(BuilderState, A)] = 
+    e map (a => (st, a))
+
+  def liftK[A](e : Error[A]) : Builder[A] = 
+    StateT(st => insertState(st, e))
+
+  def buildEntries(statement : Statement) : Builder[ModuleEntryType] = 
+    statement match {
+      case ModuleDefinition(name, body) => 
+        for {
+          env <- get
+        } yield newModule(name)
+      case ModuleImport(_, _, _) => ???
+      case ParameterDefinition(rawIdent, shell, isThin) =>
+        for {
+          env <- get
+          ident <- resolveRawIdentifier(rawIdent)
+        } yield {
+          val variable = Variable(ident, ???, isThin)
+          newParameter(variable)
+        }
+      case LiftDefinition(rawBdryIdent, nook) =>
+        for {
+          env <- get
+          ident <- resolveRawIdentifier(rawBdryIdent)
+        } yield {
+          val filler = Filler(ident, ???)
+          newLift(filler)
+        }
+    }
+
+  def resolveRawIdentifier(rawIdent : RawIdentifier) : Builder[Identifier] = {
+    def resolveToken(token : RawIdentifierToken, env : BuilderState) : Error[IdentifierToken] = 
+      token match {
+        case RawLiteralToken(lit) => builderSuccess(LiteralToken(lit))
+        case RawReferenceToken(name) =>
+          for { 
+            entry <- findEntry(name, env) 
+          } yield ReferenceToken(newIdentifierEntry(entry.asInstanceOf[ExpressionEntryType]))
+      }
+
+    for {
+      env <- get
+      tokens <- T.sequence(rawIdent.tokens map (tok => liftK(resolveToken(tok, env))))
+    } yield Identifier(tokens)
+  }
+
+  def findEntry(name : String, env : Map[String, ModuleEntryType]) : Error[ModuleEntryType] =
+    if (env.isDefinedAt(name)) 
+      builderSuccess(env(name))
+    else
+      builderFailure("Unresolved reference: " ++ name)
+
+  //============================================================================================
   // MODULE MANAGEMENT
   //
 
@@ -114,21 +187,6 @@ abstract class TypeChecker
       case _ : IdentParser.NoSuccess =>
         CheckerFailure("Invalid variable identifier: " ++ rawBdryId)
     }
-  }
-
-  def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
-    val idents : List[CheckerResult[Identifier]] = 
-      rawIdent.tokens map {
-        case RawLiteral(lit) => CheckerResult(LiteralIdentifier(lit))
-        case RawReference(ref) =>
-          for {
-            resultRef <- lookupIdentifier(ref, scope)
-          } yield ReferenceIdentifier(resultRef)
-      }
-
-    for {
-      newIdents <- sequence(idents)
-    } yield CompoundIdentifier(newIdents)
   }
 
   //============================================================================================

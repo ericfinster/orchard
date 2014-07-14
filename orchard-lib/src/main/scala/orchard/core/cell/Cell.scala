@@ -7,6 +7,7 @@
 
 package orchard.core.cell
 
+import scala.language.higherKinds
 import scala.language.implicitConversions
 
 import orchard.core.util._
@@ -239,7 +240,7 @@ object Cell {
 //  For abstracting over the dimension
 //
 
-abstract class NCell[A] { thisNCell =>
+abstract class NCell[+A] { thisNCell =>
   type Dim <: Nat
 
   val dim : Dim
@@ -306,6 +307,7 @@ abstract class NCell[A] { thisNCell =>
 }
 
 object NCell {
+
   implicit def cellIsNCell[D <: Nat, A](c : Cell[D, A]) : NCell[A] = 
       new NCell[A] {
         type Dim = D
@@ -319,6 +321,127 @@ object NCell {
 
   implicit def ncellHasOps[A](ncell : NCell[A]) : Cell.CellOps[ncell.dim.Self, A] = 
       ncell.cell
+
+
+  // I'm going to try to do it for a monad first, and then I'll see if I just need the
+  // applicable instance
+
+  import scalaz._
+
+  // WARNING!!! This implementation, I believe suffers from the same difficulty as the original
+  // map implementation did in that it seems some of the computations will run more than once, 
+  // seeing how we pass *all* off them and you know that there are duplicates possible within
+  // this implementation of opetopic cells.
+
+  // You have been thinking of another representation recently, by the way.  The idea is fairly
+  // simple.  Instead of having a cell tree consist of cells, it could consist of tags around 
+  // cells and cell trees themselves.  That is, internal to the node, you could stick either a
+  // cell wrapped in a little tag (meaning that it was external) or else a cell tree of one
+  // dimension higher (meaning that we were supposed to look at the "output" of that
+  // tree.)  This is how you do it in the example file in order to avoid repetitions.  It's 
+  // probably worth playing with this idea at some point
+
+  def sequence[A, M[+_]](ncell : NCell[M[A]])(implicit m : Monad[M]) : M[NCell[A]] = {
+    import m.functorSyntax._
+    sequenceCell(ncell.cell) map (cellIsNCell(_))
+  }
+
+  def sequenceCell[D <: Nat, A, M[+_]](cell : Cell[D, M[A]])(implicit m : Monad[M]) : M[Cell[D, A]] = {
+    import m.monadSyntax._
+
+    cell match {
+      case Object(value, ev) => {
+        implicit val isZero = ev
+
+        for {
+          a <- value
+        } yield ObjectCell(a)
+      }
+      case Composite(value, srcTree, tgtValue, ev) => {
+        implicit val hasPred = ev
+
+        for {
+          v <- value
+          tv <- tgtValue
+          resTree <- sequenceTree(srcTree)
+        } yield CompositeCell(v, resTree, tv)
+      }
+    }
+  }
+
+
+  def sequenceTree[D <: Nat, A, M[+_]](tree : CellTree[D, M[A]])(implicit m : Monad[M]) : M[CellTree[D, A]] = {
+    import m.monadSyntax._
+
+    tree match {
+      case Seed(obj, ev) => {
+        implicit val isZero = ev
+
+        for {
+          newObj <- sequenceCell(obj)
+        } yield SeedClass(newObj.asInstanceOf[ObjectCell[D, A]])
+      }
+      case Leaf(shape, ev) => {
+        implicit val hasPred = ev
+
+        for {
+          newShape <- sequenceCell(shape)
+        } yield LeafClass(newShape)
+      }
+      case Graft(cell, branches, ev) => {
+        implicit val hasPred = ev
+        import scalaz.std.vector._
+        val T = Traverse[Vector]
+
+        for {
+          newCell <- sequenceCell(cell)
+          newBranches <- T.sequence(branches map (sequenceTree(_)))
+        } yield GraftClass(newCell, newBranches)
+      }
+    }
+
+  }
+
+  // import scalaz.Traverse
+  // import scalaz.Applicative
+
+  // implicit def ncellIsTraverse : Traverse[NCell] = 
+  //   new Traverse[NCell] {
+
+  //     override def map[A, B](fa : NCell[A])(f : (A) => B) : NCell[B] =
+  //       fa map f
+
+  //     // def traverseImpl[G[_], A, B](fa : NCell[A])(f : (A) => G[B])(implicit arg0 : Applicative[G]) : G[NCell[B]] = ???
+
+  //   }
+
+  // implicit def ncellIsApplicative : Applicative[NCell] = 
+  //   new Applicative[NCell] {
+
+  //     def point[A](a: => A) : NCell[A] = Object(a)
+
+  //     def ap[A, B](fa : => NCell[A])(f : => NCell[A => B]) : NCell[B] = ???
+
+  //     override def map[A, B](fa : NCell[A])(f : (A) => B) : NCell[B] =
+  //       fa map f
+
+  //     def traverseImpl[G[_], A, B](fa : NCell[A])(f : (A) => G[B])(implicit arg0 : Applicative[G]) : G[NCell[B]] = {
+
+  //       val A = arg0
+  //       import A._
+
+  //       ???
+
+  //     }
+
+
+  //     // Hmmm. so what's the idea here?  I'm not reall sure this will work.  Just think of what the list instance would look
+  //     // like.  If a cell is mapped to a guy shorter than all of it's faces, then it's like an unzip kind of thing where we
+  //     // should kinda split things apart (I think).  But suppose he is longer.  Then do we duplicate his value on the lower
+  //     // faces?
+
+  //   }
+
 }
 
 //

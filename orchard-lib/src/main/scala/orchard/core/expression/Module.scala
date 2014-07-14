@@ -62,7 +62,7 @@ trait ModuleModule { thisChecker : TypeChecker =>
 
     def styleString = "unknown"
 
-    def toRawSyntax = ModuleDefinition(name, entries map (_.toRawSyntax))
+    def toRawSyntax = ModuleDefinition(name, (entries map (_.toRawSyntax)).toList)
 
   }
 
@@ -107,7 +107,12 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def referenceNCell = 
       expression.shell.withFillingExpression(thisParameter.reference)
 
-    def toRawSyntax = ParameterDefinition(expression)
+    def toRawSyntax = {
+      val referenceShell = 
+        expression.shell.ncell map (exprOpt => 
+          exprOpt map (e => e.asInstanceOf[Reference].qualifiedName))
+      ParameterDefinition(identifierToRaw(expression.ident), referenceShell, expression.isThin)
+    }
 
   }
 
@@ -122,7 +127,12 @@ trait ModuleModule { thisChecker : TypeChecker =>
     def referenceNCell =
       fillerEntry.referenceNCell.seek(fillerEntry.expression.bdryAddress).get
 
-    def toRawSyntax = LiftDefinition(fillerEntry.expression)
+    def toRawSyntax = {
+      val referenceShell = 
+        fillerEntry.expression.nook.ncell map (exprOpt =>
+          exprOpt map (e => e.asInstanceOf[Reference].qualifiedName))
+      LiftDefinition(identifierToRaw(fillerEntry.expression.bdryIdent), referenceShell)
+    }
 
     trait FillerEntry extends ExpressionEntry {
       thisFillerEntry : ExpressionEntryType =>
