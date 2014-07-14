@@ -21,8 +21,7 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     with JavaFXEvents 
     with JavaFXDialogs
     with JavaFXUI
-    with JavaFXMenus 
-    with Editor {
+    with JavaFXMenus {
 
   implicit def pm : PopupManager = this
 
