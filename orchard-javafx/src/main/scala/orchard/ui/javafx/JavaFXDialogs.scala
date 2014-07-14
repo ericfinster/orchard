@@ -36,8 +36,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
     def onHide =
       response match {
-        case DialogOK => 
-          executeCheckerCommand(handler(idField.text()))
+        case DialogOK => ()
         case DialogCancel => ()
       }
   }
@@ -63,10 +62,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
     def onHide = 
       response match {
-        case DialogOK =>
-          executeCheckerCommand(
-            handler(idField.text(), thinCheckBox.selected())
-          )
+        case DialogOK => ()
         case DialogCancel => ()
       }
   }

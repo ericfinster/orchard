@@ -44,59 +44,6 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def consoleDebug(str: String): Unit =
     console.appendText("DEBUG: " ++ str ++ "\n")
 
-  //============================================================================================
-  // INPUT CALLBACKS
-  //
-
-  def withAssumptionInfo[A](
-    thinHint : Boolean,
-    forceThin : Boolean,
-    handler : (String, Boolean) => CheckerResult[A]
-  ) : Unit = {
-
-    val varDialog = new VariableDialog(handler)
-
-    varDialog.thinCheckBox.selected = thinHint
-
-    if (forceThin) {
-      varDialog.thinCheckBox.selected = true
-      varDialog.thinCheckBox.disable = true
-    }
-
-    varDialog.run
-
-  }
-
-  def withFillerIdentifier[A](
-    handler : String => CheckerResult[A]
-  ) : Unit = {
-    val idDialog = new SimpleIdentifierDialog(handler)
-    idDialog.setHeading("Fill Nook")
-    idDialog.run
-  }
-
-  //============================================================================================
-  // THE TYPE CHECKER
-  //
-
-  var currentTypeChecker : Option[JavaFXTypeChecker] = Some(new JavaFXTypeChecker(this, "Prelude"))
-
-  def typeChecker : Option[JavaFXTypeChecker] = currentTypeChecker
-  def typeChecker_=(checker : JavaFXTypeChecker) = {
-    currentTypeChecker = Some(checker)
-    displayTypeChecker
-  }
-
-  def displayTypeChecker : Unit = 
-    for {
-      checker <- typeChecker
-    } {
-      modulePane.content = checker.moduleView
-      environmentPane.content = checker.environmentView
-    }
-
-  displayTypeChecker
-
 }
 
 
