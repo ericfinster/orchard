@@ -11,7 +11,7 @@ import orchard.core.cell._
 
 trait Worksheet {
 
-  def toNCell : NCell[ExpressionMarker]
+  def complex : MarkerComplex
 
   def selectCell(addr : CellAddress) : Option[Unit]
   def appendToSelection(addr : CellAddress) : Option[Unit]
