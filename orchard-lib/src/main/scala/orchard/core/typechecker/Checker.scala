@@ -8,7 +8,7 @@
 package orchard.core.typechecker
 
 import scalaz._
-import scalaz.concurrent._
+import Free._
 
 class Checker extends CheckerMonad {
 
@@ -16,9 +16,28 @@ class Checker extends CheckerMonad {
 
   private var environment : Environment = Map.empty
 
-  // The idea is that this will interpret the statements
-  // given by the free monad guy inside the type checking monad,
-  // the run the result and report back to the outside ...
-  def run(seq : StatementSeq) : Option[String] = ???
+  def interpret(seq : StatementSeq) : CheckerM[Unit] =
+    seq match {
+      case Suspend(BeginModule(name, next)) => 
+        for {
+          _ <- beginModule(name)
+          _ <- interpret(next)
+        } yield ()
+      case Suspend(EndModule(name, next)) =>
+        for {
+          _ <- endModule(name)
+          _ <- interpret(next)
+        } yield ()
+      case Suspend(ParameterDec(name, next)) =>
+        for {
+          _ <- createParameter(name, ???)
+          _ <- interpret(next)
+        } yield ()
+      case Suspend(LiftDec(name, next)) =>
+        for {
+          _ <- createLift(name, ???)
+          _ <- interpret(next)
+        } yield ()
+    }
 
 }

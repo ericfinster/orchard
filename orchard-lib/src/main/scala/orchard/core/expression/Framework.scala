@@ -23,7 +23,6 @@ trait FrameworkModule { thisChecker : TypeChecker =>
 
     def extract(cell : CellType) : FrameworkType
     def duplicate : FrameworkType = extract(topCell)
-    // def newFromExpression(expr : Expression) : FrameworkType
 
     def stabilityLevel : Option[Int]
     def invertibilityLevel : Option[Int]

@@ -12,8 +12,7 @@ import scalafx.scene.Node
 import scalafx.scene.layout._
 import scalafx.stage.FileChooser
 
-import orchard.core.expression.Editor
-import orchard.core.expression.CheckerResult
+import orchard.core.typechecker._
 
 import controls._
 
@@ -42,6 +41,12 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
   def consoleDebug(str: String): Unit =
     console.appendText("DEBUG: " ++ str ++ "\n")
+
+  //============================================================================================
+  // THE TYPECHECKER
+  //
+
+  val checker = new Checker
 
 }
 
