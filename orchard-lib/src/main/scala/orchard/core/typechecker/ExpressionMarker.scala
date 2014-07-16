@@ -20,7 +20,7 @@ sealed trait ExpressionMarker extends Styleable {
 
 sealed trait PolarityMarker extends ExpressionMarker {
 
-  def styleString = "polarity"
+  def styleString = "polarized"
 
   def isEmpty = false
   def isShell = false

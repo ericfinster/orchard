@@ -8,8 +8,8 @@
 package orchard.ui.javafx
 
 import scalafx.Includes._
-
 import scalafx.scene.text.Text
+import scalafx.scene.layout.Region
 
 import javafx.{scene => jfxs}
 
@@ -42,12 +42,18 @@ class WorksheetPanel(val worksheet : WorksheetHandle, val baseIndex : Int)
 
   class WorksheetPanelCell(val owner : complex.CellType) extends JavaFXCell { thisCell : CellType =>
 
-    def renderLabel : jfxs.Node = 
-      if (owner.item.isEmpty) {
-        new Text("empty")
-      } else {
-        new Text(owner.item.name)
-      }
+    def renderLabel : jfxs.Node = {
+      val labelNode = 
+        if (owner.item.isEmpty) {
+          new Region { prefWidth = 10 ; prefHeight = 10 }
+        } else {
+          new Text(owner.item.name)
+        }
+
+      labelNode.layoutBounds onChange { thisPanel.refresh }
+      pane.getChildren.setAll(labelNode)
+      labelNode
+    }
 
     def getStyleString = 
       owner.item.styleString
