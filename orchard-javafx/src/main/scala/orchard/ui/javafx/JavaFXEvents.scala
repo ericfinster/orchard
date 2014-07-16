@@ -20,26 +20,22 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     new EventHandler[KeyEvent] {
       def handle(ev : KeyEvent) {
         ev.getCode match {
-          // case KeyCode.LEFT => {
-          //   for { 
-          //     checker <- typeChecker
-          //     wksp <- checker.activeWorkspace
-          //     gallery <- wksp.activeGallery 
-          //   } gallery.prev
+          case KeyCode.LEFT => {
+            for { 
+              gallery <- activeGallery
+            } gallery.prev
 
-          //   ev.consume
-          // }
-          // case KeyCode.RIGHT => {
-          //   for { 
-          //     checker <- typeChecker
-          //     wksp <- checker.activeWorkspace
-          //     gallery <- wksp.activeGallery 
-          //   } gallery.next
+            ev.consume
+          }
+          case KeyCode.RIGHT => {
+            for { 
+              gallery <- activeGallery 
+            } gallery.next
 
-          //   ev.consume
-          // }
-          // case KeyCode.E => if (ev.isControlDown) onExtrude
-          // case KeyCode.D => if (ev.isControlDown) onDrop
+            ev.consume
+          }
+          case KeyCode.E => if (ev.isControlDown) onExtrude
+          case KeyCode.D => if (ev.isControlDown) onDrop
           // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
@@ -75,5 +71,21 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     scalafx.application.Platform.exit
 
   def onNewWorksheet : Unit = createWorksheet
+
+  def onExtrude : Unit = 
+    for {
+      gallery <- activeGallery
+    } {
+      gallery.handle.extrudeSelection
+      gallery.update
+    }
+
+  def onDrop : Unit =
+    for {
+      gallery <- activeGallery
+    } {
+      gallery.handle.dropSelection
+      gallery.update
+    }
 
 }

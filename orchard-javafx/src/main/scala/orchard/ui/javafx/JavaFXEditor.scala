@@ -47,6 +47,8 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   // A WORKSPACE
   //
 
+  var activeGallery : Option[WorksheetGallery] = None
+
   val workspace = new Workspace
 
   def createWorksheet =
@@ -58,6 +60,11 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
       val tab = new Tab {
         text = "Worksheet"
         content = gallery
+
+        onSelectionChanged = () => {
+          if (selected()) 
+            activeGallery = Some(gallery)
+        }
       }
 
       gallery.refreshAll
@@ -65,6 +72,7 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
       consoleMessage("Created worksheet")
     }
+
 
 }
 

@@ -18,7 +18,7 @@ class Workspace extends ErrorMonad {
     succeed(new Worksheet(CardinalComplex(Object(None))))
 
   class Worksheet(seed : NCell[Polarity[Option[Expression]]]) 
-      extends AbstractWorksheet(seed) with WorksheetHandle {
+      extends AbstractWorksheet(seed) with WorksheetHandle { thisWorksheet =>
 
     type CellType = WorksheetCell
     type FrameworkType = Worksheet
@@ -53,6 +53,33 @@ class Workspace extends ErrorMonad {
       new MarkerComplex(markerNCell)
 
     }
+
+    def selectAsBase(address : CellAddress) : Unit = 
+      for {
+        cell <- thisWorksheet.seek(address)
+      } {
+        thisWorksheet.selectAsBase(cell)
+      }
+
+    def selectCell(address : CellAddress) : Unit =
+      for {
+        cell <- thisWorksheet.seek(address)
+      } {
+        thisWorksheet.select(cell)
+      }
+
+    def deselectCell(address : CellAddress) : Unit = 
+      for {
+        cell <- thisWorksheet.seek(address)
+      } {
+        thisWorksheet.deselect(cell)
+      }
+
+    def extrudeSelection : Unit = 
+      emptyExtrusion
+
+    def dropSelection : Unit = 
+      emptyDrop
 
   }
 }

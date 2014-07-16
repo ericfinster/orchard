@@ -22,11 +22,19 @@ trait SelectableComplex[A] extends CellComplex[A] {
   var selectionBase : Option[CellType] = None
   val selectedCells : Set[CellType] = new HashSet
 
-  def deselectAll = {
-    selectedCells foreach
-    (cell => cell.emitToFaces(RequestCellDeselected))
-    selectedCells.clear
+  def deselectAll : Unit = {
+    for {
+      cell <- selectedCells
+    } {
+      deselect(cell)
+    }
+
     selectionBase = None
+  }
+
+  def deselect(cell : CellType) : Unit = {
+    cell.emitToFaces(RequestCellDeselected)
+    selectedCells remove cell
   }
 
   def clearAndSelect(cell : CellType) = {
@@ -80,7 +88,7 @@ trait SelectableComplex[A] extends CellComplex[A] {
     return false
   }
 
-  def select(cell : CellType) = {
+  def select(cell : CellType) : Unit = {
     cell.emitToFaces(RequestCellSelected)
     selectedCells add cell
   }

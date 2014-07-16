@@ -26,7 +26,7 @@ trait JavaFXGallery[A] extends Gallery[A] {
 
   def initialize = {
     reactTo(complex)
-    myPanels ++= { for { i <- Range(0, complex.baseCells.length) } yield { newPanel(i) } }
+    myPanels setAll (for { i <- Range(0, complex.baseCells.length) } yield { newPanel(i) })
   }
 
 }
