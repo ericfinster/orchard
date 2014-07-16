@@ -683,13 +683,6 @@ trait SizeablePanel[A] extends Panel[A] {
         override def leftInternalMargin = thisMarker.leftInternalMargin
         override def rightInternalMargin = thisMarker.rightInternalMargin
       }
-
-    // override def toString = "LM(" ++ owner.toString ++ ")" ++ 
-    //   "(we = " ++ wasExternal.toString ++ ", ht = " ++ height.toString ++
-    //   ", lsm = " ++ leftSubtreeMargin.toString ++
-    //   ", lim = " ++ leftInternalMargin.toString ++
-    //   ", rim = " ++ rightInternalMargin.toString ++
-    //   ", rsm = " ++ rightSubtreeMargin.toString ++ ")"
   }
   
 }
