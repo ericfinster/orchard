@@ -10,6 +10,7 @@ package orchard.ui.javafx
 import scalafx.Includes._
 import scalafx.scene.Node
 import scalafx.scene.layout._
+import scalafx.scene.control._
 import scalafx.stage.FileChooser
 
 import orchard.core.typechecker._
@@ -43,10 +44,27 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     console.appendText("DEBUG: " ++ str ++ "\n")
 
   //============================================================================================
-  // THE TYPECHECKER
+  // A WORKSPACE
   //
 
-  val checker = new Checker
+  val workspace = new Workspace
+
+  def createWorksheet =
+    for {
+      worksheet <- workspace.newWorksheet("New Sheet")
+    } {
+      val gallery = new WorksheetGallery(worksheet)
+
+      val tab = new Tab {
+        text = "Worksheet"
+        content = gallery
+      }
+
+      gallery.refreshAll
+      worksheetTabPane += tab
+
+      consoleMessage("Created worksheet")
+    }
 
 }
 

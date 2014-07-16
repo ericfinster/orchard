@@ -7,11 +7,16 @@
 
 package orchard.ui.javafx
 
+import scalafx.Includes._
+
+import scalafx.scene.text.Text
+
 import javafx.{scene => jfxs}
 
+import orchard.core.complex._
 import orchard.core.typechecker._
 
-class WorksheetPanel(val worksheet : Worksheet, val baseIndex : Int) 
+class WorksheetPanel(val worksheet : WorksheetHandle, val baseIndex : Int) 
     extends ZoomPanel[ExpressionMarker] { thisPanel =>
 
   type ComplexType = MarkerComplex
@@ -37,19 +42,26 @@ class WorksheetPanel(val worksheet : Worksheet, val baseIndex : Int)
 
   class WorksheetPanelCell(val owner : complex.CellType) extends JavaFXCell { thisCell : CellType =>
 
-    def renderLabel : jfxs.Node = ???
-    def getStyleString = owner.item.styleString
+    def renderLabel : jfxs.Node = 
+      if (owner.item.isEmpty) {
+        new Text("empty")
+      } else {
+        new Text(owner.item.name)
+      }
 
-//     renderCell
+    def getStyleString = 
+      owner.item.styleString
 
-//     override def onEventEmitted(ev : CellEvent) = {
-//       ev match {
-//         case complex.ChangeEvents.ItemChangedEvent(oldItem) => { renderCell ;  super.onEventEmitted(ev) }
-//         case CellEntered(cell) => owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered)
-//         case CellExited(cell) => owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered)
-//         case _ => super.onEventEmitted(ev)
-//       }
-//     }
+    renderCell
+
+    override def onEventEmitted(ev : CellEvent) = {
+      ev match {
+        // case complex.ChangeEvents.ItemChangedEvent(oldItem) => { renderCell ;  super.onEventEmitted(ev) }
+        case CellEntered(cell) => owner.emitToFaces(RequestCellHovered) ; owner.emit(RequestEdgeHovered)
+        case CellExited(cell) => owner.emitToFaces(RequestCellUnhovered) ; owner.emit(RequestEdgeUnhovered)
+        case _ => super.onEventEmitted(ev)
+      }
+    }
 
   }
 

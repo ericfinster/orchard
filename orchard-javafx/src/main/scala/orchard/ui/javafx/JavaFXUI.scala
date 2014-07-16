@@ -22,8 +22,10 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
     styleClass += "orch-pane"
   }
 
+  val worksheetTabPane = new TabPane
+
   val workspacePane = new StackPane {
-    content = noWorkspaceLabel
+    content = worksheetTabPane
     styleClass += "orch-pane"
   }
 

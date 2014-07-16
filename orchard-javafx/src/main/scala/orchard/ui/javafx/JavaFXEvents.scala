@@ -43,7 +43,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
           // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
-          // case KeyCode.T => if (ev.isControlDown) onNewSheet
+          case KeyCode.T => if (ev.isControlDown) onNewWorksheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
           // case KeyCode.B => if (ev.isControlDown) onBind
@@ -73,5 +73,7 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
 
   def onExit : Unit = 
     scalafx.application.Platform.exit
+
+  def onNewWorksheet : Unit = createWorksheet
 
 }

@@ -8,23 +8,33 @@
 package orchard.core.typechecker
 
 import orchard.core.cell._
+import orchard.core.ui.Styleable
 
-sealed trait Expression {
+sealed trait Expression extends Styleable {
 
   def isThin : Boolean
 
 }
 
-case class Variable(name : String, shell : NCell[Option[Expression]], val isThin : Boolean) extends Expression 
-case class Filler(name : String, nook : NCell[Option[Expression]]) extends Expression {
+case class Variable(val name : String, shell : NCell[Option[Expression]], val isThin : Boolean) extends Expression {
+
+  def styleString = if (isThin) "variable-thin" else "variable"
+
+}
+
+case class Filler(val name : String, nook : NCell[Option[Expression]]) extends Expression {
+
+  def styleString = "filler"
 
   def isThin = true
 
 }
 
-case class Reference(name : String) extends Expression {
+case class Reference(val name : String) extends Expression {
 
-  def isThin = ???
+  def styleString = "app"
+
+  def isThin = false
 
 }
 

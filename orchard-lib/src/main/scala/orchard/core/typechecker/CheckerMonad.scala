@@ -17,9 +17,11 @@ trait CheckerMonad {
   type Error[+A] = \/[String, A]
   type Environment = Map[String, Expression] 
 
-  sealed trait ModuleEntry
-  case class Module(name : String, parent : Option[Module], entries : Vector[ModuleEntry]) extends ModuleEntry
-  case class ExpressionEntry(expr : Expression) extends ModuleEntry
+  // Okay, I think what I want to do is have the checker state be a zipper.  This way, I think it
+  // should be relatively easy to unfold and calculate the current environment, since it will just be the
+  // left or right hand lists in the module strucuture.
+
+  // Right, that's nice.
 
   case class CheckerState(
     val activeModule : Option[Module],
@@ -69,7 +71,7 @@ trait CheckerMonad {
   def beginModule(name : String) : CheckerM[Unit] =
     for {
       st <- M.get
-      _ <- setActiveModule(new Module(name, st.activeModule, Vector.empty))
+      _ <- setActiveModule(new Module(name, Vector.empty))
     } yield ()
 
   def endModule(name : String) : CheckerM[Unit] =
@@ -77,7 +79,7 @@ trait CheckerMonad {
       st <- M.get
       mod <- getOption(st.activeModule, "Cannot close module " ++ name ++ " because no module is active.")
       _ <- ensure(mod.name == name, "Cannot close module " ++ name ++ " because active module is " ++ mod.name)
-      _ <- M.put(CheckerState(mod.parent, st.environment)) 
+      _ <- M.put(CheckerState(None, st.environment)) 
       // Hmm. the environment should change, since all of the definitions in the last module are now hidden.
       // How to reflect this?
     } yield ()

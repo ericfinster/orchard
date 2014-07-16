@@ -9,11 +9,11 @@ package orchard.ui.javafx
 
 import orchard.core.typechecker._
 
-class WorksheetGallery(val worksheet : Worksheet) extends SpinnerGallery[ExpressionMarker] {
+class WorksheetGallery(val worksheet : WorksheetHandle) extends SpinnerGallery[ExpressionMarker] {
 
   type PanelType = WorksheetPanel
 
-  def complex = worksheet.complex
+  var complex = worksheet.complex
 
   def newPanel(i : Int) : WorksheetPanel = {
     val panel = new WorksheetPanel(worksheet, i)
@@ -21,7 +21,7 @@ class WorksheetGallery(val worksheet : Worksheet) extends SpinnerGallery[Express
     panel
   }
 
-  // initialize
+  initialize
 
 }
 
