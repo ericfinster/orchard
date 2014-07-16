@@ -17,12 +17,14 @@ trait SVGPanel[A] extends SizeablePanel[A] {
   override type CellType <: SVGCell
   override type EdgeType <: SVGEdge
 
-  abstract class SVGCell extends SizeableCell { thisCell : CellType =>
+  // What do we need to do?  We need to create a kind of attribute list which stores
+  // the gallery's address and panel info, etc.
+
+  trait SVGCell extends SizeableCell { thisCell : CellType =>
 
   }
 
-  abstract class SVGEdge extends SizeableEdge { thisEdge : EdgeType =>
-
+  trait SVGEdge extends SizeableEdge { thisEdge : EdgeType =>
 
   }
 

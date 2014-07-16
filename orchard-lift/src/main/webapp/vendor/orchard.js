@@ -4,12 +4,9 @@
 // Eric Finster
 //
 
-function returnLabelDimensions() {
-    var dimensionMap = {}
+$(function() {
 
-    $('.orch-label').each(function(i, e) {
-	dimensionMap[e.getAttribute("id")] = e.getBBox();
-    });
-	
-    return dimensionMap
-}
+    alert("Orchard is starting ...")
+
+});
+
