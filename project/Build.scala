@@ -41,4 +41,10 @@ object OrchardBuild extends Build {
       jarName in assembly := "orchard-0.1-SNAPSHOT.jar"
     )
 
+  lazy val orchardLift = Project(
+    id = "orchard-lift",
+    base = file("orchard-lift"),
+    dependencies = Seq(orchardLib)
+  )
+
 }

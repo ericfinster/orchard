@@ -8,7 +8,7 @@
 package orchard.ui.lift
 
 import xml._
-import orchard.core._
+import orchard.core.ui._
 
 trait LiftPanel[A] extends RenderingPanel[A] {
 

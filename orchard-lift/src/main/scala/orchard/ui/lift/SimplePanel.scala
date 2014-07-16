@@ -10,7 +10,7 @@ package orchard.ui.lift
 import scala.collection.mutable.Map
 
 import xml._
-import orchard.core._
+import orchard.core.complex._
 
 case class BBox(val x : Int, val y : Int, val width : Int, val height : Int)
 
@@ -49,7 +49,7 @@ class SimplePanel[A](val complex : SimpleMutableComplex[A], baseIndex : Int) ext
     </svg>
   }
 
-  def refresh = ()
+  override def refresh = ()
 
   class SimpleCell(val owner : complex.SimpleMutableCell) extends LiftCell {
     def labelSVG : NodeSeq = <text class="orch-label" id={hashCode.toString}>{item.toString}</text>

@@ -26,8 +26,9 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.DefaultFormats
 
 import xml._
-import orchard.core._
 import orchard.ui.lift._
+import orchard.core.cell._
+import orchard.core.complex._
 
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
