@@ -7,7 +7,6 @@
 
 package orchard.ui.lift.snippet
 
-
 import net.liftweb.common._
 
 import net.liftweb.http.LiftRules
@@ -43,30 +42,31 @@ object Editor {
   // Right.  And the cookbook shows how to make this come from a complete template
   // if you like.  But either way, it seems to use SetHtml, so do we care?
 
-  val panel = new SimplePanel(new SimpleMutableComplex(Example.Psi), 2)
+  // val panel = new SimplePanel(new SimpleMutableComplex(Example.Psi), 2)
 
-  def processDimensions(value : JValue) : JsCmd = {
-    val dimensionMap : Map[String, BBox] = new HashMap[String, BBox]
+  // def processDimensions(value : JValue) : JsCmd = {
+  //   val dimensionMap : Map[String, BBox] = new HashMap[String, BBox]
 
-    implicit val formats = DefaultFormats
+  //   implicit val formats = DefaultFormats
 
-    // We should catch the possible exception here
-    value match {
-      case JObject(members) => {
-        for {
-          JField(id, bbox) <- members
-        } { dimensionMap(id) = bbox.extractOpt[BBox].get }
-      }
-      case _ => println("Ooops, it's not.")
-    }
+  //   // We should catch the possible exception here
+  //   value match {
+  //     case JObject(members) => {
+  //       for {
+  //         JField(id, bbox) <- members
+  //       } { dimensionMap(id) = bbox.extractOpt[BBox].get }
+  //     }
+  //     case _ => println("Ooops, it's not.")
+  //   }
 
-    panel.setLabelsFromBBox(dimensionMap)
-    panel.render
+  //   panel.setLabelsFromBBox(dimensionMap)
+  //   panel.render
 
-    SetHtml("viewer", panel.toSVG)
-  }
+  //   SetHtml("viewer", panel.toSVG)
+  // }
 
-  def render = <svg width="400" height="400">{panel.labelProofSheet}</svg>
+  // def render = <svg width="400" height="400">{panel.labelProofSheet}</svg>
 
-  def buttonClicked = "button [onclick]" #> SHtml.jsonCall(Call("returnLabelDimensions"), processDimensions _)
+  // def buttonClicked = "button [onclick]" #> SHtml.jsonCall(Call("returnLabelDimensions"), processDimensions _)
+
 }

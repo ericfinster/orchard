@@ -12,36 +12,17 @@ import orchard.core.complex._
 
 import xml._
 
-case class BBox(val x : Int, val y : Int, val width : Int, val height : Int)
-
-trait SVGPanel[A] extends RenderingPanel[A] {
+trait SVGPanel[A] extends SizeablePanel[A] {
 
   override type CellType <: SVGCell
   override type EdgeType <: SVGEdge
 
-  // We need a method which will return just the labels, and one which will 
-  // return the whole rendered SVG.
-
-  def labelProofSheet : NodeSeq = {
-    var lps : NodeSeq = Seq.empty
-
-    baseCell foreachCell (c => {
-      lps ++= c.labelSVG
-    })
-
-    <g>{lps}</g>
-  }
-
-  abstract class SVGCell extends VisualCell { thisCell : CellType =>
-
-    def labelSVG : NodeSeq
-    def toSVG : NodeSeq
+  abstract class SVGCell extends SizeableCell { thisCell : CellType =>
 
   }
 
-  abstract class SVGEdge extends VisualEdge { thisEdge : EdgeType =>
+  abstract class SVGEdge extends SizeableEdge { thisEdge : EdgeType =>
 
-    def toSVG : NodeSeq
 
   }
 
