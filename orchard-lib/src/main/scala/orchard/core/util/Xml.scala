@@ -110,80 +110,80 @@ object XmlSerializable {
       def fromXML(node : xml.Node) : NCell[A] = ev.fromXML(node)
     }
 
-  implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] =
-    new XmlSerializable[Cell[_ <: Nat, A]] {
-      val ev = implicitly[XmlSerializable[A]]
+  implicit def cellSerializable[A : XmlSerializable] : XmlSerializable[Cell[_ <: Nat, A]] = ???
+    // new XmlSerializable[Cell[_ <: Nat, A]] {
+    //   val ev = implicitly[XmlSerializable[A]]
 
-      def toXML(cell : Cell[_ <: Nat, A]) : xml.Node = {
-        val cplx = new SimpleMutableComplex(cell)
-        val nodes = new ListBuffer[xml.Node]
+    //   def toXML(cell : Cell[_ <: Nat, A]) : xml.Node = {
+    //     val cplx = new SimpleMutableComplex(cell)
+    //     val nodes = new ListBuffer[xml.Node]
 
-        cplx forAllCells (c => nodes += c.cellToXML)
+    //     cplx forAllCells (c => nodes += c.cellToXML)
 
-        <complex topCell={cplx.topCell.hashCode.toString}>{nodes}</complex>
-      }
+    //     <complex topCell={cplx.topCell.hashCode.toString}>{nodes}</complex>
+    //   }
 
-      def fromXML(node : xml.Node) : Cell[_ <: Nat, A] = {
-        node match {
-          case <complex>{cells @ _*}</complex> => {
-            val topCellId = (node \ "@topCell").text.toInt
-            val env = new HashMap[Int, Cell[_ <: Nat, A]]
+    //   def fromXML(node : xml.Node) : Cell[_ <: Nat, A] = {
+    //     node match {
+    //       case <complex>{cells @ _*}</complex> => {
+    //         val topCellId = (node \ "@topCell").text.toInt
+    //         val env = new HashMap[Int, Cell[_ <: Nat, A]]
 
-            for (cell <- trimText(cells)) {
-              cell match {
-                case <obj>{objContents @ _*}</obj> => {
-                  val id = (cell \ "@id").text.toInt
-                  val item = ev.fromXML(((objContents \\ "label")(0).descendant)(0))
+    //         for (cell <- trimText(cells)) {
+    //           cell match {
+    //             case <obj>{objContents @ _*}</obj> => {
+    //               val id = (cell \ "@id").text.toInt
+    //               val item = ev.fromXML(((objContents \\ "label")(0).descendant)(0))
 
-                  env(id) = Object(item)
-                }
-                case <cell>{cellContents @ _*}</cell> => {
+    //               env(id) = Object(item)
+    //             }
+    //             case <cell>{cellContents @ _*}</cell> => {
 
-                  val id = (cell \ "@id").text.toInt
-                  val targetId = ((cellContents \\ "target")(0) \ "@ref").text.toInt
-                  val item = ev.fromXML(((cellContents \\ "label")(0).descendant)(0))
+    //               val id = (cell \ "@id").text.toInt
+    //               val targetId = ((cellContents \\ "target")(0) \ "@ref").text.toInt
+    //               val item = ev.fromXML(((cellContents \\ "label")(0).descendant)(0))
 
-                  def extractTree[D <: Nat](node : xml.Node) : CellTree[D, A] = {
-                    node match {
-                      case s @ <seed /> => {
-                        val srcId = (s \ "@ref").text.toInt
-                        val srcObj = env(srcId).asInstanceOf[ObjectCell[_0, A]]
+    //               def extractTree[D <: Nat](node : xml.Node) : CellTree[D, A] = {
+    //                 node match {
+    //                   case s @ <seed /> => {
+    //                     val srcId = (s \ "@ref").text.toInt
+    //                     val srcObj = env(srcId).asInstanceOf[ObjectCell[_0, A]]
 
-                        Seed(srcObj).asInstanceOf[CellTree[D, A]]
-                      }
-                      case l @ <leaf /> => {
-                        val leafId = (l \ "@ref").text.toInt
-                        val leafCell = env(leafId).asInstanceOf[Cell[D#Pred, A]]
+    //                     Seed(srcObj).asInstanceOf[CellTree[D, A]]
+    //                   }
+    //                   case l @ <leaf /> => {
+    //                     val leafId = (l \ "@ref").text.toInt
+    //                     val leafCell = env(leafId).asInstanceOf[Cell[D#Pred, A]]
 
-                        Leaf(leafCell).asInstanceOf[CellTree[D, A]]
-                      }
-                      case g @ <graft>{graftContents @ _*}</graft> => {
-                        // Fake it.
-                        implicit val hasPred : HasPred[D] = new HasPred[D] { type Pred = D#Pred }
+    //                     Leaf(leafCell).asInstanceOf[CellTree[D, A]]
+    //                   }
+    //                   case g @ <graft>{graftContents @ _*}</graft> => {
+    //                     // Fake it.
+    //                     implicit val hasPred : HasPred[D] = new HasPred[D] { type Pred = D#Pred }
 
-                        val graftId = (g \ "@ref").text.toInt
-                        val graftCell = env(graftId).asInstanceOf[Cell[D, A]]
-                        val branches = trimText(graftContents).toVector map (n => extractTree[D](n))
+    //                     val graftId = (g \ "@ref").text.toInt
+    //                     val graftCell = env(graftId).asInstanceOf[Cell[D, A]]
+    //                     val branches = trimText(graftContents).toVector map (n => extractTree[D](n))
 
-                        Graft(graftCell, branches)
-                      }
-                      case other @ _ => throw new IllegalArgumentException
-                    }
-                  }
+    //                     Graft(graftCell, branches)
+    //                   }
+    //                   case other @ _ => throw new IllegalArgumentException
+    //                 }
+    //               }
 
-                  val dim : Nat = env(targetId).dimension
-                  val srcTree = extractTree[dim.Self](trimText((cellContents \\ "sourcetree")(0).descendant)(0))
+    //               val dim : Nat = env(targetId).dimension
+    //               val srcTree = extractTree[dim.Self](trimText((cellContents \\ "sourcetree")(0).descendant)(0))
 
-                  env(id) = Composite(item, srcTree, env(targetId).value)
-                }
-                case other @ _ => println("Skipping unrecognized element." ++ other.toString)
-              }
-            }
+    //               env(id) = Composite(item, srcTree, env(targetId).value)
+    //             }
+    //             case other @ _ => println("Skipping unrecognized element." ++ other.toString)
+    //           }
+    //         }
 
-            env(topCellId)
-          }
-          case _ => throw new IllegalArgumentException("Not a complex")
-        }
-      }
-    }
+    //         env(topCellId)
+    //       }
+    //       case _ => throw new IllegalArgumentException("Not a complex")
+    //     }
+    //   }
+    // }
 }

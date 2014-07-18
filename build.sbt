@@ -9,6 +9,7 @@ lazy val root = project.in(file(".")).aggregate()
 lazy val orchardLib = project.in(file("orchard-lib")).settings(
   name := "orchard-lib",
   unmanagedSourceDirectories in Compile += (baseDirectory in root).value / "orchard-common" / "src" / "main" / "scala",
+  excludeFilter in unmanagedSources ~= { _ || "svg*" },
   libraryDependencies ++= Seq(
     "org.scalaz" %% "scalaz-core" % "7.0.6",
     "org.scalaz" %% "scalaz-concurrent" % "7.0.6"

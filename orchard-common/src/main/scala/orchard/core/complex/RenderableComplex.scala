@@ -1,24 +1,20 @@
 /**
-  * RenderingPanel.scala - A panel which renders its elements
+  * RenderableComplex.scala - A Complex which can render it's cells
   * 
   * @author Eric Finster
-  * @version 0.1
+  * @version 0.1 
   */
 
-package orchard.core.ui
+package orchard.core.complex
 
 import scala.collection.mutable.ListBuffer
 
 import orchard.core.util._
-import orchard.core.complex._
 
-import Util._
+trait RenderableComplex[A] extends GalleryComplex[A] {
 
-// Add a type class so that A is renderable??
-trait RenderingPanel[A] extends Panel[A] {
-
-  type CellType <: VisualCell
-  type EdgeType <: VisualEdge
+  type PanelCellType <: RenderableCell
+  type PanelEdgeType <: RenderableEdge
 
   //============================================================================================
   // VISUAL OPTIONS
@@ -36,72 +32,10 @@ trait RenderingPanel[A] extends Panel[A] {
   def leafWidth = halfLeafWidth + strokeWidth + halfLeafWidth
 
   //============================================================================================
-  // RENDERING SETUP AND CLEANUP
-  //
-
-  def refresh = {
-    clearRenderState
-    render
-  }
-
-  def clearRenderState =
-  {
-    baseCell foreachCell (cell => cell.clearRenderState)
-
-    for { tgt <- baseCell.target } {
-      tgt foreachEdge (edge => edge.clearRenderState)
-    }
-  }
-
-  def setLabelSizes : Unit
-
-  def render : Unit = {
-    val baseMarker = baseCell.sources match {
-        case None => render(baseCell, new Array(0))
-        case Some(srcs) =>
-          {
-            val markers =
-              (srcs map (src => new LayoutMarker { val owner = src ; val wasExternal = true }))
-
-            render(baseCell, markers.toArray)
-          }
-      }
-
-    // Now align the edges properly ...
-    baseCell foreachCell (cell => cell.alignEdges)
-
-    // ... and render them.
-    for { tgt <- baseCell.target } {
-      tgt foreachEdge (edge => edge.renderPath)
-    }
-  }
-  
-
-  def edgePadding = {
-    if (baseCell.isExternal) {
-      if (baseCell.sourceCount > 1) {
-        val numRightEdges : Int = baseCell.sourceCount / 2
-        // Ech.  This isn't very careful.  I think you can do better.
-        val padding = ((numRightEdges - 1) * (leafWidth + (2 * strokeWidth))) + halfLeafWidth + (2 * strokeWidth)
-        padding
-      } else {
-        0.0
-      }
-    } else {
-      0.0
-    }
-  }
-
-  def panelX = baseCell.x - edgePadding
-  def panelY = baseCell.y - (2 * externalPadding)
-  def panelHeight = baseCell.height + (4 * externalPadding)
-  def panelWidth = baseCell.width + (2 * edgePadding)
-
-  //============================================================================================
   // MAIN RENDERING ALGORITHM
   //
 
-  protected def render(cell : CellType, sourceMarkers : Array[LayoutMarker]) : LayoutMarker = {
+  protected def render(cell : PanelCellType, sourceMarkers : Array[LayoutMarker]) : LayoutMarker = {
 
     val cellMarker : LayoutMarker = 
       cell.canopy match {
@@ -262,7 +196,7 @@ trait RenderingPanel[A] extends Panel[A] {
         case Some(tree) => { // internal case
 
           // This inner loop traverse the source tree, recursively rendering the cells it finds
-          def traverse[D <: Nat](canopyTree : RoseTree[CellType, Int]) : LayoutMarker =
+          def traverse[D <: Nat](canopyTree : RoseTree[PanelCellType, Int]) : LayoutMarker =
             canopyTree match {
               case Rose(leafIndex) =>
                 {
@@ -394,6 +328,21 @@ trait RenderingPanel[A] extends Panel[A] {
   }
 
   //============================================================================================
+  // ROOTED OBJECTS
+  //
+
+  trait Rooted {
+    var rootX : Double
+    var rootY : Double
+
+    def horizontalShift(amount : Double)
+    def verticalShift(amount : Double)
+
+    def alignTo(other : Rooted) =
+      horizontalShift(other.rootX - rootX)
+  }
+
+  //============================================================================================
   // RENDERING UTILITY METHODS
   //
 
@@ -415,25 +364,11 @@ trait RenderingPanel[A] extends Panel[A] {
   }
 
   //============================================================================================
-  // TRAITS AND CLASSES
+  // RENDERABLE CELLS
   //
 
-  trait Rooted {
-    var rootX : Double
-    var rootY : Double
-
-    def horizontalShift(amount : Double)
-    def verticalShift(amount : Double)
-
-    def alignTo(other : Rooted) =
-      horizontalShift(other.rootX - rootX)
-  }
-
-  //============================================================================================
-  // VISUAL CELLS
-  //
-
-  trait VisualCell extends PanelCell with Rooted { thisCell : CellType =>
+  trait RenderableCell extends PanelCell with Rooted {
+    thisCell : PanelCellType =>
 
     var internalWidth : Double = 0.0
     var internalHeight : Double = 0.0
@@ -455,16 +390,14 @@ trait RenderingPanel[A] extends Panel[A] {
     def addVerticalDependent(r : Rooted) = { vertDeps += r }
     def addHorizontalDependent(r : Rooted) = { horzDeps += r }
 
-    def horizontalShift(amount : Double) =
-    {
+    def horizontalShift(amount : Double) = {
       if (amount != 0) {
         rootX += amount
         horzDeps foreach (dep => dep.horizontalShift(amount))
       }
     }
 
-    def verticalShift(amount : Double) =
-    {
+    def verticalShift(amount : Double) = {
       if (amount != 0) {
         rootY += amount
         vertDeps foreach (dep => dep.verticalShift(amount))
@@ -493,8 +426,7 @@ trait RenderingPanel[A] extends Panel[A] {
     def centerX : Double = x + (width / 2)
     def centerY : Double = y + (height / 2)
 
-    def clearRenderState =
-    {
+    def clearRenderState = {
       internalWidth = 0.0
       internalHeight = 0.0
       rootLeftMargin = 0.0
@@ -555,48 +487,14 @@ trait RenderingPanel[A] extends Panel[A] {
         }
       }
     }
-
-    //============================================================================================
-    // SELECTION AND HIGHLIGHTING
-    //
-
-    def doHover : Unit = ()
-    def doSelect : Unit = ()
-    def doUnhover : Unit = ()
-    def doDeselect : Unit = ()
-
-    override def onEventEmitted(ev : CellEvent) =
-      ev match {
-        case RequestCellSelected => doSelect
-        case RequestCellDeselected => doDeselect
-        case RequestCellHovered => doHover
-        case RequestCellUnhovered => doUnhover
-        case _ => super.onEventEmitted(ev)
-      }
-
-    //============================================================================================
-    // MISC
-    //
-
-    def boundInfo : String =
-      "(x = " ++ x.toString ++
-        ", y = " ++ y.toString ++
-        ", width = " ++ width.toString ++
-        ", height = " ++ height.toString ++ ")"
-
-    def rootInfo : String =
-      "(rootX = " ++ rootX.toString ++
-        ", rootY = " ++ rootY.toString ++
-        ", rootLeftMargin = " ++ rootLeftMargin.toString ++
-        ", rootRightMargin = " ++ rootRightMargin.toString ++
-        ")"
   }
 
   //============================================================================================
-  // VISUAL EDGES
+  // RENDERABLE EDGES
   //
 
-  trait VisualEdge extends PanelEdge with Rooted { thisEdge : EdgeType =>
+  trait RenderableEdge extends PanelEdge with Rooted {
+    thisEdge : PanelEdgeType =>
 
     var incomingX : Double = 0.0
     var incomingY : Double = 0.0
@@ -616,38 +514,13 @@ trait RenderingPanel[A] extends Panel[A] {
 
     def isVertical = incomingX == outgoingX
 
-    def clearRenderState =
-    {
+    def clearRenderState = {
       incomingX = 0.0
       incomingY = 0.0
       outgoingX = 0.0
       outgoingY = 0.0
     }
 
-    def doHover : Unit = ()
-    def doSelect : Unit = ()
-    def doUnhover : Unit = ()
-    def doDeselect : Unit = ()
-
-    override def onEventEmitted(ev : CellEvent) = {
-      // Edges consume their events.  I think this might
-      // have been fucking up the event stream.  But seriously,
-      // you need to fix it.
-      ev match {
-        case RequestEdgeSelected => doSelect
-        case RequestEdgeDeselected => doDeselect
-        case RequestEdgeHovered => doHover
-        case RequestEdgeUnhovered => doUnhover
-        case _ => ()
-      }
-    }
-
-    def renderInfo : String =
-      "(incomingX = " ++ incomingX.toString ++
-        ", incomingY = " ++ incomingY.toString ++
-        ", outgoingX = " ++ outgoingX.toString ++
-        ", outgoingY = " ++ outgoingY.toString ++
-        ")"
   }
 
   //============================================================================================

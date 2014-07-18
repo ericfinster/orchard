@@ -9,18 +9,20 @@ package orchard.core.complex
 
 import scala.collection.mutable.ListBuffer
 
-import orchard.core.ui._
 import orchard.core.cell._
 import orchard.core.util._
 
 import Util._
 
-trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
+trait CellComplex[A] { thisComplex =>
 
   type CellType <: ComplexCell
 
   def newCell(item : A) : CellType
 
+  // This method is not necessary.  What we should do instead
+  // is keep a reference to the ncell itself, from which all of
+  // this information can be reconstructed ...
   def baseCells : Vector[CellType]
 
   def topCell : CellType = baseCells.last
@@ -72,8 +74,8 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
 
   trait ComplexCell 
       extends CellBase[CellType, CellType] 
-      with    EdgeBase[CellType, CellType] 
-      with    EventEmitter[CellEvent] { thisCell : CellType =>
+      with    EdgeBase[CellType, CellType] { thisCell : CellType =>
+      
 
     def item : A
     def complex : CellComplex[A] = thisComplex
@@ -83,44 +85,12 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
     var skeleton : NCell[CellType] = null
 
     //============================================================================================
-    // PANEL TRACKING
-    //
-
-    // The idea here is that instead of events, a cell complex tracks the panels which it has
-    // be incarnated on.  This provides a more direct link between the complex and it's views,
-    // and I think will have some benefits when we work on the mutability routines ....
-
-    // Note that the reason it is not a map is that we have a dependent return type ...
-
-    def cellPanels : Iterable[Panel[A]]
-    def edgePanels : Iterable[Panel[A]]
-
-    def cellOnPanel(panel : Panel[A]) : panel.CellType
-    def edgeOnPanel(panel : Panel[A]) : panel.EdgeType
-
-    def getOrCreateCell(panel : Panel[A]) : panel.CellType
-    def getOrCreateEdge(panel : Panel[A]) : panel.EdgeType
-
-    def registerPanelCell(panel : Panel[A])(cell : panel.CellType) : Unit
-    def registerPanelEdge(panel : Panel[A])(edge : panel.EdgeType) : Unit
-
-    def unregisterPanelCell(panel : Panel[A]) : Unit
-    def unregisterPanelEdge(panel : Panel[A]) : Unit
-    
-    //============================================================================================
-    // EVENT EMISSION
-    //
-
-    def emitToFaces(ev : CellEvent) : Unit =
-      skeleton map (face => { face.emit(ev) })
-
-    def emitToNeighborhood(ev : CellEvent) : Unit =
-      topCell.skeleton map (face => { if (face.hasFace(this)) face.emit(ev) })
-
-    //============================================================================================
     // SEMANTIC ROUTINES
     //
 
+    // We should be able to remove this ListBuffer dependency here.  The point should be the 
+    // traversal routines that you implemented and flatmap and what have you.  But what ever
+    // for right now ...
     def neighborhood : List[CellType] = {
       val neighbors = new ListBuffer[CellType]
       topCell.skeleton map (face => { if (face.hasFace(this)) { neighbors += face } })
@@ -240,30 +210,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
         }
       }
     }
-
-    //============================================================================================
-    // XML CONVERSION
-    //
-
-    def cellToXML(implicit vs : XmlSerializable[A]) = 
-      skeleton.cell match {
-        case Object(_, ev) => <obj id={hashCode.toString}><label>{vs.toXML(item)}</label></obj>
-        case Composite(_, srcTree, tgtValue, ev) => {
-          <cell id={hashCode.toString}><sourcetree>{
-
-            def processSourceTree(tree : CellTree[_ <: Nat, CellType]) : xml.NodeSeq = 
-              tree match {
-                case Seed(o, _) => <seed ref={o.value.hashCode.toString} />
-                case Leaf(l, _) => <leaf ref={l.value.hashCode.toString} />
-                case Graft(c, brs, _) => <graft ref={c.value.hashCode.toString}>{ brs map processSourceTree }</graft>
-              }
-
-            processSourceTree(srcTree)
-          }</sourcetree><target ref={tgtValue.hashCode.toString} /><label>{vs.toXML(item)}</label></cell>
-        }
-      }
   }
-
 }
 
 

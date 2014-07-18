@@ -1,5 +1,5 @@
 /**
-  * SelectableComplex.scala - A cell complex whose cells are selectable
+  * SelectableComplex.scala - A Gallery which allows for selection
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -7,15 +7,10 @@
 
 package orchard.core.complex
 
-import scala.collection.JavaConversions._
-
 import scala.collection.mutable.Set
 import scala.collection.mutable.HashSet
 
-import orchard.core.cell._
 import orchard.core.util._
-
-import Util._
 
 trait SelectableComplex[A] extends CellComplex[A] {
 
@@ -23,31 +18,25 @@ trait SelectableComplex[A] extends CellComplex[A] {
   val selectedCells : Set[CellType] = new HashSet
 
   def deselectAll : Unit = {
-    for {
-      cell <- selectedCells
-    } {
-      deselect(cell)
-    }
-
+    // selectedCells foreach
+    // (cell => cell.owner.emitToFaces(RequestCellDeselected))
+    selectedCells.clear
     selectionBase = None
   }
 
-  def deselect(cell : CellType) : Unit = {
-    cell.emitToFaces(RequestCellDeselected)
-    selectedCells remove cell
-  }
+  def deselect(cell : CellType) : Unit = ???
 
-  def clearAndSelect(cell : CellType) = {
+  def clearAndSelect(cell : CellType) : Unit = {
     deselectAll
     selectAsBase(cell)
   }
 
-  def selectAsBase(cell : CellType) = {
+  def selectAsBase(cell : CellType) : Unit = {
     select(cell)
     selectionBase = Some(cell)
   }
 
-  def isSelected(cell : CellType) =
+  def isSelected(cell : CellType) : Boolean =
     selectedCells contains cell
 
   def selectionIsUnique : Boolean = 
@@ -67,7 +56,6 @@ trait SelectableComplex[A] extends CellComplex[A] {
     // Now look up a zipper to this guy
     val zipper : RoseZipper[CellType, Int] =
       new RoseZipper(baseContainer.canopy.get, Nil)
-
     var ptrOpt = zipper.lookup(cell).get.zipOnce
 
     // Step back through the zipper and look for the base selection
@@ -89,9 +77,8 @@ trait SelectableComplex[A] extends CellComplex[A] {
   }
 
   def select(cell : CellType) : Unit = {
-    cell.emitToFaces(RequestCellSelected)
+    // cell.owner.emitToFaces(RequestCellSelected)
     selectedCells add cell
   }
 
 }
-

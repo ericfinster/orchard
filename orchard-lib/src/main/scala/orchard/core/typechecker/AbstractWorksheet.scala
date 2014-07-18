@@ -29,7 +29,7 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
     def item_=(newItm : Polarity[Option[Expression]]) = {
       val oldItem = item
       myItem = newItm
-      emit(ChangeEvents.ItemChangedEvent(oldItem))
+      // emit(ChangeEvents.ItemChangedEvent(oldItem))
     }
   }
 

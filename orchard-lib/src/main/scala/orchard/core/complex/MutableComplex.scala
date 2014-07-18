@@ -74,13 +74,13 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
     setBaseCell(newSource.dimension, newTarget)
     appendBaseCell(newGlob)
 
-    newSource.cellPanels foreach (panel => {
-      val newPanelCell = panel.newCell(newTarget.asInstanceOf[panel.complex.CellType])
-      panel.baseCell = newPanelCell
-      panel.refreshPanelData
-    })
+    // newSource.cellPanels foreach (panel => {
+    //   val newPanelCell = panel.newCell(newTarget.asInstanceOf[panel.complex.CellType])
+    //   panel.baseCell = newPanelCell
+    //   panel.refreshPanelData
+    // })
 
-    emit(ComplexExtended)
+    // emit(ComplexExtended)
 
     newGlob
   }
@@ -153,11 +153,11 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
   // CHANGE EVENTS
   //
 
-  object ChangeEvents {
-    sealed trait ChangeEvent extends CellEvent
-    case class ItemChangedEvent(oldItem : A) extends ChangeEvent
-    case class CompositeInsertionEvent(composite : CellType, universal : CellType) extends ChangeEvent
-  }
+  // object ChangeEvents {
+  //   sealed trait ChangeEvent extends CellEvent
+  //   case class ItemChangedEvent(oldItem : A) extends ChangeEvent
+  //   case class CompositeInsertionEvent(composite : CellType, universal : CellType) extends ChangeEvent
+  // }
 
   //============================================================================================
   // CELL IMPLEMENTATION
@@ -305,10 +305,10 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
       affectedDimensions foreach (d => {
         val theBase = thisComplex(d)
         theBase.rigidify
-        theBase.cellPanels.foreach (panel => panel.refreshPanelData)
+        // theBase.cellPanels.foreach (panel => panel.refreshPanelData)
       })
 
-      thisComplex.emit(ChangeEvents.CompositeInsertionEvent(compositeCell, universalCell))
+      // thisComplex.emit(ChangeEvents.CompositeInsertionEvent(compositeCell, universalCell))
 
       (compositeCell, universalCell)
     }
