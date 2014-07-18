@@ -35,6 +35,6 @@ lazy val orchardJavafx = project.in(file("orchard-javafx")).settings(
   unmanagedJars in Compile += Attributed.blank(
     file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar"),
   fork := true
-).dependsOn(orchardLib)
+).dependsOn(orchardLib).dependsOn(orchardJs)
 
 
