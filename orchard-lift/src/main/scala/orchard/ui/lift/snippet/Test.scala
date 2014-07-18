@@ -7,7 +7,7 @@
 
 package orchard.ui.lift.snippet
 
-import orchard.core.svg._
+// import orchard.core.svg._
 import orchard.core.cell._
 import orchard.core.complex._
 
@@ -15,17 +15,21 @@ import orchard.ui.lift._
 
 object Test {
 
-  val gallery = new LiftGallery(Example1.w)
-  gallery.refreshAll
+  // val gallery = new LiftGallery(Example1.w)
+  // gallery.refreshAll
 
   def render = {
     <div class="jcarousel">
       <ul>
-        { gallery.panels map (panel => { <li>{panel.toSVG}</li> }) }
+        <li>First</li>
+        <li>Second</li>
       </ul>
       <a class="jcarousel-prev" href="#">Prev</a>
       <a class="jcarousel-next" href="#">Next</a>
     </div>
   }
+
+
+  // { gallery.panels map (panel => { <li>{panel.toSVG}</li> }) }
 
 }
