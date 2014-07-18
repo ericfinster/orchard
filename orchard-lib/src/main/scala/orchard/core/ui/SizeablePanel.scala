@@ -7,6 +7,7 @@
 
 package orchard.core.ui
 
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
 
 import orchard.core.util._
@@ -32,6 +33,107 @@ trait SizeablePanel[A] extends Panel[A] {
 
   def strokeWidth = halfStrokeWidth + halfStrokeWidth
   def leafWidth = halfLeafWidth + strokeWidth + halfLeafWidth
+
+  //============================================================================================
+  // DEBUGGING
+  //
+
+  def cellMap : HashMap[Int, CellType] = {
+    val map : HashMap[Int, CellType] = HashMap.empty
+
+    baseCell.foreachCell (cell => {
+      map(cell.hashCode) = cell
+    })
+
+    map
+  }
+
+  implicit class InternalSize[A](size : SizeExpression[A]) {
+
+    def internalString : String =
+      size match {
+        case Constant(value) => value.toString
+        case Plus(e, f) => "( " ++ e.internalString ++ " + " ++ f.internalString ++ " )"
+        case Minus(e, f) => "( " ++ e.internalString ++ " - " ++ f.internalString ++ " )"
+        case Max(e, f) => "Math.max( " ++ e.internalString ++ ", " ++ f.internalString ++ " )"
+        case Divide(e, f) => "( " ++ e.internalString ++ " / " ++ f.internalString ++ " )"
+        case Times(e, f) => "( " ++ e.internalString ++ " * " ++ f.internalString ++ " )"
+        case If(cond, e, f) => "if (" ++ cond.internalString ++ ") { " ++ e.internalString ++ " } else { " ++ f.internalString ++ " }"
+        case orchard.core.ui.Attribute(ref, attr) => {
+          var referencedCell : Option[CellType] = None
+
+          baseCell.foreachCell(cell => {
+            if (cell.hashCode == ref) {
+              referencedCell = Some(cell)
+            }
+          })
+
+          referencedCell match {
+            case None => "unknown." ++ attr
+            case Some(cell) => cell.item.toString ++ "." ++ attr
+          }
+        }
+      }
+
+    def interpret : Double = 
+      size match {
+        case Constant(value) => value
+        case Plus(e, f) => e.interpret + f.interpret
+        case Minus(e, f) => e.interpret - f.interpret
+        case Max(e, f) => Math.max(e.interpret, f.interpret)
+        case Divide(e, f) => e.interpret / f.interpret
+        case Times(e, f) => e.interpret * f.interpret
+        case If(cond, e, f) => if (cond.interpret) { e.interpret } else { f.interpret }
+        case orchard.core.ui.Attribute(ref, attr) => {
+          val map = cellMap
+
+          if (map.isDefinedAt(ref.hashCode)) {
+            val (attrName, attrParamStr) = attr.splitAt(attr.indexOf("("))
+
+            attrName match {
+              case "x" => map(ref.hashCode).x.interpret
+              case "y" => map(ref.hashCode).y.interpret
+              case "width" => map(ref.hashCode).width.interpret
+              case "height" => map(ref.hashCode).height.interpret
+              case "rootLeftMargin" => ???
+              case "rootRightMargin" => ???
+              case "internalWidth" => ???
+              case "internalHeight" => ???
+              case "labelPadding" => ???
+              case "rootY" => ???
+              case "rootX" => ???
+              case _ => { println("Unknown attribute: " ++ attrName) ; 0.0 }
+            }
+          } else {
+            println("Undefined reference to cell: " ++ ref.toString)
+            0.0
+          }
+        }
+      }
+
+  }
+
+  implicit class InternalCondition[A](cond : SizeCondition[A]) {
+
+    def internalString : String =
+      cond match {
+        case Gt(e, f) => e.internalString ++ " > " ++ f.internalString
+        case Gte(e, f) => e.internalString ++ " >= " ++ f.internalString
+        case Lt(e, f) => e.internalString ++ " < " ++ f.internalString
+        case Lte(e, f) => e.internalString ++ " <= " ++ f.internalString
+        case Eq(e, f) => e.internalString ++ " == " ++ f.internalString
+      }
+
+    def interpret : Boolean = 
+      cond match {
+        case Gt(e, f) => e.interpret > f.interpret
+        case Gte(e, f) => e.interpret >= f.interpret
+        case Lt(e, f) => e.interpret < f.interpret
+        case Lte(e, f) => e.interpret <= f.interpret
+        case Eq(e, f) => e.interpret == f.interpret
+      }
+
+  }
 
   //============================================================================================
   // RENDERING SETUP AND CLEANUP
@@ -426,8 +528,7 @@ trait SizeablePanel[A] extends Panel[A] {
     def horizontalShift(amount : SizeResult)
     def verticalShift(amount : SizeResult)
 
-    def alignTo(other : Rooted) =
-      horizontalShift(other.rootX - rootX)
+    def alignTo(other : Rooted)
 
   }
 
@@ -437,47 +538,61 @@ trait SizeablePanel[A] extends Panel[A] {
 
   trait SizeableCell extends PanelCell with Rooted { thisCell : CellType =>
 
-    var myInternalWidth : SizeResult = 0.0
-    var myInternalHeight : SizeResult = 0.0
+    val internalWidthBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
+    val internalHeightBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
 
-    def internalWidth : SizeResult = Attribute(thisCell.hashCode, "myInternalWidth")
+    def internalWidth : SizeResult = 
+      Attribute(thisCell.hashCode, "internalWidth(" ++ (internalWidthBuffer.length - 1).toString ++ ")")
+
     def internalWidth_=(size : SizeResult) : Unit = 
-      myInternalWidth = size
+      internalWidthBuffer += size
 
-    def internalHeight : SizeResult = Attribute(thisCell.hashCode, "myInternalHeight")
+    def internalHeight : SizeResult = 
+      Attribute(thisCell.hashCode, "internalHeight(" ++ (internalHeightBuffer.length - 1).toString ++ ")")
+
     def internalHeight_=(size : SizeResult) : Unit = 
-      myInternalHeight = size
+      internalHeightBuffer += size
 
-    var myRootLeftMargin : SizeResult = 0.0
-    var myRootRightMargin : SizeResult = 0.0
+    val rootLeftMarginBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))    
+    val rootRightMarginBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
 
-    def rootLeftMargin : SizeResult = Attribute(thisCell.hashCode, "rootLeftMargin")
+    def rootLeftMargin : SizeResult = 
+      Attribute(thisCell.hashCode, "rootLeftMargin(" ++ (rootLeftMarginBuffer.length - 1).toString ++ ")")
+
     def rootLeftMargin_=(size : SizeResult) : Unit =
-      myRootLeftMargin = size
+      rootLeftMarginBuffer += size
 
-    def rootRightMargin : SizeResult = Attribute(thisCell.hashCode, "rootRightMargin")
+    def rootRightMargin : SizeResult = 
+      Attribute(thisCell.hashCode, "rootRightMargin(" ++ (rootRightMarginBuffer.length - 1).toString ++ ")")
+
     def rootRightMargin_=(size : SizeResult) : Unit =
-      myRootLeftMargin = size
+      rootRightMarginBuffer += size
 
-    var myRootX : SizeResult = 0.0
-    var myRootY : SizeResult = 0.0
+    val rootYBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
+    val rootXBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
 
-    override def rootX : SizeResult = Attribute(thisCell.hashCode, "rootX")
+    override def rootX : SizeResult = 
+      Attribute(thisCell.hashCode, "rootX(" ++ (rootXBuffer.length - 1).toString ++ ")")
+
     override def rootX_=(size : SizeResult) : Unit =
-      myRootX = size
+      rootXBuffer += size
 
-    override def rootY : SizeResult = Attribute(thisCell.hashCode, "rootY")
+    override def rootY : SizeResult = 
+      Attribute(thisCell.hashCode, "rootY(" ++ (rootYBuffer.length - 1).toString ++ ")")
+
     override def rootY_=(size : SizeResult) : Unit =
-      myRootY = size
+      rootYBuffer += size
 
-    def labelWidth : SizeResult = Attribute(thisCell.hashCode, "labelWidth")
-    def labelHeight : SizeResult = Attribute(thisCell.hashCode, "labelHeight")
+    def labelWidth : SizeResult = Attribute(thisCell.hashCode, "labelWidth()")
+    def labelHeight : SizeResult = Attribute(thisCell.hashCode, "labelHeight()")
 
-    var myLabelPadding : SizeResult = 0.0
+    val labelPaddingBuffer : ListBuffer[SizeResult] = ListBuffer(Constant(0.0))
 
-    def labelPadding : SizeResult = Attribute(thisCell.hashCode, "labelPadding")
+    def labelPadding : SizeResult = 
+      Attribute(thisCell.hashCode, "labelPadding(" ++ (labelPaddingBuffer.length - 1).toString ++ ")")
+
     def labelPadding_=(size : SizeResult) : Unit =
-      myLabelPadding = size
+      labelPaddingBuffer += size
 
     val vertDeps = new ListBuffer[Rooted]
     val horzDeps = new ListBuffer[Rooted]
@@ -486,14 +601,17 @@ trait SizeablePanel[A] extends Panel[A] {
     def addHorizontalDependent(r : Rooted) = { horzDeps += r }
 
     def horizontalShift(amount : SizeResult) = {
-      rootX += amount
+      rootX = (rootX + amount)
       horzDeps foreach (_.horizontalShift(amount))
     }
 
     def verticalShift(amount : SizeResult) = {
-      rootY += amount
+      rootY = (rootY + amount)
       vertDeps foreach (_.verticalShift(amount))
     }
+
+    def alignTo(other : Rooted) =
+      horizontalShift(other.rootX - rootX)
 
     // Derived visual data
 
@@ -516,6 +634,12 @@ trait SizeablePanel[A] extends Panel[A] {
 
     def centerX : SizeResult = x + (width / 2)
     def centerY : SizeResult = y + (height / 2)
+
+    def labelX : SizeResult = x + width - labelWidth - internalPadding - strokeWidth
+    def labelY : SizeResult = y + height - internalPadding - strokeWidth - (if (hasChildren) 0.0 else (strokeWidth * 1.5))
+
+    // val labelX = x + width - labelWidth - internalPadding - strokeWidth
+    // val labelY = y + height - internalPadding - strokeWidth - (if (hasChildren) 0.0 else (1.5 * strokeWidth))
 
     def clearRenderState =
     {
@@ -606,12 +730,15 @@ trait SizeablePanel[A] extends Panel[A] {
     def rootY = incomingY
     def rootY_=(r : SizeResult) = { incomingY = r }
 
+    def alignTo(other : Rooted) =
+      horizontalShift(other.rootX - rootX)
+
     def horizontalShift(amount : SizeResult) = { rootX += amount }
     def verticalShift(amount : SizeResult) = { rootY += amount }
 
     def renderPath : Unit
 
-    def isVertical = incomingX === outgoingX
+    // def isVertical = incomingX === outgoingX
 
     def clearRenderState =
     {

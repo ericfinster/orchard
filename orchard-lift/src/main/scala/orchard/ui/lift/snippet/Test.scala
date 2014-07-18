@@ -11,21 +11,21 @@ import orchard.core.svg._
 import orchard.core.cell._
 import orchard.core.complex._
 
+import orchard.ui.lift._
+
 object Test {
 
-  val panel = new SimpleSVGPanel(new SimpleMutableComplex(Example.Psi), 2)
+  val gallery = new LiftGallery(Example1.w)
+  gallery.refreshAll
 
   def render = {
-
-    val viewBoxStr = "-1.0 10.0 " ++ 100.toString ++ " " ++ 100.toString
-
-    <svg width={100.toString} height={100.toString} viewBox={viewBoxStr} xmlns="http://www.w3.org/2000/svg" version="1.1">
-      <script type="text/javascript">
-        window.onload = function() {{ 
-          alert("You loaded an opetopic gallery!"); 
-        }}
-      </script>
-    </svg>
+    <div class="jcarousel">
+      <ul>
+        { gallery.panels map (panel => { <li>{panel.toSVG}</li> }) }
+      </ul>
+      <a class="jcarousel-prev" href="#">Prev</a>
+      <a class="jcarousel-next" href="#">Next</a>
+    </div>
   }
 
 }

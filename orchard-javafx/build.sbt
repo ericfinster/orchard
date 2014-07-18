@@ -1,6 +1,6 @@
 name := "orchard-javafx"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.11.1"
 
 unmanagedJars in Compile := {
   val base = baseDirectory.value

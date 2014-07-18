@@ -26,6 +26,7 @@ trait Panel[A] extends EventConduit[CellEvent] { thisPanel =>
   def newCell(owner : complex.CellType) : CellType
   def newEdge(owner : complex.CellType) : EdgeType
 
+  def render : Unit
   def refresh : Unit
 
   //============================================================================================

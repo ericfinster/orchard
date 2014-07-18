@@ -12,7 +12,7 @@ import orchard.core.complex._
 
 trait Gallery[A] extends EventConduit[CellEvent] {
 
-  type PanelType <: RenderingPanel[A]
+  type PanelType <: Panel[A]
   type GalleryCell = PanelType#CellType
 
   def complex : PanelType#ComplexType

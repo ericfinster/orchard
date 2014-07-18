@@ -41,6 +41,11 @@ object OrchardBuild extends Build {
       jarName in assembly := "orchard-0.1-SNAPSHOT.jar"
     )
 
+  lazy val orchardJs = Project(
+    id = "orchard-js",
+    base = file("orchard-js")
+  ).settings(scalaJSSettings: _*)
+
   lazy val orchardLift = Project(
     id = "orchard-lift",
     base = file("orchard-lift"),

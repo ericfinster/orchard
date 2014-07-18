@@ -1,6 +1,6 @@
 name := "orchard-lift"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.11.1"
 
 seq(webSettings :_*)
 
