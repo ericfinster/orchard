@@ -9,8 +9,6 @@ package orchard.core.util
 
 import scala.collection.mutable.ListBuffer
 
-import Util._
-
 sealed trait RoseTree[+A, +B]
 case class Rose[B](value : B) extends RoseTree[Nothing, B] { override def toString = "(Leaf " ++ value.toString ++ ")" }
 case class Branch[A, B](value : A, branches : Vector[RoseTree[A, B]]) extends RoseTree[A, B]
@@ -159,7 +157,7 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
           var i : Int = 0
 
           while (i < branches.length) {
-            val res = visitBranch(i).force.find(branchProp, roseProp)
+            val res = visitBranch(i).get.find(branchProp, roseProp)
             if (res != None) return res
             i += 1
           }

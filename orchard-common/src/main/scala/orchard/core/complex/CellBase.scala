@@ -7,10 +7,9 @@
 
 package orchard.core.complex
 
-import orchard.core.cell._
-import orchard.core.util._
-
-import Util._
+import orchard.core.util.Rose
+import orchard.core.util.Branch
+import orchard.core.util.RoseTree
 
 trait CellBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisCell : C =>
 
@@ -98,4 +97,5 @@ trait EdgeBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisEdge : E =>
 
     action(this)
   }
+
 }
