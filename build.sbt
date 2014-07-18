@@ -8,7 +8,7 @@ lazy val root = project.in(file(".")).aggregate()
 
 lazy val orchardLib = project.in(file("orchard-lib")).settings(
   name := "orchard-lib",
-  unmanagedSourceDirectories in Compile += root.base / "orchard-common" / "src" / "main" / "scala",
+  unmanagedSourceDirectories in Compile += (baseDirectory in root).value / "orchard-common" / "src" / "main" / "scala",
   libraryDependencies ++= Seq(
     "org.scalaz" %% "scalaz-core" % "7.0.6",
     "org.scalaz" %% "scalaz-concurrent" % "7.0.6"
@@ -17,7 +17,7 @@ lazy val orchardLib = project.in(file("orchard-lib")).settings(
 
 lazy val orchardJs = project.in(file("orchard-js")).settings(scalaJSSettings: _*).settings(
   name := "orchard-js",
-  unmanagedSourceDirectories in Compile += root.base / "orchard-common" / "src" / "main" / "scala"
+  unmanagedSourceDirectories in Compile += (baseDirectory in root).value / "orchard-common" / "src" / "main" / "scala"
 )
 
 lazy val orchardLift = project.in(file("orchard-lift")).settings(webSettings: _*).settings(
@@ -28,7 +28,7 @@ lazy val orchardLift = project.in(file("orchard-lift")).settings(webSettings: _*
     "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" %
       "container,compile" artifacts Artifact("javax.servlet", "jar", "jar")
   )
-)
+).dependsOn(orchardLib)
 
 lazy val orchardJavafx = project.in(file("orchard-javafx")).settings(
   name := "orchard-javafx",

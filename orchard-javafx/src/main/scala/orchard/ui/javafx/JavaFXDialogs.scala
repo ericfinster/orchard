@@ -12,13 +12,11 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry._
 
-import orchard.core.expression.CheckerResult
-
 import controls._
 
 trait JavaFXDialogs { thisEditor : JavaFXEditor =>
 
-  class SimpleIdentifierDialog(handler : String => CheckerResult[_]) extends CancellableDialog {
+  class SimpleIdentifierDialog(handler : String => Unit) extends CancellableDialog {
 
     val idField = new TextField { promptText = "Identifier" ; onAction = () => { okBtn.fire } }
 
@@ -41,7 +39,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
       }
   }
 
-  class VariableDialog(handler : (String, Boolean) => CheckerResult[_]) extends CancellableDialog {
+  class VariableDialog(handler : (String, Boolean) => Unit) extends CancellableDialog {
 
     setHeading("Assume Variable")
 

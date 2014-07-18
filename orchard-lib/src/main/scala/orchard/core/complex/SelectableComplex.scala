@@ -55,10 +55,10 @@ trait SelectableComplex[A] extends CellComplex[A] {
 
   def trySelect(cell : CellType) : Boolean = {
     // This should be guaranteed by the cardinal structure
-    val base = selectionBase.force
-    val baseContainer = base.container.force
+    val base = selectionBase.get
+    val baseContainer = base.container.get
 
-    if (cell.container.force != baseContainer)
+    if (cell.container.get != baseContainer)
       return false
 
     val candidates : Set[CellType] = new HashSet
@@ -66,14 +66,14 @@ trait SelectableComplex[A] extends CellComplex[A] {
 
     // Now look up a zipper to this guy
     val zipper : RoseZipper[CellType, Int] =
-      new RoseZipper(baseContainer.canopy.force, Nil)
-    var ptrOpt = zipper.lookup(cell)
-      .force("Lookup failed for selected cell.").zipOnce
+      new RoseZipper(baseContainer.canopy.get, Nil)
+
+    var ptrOpt = zipper.lookup(cell).get.zipOnce
 
     // Step back through the zipper and look for the base selection
     while (ptrOpt != None) {
-      val ptr = ptrOpt.force
-      val testCell = ptr.focus.rootElement.force("No root element?")
+      val ptr = ptrOpt.get
+      val testCell = ptr.focus.rootElement.get
 
       if (isSelected(testCell)) {
         // We're done!!

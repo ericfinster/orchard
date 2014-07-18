@@ -157,7 +157,7 @@ trait CellComplex[A] extends EventEmitter[CellEvent] { thisComplex =>
           if (loops != Nil) {
             loops.head
           } else {
-            baseContainer.incoming.force
+            baseContainer.incoming.get
           }
 
         next.topCell

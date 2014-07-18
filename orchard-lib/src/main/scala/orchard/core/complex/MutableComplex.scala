@@ -200,9 +200,9 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
       // once you know that the lower dimensional information has been corrected.
 
       // Make sure we have all the available information before proceeding
-      val myFiller = incoming.force("Need a filling cell")
-      val myFillerContainer = myFiller.container.force("Filling cell needs a container")
-      val topFiller = myFiller.outgoing.force("Need a top cell for the new leaf")
+      val myFiller = incoming.get
+      val myFillerContainer = myFiller.container.get
+      val topFiller = myFiller.outgoing.get
 
       val compositeCell = newCell(compositeValue)
       val universalCell = newCell(universalValue)
@@ -253,7 +253,7 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
       canopy = Some(newCanopy)
 
       // Now, we move on to the next dimension where we look for the filling cell
-      val ptr = RoseZipper(myFillerContainer.canopy.get, Nil).lookup(myFiller).force("Failed to find the filler!")
+      val ptr = RoseZipper(myFillerContainer.canopy.get, Nil).lookup(myFiller).get
 
       val (fillerSources, universalSources) = (newCanopy.nodeVector, compositeCanopy.nodeVector)
 
@@ -266,8 +266,8 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
 
               val universalBranches = universalSources map
                 (src => {
-                  val branch = (branches find (b => myFillerContainer.edgeAt(b).force == src)).force("No branch found for this edge.")
-                  myFillerContainer.edgeAt(branch).force.outgoing = Some(universalCell)
+                  val branch = (branches find (b => myFillerContainer.edgeAt(b).get == src)).get
+                  myFillerContainer.edgeAt(branch).get.outgoing = Some(universalCell)
                   branch
                 })
 
@@ -276,7 +276,7 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
                   if (src == compositeCell) {
                     Branch(universalCell, universalBranches)
                   } else {
-                    (branches find (b => myFillerContainer.edgeAt(b).force == src)).force("No branch found for this edge.")
+                    (branches find (b => myFillerContainer.edgeAt(b).get == src)).get
                   }
                 })
 

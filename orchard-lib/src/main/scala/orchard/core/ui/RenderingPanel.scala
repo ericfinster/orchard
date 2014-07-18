@@ -320,7 +320,7 @@ trait RenderingPanel[A] extends Panel[A] {
           // Traverse the source tree if necessary
           val rootMarker =
             if (cell.isObject) {
-              val childObj = tree.rootElement.force("Malformed object!")
+              val childObj = tree.rootElement.get
               render(childObj, new Array(0))
             } else {
               traverse(tree)
