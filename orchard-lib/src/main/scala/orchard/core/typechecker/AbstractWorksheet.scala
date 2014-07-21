@@ -19,9 +19,12 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
   type CellType <: AbstractWorksheetCell
 
   abstract class AbstractWorksheetCell(itm : Polarity[Option[Expression]])
-      extends AbstractMutableCell
+      extends MutableSkeletalCell
       with FrameworkCell
       with CardinalCell { thisCell : CellType =>
+
+    // Umm ....
+    var skeleton : NCell[CellType] = null
 
     protected var myItem = itm
 

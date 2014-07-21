@@ -11,7 +11,9 @@ import scala.collection.mutable.ListBuffer
 
 import orchard.core.util._
 
-trait RenderableComplex[A] extends GalleryComplex[A] {
+trait RenderableComplex[A] extends GalleryComplex[A] { thisComplex =>
+
+  type PanelType <: RenderablePanel
 
   type PanelCellType <: RenderableCell
   type PanelEdgeType <: RenderableEdge
@@ -30,6 +32,64 @@ trait RenderableComplex[A] extends GalleryComplex[A] {
 
   def strokeWidth = halfStrokeWidth + halfStrokeWidth
   def leafWidth = halfLeafWidth + strokeWidth + halfLeafWidth
+
+  //============================================================================================
+  // PANEL LEVEL RENDERING 
+  //
+
+  trait RenderablePanel extends Panel { thisPanel : PanelType =>
+
+    def refresh = {
+      clearRenderState
+      render
+    }
+
+    def clearRenderState =
+    {
+      baseCell foreachCell (cell => cell.clearRenderState)
+
+      for { tgt <- baseCell.target } {
+        tgt foreachEdge (edge => edge.clearRenderState)
+      }
+    }
+
+    def render : Unit = {
+      val baseMarker = baseCell.sources match {
+        case None => thisComplex.render(baseCell, new Array(0))
+        case Some(srcs) =>
+          {
+            val markers =
+              (srcs map (src => new LayoutMarker { val owner = src ; val wasExternal = true }))
+
+            thisComplex.render(baseCell, markers.toArray)
+          }
+      }
+
+      // Now align the edges properly ...
+      baseCell foreachCell (cell => cell.alignEdges)
+    }
+
+    def edgePadding = {
+      if (baseCell.isExternal) {
+        if (baseCell.sourceCount > 1) {
+          val numRightEdges : Int = baseCell.sourceCount / 2
+          // Ech.  This isn't very careful.  I think you can do better.
+          val padding = ((numRightEdges - 1) * (leafWidth + (2 * strokeWidth))) + halfLeafWidth + (2 * strokeWidth)
+          padding
+        } else {
+          0.0
+        }
+      } else {
+        0.0
+      }
+    }
+
+    def panelX = baseCell.x - edgePadding
+    def panelY = baseCell.y - (2 * externalPadding)
+    def panelHeight = baseCell.height + (4 * externalPadding)
+    def panelWidth = baseCell.width + (2 * edgePadding)
+
+  }
 
   //============================================================================================
   // MAIN RENDERING ALGORITHM
@@ -379,8 +439,11 @@ trait RenderableComplex[A] extends GalleryComplex[A] {
     var rootX : Double = 0.0
     var rootY : Double = 0.0
 
-    var labelWidth : Double = 0.0
-    var labelHeight : Double = 0.0
+    def labelWidth : Double 
+    def labelHeight : Double
+
+    def labelX : Double = x + width - labelWidth - internalPadding - strokeWidth
+    def labelY : Double = y + height - internalPadding - strokeWidth - (if (hasChildren) 0.0 else (strokeWidth * 1.5))
 
     var labelPadding : Double = 0.0
 
@@ -433,8 +496,6 @@ trait RenderableComplex[A] extends GalleryComplex[A] {
       rootRightMargin = 0.0
       rootX = 0.0
       rootY = 0.0
-      labelWidth = 0.0
-      labelHeight = 0.0
       labelPadding = 0.0
       vertDeps.clear
       horzDeps.clear
@@ -509,8 +570,6 @@ trait RenderableComplex[A] extends GalleryComplex[A] {
 
     def horizontalShift(amount : Double) = { rootX += amount }
     def verticalShift(amount : Double) = { rootY += amount }
-
-    def renderPath : Unit
 
     def isVertical = incomingX == outgoingX
 

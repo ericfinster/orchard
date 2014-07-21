@@ -7,66 +7,35 @@
 
 package orchard.ui.lift.snippet
 
-import net.liftweb.common._
-
-import net.liftweb.http.LiftRules
-
-import net.liftweb.util._
-import Helpers._
-
 import net.liftweb.http.SHtml
-import net.liftweb.http.js._
-import JE.JsRaw
-import JE.Call
 import net.liftweb.http.js.JsCmds._
+import net.liftweb.http.js.JE._
 
-import net.liftweb.common.Loggable
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.DefaultFormats
 
 import xml._
 import orchard.ui.lift._
+import orchard.core.util._
 import orchard.core.cell._
 import orchard.core.complex._
 
-import scala.collection.mutable.Map
-import scala.collection.mutable.HashMap
-
 object Editor {
 
-  // Sweet.  So this works nicely.  You set the right class and just blaze through the text elements,
-  // returning all the bounding boxes over to this side.  Now we just parse the information, pass it
-  // back to the panel, and try to cause a reloading of the data ...
+  // Great, so here we create a complex.  The idea will be to serialize
+  // this guy and send him off to the client ...
 
-  // We can cause a reload of the data by using the SetHtml javascript command.
-  // Right.  And the cookbook shows how to make this come from a complete template
-  // if you like.  But either way, it seems to use SetHtml, so do we care?
+  val complex = new LiftComplex[String](Example1.w map (_.toString))
+  val stringWriter = implicitly[JsonWritable[String, JValue]]
+  val complexJson = complex.toJson(LiftJsonWriter, stringWriter)
 
-  // val panel = new SimplePanel(new SimpleMutableComplex(Example.Psi), 2)
+  def example(html : NodeSeq) : NodeSeq = 
+    SHtml.a(() => Call("orchard.js.Main().renderComplex", complexJson), Text("Render complex."))
 
-  // def processDimensions(value : JValue) : JsCmd = {
-  //   val dimensionMap : Map[String, BBox] = new HashMap[String, BBox]
+  // def createSnap(html : NodeSeq) : NodeSeq = 
+  //   SHtml.a(() => Call("orchard.js.Main().createSnapSurface", complexJson), Text("Create Snap Surface."))
 
-  //   implicit val formats = DefaultFormats
+  // def createSvg(html : NodeSeq) : NodeSeq = 
+  //   SHtml.a(() => Call("orchard.js.Main().createSVGElement", complexJson), Text("Create Svg Surface."))
 
-  //   // We should catch the possible exception here
-  //   value match {
-  //     case JObject(members) => {
-  //       for {
-  //         JField(id, bbox) <- members
-  //       } { dimensionMap(id) = bbox.extractOpt[BBox].get }
-  //     }
-  //     case _ => println("Ooops, it's not.")
-  //   }
-
-  //   panel.setLabelsFromBBox(dimensionMap)
-  //   panel.render
-
-  //   SetHtml("viewer", panel.toSVG)
-  // }
-
-  // def render = <svg width="400" height="400">{panel.labelProofSheet}</svg>
-
-  // def buttonClicked = "button [onclick]" #> SHtml.jsonCall(Call("returnLabelDimensions"), processDimensions _)
 
 }

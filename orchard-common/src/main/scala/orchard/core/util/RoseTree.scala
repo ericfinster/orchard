@@ -15,6 +15,7 @@ case class Branch[A, B](value : A, branches : Vector[RoseTree[A, B]]) extends Ro
 { override def toString = "(Branch: " ++ value.toString ++ ") => " ++ (branches map (_.toString)).toString }
 
 object RoseTree {
+
   implicit class RoseTreeOps[A, B](tree : RoseTree[A, B]) {
     def map[S, T](f : A => S, g : B => T) : RoseTree[S, T] = 
       tree match {
@@ -38,7 +39,7 @@ object RoseTree {
 
     def leaves : Vector[B] =
       tree match {
-        case Rose(value) => Vector(value)
+        case Rose(value) => Vector[B](value)
         case Branch(value, branches) => branches flatMap (_.leaves)
       }
 
@@ -71,6 +72,54 @@ object RoseTree {
         case Rose(_) => None
         case Branch(value, _) => Some(value)
       }
+  }
+
+  implicit def roseTreeIsReadable[A, B, P](
+    implicit aReader : JsonReadable[A, P], bReader : JsonReadable[B, P]
+  ) : JsonReadable[RoseTree[A, B], P] = new JsonReadable[RoseTree[A, B], P] {
+    def read(x : P, reader : JsonReader[P]) : RoseTree[A, B] = {
+      reader.readString(
+        reader.readObjectField(x, "type")
+      ) match {
+        case "rose" => {
+          val bObj = reader.readObjectField(x, "value")
+          val b = bReader.read(bObj, reader)
+          Rose(b)
+        }
+        case "branch" => {
+          val vReader = implicitly[JsonReadable[Vector[RoseTree[A, B]], P]]
+
+          val aObj = reader.readObjectField(x, "value")
+          val a = aReader.read(aObj, reader)
+          val branchesObj = reader.readObjectField(x, "branches")
+          val branches = vReader.read(branchesObj, reader)
+
+          Branch(a, branches)
+        }
+      }
+    }
+  }
+
+  implicit def roseTreeIsWritable[A, B, P](
+    implicit aWriter : JsonWritable[A, P], bWriter : JsonWritable[B, P]
+  ) : JsonWritable[RoseTree[A, B], P] = new JsonWritable[RoseTree[A, B], P] {
+    def write(tree : RoseTree[A, B], writer : JsonWriter[P]) : P = {
+      tree match {
+        case Rose(b) => {
+          writer.writeObject(
+            ("type" -> writer.writeString("rose")),
+            ("value" -> bWriter.write(b, writer))
+          )
+        }
+        case Branch(a, branches) => {
+          writer.writeObject(
+            ("type" -> writer.writeString("branch")),
+            ("value" -> aWriter.write(a, writer)),
+            ("branches" -> writer.writeArray((branches map (write(_, writer))) : _*))
+          )
+        }
+      }
+    }
   }
 }
 

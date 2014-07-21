@@ -12,7 +12,7 @@ import orchard.core.util._
 import orchard.core.complex._
 
 abstract class Framework[A : ExpressionLike](seed : NCell[A])
-    extends AbstractMutableComplex[A](seed) { thisFramework =>
+    extends MutableSkeletalComplex[A] { thisFramework =>
 
   type FrameworkType <: Framework[A]
   type CellType <: FrameworkCell
@@ -24,7 +24,18 @@ abstract class Framework[A : ExpressionLike](seed : NCell[A])
   def invertibilityLevel : Option[Int]
   def unicityLevel : Option[Int]
 
-  trait FrameworkCell extends AbstractMutableCell { thisCell : CellType =>
+  trait FrameworkCell extends MutableSkeletalCell { thisCell : CellType =>
+
+    var canopy : Option[RoseTree[CellType, Int]] = None
+    var target : Option[CellType] = None 
+    var sources : Option[Vector[CellType]] = None
+    var container : Option[CellType] = None
+
+    var incoming : Option[CellType] = None
+    var outgoing : Option[CellType] = None
+
+    // Umm ....
+    var skeleton : NCell[CellType] = null
 
     def isThin : Boolean =
       implicitly[ExpressionLike[A]].isThin(item)

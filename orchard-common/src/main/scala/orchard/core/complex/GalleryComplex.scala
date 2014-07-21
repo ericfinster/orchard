@@ -13,16 +13,22 @@ trait GalleryComplex[A] extends CellComplex[A] {
 
   type CellType <: GalleryCell
 
+  type PanelType <: Panel
+
   type PanelCellType <: PanelCell
   type PanelEdgeType <: PanelEdge
 
-  trait Panel {
-    // Not sure what goes here just yet ...
+  trait Panel { thisPanel : PanelType =>
+
+    def render : Unit
+    def baseCell : PanelCellType
+
   }
 
   trait PanelCell extends CellBase[PanelCellType, PanelEdgeType] {
     thisPanelCell : PanelCellType =>
 
+    def item : A = complexCell.item
     def complexCell : CellType
 
     // Because of unicity, we can actually implement these methods
@@ -58,6 +64,7 @@ trait GalleryComplex[A] extends CellComplex[A] {
   trait PanelEdge extends EdgeBase[PanelCellType, PanelEdgeType] {
     thisPanelEdge : PanelEdgeType =>
 
+    def item : A = complexCell.item
     def complexCell : CellType
 
     def incoming : Option[PanelCellType] = 

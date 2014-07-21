@@ -8,6 +8,7 @@
 package orchard.core.typechecker
 
 import orchard.core.cell._
+import orchard.core.util._
 import orchard.core.complex._
 
 trait WorksheetHandle { thisHandle =>
@@ -22,7 +23,7 @@ trait WorksheetHandle { thisHandle =>
   def dropSelection : Unit
 
   class MarkerComplex(seed : NCell[ExpressionMarker])
-      extends AbstractMutableComplex[ExpressionMarker](seed)
+      extends MutableSkeletalComplex[ExpressionMarker]
       with SelectableComplex[ExpressionMarker] { thisComplex =>
 
     type CellType = MarkerCell
@@ -31,7 +32,18 @@ trait WorksheetHandle { thisHandle =>
 
     def newCell(item : ExpressionMarker) = new MarkerCell(item)
 
-    class MarkerCell(var item : ExpressionMarker) extends AbstractMutableCell {
+    class MarkerCell(var item : ExpressionMarker) extends MutableSkeletalCell {
+
+      var canopy : Option[RoseTree[CellType, Int]] = None
+      var target : Option[CellType] = None
+      var sources : Option[Vector[CellType]] = None
+      var container : Option[CellType] = None
+
+      var incoming : Option[CellType] = None
+      var outgoing : Option[CellType] = None
+
+      // Umm ....
+      var skeleton : NCell[CellType] = null
 
       def isNeutral : Boolean = item.isNeutral
 

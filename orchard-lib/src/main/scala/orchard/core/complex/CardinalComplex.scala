@@ -32,11 +32,11 @@ object Polarity {
 
 }
 
-trait CardinalComplex[A] { thisComplex : MutableComplex[Polarity[A]] =>
+trait CardinalComplex[A] { thisComplex : MutableSkeletalComplex[Polarity[A]] =>
 
   override type CellType <: CardinalCell
 
-  trait CardinalCell { thisCardinal : MutableCell =>
+  trait CardinalCell { thisCardinal : MutableSkeletalCell =>
 
     def isPositive : Boolean =
       item match {
