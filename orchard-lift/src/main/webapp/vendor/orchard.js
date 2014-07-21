@@ -865,9 +865,6 @@ ScalaJS.i.Lorchard_core_complex_CellComplex$ComplexCell$class__$init$__Lorchard_
 ScalaJS.i.Lorchard_core_complex_CellComplex$class__baseCells__Lorchard_core_complex_CellComplex__sci_List = (function($$this) {
   return $$this.topCell__Lorchard_core_complex_CellComplex$ComplexCell().targets__sci_List()
 });
-ScalaJS.i.Lorchard_core_complex_CellComplex$class__dimension__Lorchard_core_complex_CellComplex__I = (function($$this) {
-  return (($$this.baseCells__sci_List().length__I() - 1) | 0)
-});
 ScalaJS.i.Lorchard_core_complex_CellComplex$class__cellFromDescriptor__Lorchard_core_complex_CellComplex__Lorchard_core_complex_CellComplex$ComplexCell__Lorchard_core_complex_CellComplex$CellDescriptor__sci_Map__V = (function($$this, cell, desc, cellMap) {
   cell.canopy$und$eq__s_Option__V(desc.canopy__s_Option().map__F1__s_Option(new ScalaJS.c.Lorchard_core_complex_CellComplex$$anonfun$cellFromDescriptor$1().init___Lorchard_core_complex_CellComplex__sci_Map($$this, cellMap)));
   cell.sources$und$eq__s_Option__V(desc.sources__s_Option().map__F1__s_Option(new ScalaJS.c.Lorchard_core_complex_CellComplex$$anonfun$cellFromDescriptor$2().init___Lorchard_core_complex_CellComplex__sci_Map($$this, cellMap)));
@@ -962,6 +959,10 @@ ScalaJS.i.Lorchard_core_complex_CellComplex$class__fromJson__Lorchard_core_compl
 ScalaJS.i.Lorchard_core_complex_CellComplex$class__$init$__Lorchard_core_complex_CellComplex__V = (function($$this) {
   /*<skip>*/
 });
+ScalaJS.i.Lorchard_core_complex_EdgeBase$class__foreachEdge__Lorchard_core_complex_EdgeBase__F1__V = (function($$this, action) {
+  $$this.incoming__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1().init___Lorchard_core_complex_EdgeBase__F1($$this, action));
+  action.apply__O__O($$this)
+});
 ScalaJS.i.Lorchard_core_complex_EdgeBase$class__$init$__Lorchard_core_complex_EdgeBase__V = (function($$this) {
   /*<skip>*/
 });
@@ -988,6 +989,12 @@ ScalaJS.i.Lorchard_core_complex_GalleryComplex$PanelCell$class__container__Lorch
 });
 ScalaJS.i.Lorchard_core_complex_GalleryComplex$PanelCell$class__$init$__Lorchard_core_complex_GalleryComplex$PanelCell__V = (function($$this) {
   /*<skip>*/
+});
+ScalaJS.i.Lorchard_core_complex_GalleryComplex$PanelEdge$class__incoming__Lorchard_core_complex_GalleryComplex$PanelEdge__s_Option = (function($$this) {
+  return $$this.complexCell__Lorchard_core_complex_GalleryComplex$GalleryCell().incoming__s_Option().map__F1__s_Option(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(complexIncoming$2) {
+    var complexIncoming = ScalaJS.as.Lorchard_core_complex_GalleryComplex$GalleryCell(complexIncoming$2);
+    return complexIncoming.panelCell__Lorchard_core_complex_GalleryComplex$PanelCell()
+  })))
 });
 ScalaJS.i.Lorchard_core_complex_GalleryComplex$PanelEdge$class__$init$__Lorchard_core_complex_GalleryComplex$PanelEdge__V = (function($$this) {
   /*<skip>*/
@@ -1159,6 +1166,9 @@ ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__horizont
 });
 ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__verticalShift__Lorchard_core_complex_RenderableComplex$RenderableEdge__D__V = (function($$this, amount) {
   $$this.rootY$und$eq__D__V(($$this.rootY__D() + amount))
+});
+ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__isVertical__Lorchard_core_complex_RenderableComplex$RenderableEdge__Z = (function($$this) {
+  return ($$this.incomingX__D() === $$this.outgoingX__D())
 });
 ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__$init$__Lorchard_core_complex_RenderableComplex$RenderableEdge__V = (function($$this) {
   $$this.incomingX$und$eq__D__V(0.0);
@@ -1443,7 +1453,7 @@ ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__labelHeight__Lorchard_js_JsCo
     return 0.0
   }))))
 });
-ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__cellGroup__Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Paper__Lorchard_js_Element = (function($$this, p) {
+ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__drawCellContent__Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Paper__Lorchard_js_Element = (function($$this, p) {
   var label = p["text"](0.0, 0.0, ScalaJS.objectToString($$this.item__O()));
   var rect = p["rect"](0.0, 0.0, 0.0, 0.0, 4.0, 4.0);
   var group = p["g"](new ScalaJS.g["Array"]());
@@ -1451,18 +1461,88 @@ ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__cellGroup__Lorchard_js_JsComp
   $$this.labelElement$und$eq__s_Option__V(new ScalaJS.c.s_Some().init___O(label));
   group["append"](rect);
   group["append"](label);
-  $$this.canopy__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1().init___Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Element__Lorchard_js_Paper($$this, group, p));
+  $$this.groupElement$und$eq__s_Option__V(new ScalaJS.c.s_Some().init___O(group));
+  $$this.canopy__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1().init___Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Element__Lorchard_js_Paper($$this, group, p));
   return group
 });
 ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__setDimensions__Lorchard_js_JsComplex$JsPanelCell__V = (function($$this) {
   $$this.rectElement__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$setDimensions$1().init___Lorchard_js_JsComplex$JsPanelCell($$this))
 });
 ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__$init$__Lorchard_js_JsComplex$JsPanelCell__V = (function($$this) {
+  $$this.groupElement$und$eq__s_Option__V(ScalaJS.m.s_None());
   $$this.rectElement$und$eq__s_Option__V(ScalaJS.m.s_None());
   $$this.labelElement$und$eq__s_Option__V(ScalaJS.m.s_None())
 });
+ScalaJS.i.Lorchard_js_JsComplex$JsPanelEdge$class__drawPath__Lorchard_js_JsComplex$JsPanelEdge__Lorchard_js_Paper__Lorchard_js_Element = (function($$this, p) {
+  var path = p["path"]("");
+  $$this.pathElement$und$eq__s_Option__V(new ScalaJS.c.s_Some().init___O(path));
+  return path
+});
+ScalaJS.i.Lorchard_js_JsComplex$JsPanelEdge$class__renderPath__Lorchard_js_JsComplex$JsPanelEdge__V = (function($$this) {
+  $$this.pathElement__s_Option().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
+    return (function(path$2) {
+      var path = path$2;
+      var pathString = ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("M ")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.incomingX__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.incomingY__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()));
+      if (arg$outer.isVertical__Z()) {
+        pathString = ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(pathString)).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("V ")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.outgoingY__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()))
+      } else {
+        pathString = ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(pathString)).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("V ")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString((arg$outer.outgoingY__D() - arg$outer.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex().arcRadius__D())))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()));
+        var jsx$34 = new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(pathString));
+        var jsx$33 = ScalaJS.m.s_Predef();
+        var jsx$32 = ScalaJS.m.s_Predef();
+        var jsx$31 = ScalaJS.m.s_Predef();
+        var jsx$30 = ScalaJS.m.s_Predef();
+        var jsx$29 = ScalaJS.m.s_Predef();
+        var jsx$28 = new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("A ")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex().arcRadius__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex().arcRadius__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" 0 0 ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()))));
+        if ((arg$outer.incomingX__D() > arg$outer.outgoingX__D())) {
+          var jsx$27 = new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("1 "))
+        } else {
+          var jsx$27 = new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("0 "))
+        };
+        var jsx$26 = jsx$28.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(jsx$27, ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        var jsx$25 = ScalaJS.as.T(jsx$26);
+        var jsx$24 = jsx$29.augmentString__T__T(jsx$25);
+        var jsx$23 = new ScalaJS.c.sci_StringOps().init___T(jsx$24);
+        var jsx$22 = ScalaJS.m.s_Predef();
+        if ((arg$outer.incomingX__D() > arg$outer.outgoingX__D())) {
+          var jsx$21 = (arg$outer.incomingX__D() - arg$outer.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex().arcRadius__D())
+        } else {
+          var jsx$21 = (arg$outer.incomingX__D() + arg$outer.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex().arcRadius__D())
+        };
+        var jsx$20 = ScalaJS.objectToString(jsx$21);
+        var jsx$19 = jsx$22.augmentString__T__T(jsx$20);
+        var jsx$18 = new ScalaJS.c.sci_StringOps().init___T(jsx$19);
+        var jsx$17 = jsx$23.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(jsx$18, ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        var jsx$16 = ScalaJS.as.T(jsx$17);
+        var jsx$15 = jsx$30.augmentString__T__T(jsx$16);
+        var jsx$14 = new ScalaJS.c.sci_StringOps().init___T(jsx$15);
+        var jsx$13 = jsx$14.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        var jsx$12 = ScalaJS.as.T(jsx$13);
+        var jsx$11 = jsx$31.augmentString__T__T(jsx$12);
+        var jsx$10 = new ScalaJS.c.sci_StringOps().init___T(jsx$11);
+        var jsx$9 = jsx$10.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.outgoingY__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        var jsx$8 = ScalaJS.as.T(jsx$9);
+        var jsx$7 = jsx$32.augmentString__T__T(jsx$8);
+        var jsx$6 = new ScalaJS.c.sci_StringOps().init___T(jsx$7);
+        var jsx$5 = jsx$6.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        var jsx$4 = ScalaJS.as.T(jsx$5);
+        var jsx$3 = jsx$33.augmentString__T__T(jsx$4);
+        var jsx$2 = new ScalaJS.c.sci_StringOps().init___T(jsx$3);
+        var jsx$1 = jsx$34.$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(jsx$2, ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom());
+        pathString = ScalaJS.as.T(jsx$1);
+        pathString = ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(pathString)).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("H ")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(arg$outer.outgoingX__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()))
+      };
+      path["attr"]({
+        "d": pathString,
+        "stroke": "#000",
+        "strokeWidth": 2,
+        "fill": "none"
+      })
+    })
+  })($$this)))
+});
 ScalaJS.i.Lorchard_js_JsComplex$JsPanelEdge$class__$init$__Lorchard_js_JsComplex$JsPanelEdge__V = (function($$this) {
-  /*<skip>*/
+  $$this.pathElement$und$eq__s_Option__V(ScalaJS.m.s_None())
 });
 /** @constructor */
 ScalaJS.c.O = (function() {
@@ -2047,6 +2127,18 @@ ScalaJS.i.sc_IterableLike$class__copyToArray__sc_IterableLike__O__I__I__V = (fun
     ScalaJS.m.sr_ScalaRunTime().array$undupdate__O__I__O__V(xs, i, it.next__O());
     i = ((i + 1) | 0)
   }
+});
+ScalaJS.i.sc_IterableLike$class__zipWithIndex__sc_IterableLike__scg_CanBuildFrom__O = (function($$this, bf) {
+  var b = bf.apply__O__scm_Builder($$this.repr__O());
+  var i = new ScalaJS.c.sr_IntRef().init___I(0);
+  $$this.foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(b$2, i$1) {
+    return (function(x$2) {
+      var x = ScalaJS.as.O(x$2);
+      b$2.$$plus$eq__O__scm_Builder(new ScalaJS.c.T2().init___O__O(x, i$1.elem$1));
+      i$1.elem$1 = ((i$1.elem$1 + 1) | 0)
+    })
+  })(b, i)));
+  return b.result__O()
 });
 ScalaJS.i.sc_IterableLike$class__sameElements__sc_IterableLike__sc_GenIterable__Z = (function($$this, that) {
   var these = $$this.iterator__sc_Iterator();
@@ -3631,32 +3723,6 @@ ScalaJS.d.Lorchard_core_complex_GalleryComplex$GalleryCell = new ScalaJS.ClassTy
   Lorchard_core_complex_CellBase: 1,
   O: 1
 });
-ScalaJS.is.Lorchard_core_complex_GalleryComplex$Panel = (function(obj) {
-  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_core_complex_GalleryComplex$Panel)))
-});
-ScalaJS.as.Lorchard_core_complex_GalleryComplex$Panel = (function(obj) {
-  if ((ScalaJS.is.Lorchard_core_complex_GalleryComplex$Panel(obj) || (obj === null))) {
-    return obj
-  } else {
-    ScalaJS.throwClassCastException(obj, "orchard.core.complex.GalleryComplex$Panel")
-  }
-});
-ScalaJS.isArrayOf.Lorchard_core_complex_GalleryComplex$Panel = (function(obj, depth) {
-  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_core_complex_GalleryComplex$Panel)))
-});
-ScalaJS.asArrayOf.Lorchard_core_complex_GalleryComplex$Panel = (function(obj, depth) {
-  if ((ScalaJS.isArrayOf.Lorchard_core_complex_GalleryComplex$Panel(obj, depth) || (obj === null))) {
-    return obj
-  } else {
-    ScalaJS.throwArrayCastException(obj, "Lorchard.core.complex.GalleryComplex$Panel;", depth)
-  }
-});
-ScalaJS.d.Lorchard_core_complex_GalleryComplex$Panel = new ScalaJS.ClassTypeData({
-  Lorchard_core_complex_GalleryComplex$Panel: 0
-}, true, "orchard.core.complex.GalleryComplex$Panel", undefined, {
-  Lorchard_core_complex_GalleryComplex$Panel: 1,
-  O: 1
-});
 /** @constructor */
 ScalaJS.c.Lorchard_core_complex_RenderableComplex$LayoutMarker = (function() {
   ScalaJS.c.O.call(this);
@@ -4679,10 +4745,59 @@ ScalaJS.d.Lorchard_core_util_RoseTree$RoseTreeOps = new ScalaJS.ClassTypeData({
 ScalaJS.c.Lorchard_core_util_RoseTree$RoseTreeOps.prototype.$classData = ScalaJS.d.Lorchard_core_util_RoseTree$RoseTreeOps;
 /*<skip>*/;
 /** @constructor */
+ScalaJS.c.Lorchard_js_JQueryCarousel$ = (function() {
+  ScalaJS.c.O.call(this)
+});
+ScalaJS.c.Lorchard_js_JQueryCarousel$.prototype = new ScalaJS.h.O();
+ScalaJS.c.Lorchard_js_JQueryCarousel$.prototype.constructor = ScalaJS.c.Lorchard_js_JQueryCarousel$;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JQueryCarousel$ = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JQueryCarousel$.prototype = ScalaJS.c.Lorchard_js_JQueryCarousel$.prototype;
+ScalaJS.c.Lorchard_js_JQueryCarousel$.prototype.jq2Carousel__Lorg_scalajs_jquery_JQuery__Lorchard_js_JQueryCarousel = (function(jq) {
+  return jq
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JQueryCarousel$ = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JQueryCarousel$)))
+});
+ScalaJS.as.Lorchard_js_JQueryCarousel$ = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JQueryCarousel$(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JQueryCarousel$")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JQueryCarousel$ = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JQueryCarousel$)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JQueryCarousel$ = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JQueryCarousel$(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JQueryCarousel$;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JQueryCarousel$ = new ScalaJS.ClassTypeData({
+  Lorchard_js_JQueryCarousel$: 0
+}, false, "orchard.js.JQueryCarousel$", ScalaJS.d.O, {
+  Lorchard_js_JQueryCarousel$: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JQueryCarousel$.prototype.$classData = ScalaJS.d.Lorchard_js_JQueryCarousel$;
+ScalaJS.n.Lorchard_js_JQueryCarousel = undefined;
+ScalaJS.m.Lorchard_js_JQueryCarousel = (function() {
+  if ((!ScalaJS.n.Lorchard_js_JQueryCarousel)) {
+    ScalaJS.n.Lorchard_js_JQueryCarousel = new ScalaJS.c.Lorchard_js_JQueryCarousel$().init___()
+  };
+  return ScalaJS.n.Lorchard_js_JQueryCarousel
+});
+/*<skip>*/;
+/** @constructor */
 ScalaJS.c.Lorchard_js_JsComplex = (function() {
   ScalaJS.c.O.call(this);
   this.topCell$1 = null;
-  this.panels$1 = null;
   this.arcRadius$1 = 0.0;
   this.internalPadding$1 = 0.0;
   this.externalPadding$1 = 0.0;
@@ -4744,9 +4859,6 @@ ScalaJS.c.Lorchard_js_JsComplex.prototype.getMaxHeight__ALorchard_core_complex_R
 ScalaJS.c.Lorchard_js_JsComplex.prototype.baseCells__sci_List = (function() {
   return ScalaJS.i.Lorchard_core_complex_CellComplex$class__baseCells__Lorchard_core_complex_CellComplex__sci_List(this)
 });
-ScalaJS.c.Lorchard_js_JsComplex.prototype.dimension__I = (function() {
-  return ScalaJS.i.Lorchard_core_complex_CellComplex$class__dimension__Lorchard_core_complex_CellComplex__I(this)
-});
 ScalaJS.c.Lorchard_js_JsComplex.prototype.cellFromDescriptor__Lorchard_core_complex_CellComplex$ComplexCell__Lorchard_core_complex_CellComplex$CellDescriptor__sci_Map__V = (function(cell, desc, cellMap) {
   ScalaJS.i.Lorchard_core_complex_CellComplex$class__cellFromDescriptor__Lorchard_core_complex_CellComplex__Lorchard_core_complex_CellComplex$ComplexCell__Lorchard_core_complex_CellComplex$CellDescriptor__sci_Map__V(this, cell, desc, cellMap)
 });
@@ -4765,25 +4877,42 @@ ScalaJS.c.Lorchard_js_JsComplex.prototype.topCell$und$eq__Lorchard_js_JsComplex$
 ScalaJS.c.Lorchard_js_JsComplex.prototype.newCell__O__Lorchard_js_JsComplex$JsCell = (function(item) {
   return new ScalaJS.c.Lorchard_js_JsComplex$JsCell().init___Lorchard_js_JsComplex__O(this, item)
 });
-ScalaJS.c.Lorchard_js_JsComplex.prototype.panels__sci_List = (function() {
-  return this.panels$1
-});
-ScalaJS.c.Lorchard_js_JsComplex.prototype.panels$und$eq__sci_List__V = (function(x$1) {
-  this.panels$1 = x$1
-});
 ScalaJS.c.Lorchard_js_JsComplex.prototype.generatePanels__V = (function() {
-  this.panels$und$eq__sci_List__V(ScalaJS.as.sc_TraversableOnce(ScalaJS.m.s_package().Range__sci_Range$().apply__I__I__sci_Range(0, ((this.dimension__I() + 1) | 0)).map__F1__scg_CanBuildFrom__O(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
-    return (function(i$2) {
-      var i = ScalaJS.uI(i$2);
-      return new ScalaJS.c.Lorchard_js_JsComplex$JsPanel().init___Lorchard_js_JsComplex__I(arg$outer, i)
+  ScalaJS.as.sc_TraversableLike(this.baseCells__sci_List().zipWithIndex__scg_CanBuildFrom__O(ScalaJS.m.sci_List().canBuildFrom__scg_CanBuildFrom())).withFilter__F1__scg_FilterMonadic(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(check$ifrefutable$1$2) {
+    var check$ifrefutable$1 = ScalaJS.as.T2(check$ifrefutable$1$2);
+    var x1 = check$ifrefutable$1;
+    if ((x1 !== null)) {
+      return true
+    };
+    return false
+  }))).foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
+    return (function(x$1$2) {
+      var x$1 = ScalaJS.as.T2(x$1$2);
+      var x1 = x$1;
+      matchEnd3: {
+        if ((x1 !== null)) {
+          var base = ScalaJS.as.Lorchard_js_JsComplex$JsCell(x1.$$und1__O());
+          var i = x1.$$und2$mcI$sp__I();
+          base.panel$und$eq__s_Option__V(new ScalaJS.c.s_Some().init___O(new ScalaJS.c.Lorchard_js_JsComplex$JsPanel().init___Lorchard_js_JsComplex__I(arg$outer, i)));
+          break matchEnd3
+        };
+        throw new ScalaJS.c.s_MatchError().init___O(x1)
+      }
     })
-  })(this)), ScalaJS.m.sci_IndexedSeq().canBuildFrom__scg_CanBuildFrom())).toList__sci_List())
+  })(this)))
 });
 ScalaJS.c.Lorchard_js_JsComplex.prototype.renderAll__V = (function() {
-  this.panels__sci_List().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$1$2) {
-    var x$1 = ScalaJS.as.Lorchard_core_complex_GalleryComplex$Panel(x$1$2);
-    x$1.render__V()
-  })))
+  this.baseCells__sci_List().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1().init___Lorchard_js_JsComplex(this))
+});
+ScalaJS.c.Lorchard_js_JsComplex.prototype.getContent__Lorg_scalajs_dom_Element = (function() {
+  var carousel = ScalaJS.g["document"]["createElement"]("div");
+  carousel["setAttribute"]("id", "gallery");
+  carousel["setAttribute"]("class", "jcarousel");
+  var carouselList = ScalaJS.g["document"]["createElement"]("div");
+  carousel["appendChild"](carouselList);
+  this.generatePanels__V();
+  this.baseCells__sci_List().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1().init___Lorchard_js_JsComplex__Lorg_scalajs_dom_HTMLElement(this, carouselList));
+  return carousel
 });
 ScalaJS.c.Lorchard_js_JsComplex.prototype.newCell__O__Lorchard_core_complex_CellComplex$ComplexCell = (function(item) {
   return this.newCell__O__Lorchard_js_JsComplex$JsCell(item)
@@ -4797,7 +4926,6 @@ ScalaJS.c.Lorchard_js_JsComplex.prototype.init___ = (function() {
   ScalaJS.i.Lorchard_core_complex_GalleryComplex$class__$init$__Lorchard_core_complex_GalleryComplex__V(this);
   ScalaJS.i.Lorchard_core_complex_RenderableComplex$class__$init$__Lorchard_core_complex_RenderableComplex__V(this);
   this.topCell$1 = null;
-  this.panels$1 = ScalaJS.m.sci_Nil();
   return this
 });
 /*<skip>*/;
@@ -4842,6 +4970,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell = (function() {
   this.container$1 = null;
   this.incoming$1 = null;
   this.outgoing$1 = null;
+  this.panel$1 = null;
   this.MyPanelCell$module$1 = null;
   this.MyPanelEdge$module$1 = null;
   this.$$outer$f = null;
@@ -4875,6 +5004,9 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.properTargets__sci_List = (func
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.targets__sci_List = (function() {
   return ScalaJS.i.Lorchard_core_complex_CellComplex$ComplexCell$class__targets__Lorchard_core_complex_CellComplex$ComplexCell__sci_List(this)
 });
+ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.foreachEdge__F1__V = (function(action) {
+  ScalaJS.i.Lorchard_core_complex_EdgeBase$class__foreachEdge__Lorchard_core_complex_EdgeBase__F1__V(this, action)
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.foreachCell__F1__V = (function(action) {
   ScalaJS.i.Lorchard_core_complex_CellBase$class__foreachCell__Lorchard_core_complex_CellBase__F1__V(this, action)
 });
@@ -4905,11 +5037,20 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.container__s_Option = (function
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.container$und$eq__s_Option__V = (function(x$1) {
   this.container$1 = x$1
 });
+ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.incoming__s_Option = (function() {
+  return this.incoming$1
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.incoming$und$eq__s_Option__V = (function(x$1) {
   this.incoming$1 = x$1
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.outgoing$und$eq__s_Option__V = (function(x$1) {
   this.outgoing$1 = x$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.panel__s_Option = (function() {
+  return this.panel$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.panel$und$eq__s_Option__V = (function(x$1) {
+  this.panel$1 = x$1
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.MyPanelCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$ = (function() {
   if ((this.MyPanelCell$module$1 === null)) {
@@ -4957,6 +5098,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.init___Lorchard_js_JsComplex__O
   this.container$1 = ScalaJS.m.s_None();
   this.incoming$1 = ScalaJS.m.s_None();
   this.outgoing$1 = ScalaJS.m.s_None();
+  this.panel$1 = ScalaJS.m.s_None();
   return this
 });
 /*<skip>*/;
@@ -4998,6 +5140,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell.prototype.$classData = ScalaJS.d.Lorchard
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$ = (function() {
   ScalaJS.c.O.call(this);
   this.$$outer$1 = null;
+  this.groupElement$1 = null;
   this.rectElement$1 = null;
   this.labelElement$1 = null;
   this.internalWidth$1 = 0.0;
@@ -5017,6 +5160,12 @@ ScalaJS.h.Lorchard_js_JsComplex$JsCell$MyPanelCell$ = (function() {
   /*<skip>*/
 });
 ScalaJS.h.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.groupElement__s_Option = (function() {
+  return this.groupElement$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.groupElement$und$eq__s_Option__V = (function(x$1) {
+  this.groupElement$1 = x$1
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.rectElement__s_Option = (function() {
   return this.rectElement$1
 });
@@ -5035,8 +5184,8 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.labelWidth__D = (f
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.labelHeight__D = (function() {
   return ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__labelHeight__Lorchard_js_JsComplex$JsPanelCell__D(this)
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.cellGroup__Lorchard_js_Paper__Lorchard_js_Element = (function(p) {
-  return ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__cellGroup__Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Paper__Lorchard_js_Element(this, p)
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.drawCellContent__Lorchard_js_Paper__Lorchard_js_Element = (function(p) {
+  return ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__drawCellContent__Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Paper__Lorchard_js_Element(this, p)
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.setDimensions__V = (function() {
   ScalaJS.i.Lorchard_js_JsComplex$JsPanelCell$class__setDimensions__Lorchard_js_JsComplex$JsPanelCell__V(this)
@@ -5228,6 +5377,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelCell$.prototype.$classData = Scala
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$ = (function() {
   ScalaJS.c.O.call(this);
   this.$$outer$1 = null;
+  this.pathElement$1 = null;
   this.incomingX$1 = 0.0;
   this.incomingY$1 = 0.0;
   this.outgoingX$1 = 0.0;
@@ -5240,6 +5390,18 @@ ScalaJS.h.Lorchard_js_JsComplex$JsCell$MyPanelEdge$ = (function() {
   /*<skip>*/
 });
 ScalaJS.h.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.pathElement__s_Option = (function() {
+  return this.pathElement$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.pathElement$und$eq__s_Option__V = (function(x$1) {
+  this.pathElement$1 = x$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.drawPath__Lorchard_js_Paper__Lorchard_js_Element = (function(p) {
+  return ScalaJS.i.Lorchard_js_JsComplex$JsPanelEdge$class__drawPath__Lorchard_js_JsComplex$JsPanelEdge__Lorchard_js_Paper__Lorchard_js_Element(this, p)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.renderPath__V = (function() {
+  ScalaJS.i.Lorchard_js_JsComplex$JsPanelEdge$class__renderPath__Lorchard_js_JsComplex$JsPanelEdge__V(this)
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.incomingX__D = (function() {
   return this.incomingX$1
 });
@@ -5252,8 +5414,14 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.incomingY__D = (fu
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.incomingY$und$eq__D__V = (function(x$1) {
   this.incomingY$1 = x$1
 });
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.outgoingX__D = (function() {
+  return this.outgoingX$1
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.outgoingX$und$eq__D__V = (function(x$1) {
   this.outgoingX$1 = x$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.outgoingY__D = (function() {
+  return this.outgoingY$1
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.outgoingY$und$eq__D__V = (function(x$1) {
   this.outgoingY$1 = x$1
@@ -5276,8 +5444,26 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.horizontalShift__D
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.verticalShift__D__V = (function(amount) {
   ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__verticalShift__Lorchard_core_complex_RenderableComplex$RenderableEdge__D__V(this, amount)
 });
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.isVertical__Z = (function() {
+  return ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderableEdge$class__isVertical__Lorchard_core_complex_RenderableComplex$RenderableEdge__Z(this)
+});
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.alignTo__Lorchard_core_complex_RenderableComplex$Rooted__V = (function(other) {
   ScalaJS.i.Lorchard_core_complex_RenderableComplex$Rooted$class__alignTo__Lorchard_core_complex_RenderableComplex$Rooted__Lorchard_core_complex_RenderableComplex$Rooted__V(this, other)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.incoming__s_Option = (function() {
+  return ScalaJS.i.Lorchard_core_complex_GalleryComplex$PanelEdge$class__incoming__Lorchard_core_complex_GalleryComplex$PanelEdge__s_Option(this)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.foreachEdge__F1__V = (function(action) {
+  ScalaJS.i.Lorchard_core_complex_EdgeBase$class__foreachEdge__Lorchard_core_complex_EdgeBase__F1__V(this, action)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.complexCell__Lorchard_js_JsComplex$JsCell = (function() {
+  return this.$$outer$1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.orchard$js$JsComplex$JsPanelEdge$$$outer__Lorchard_js_JsComplex = (function() {
+  return this.$$outer$1.orchard$js$JsComplex$JsCell$$$outer__Lorchard_js_JsComplex()
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.complexCell__Lorchard_core_complex_GalleryComplex$GalleryCell = (function() {
+  return this.complexCell__Lorchard_js_JsComplex$JsCell()
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.init___Lorchard_js_JsComplex$JsCell = (function($$outer) {
   if (($$outer === null)) {
@@ -5331,9 +5517,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsCell$MyPanelEdge$.prototype.$classData = Scala
 ScalaJS.c.Lorchard_js_JsComplex$JsPanel = (function() {
   ScalaJS.c.O.call(this);
   this.index$1 = 0;
-  this.svgNS$1 = null;
-  this.d$1 = null;
-  this.paper$1 = null;
+  this.paperElement$1 = null;
   this.$$outer$f = null
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype = new ScalaJS.h.O();
@@ -5358,31 +5542,41 @@ ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.panelHeight__D = (function() {
 ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.panelWidth__D = (function() {
   return ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderablePanel$class__panelWidth__Lorchard_core_complex_RenderableComplex$RenderablePanel__D(this)
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.svgNS__T = (function() {
-  return this.svgNS$1
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.paperElement__s_Option = (function() {
+  return this.paperElement$1
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.panelId__T = (function() {
-  return ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("panel-")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(this.index$1))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()))
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.paperElement$und$eq__s_Option__V = (function(x$1) {
+  this.paperElement$1 = x$1
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.d__Lorg_scalajs_dom_Element = (function() {
-  return this.d$1
-});
-ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.paper__Lorchard_js_Paper = (function() {
-  return this.paper$1
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.getContent__Lorg_scalajs_dom_Element = (function() {
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = ScalaJS.g["document"]["createElementNS"](svgNS, "svg");
+  var p = ScalaJS.g["document"]["createElement"]("p");
+  p["appendChild"](svg);
+  var paper = ScalaJS.protect(ScalaJS.g["Snap"])(svg);
+  this.paperElement$und$eq__s_Option__V(new ScalaJS.c.s_Some().init___O(paper));
+  this.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().drawCellContent__Lorchard_js_Paper__Lorchard_js_Element(paper);
+  this.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().target__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2().init___Lorchard_js_JsComplex$JsPanel__Lorchard_js_Paper(this, paper));
+  return p
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.render__V = (function() {
-  var baseCellGroup = this.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().cellGroup__Lorchard_js_Paper__Lorchard_js_Element(this.paper__Lorchard_js_Paper());
   ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderablePanel$class__render__Lorchard_core_complex_RenderableComplex$RenderablePanel__V(this);
   this.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().foreachCell__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(cell$2) {
     var cell = ScalaJS.as.Lorchard_js_JsComplex$JsPanelCell(cell$2);
     cell.setDimensions__V()
   })));
+  this.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().target__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2().init___Lorchard_js_JsComplex$JsPanel(this));
   var viewBoxString = ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(this.panelX__D()))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(this.panelY__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(this.panelWidth__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(" ")), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())))).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(ScalaJS.objectToString(this.panelHeight__D()))), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom()));
-  this.paper__Lorchard_js_Paper()["attr"]({
-    "width": ScalaJS.objectToString((this.panelWidth__D() + 10)),
-    "height": this.panelHeight__D(),
-    "viewBox": viewBoxString
-  })
+  this.paperElement__s_Option().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer, viewBoxString$1) {
+    return (function(paper$2) {
+      var paper = paper$2;
+      paper["attr"]({
+        "width": ScalaJS.objectToString((arg$outer.panelWidth__D() + 10)),
+        "height": arg$outer.panelHeight__D(),
+        "viewBox": viewBoxString$1
+      })
+    })
+  })(this, viewBoxString)))
 });
 ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$ = (function() {
   return ScalaJS.as.Lorchard_js_JsComplex$JsCell(this.orchard$js$JsComplex$JsPanel$$$outer__Lorchard_js_JsComplex().baseCells__sci_List().apply__I__O(this.index$1)).panelCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$()
@@ -5405,14 +5599,7 @@ ScalaJS.c.Lorchard_js_JsComplex$JsPanel.prototype.init___Lorchard_js_JsComplex__
   };
   ScalaJS.c.O.prototype.init___.call(this);
   ScalaJS.i.Lorchard_core_complex_RenderableComplex$RenderablePanel$class__$init$__Lorchard_core_complex_RenderableComplex$RenderablePanel__V(this);
-  this.svgNS$1 = "http://www.w3.org/2000/svg";
-  this.d$1 = ScalaJS.g["document"]["createElementNS"](this.svgNS__T(), "svg");
-  ScalaJS.protect(ScalaJS.g["jQuery"])(this.d__Lorg_scalajs_dom_Element())["attr"]({
-    "id": this.panelId__T(),
-    "width": 0,
-    "height": 0
-  })["appendTo"]("#gallery");
-  this.paper$1 = ScalaJS.protect(ScalaJS.g["Snap"])(ScalaJS.as.T(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T("#")).$$plus$plus__sc_GenTraversableOnce__scg_CanBuildFrom__O(new ScalaJS.c.sci_StringOps().init___T(ScalaJS.m.s_Predef().augmentString__T__T(this.panelId__T())), ScalaJS.m.s_Predef().StringCanBuildFrom__scg_CanBuildFrom())));
+  this.paperElement$1 = ScalaJS.m.s_None();
   return this
 });
 /*<skip>*/;
@@ -5474,6 +5661,36 @@ ScalaJS.d.Lorchard_js_JsComplex$JsPanelCell = new ScalaJS.ClassTypeData({
   Lorchard_core_complex_RenderableComplex$Rooted: 1,
   Lorchard_core_complex_GalleryComplex$PanelCell: 1,
   Lorchard_core_complex_CellBase: 1,
+  O: 1
+});
+ScalaJS.is.Lorchard_js_JsComplex$JsPanelEdge = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanelEdge)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$JsPanelEdge = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanelEdge(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanelEdge")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelEdge = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanelEdge)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanelEdge = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelEdge(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanelEdge;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$JsPanelEdge = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$JsPanelEdge: 0
+}, true, "orchard.js.JsComplex$JsPanelEdge", undefined, {
+  Lorchard_js_JsComplex$JsPanelEdge: 1,
+  Lorchard_core_complex_RenderableComplex$RenderableEdge: 1,
+  Lorchard_core_complex_RenderableComplex$Rooted: 1,
+  Lorchard_core_complex_GalleryComplex$PanelEdge: 1,
+  Lorchard_core_complex_EdgeBase: 1,
   O: 1
 });
 /** @constructor */
@@ -5582,8 +5799,9 @@ ScalaJS.c.Lorchard_js_Main$.prototype.renderComplex__sjs_js_Any__V = (function(j
   var newTopCell = ScalaJS.as.Lorchard_js_JsComplex$JsCell(complex.fromJson__O__Lorchard_core_util_JsonReader__Lorchard_core_util_JsonReadable__Lorchard_core_complex_CellComplex$ComplexCell(json, ScalaJS.m.Lorchard_js_JsJsonReader(), stringReader));
   ScalaJS.m.s_Predef().println__O__V("Parsed complex.");
   complex.topCell$und$eq__Lorchard_js_JsComplex$JsCell__V(newTopCell);
-  complex.generatePanels__V();
-  complex.renderAll__V()
+  ScalaJS.protect(ScalaJS.g["jQuery"])("#workspace")["append"](complex.getContent__Lorg_scalajs_dom_Element());
+  complex.renderAll__V();
+  ScalaJS.m.Lorchard_js_JQueryCarousel().jq2Carousel__Lorg_scalajs_jquery_JQuery__Lorchard_js_JQueryCarousel(ScalaJS.protect(ScalaJS.g["jQuery"])("#gallery"))["jcarousel"]()
 });
 ScalaJS.c.Lorchard_js_Main$.prototype.$$js$exported$meth$logMessage__O = (function() {
   this.logMessage__V()
@@ -5734,6 +5952,9 @@ ScalaJS.c.T2.prototype.equals__O__Z = (function(x$1) {
       return false
     }
   }
+});
+ScalaJS.c.T2.prototype.$$und2$mcI$sp__I = (function() {
+  return ScalaJS.uI(this.$$und2__O())
 });
 ScalaJS.c.T2.prototype.init___O__O = (function(_1, _2) {
   this.$$und1$f = _1;
@@ -11580,6 +11801,38 @@ ScalaJS.d.sc_Set = new ScalaJS.ClassTypeData({
   F1: 1,
   O: 1
 });
+ScalaJS.is.sc_TraversableLike = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.sc_TraversableLike)))
+});
+ScalaJS.as.sc_TraversableLike = (function(obj) {
+  if ((ScalaJS.is.sc_TraversableLike(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "scala.collection.TraversableLike")
+  }
+});
+ScalaJS.isArrayOf.sc_TraversableLike = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.sc_TraversableLike)))
+});
+ScalaJS.asArrayOf.sc_TraversableLike = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.sc_TraversableLike(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lscala.collection.TraversableLike;", depth)
+  }
+});
+ScalaJS.d.sc_TraversableLike = new ScalaJS.ClassTypeData({
+  sc_TraversableLike: 0
+}, true, "scala.collection.TraversableLike", undefined, {
+  sc_TraversableLike: 1,
+  sc_GenTraversableLike: 1,
+  sc_Parallelizable: 1,
+  sc_TraversableOnce: 1,
+  sc_GenTraversableOnce: 1,
+  scg_FilterMonadic: 1,
+  scg_HasNewBuilder: 1,
+  O: 1
+});
 /** @constructor */
 ScalaJS.c.sc_TraversableLike$WithFilter = (function() {
   ScalaJS.c.O.call(this);
@@ -12616,6 +12869,9 @@ ScalaJS.c.sci_StringOps.prototype.to__scg_CanBuildFrom__O = (function(cbf) {
 ScalaJS.c.sci_StringOps.prototype.stringPrefix__T = (function() {
   return ScalaJS.i.sc_TraversableLike$class__stringPrefix__sc_TraversableLike__T(this)
 });
+ScalaJS.c.sci_StringOps.prototype.withFilter__F1__scg_FilterMonadic = (function(p) {
+  return ScalaJS.i.sc_TraversableLike$class__withFilter__sc_TraversableLike__F1__scg_FilterMonadic(this, p)
+});
 ScalaJS.c.sci_StringOps.prototype.$$div$colon__O__F2__O = (function(z, op) {
   return ScalaJS.i.sc_TraversableOnce$class__$div$colon__sc_TraversableOnce__O__F2__O(this, z, op)
 });
@@ -13288,6 +13544,9 @@ ScalaJS.c.scm_ArrayOps$ofBoolean.prototype.to__scg_CanBuildFrom__O = (function(c
 ScalaJS.c.scm_ArrayOps$ofBoolean.prototype.stringPrefix__T = (function() {
   return ScalaJS.i.sc_TraversableLike$class__stringPrefix__sc_TraversableLike__T(this)
 });
+ScalaJS.c.scm_ArrayOps$ofBoolean.prototype.withFilter__F1__scg_FilterMonadic = (function(p) {
+  return ScalaJS.i.sc_TraversableLike$class__withFilter__sc_TraversableLike__F1__scg_FilterMonadic(this, p)
+});
 ScalaJS.c.scm_ArrayOps$ofBoolean.prototype.$$div$colon__O__F2__O = (function(z, op) {
   return ScalaJS.i.sc_TraversableOnce$class__$div$colon__sc_TraversableOnce__O__F2__O(this, z, op)
 });
@@ -13590,6 +13849,9 @@ ScalaJS.c.scm_ArrayOps$ofDouble.prototype.to__scg_CanBuildFrom__O = (function(cb
 ScalaJS.c.scm_ArrayOps$ofDouble.prototype.stringPrefix__T = (function() {
   return ScalaJS.i.sc_TraversableLike$class__stringPrefix__sc_TraversableLike__T(this)
 });
+ScalaJS.c.scm_ArrayOps$ofDouble.prototype.withFilter__F1__scg_FilterMonadic = (function(p) {
+  return ScalaJS.i.sc_TraversableLike$class__withFilter__sc_TraversableLike__F1__scg_FilterMonadic(this, p)
+});
 ScalaJS.c.scm_ArrayOps$ofDouble.prototype.$$div$colon__O__F2__O = (function(z, op) {
   return ScalaJS.i.sc_TraversableOnce$class__$div$colon__sc_TraversableOnce__O__F2__O(this, z, op)
 });
@@ -13891,6 +14153,9 @@ ScalaJS.c.scm_ArrayOps$ofRef.prototype.to__scg_CanBuildFrom__O = (function(cbf) 
 });
 ScalaJS.c.scm_ArrayOps$ofRef.prototype.stringPrefix__T = (function() {
   return ScalaJS.i.sc_TraversableLike$class__stringPrefix__sc_TraversableLike__T(this)
+});
+ScalaJS.c.scm_ArrayOps$ofRef.prototype.withFilter__F1__scg_FilterMonadic = (function(p) {
+  return ScalaJS.i.sc_TraversableLike$class__withFilter__sc_TraversableLike__F1__scg_FilterMonadic(this, p)
 });
 ScalaJS.c.scm_ArrayOps$ofRef.prototype.$$div$colon__O__F2__O = (function(z, op) {
   return ScalaJS.i.sc_TraversableOnce$class__$div$colon__sc_TraversableOnce__O__F2__O(this, z, op)
@@ -17177,6 +17442,130 @@ ScalaJS.d.Lorchard_core_complex_CellComplex$$anonfun$cellFromDescriptor$2 = new 
 ScalaJS.c.Lorchard_core_complex_CellComplex$$anonfun$cellFromDescriptor$2.prototype.$classData = ScalaJS.d.Lorchard_core_complex_CellComplex$$anonfun$cellFromDescriptor$2;
 /*<skip>*/;
 /** @constructor */
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this);
+  this.action$2$f = null
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype.constructor = ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1;
+/** @constructor */
+ScalaJS.h.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype = ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype;
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype.apply__Lorchard_core_complex_CellBase__V = (function(cell) {
+  cell.sources__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1().init___Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1(this))
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_core_complex_CellBase__V(ScalaJS.as.Lorchard_core_complex_CellBase(v1))
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype.init___Lorchard_core_complex_EdgeBase__F1 = (function($$outer, action$2) {
+  this.action$2$f = action$2;
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1)))
+});
+ScalaJS.as.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.core.complex.EdgeBase$$anonfun$foreachEdge$1")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1)))
+});
+ScalaJS.asArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.core.complex.EdgeBase$$anonfun$foreachEdge$1;", depth)
+  }
+});
+ScalaJS.d.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = new ScalaJS.ClassTypeData({
+  Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1: 0
+}, false, "orchard.core.complex.EdgeBase$$anonfun$foreachEdge$1", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1.prototype.$classData = ScalaJS.d.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this);
+  this.$$outer$2 = null
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.constructor = ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1;
+/** @constructor */
+ScalaJS.h.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype = ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype;
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.apply__sci_Vector__V = (function(srcs) {
+  srcs.foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
+    return (function(src$2) {
+      var src = ScalaJS.as.Lorchard_core_complex_EdgeBase(src$2);
+      src.foreachEdge__F1__V(arg$outer.orchard$core$complex$EdgeBase$$anonfun$$anonfun$$$outer__Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1().action$2$f)
+    })
+  })(this)))
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.orchard$core$complex$EdgeBase$$anonfun$$anonfun$$$outer__Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function() {
+  return this.$$outer$2
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.apply__O__O = (function(v1) {
+  this.apply__sci_Vector__V(ScalaJS.as.sci_Vector(v1))
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.init___Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1 = (function($$outer) {
+  if (($$outer === null)) {
+    throw new ScalaJS.c.jl_NullPointerException().init___()
+  } else {
+    this.$$outer$2 = $$outer
+  };
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1)))
+});
+ScalaJS.as.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.core.complex.EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1)))
+});
+ScalaJS.asArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.core.complex.EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1;", depth)
+  }
+});
+ScalaJS.d.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1 = new ScalaJS.ClassTypeData({
+  Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1: 0
+}, false, "orchard.core.complex.EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1.prototype.$classData = ScalaJS.d.Lorchard_core_complex_EdgeBase$$anonfun$foreachEdge$1$$anonfun$apply$1;
+/*<skip>*/;
+/** @constructor */
 ScalaJS.c.Lorchard_core_complex_GalleryComplex$PanelCell$$anonfun$canopy$1 = (function() {
   ScalaJS.c.sr_AbstractFunction1.call(this)
 });
@@ -18114,67 +18503,374 @@ ScalaJS.d.Lorchard_core_complex_RenderableComplex$RenderablePanel$$anonfun$1$$an
 ScalaJS.c.Lorchard_core_complex_RenderableComplex$RenderablePanel$$anonfun$1$$anon$1.prototype.$classData = ScalaJS.d.Lorchard_core_complex_RenderableComplex$RenderablePanel$$anonfun$1$$anon$1;
 /*<skip>*/;
 /** @constructor */
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function() {
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function() {
   ScalaJS.c.sr_AbstractFunction1.call(this);
-  this.group$1$f = null;
-  this.p$1$f = null
+  this.carouselList$1$f = null
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1;
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1;
 /** @constructor */
-ScalaJS.h.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function() {
+ScalaJS.h.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function() {
   /*<skip>*/
 });
-ScalaJS.h.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype;
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype.apply__Lorchard_core_util_RoseTree__V = (function(tree) {
-  ScalaJS.m.Lorchard_core_util_RoseTree().RoseTreeOps__Lorchard_core_util_RoseTree__Lorchard_core_util_RoseTree$RoseTreeOps(tree).foreachCell__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
-    return (function(cell$2) {
-      var cell = ScalaJS.as.Lorchard_js_JsComplex$JsPanelCell(cell$2);
-      arg$outer.group$1$f["append"](cell.cellGroup__Lorchard_js_Paper__Lorchard_js_Element(arg$outer.p$1$f))
+ScalaJS.h.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype = ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype.apply__Lorchard_js_JsComplex$JsCell__V = (function(base) {
+  base.panel__s_Option().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
+    return (function(panel$2) {
+      var panel = ScalaJS.as.Lorchard_js_JsComplex$JsPanel(panel$2);
+      return arg$outer.carouselList$1$f["appendChild"](panel.getContent__Lorg_scalajs_dom_Element())
     })
   })(this)))
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype.apply__O__O = (function(v1) {
-  this.apply__Lorchard_core_util_RoseTree__V(ScalaJS.as.Lorchard_core_util_RoseTree(v1))
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_js_JsComplex$JsCell__V(ScalaJS.as.Lorchard_js_JsComplex$JsCell(v1))
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype.init___Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Element__Lorchard_js_Paper = (function($$outer, group$1, p$1) {
-  this.group$1$f = group$1;
-  this.p$1$f = p$1;
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype.init___Lorchard_js_JsComplex__Lorg_scalajs_dom_HTMLElement = (function($$outer, carouselList$1) {
+  this.carouselList$1$f = carouselList$1;
   ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
   return this
 });
 /*<skip>*/;
-ScalaJS.is.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function(obj) {
-  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1)))
+ScalaJS.is.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$$anonfun$getContent$1)))
 });
-ScalaJS.as.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function(obj) {
-  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1(obj) || (obj === null))) {
+ScalaJS.as.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$$anonfun$getContent$1(obj) || (obj === null))) {
     return obj
   } else {
-    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanelCell$$anonfun$cellGroup$1")
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$$anonfun$getContent$1")
   }
 });
-ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function(obj, depth) {
-  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1)))
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$$anonfun$getContent$1)))
 });
-ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = (function(obj, depth) {
-  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1(obj, depth) || (obj === null))) {
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$$anonfun$getContent$1 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$$anonfun$getContent$1(obj, depth) || (obj === null))) {
     return obj
   } else {
-    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanelCell$$anonfun$cellGroup$1;", depth)
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$$anonfun$getContent$1;", depth)
   }
 });
-ScalaJS.d.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1 = new ScalaJS.ClassTypeData({
-  Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1: 0
-}, false, "orchard.js.JsComplex$JsPanelCell$$anonfun$cellGroup$1", ScalaJS.d.sr_AbstractFunction1, {
-  Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1: 1,
+ScalaJS.d.Lorchard_js_JsComplex$$anonfun$getContent$1 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$$anonfun$getContent$1: 0
+}, false, "orchard.js.JsComplex$$anonfun$getContent$1", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$$anonfun$getContent$1: 1,
   s_Serializable: 1,
   Ljava_io_Serializable: 1,
   sr_AbstractFunction1: 1,
   F1: 1,
   O: 1
 });
-ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$JsPanelCell$$anonfun$cellGroup$1;
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$getContent$1.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$$anonfun$getContent$1;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this)
+});
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype = ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype.apply__Lorchard_js_JsComplex$JsCell__V = (function(base) {
+  base.panel__s_Option().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(panel$2) {
+    var panel = ScalaJS.as.Lorchard_js_JsComplex$JsPanel(panel$2);
+    panel.render__V()
+  })))
+});
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_js_JsComplex$JsCell__V(ScalaJS.as.Lorchard_js_JsComplex$JsCell(v1))
+});
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype.init___Lorchard_js_JsComplex = (function($$outer) {
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$$anonfun$renderAll$1)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$$anonfun$renderAll$1(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$$anonfun$renderAll$1")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$$anonfun$renderAll$1)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$$anonfun$renderAll$1 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$$anonfun$renderAll$1(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$$anonfun$renderAll$1;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$$anonfun$renderAll$1 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$$anonfun$renderAll$1: 0
+}, false, "orchard.js.JsComplex$$anonfun$renderAll$1", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$$anonfun$renderAll$1: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JsComplex$$anonfun$renderAll$1.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$$anonfun$renderAll$1;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this);
+  this.$$outer$2 = null;
+  this.paper$1$f = null
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype.apply__Lorchard_js_JsComplex$JsPanelEdge__V = (function(tgt) {
+  this.$$outer$2.baseCell__Lorchard_js_JsComplex$JsCell$MyPanelCell$().groupElement__s_Option().foreach__F1__V(new ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3().init___Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2__Lorchard_js_JsComplex$JsPanelEdge(this, tgt))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_js_JsComplex$JsPanelEdge__V(ScalaJS.as.Lorchard_js_JsComplex$JsPanelEdge(v1))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype.init___Lorchard_js_JsComplex$JsPanel__Lorchard_js_Paper = (function($$outer, paper$1) {
+  if (($$outer === null)) {
+    throw new ScalaJS.c.jl_NullPointerException().init___()
+  } else {
+    this.$$outer$2 = $$outer
+  };
+  this.paper$1$f = paper$1;
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanel$$anonfun$getContent$2")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanel$$anonfun$getContent$2;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2: 0
+}, false, "orchard.js.JsComplex$JsPanel$$anonfun$getContent$2", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this);
+  this.$$outer$2 = null;
+  this.tgt$1$2 = null
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.apply__Lorchard_js_Element__V = (function(baseGroup) {
+  this.tgt$1$2.foreachEdge__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer, baseGroup$1) {
+    return (function(edge$2) {
+      var edge = ScalaJS.as.Lorchard_js_JsComplex$JsPanelEdge(edge$2);
+      baseGroup$1["append"](edge.drawPath__Lorchard_js_Paper__Lorchard_js_Element(arg$outer.orchard$js$JsComplex$JsPanel$$anonfun$$anonfun$$$outer__Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2().paper$1$f))
+    })
+  })(this, baseGroup)))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.orchard$js$JsComplex$JsPanel$$anonfun$$anonfun$$$outer__Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2 = (function() {
+  return this.$$outer$2
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_js_Element__V(v1)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.init___Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2__Lorchard_js_JsComplex$JsPanelEdge = (function($$outer, tgt$1) {
+  if (($$outer === null)) {
+    throw new ScalaJS.c.jl_NullPointerException().init___()
+  } else {
+    this.$$outer$2 = $$outer
+  };
+  this.tgt$1$2 = tgt$1;
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3: 0
+}, false, "orchard.js.JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$getContent$2$$anonfun$apply$3;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this)
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype.apply__Lorchard_js_JsComplex$JsPanelEdge__V = (function(tgt) {
+  tgt.foreachEdge__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(edge$2) {
+    var edge = ScalaJS.as.Lorchard_js_JsComplex$JsPanelEdge(edge$2);
+    edge.renderPath__V()
+  })))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_js_JsComplex$JsPanelEdge__V(ScalaJS.as.Lorchard_js_JsComplex$JsPanelEdge(v1))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype.init___Lorchard_js_JsComplex$JsPanel = (function($$outer) {
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanel$$anonfun$render$2")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanel$$anonfun$render$2;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$JsPanel$$anonfun$render$2: 0
+}, false, "orchard.js.JsComplex$JsPanel$$anonfun$render$2", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$JsPanel$$anonfun$render$2: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$JsPanel$$anonfun$render$2;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this);
+  this.group$1$f = null;
+  this.p$1$f = null
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype.constructor = ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1;
+/** @constructor */
+ScalaJS.h.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype = ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype;
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype.apply__Lorchard_core_util_RoseTree__V = (function(tree) {
+  ScalaJS.m.Lorchard_core_util_RoseTree().RoseTreeOps__Lorchard_core_util_RoseTree__Lorchard_core_util_RoseTree$RoseTreeOps(tree).foreachCell__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer) {
+    return (function(cell$2) {
+      var cell = ScalaJS.as.Lorchard_js_JsComplex$JsPanelCell(cell$2);
+      arg$outer.group$1$f["append"](cell.drawCellContent__Lorchard_js_Paper__Lorchard_js_Element(arg$outer.p$1$f))
+    })
+  })(this)))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype.apply__O__O = (function(v1) {
+  this.apply__Lorchard_core_util_RoseTree__V(ScalaJS.as.Lorchard_core_util_RoseTree(v1))
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype.init___Lorchard_js_JsComplex$JsPanelCell__Lorchard_js_Element__Lorchard_js_Paper = (function($$outer, group$1, p$1) {
+  this.group$1$f = group$1;
+  this.p$1$f = p$1;
+  ScalaJS.c.sr_AbstractFunction1.prototype.init___.call(this);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1)))
+});
+ScalaJS.as.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function(obj) {
+  if ((ScalaJS.is.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "orchard.js.JsComplex$JsPanelCell$$anonfun$drawCellContent$1")
+  }
+});
+ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1)))
+});
+ScalaJS.asArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lorchard.js.JsComplex$JsPanelCell$$anonfun$drawCellContent$1;", depth)
+  }
+});
+ScalaJS.d.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1 = new ScalaJS.ClassTypeData({
+  Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1: 0
+}, false, "orchard.js.JsComplex$JsPanelCell$$anonfun$drawCellContent$1", ScalaJS.d.sr_AbstractFunction1, {
+  Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1,
+  sr_AbstractFunction1: 1,
+  F1: 1,
+  O: 1
+});
+ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1.prototype.$classData = ScalaJS.d.Lorchard_js_JsComplex$JsPanelCell$$anonfun$drawCellContent$1;
 /*<skip>*/;
 /** @constructor */
 ScalaJS.c.Lorchard_js_JsComplex$JsPanelCell$$anonfun$setDimensions$1 = (function() {
@@ -20457,6 +21153,9 @@ ScalaJS.c.sc_AbstractIterable.prototype.take__I__O = (function(n) {
 ScalaJS.c.sc_AbstractIterable.prototype.copyToArray__O__I__I__V = (function(xs, start, len) {
   ScalaJS.i.sc_IterableLike$class__copyToArray__sc_IterableLike__O__I__I__V(this, xs, start, len)
 });
+ScalaJS.c.sc_AbstractIterable.prototype.zipWithIndex__scg_CanBuildFrom__O = (function(bf) {
+  return ScalaJS.i.sc_IterableLike$class__zipWithIndex__sc_IterableLike__scg_CanBuildFrom__O(this, bf)
+});
 ScalaJS.c.sc_AbstractIterable.prototype.sameElements__sc_GenIterable__Z = (function(that) {
   return ScalaJS.i.sc_IterableLike$class__sameElements__sc_IterableLike__sc_GenIterable__Z(this, that)
 });
@@ -21468,6 +22167,69 @@ ScalaJS.d.sci_Stream$StreamCanBuildFrom = new ScalaJS.ClassTypeData({
   O: 1
 });
 ScalaJS.c.sci_Stream$StreamCanBuildFrom.prototype.$classData = ScalaJS.d.sci_Stream$StreamCanBuildFrom;
+/*<skip>*/;
+/** @constructor */
+ScalaJS.c.sci_Stream$StreamWithFilter = (function() {
+  ScalaJS.c.sc_TraversableLike$WithFilter.call(this);
+  this.scala$collection$immutable$Stream$StreamWithFilter$$p$f = null
+});
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype = new ScalaJS.h.sc_TraversableLike$WithFilter();
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype.constructor = ScalaJS.c.sci_Stream$StreamWithFilter;
+/** @constructor */
+ScalaJS.h.sci_Stream$StreamWithFilter = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.sci_Stream$StreamWithFilter.prototype = ScalaJS.c.sci_Stream$StreamWithFilter.prototype;
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype.foreach__F1__V = (function(f) {
+  this.scala$collection$immutable$Stream$StreamWithFilter$$$outer__sci_Stream().foreach__F1__V(new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(arg$outer, f$5) {
+    return (function(x$2) {
+      var x = ScalaJS.as.O(x$2);
+      if (ScalaJS.uZ(arg$outer.scala$collection$immutable$Stream$StreamWithFilter$$p$f.apply__O__O(x))) {
+        return f$5.apply__O__O(x)
+      } else {
+        return undefined
+      }
+    })
+  })(this, f)))
+});
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype.scala$collection$immutable$Stream$StreamWithFilter$$$outer__sci_Stream = (function() {
+  return ScalaJS.as.sci_Stream(this.$$outer$f)
+});
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype.init___sci_Stream__F1 = (function($$outer, p) {
+  this.scala$collection$immutable$Stream$StreamWithFilter$$p$f = p;
+  ScalaJS.c.sc_TraversableLike$WithFilter.prototype.init___sc_TraversableLike__F1.call(this, $$outer, p);
+  return this
+});
+/*<skip>*/;
+ScalaJS.is.sci_Stream$StreamWithFilter = (function(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.sci_Stream$StreamWithFilter)))
+});
+ScalaJS.as.sci_Stream$StreamWithFilter = (function(obj) {
+  if ((ScalaJS.is.sci_Stream$StreamWithFilter(obj) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwClassCastException(obj, "scala.collection.immutable.Stream$StreamWithFilter")
+  }
+});
+ScalaJS.isArrayOf.sci_Stream$StreamWithFilter = (function(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.sci_Stream$StreamWithFilter)))
+});
+ScalaJS.asArrayOf.sci_Stream$StreamWithFilter = (function(obj, depth) {
+  if ((ScalaJS.isArrayOf.sci_Stream$StreamWithFilter(obj, depth) || (obj === null))) {
+    return obj
+  } else {
+    ScalaJS.throwArrayCastException(obj, "Lscala.collection.immutable.Stream$StreamWithFilter;", depth)
+  }
+});
+ScalaJS.d.sci_Stream$StreamWithFilter = new ScalaJS.ClassTypeData({
+  sci_Stream$StreamWithFilter: 0
+}, false, "scala.collection.immutable.Stream$StreamWithFilter", ScalaJS.d.sc_TraversableLike$WithFilter, {
+  sci_Stream$StreamWithFilter: 1,
+  sc_TraversableLike$WithFilter: 1,
+  scg_FilterMonadic: 1,
+  O: 1
+});
+ScalaJS.c.sci_Stream$StreamWithFilter.prototype.$classData = ScalaJS.d.sci_Stream$StreamWithFilter;
 /*<skip>*/;
 /** @constructor */
 ScalaJS.c.sci_StreamIterator = (function() {
@@ -28709,6 +29471,9 @@ ScalaJS.c.sci_Stream.prototype.flatMap__F1__scg_CanBuildFrom__O = (function(f, b
     return ScalaJS.i.sc_TraversableLike$class__flatMap__sc_TraversableLike__F1__scg_CanBuildFrom__O(this, f, bf)
   }
 });
+ScalaJS.c.sci_Stream.prototype.withFilter__F1__sci_Stream$StreamWithFilter = (function(p) {
+  return new ScalaJS.c.sci_Stream$StreamWithFilter().init___sci_Stream__F1(this, p)
+});
 ScalaJS.c.sci_Stream.prototype.iterator__sc_Iterator = (function() {
   return new ScalaJS.c.sci_StreamIterator().init___sci_Stream(this)
 });
@@ -28807,6 +29572,9 @@ ScalaJS.c.sci_Stream.prototype.reverse__O = (function() {
 });
 ScalaJS.c.sci_Stream.prototype.drop__I__sc_LinearSeqOptimized = (function(n) {
   return this.drop__I__sci_Stream(n)
+});
+ScalaJS.c.sci_Stream.prototype.withFilter__F1__scg_FilterMonadic = (function(p) {
+  return this.withFilter__F1__sci_Stream$StreamWithFilter(p)
 });
 ScalaJS.c.sci_Stream.prototype.loop$3__p4__T__sci_Stream__scm_StringBuilder__T__T__V = (function(pre, these, b$1, sep$2, end$1) {
   var _$this = this;

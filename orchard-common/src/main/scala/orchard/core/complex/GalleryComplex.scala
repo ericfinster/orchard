@@ -84,6 +84,8 @@ trait GalleryComplex[A] extends CellComplex[A] {
     def panelCell : PanelCellType
     def panelEdge : PanelEdgeType
 
+    def panel : Option[Panel]
+
   }
 
 }

@@ -11,6 +11,8 @@ import scala.scalajs._
 import org.scalajs.dom
 import dom.document
 
+import org.scalajs.jquery.jQuery
+
 import js.annotation.JSExport
 
 import orchard.core.util._
@@ -40,37 +42,15 @@ object Main extends js.JSApp {
     println("Parsed complex.")
 
     complex.topCell = newTopCell
-    complex.generatePanels
+
+    jQuery("#workspace").append(complex.getContent)
     complex.renderAll
+
+    import JQueryCarousel._
+
+    // Now I need to run jcarousel and start him ...
+    jQuery("#gallery").jcarousel
+
   }
 
-  // @JSExport
-  // def createSVGElement() : Unit = {
-
-  //   val svgNS = "http://www.w3.org/2000/svg"
-
-  //   val d = document.createElementNS(svgNS, "svg")
-
-  //   d.setAttributeNS(svgNS, "id", "mysvg")
-  //   d.setAttributeNS(svgNS, "width", "100")
-  //   d.setAttributeNS(svgNS, "height", "100")
-  //   d.setAttributeNS(svgNS, "version", "1.1")
-
-  //   val g = document.getElementById("gallery")
-  //   g.appendChild(d)
-
-  // }
-
-  // @JSExport
-  // def createSnapSurface() : Unit = {
-
-  //   println("Attempting to create snap surface ...")
-
-  //   val paper = Snap("#mysvg")
-
-  //   println("Done.")
-
-  // }
-
 }
-

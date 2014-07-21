@@ -99,7 +99,7 @@ This is the container of the carousel items.
 You must ensure that the position is relative or absolute and
 that the width is big enough to contain all items.
 */
-.jcarousel ul {
+.jcarousel div {
     width: 20000em;
     position: relative;
 
@@ -113,7 +113,7 @@ that the width is big enough to contain all items.
 These are the item elements. jCarousel works best, if the items
 have a fixed width and height (but it's not required).
 */
-.jcarousel li {
+.jcarousel p {
     /* Required only for block elements like <li>'s */
     float: left;
 }
