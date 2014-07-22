@@ -18,7 +18,14 @@ import scala.scalajs._
 import org.scalajs.dom
 import dom.document
 
-class JsComplex[A] extends RenderableComplex[A] {
+class JsComplex[A](
+  container : dom.Element, 
+  json : js.Any,
+  svgPanelWidth : Int, 
+  svgPanelHeight : Int, 
+  displayPanels : Int
+)(implicit aReader : JsonReadable[A, js.Any])
+    extends RenderableComplex[A] { thisComplex =>
 
   type CellType = JsCell
 
@@ -27,10 +34,9 @@ class JsComplex[A] extends RenderableComplex[A] {
   type PanelCellType = JsPanelCell
   type PanelEdgeType = JsPanelEdge
 
-  // This is temorary. We should control the topCell better ...
-  var topCell : JsCell = null
 
   def newCell(item : A) : JsCell = new JsCell(item)
+  var topCell : JsCell = fromJson(json, JsJsonReader, aReader)
 
   def generatePanels : Unit =
     for {
@@ -50,16 +56,19 @@ class JsComplex[A] extends RenderableComplex[A] {
 
   // Now, I want to add some carousel type features.  How is that going to look?
 
-  def getContent : dom.Element = {
+  def initializeContent : Unit = {
 
     val carousel = document.createElement("div")
     carousel.setAttribute("id", "gallery")
     carousel.setAttribute("class", "jcarousel")
+    carousel.style.width = ((svgPanelWidth * displayPanels).toString ++ "px")
+    carousel.style.height = (svgPanelHeight.toString ++ "px")
+    container.appendChild(carousel)
 
-    val carouselList = document.createElement("div")
+    val carouselList = document.createElement("ul")
     carousel.appendChild(carouselList)
 
-    // Now, for each of the base cells, get the content
+    // Create the panels
     generatePanels
 
     for {
@@ -69,9 +78,22 @@ class JsComplex[A] extends RenderableComplex[A] {
       carouselList.appendChild(panel.getContent)
     }
 
-    carousel
+    // Generate the controls
+    val carouselPrev = document.createElement("a")
+    carouselPrev.setAttribute("class", "jcarousel-prev")
+    carouselPrev.setAttribute("href", "#")
+    carouselPrev.appendChild(document.createTextNode("Prev"))
+    container.appendChild(carouselPrev)
+
+    val carouselNext = document.createElement("a")
+    carouselNext.setAttribute("class", "jcarousel-next")
+    carouselNext.setAttribute("href", "#")
+    carouselNext.appendChild(document.createTextNode("Next"))
+    container.appendChild(carouselNext)
 
   }
+
+  initializeContent
 
   //============================================================================================
   // JS CELL IMPLEMENTATION
@@ -116,8 +138,11 @@ class JsComplex[A] extends RenderableComplex[A] {
       val svgNS = "http://www.w3.org/2000/svg"
 
       val svg = document.createElementNS(svgNS, "svg")
-      val p = document.createElement("p")
-      p.appendChild(svg)
+
+      val li = document.createElement("li")
+      li.setAttribute("width", svgPanelWidth.toString)
+      li.setAttribute("height", svgPanelHeight.toString)
+      li.appendChild(svg)
 
       val paper = Snap(svg)
       paperElement = Some(paper)
@@ -132,7 +157,7 @@ class JsComplex[A] extends RenderableComplex[A] {
         })
       }
 
-      p
+      li
 
     }
 
@@ -162,11 +187,12 @@ class JsComplex[A] extends RenderableComplex[A] {
         paper <- paperElement
       } {
         paper.attr(js.Dynamic.literal(
-          "width" -> (panelWidth + 10).toString,
-          "height" -> panelHeight,
+          "width" -> svgPanelWidth.toString,
+          "height" -> svgPanelHeight.toString,
           "viewBox" -> viewBoxString
         ))
       }
+
     }
 
     override def clearRenderState : Unit = {

@@ -16,6 +16,7 @@ trait JQueryCarousel extends JQuery {
 
   def jcarousel() : JCarousel = ???
   def jcarousel(conf : js.Object) : JCarousel = ???
+  def jcarouselControl(conf : js.Object) : Unit = ???
 
 }
 

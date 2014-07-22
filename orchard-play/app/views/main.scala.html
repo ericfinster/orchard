@@ -1,43 +1,47 @@
+@(title: String)(content: Html)
+
 <!DOCTYPE html>
+
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
+    <meta name="description" content="Orchard Opetopic Editor">
+    <meta name="author" content="Eric Finster">
+    <link rel="icon" href="@routes.Assets.at("images/favicon.png")">
 
     <title>Orchard Opetopic Proof Assistant</title>
 
     <!-- Bootstrap core CSS-->
-    <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
 
     <!-- Orchard Custom CSS -->
-    <link href="/vendor/orchard.css" rel="stylesheet">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/orchard.css")">
+
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="/vendor/jquery/jquery-1.10.2.min.js"></script>
+    <script src="@routes.Assets.at("javascripts/jquery-1.11.1.min.js")" type="text/javascript"></script>
 
     <!-- jCarousel (for a nice carousel effect) -->
-    <script src="/vendor/jquery/jquery.jcarousel.min.js"></script>
+    <script src="@routes.Assets.at("javascripts/jquery.jcarousel.min.js")" type="text/javascript"></script>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="@routes.Assets.at("javascripts/bootstrap.min.js")" type="text/javascript"></script>
 
     <!-- Include Snap.svg SVG Library -->
-    <script src="/vendor/snap/snap.svg.js"></script>
+    <script src="@routes.Assets.at("javascripts/snap.svg.js")" type="text/javascript"></script>
 
     <!-- Orchard Javascript -->
-    <script src="/vendor/orchard.js"></script>
+    <script src="@routes.Assets.at("javascripts/orchard-js-fastopt.js")" type="text/javascript"></script>
+    <!-- for production (play dist), use the optimized version instead -->
+    <!-- <script src="@routes.Assets.at("javascripts/scalajs-example-opt.js")" type="text/javascript"></script> -->
 
-    <!-- Run Orchard -->
-    <script type="text/javascript">
-      orchard.js.Main().main();
-    </script>
+    <!-- Orchard Launcher -->
+    <script src="@routes.Assets.at("javascripts/orchard-js-launcher.js")" type="text/javascript"></script>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -98,9 +102,7 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Dashboard</h1>
 
-	  <div class="container">
-	    <lift:bind name="content" />
-	  </div>
+	  @content
 	  
         </div>
       </div>

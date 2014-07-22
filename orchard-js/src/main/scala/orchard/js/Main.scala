@@ -21,6 +21,11 @@ object Main extends js.JSApp {
 
   def main(): Unit = {
     println("Starting Orchard ...")
+
+    jQuery.getJSON("/complex", success = ((data : js.Object) => {
+      renderComplex(data)
+    }) : js.Function1[js.Object, Unit])
+
   }
 
   @JSExport
@@ -33,23 +38,25 @@ object Main extends js.JSApp {
     println("Received some Json.")
 
     val reader = JsJsonReader
-    val stringReader = implicitly[JsonReadable[String, js.Any]]
 
-    val complex = new JsComplex[String]
+    val d = document.createElement("div")
+    jQuery(d).appendTo("#workspace")
+
+    val complex = new JsComplex[String](d, json, 300, 300, 3)
     
-    val newTopCell = complex.fromJson(json, JsJsonReader, stringReader)
-
-    println("Parsed complex.")
-
-    complex.topCell = newTopCell
-
-    jQuery("#workspace").append(complex.getContent)
     complex.renderAll
 
     import JQueryCarousel._
 
     // Now I need to run jcarousel and start him ...
-    jQuery("#gallery").jcarousel
+    jQuery(".jcarousel").jcarousel
+    jQuery(".jcarousel-prev").jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
+    jQuery(".jcarousel-next").jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
+
+    // Okay, I think rather the idea should be that you create a gallery with a given
+    // div, and the gallery (on creation) puts all it's content inside. and starts the
+    // carousel.  Then the call to renderall will infact set all of the sizes and render
+    // everything.
 
   }
 

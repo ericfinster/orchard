@@ -87,7 +87,7 @@ object CardinalComplex {
         val targetCardinal = CardinalComplex(srcTree.target(tgtValue))
 
         targetCardinal match {
-          case Composite(_, Seed(_), _, e) => {
+          case Composite(_, Seed(_, _), _, e) => {
             Composite(Negative, Graft(targetCardinal, Vector(neutralize(cell).corolla)), Positive)
           }
           case Composite(neg, Graft(card, branches, f), pos, e) => {
