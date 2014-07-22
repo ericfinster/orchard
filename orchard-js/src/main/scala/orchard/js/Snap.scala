@@ -33,6 +33,9 @@ trait Element extends js.Object {
   def attr(params : js.Object) : Unit
   def append(el : Element) : Unit
 
+  def mouseover(handler : js.Function) : Unit
+  def mouseout(handler : js.Function) : Unit
+
 }
 
 trait BBox extends js.Object {

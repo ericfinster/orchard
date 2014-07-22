@@ -72,15 +72,13 @@ trait RenderableComplex[A] extends GalleryComplex[A] { thisComplex =>
     def edgePadding = {
       if (baseCell.isExternal) {
         if (baseCell.sourceCount > 1) {
-          val numRightEdges : Int = baseCell.sourceCount / 2
-          // Ech.  This isn't very careful.  I think you can do better.
-          val padding = ((numRightEdges - 1) * (leafWidth + (2 * strokeWidth))) + halfLeafWidth + (2 * strokeWidth)
-          padding
+          val leftEdge = baseCell.sources.get.head
+          baseCell.x - leftEdge.incomingX + strokeWidth
         } else {
           0.0
         }
       } else {
-        0.0
+        strokeWidth
       }
     }
 

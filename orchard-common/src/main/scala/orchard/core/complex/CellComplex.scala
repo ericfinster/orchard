@@ -80,23 +80,8 @@ trait CellComplex[A] { thisComplex =>
     // SEMANTIC ROUTINES
     //
 
-    def faces : Array[CellType]
-    def neighborhood : Array[CellType]
-
-    // We should be able to remove this ListBuffer dependency here.  The point should be the 
-    // traversal routines that you implemented and flatmap and what have you.  But what ever
-    // for right now ...
-    // def neighborhood : List[CellType] = {
-    //   val neighbors = new ListBuffer[CellType]
-    //   topCell.skeleton map (face => { if (face.hasFace(this)) { neighbors += face } })
-    //   neighbors.toList
-    // }
-
-    // def hasFace(cell : CellType) : Boolean = {
-    //   var found : Boolean = false
-    //   skeleton map (face => { found = found | (face == cell) })
-    //   found
-    // }
+    def faces : List[CellType]
+    def neighborhood : List[CellType]
 
     def properTargets : List[CellType] =
       target match {
@@ -220,6 +205,7 @@ trait CellComplex[A] { thisComplex =>
     def incoming : Option[Int]
     def outgoing : Option[Int]
     def loops : List[Int]
+    def faces : List[Int]
 
   }
 
@@ -235,10 +221,11 @@ trait CellComplex[A] { thisComplex =>
       def incoming = cell.incoming map (_.hashCode)
       def outgoing = cell.outgoing map (_.hashCode)
       def loops = cell.loops map (_.hashCode)
+      def faces = cell.faces map (_.hashCode)
 
     }
 
-  def cellFromDescriptor(cell : CellType, desc : CellDescriptor, cellMap : Map[Int, CellType]) {
+  def cellFromDescriptor(cell : CellType, desc : CellDescriptor, cellMap : Map[Int, CellType]) : Unit = {
 
     cell.canopy = desc.canopy map (_ map ((cellMap(_)), (i => i)))
     cell.sources = desc.sources map (_ map (cellMap(_)))
@@ -269,6 +256,7 @@ trait CellComplex[A] { thisComplex =>
       ("incoming" -> optionWriter.write(desc.incoming, writer)),
       ("outgoing" -> optionWriter.write(desc.outgoing, writer)),
       ("loops" -> loopWriter.write(desc.loops.toArray, writer)),
+      ("faces" -> loopWriter.write(desc.faces.toArray, writer)),
       ("item" -> aWriter.write(desc.item, writer))
     )
 
@@ -292,6 +280,7 @@ trait CellComplex[A] { thisComplex =>
     val incomingObj = reader.readObjectField(x, "incoming")
     val outgoingObj = reader.readObjectField(x, "outgoing")
     val loopsObj = reader.readObjectField(x, "loops")
+    val facesObj = reader.readObjectField(x, "faces")
     val itemObj = reader.readObjectField(x, "item")
 
     new CellDescriptor {
@@ -305,6 +294,7 @@ trait CellComplex[A] { thisComplex =>
       def incoming = optionReader.read(incomingObj, reader)
       def outgoing = optionReader.read(outgoingObj, reader)
       def loops = loopReader.read(loopsObj, reader).toList
+      def faces = loopReader.read(facesObj, reader).toList
 
     }
 

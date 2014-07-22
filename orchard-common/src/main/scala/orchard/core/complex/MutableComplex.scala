@@ -55,25 +55,7 @@ trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
     newGlob.sources = Some(Vector(newSource))
 
     topCell = newGlob
-
-    // val globCell = newSource.skeleton.glob(newTarget, newGlob)
-
-    // newGlob.skeleton = globCell
-    // newTarget.skeleton = globCell.target
-
-    // setBaseCell(newSource.dimension, newTarget)
-    // appendBaseCell(newGlob)
-
-    // newSource.cellPanels foreach (panel => {
-    //   val newPanelCell = panel.newCell(newTarget.asInstanceOf[panel.complex.CellType])
-    //   panel.baseCell = newPanelCell
-    //   panel.refreshPanelData
-    // })
-
-    // emit(ComplexExtended)
-
     newGlob
-
   }
 
   // def stablyAppend(complex : CellComplex[A]) = {

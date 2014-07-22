@@ -59,6 +59,11 @@ trait GalleryComplex[A] extends CellComplex[A] {
         complexContainer <- complexCell.container
       } yield complexContainer.panelCell
 
+    def requestHovered : Unit
+    def requestUnhovered : Unit
+    def requestSelected : Unit
+    def requestUnselected : Unit
+
   }
 
   trait PanelEdge extends EdgeBase[PanelCellType, PanelEdgeType] {

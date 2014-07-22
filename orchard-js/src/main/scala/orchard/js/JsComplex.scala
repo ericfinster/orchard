@@ -34,6 +34,7 @@ class JsComplex[A](
   type PanelCellType = JsPanelCell
   type PanelEdgeType = JsPanelEdge
 
+  def panelPadding = externalPadding * 2
 
   def newCell(item : A) : JsCell = new JsCell(item)
   var topCell : JsCell = fromJson(json, JsJsonReader, aReader)
@@ -111,6 +112,8 @@ class JsComplex[A](
 
     var panel : Option[JsPanel] = None
 
+    var faces : List[JsCell] = Nil
+
     object MyPanelCell extends JsPanelCell {
       def complexCell = thisCell
     }
@@ -122,8 +125,7 @@ class JsComplex[A](
     def panelCell = MyPanelCell
     def panelEdge = MyPanelEdge
 
-    def faces : Array[CellType] = ???
-    def neighborhood : Array[CellType] = ???
+    def neighborhood : List[CellType] = ???
 
   }
 
@@ -140,8 +142,8 @@ class JsComplex[A](
       val svg = document.createElementNS(svgNS, "svg")
 
       val li = document.createElement("li")
-      li.setAttribute("width", svgPanelWidth.toString)
-      li.setAttribute("height", svgPanelHeight.toString)
+      li.style.width = svgPanelWidth.toString ++ "px"
+      li.style.height = svgPanelHeight.toString ++ "px"
       li.appendChild(svg)
 
       val paper = Snap(svg)
@@ -187,8 +189,8 @@ class JsComplex[A](
         paper <- paperElement
       } {
         paper.attr(js.Dynamic.literal(
-          "width" -> svgPanelWidth.toString,
-          "height" -> svgPanelHeight.toString,
+          "width" -> (svgPanelWidth - (2 * panelPadding)).toString,
+          "height" -> (svgPanelHeight - (2 * panelPadding)).toString,
           "viewBox" -> viewBoxString
         ))
       }
@@ -213,10 +215,36 @@ class JsComplex[A](
     def labelWidth : Double = (labelElement map (_.getBBox().width)) getOrElse 0.0
     def labelHeight : Double = (labelElement map (_.getBBox().height)) getOrElse 0.0
 
+    def requestHovered : Unit = 
+      for {
+        r <- rectElement
+      } {
+        r.attr(js.Dynamic.literal(( "fill" -> "#f34")))
+      }
+
+    def requestUnhovered : Unit = 
+      for {
+        r <- rectElement
+      } {
+        r.attr(js.Dynamic.literal(( "fill" -> "#fff")))
+      }
+
+    def requestSelected : Unit = ()
+    def requestUnselected : Unit = ()
+
     def drawCellContent(p : Paper) : Element = {
       val label = p.text(0, 0, item.toString)
       val rect = p.rect(0, 0, 0, 0, 4, 4)
       val group = p.g(new js.Array)
+
+      // Right.  Here we want to set up some callbacks
+      rect.mouseover((() => {
+        for { f <- complexCell.faces } { f.panelCell.requestHovered }
+      }) : js.Function)
+
+      rect.mouseout((() => {
+        for { f <- complexCell.faces } { f.panelCell.requestUnhovered }
+      }) : js.Function)
 
       rectElement = Some(rect)
       labelElement = Some(label)
@@ -254,7 +282,8 @@ class JsComplex[A](
 
         label.attr(js.Dynamic.literal(
           "x" -> thisCell.labelX,
-          "y" -> thisCell.labelY
+          "y" -> thisCell.labelY,
+          "pointer-events" -> "none"
         ))
 
       }
@@ -296,9 +325,18 @@ class JsComplex[A](
         ("d" -> pathString),
         ("stroke" -> "#000"),
         ("strokeWidth" -> 2),
-        ("fill" -> "none")
+        ("fill" -> "none"),
+        ("pointer-events" -> "none")
       ))
     }
   }
 
+  //============================================================================================
+  // SERIALIZATION OVERRIDES
+  //
+
+  override def cellFromDescriptor(cell : CellType, desc : CellDescriptor, cellMap : Map[Int, CellType]) : Unit = {
+    super.cellFromDescriptor(cell, desc, cellMap)
+    cell.faces = desc.faces map (cellMap(_))
+  }
 }

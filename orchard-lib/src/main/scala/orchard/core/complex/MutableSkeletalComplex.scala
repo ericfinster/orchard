@@ -11,13 +11,45 @@ import orchard.core.util._
 import orchard.core.cell._
 
 trait MutableSkeletalComplex[A] extends MutableComplex[A] with SkeletalComplex[A] { 
+  thisComplex =>
 
   type CellType <: MutableSkeletalCell
 
+  override def glob(globValue : A, targetValue : A) : CellType = {
+    val globCell = super.glob(globValue, targetValue)
+    val sourceCell = globCell.sources.get.head
+    val targetCell = globCell.target.get
+
+    val glob = sourceCell.skeleton.glob(targetCell, globCell)
+
+    globCell.skeleton = glob
+    targetCell.skeleton = glob.target
+
+    globCell
+  }
+
   trait MutableSkeletalCell extends MutableCell with SkeletalCell { thisCell : CellType =>
 
-    // BUG !!! - We have to override the insertion routines so that they call rigidify on
-    // the appropriate cells when they have finished.  Otherwise we leave the skeletons dirty ...
+    override def insertComposite(
+      compositeValue : A, universalValue : A,
+      location : RoseZipper[CellType, Int],
+      selector : CellType => Boolean
+    ) : (CellType, CellType) = {
+      val (compositeCell, universalCell) = 
+        super.insertComposite(
+          compositeValue, universalValue,
+          location, selector
+        )
+
+      // Fix all the skeletons in higher dimensions
+      for {
+        d <- Range(dimension, thisComplex.dimension + 1)
+      } {
+        thisComplex(d).rigidify
+      }
+
+      (compositeCell, universalCell)
+    }
 
     // After insertion of a new cell, the cell state variables are left in a dirty state. This
     // routine fixes them using that 1) the lower dimensional information is still correct and

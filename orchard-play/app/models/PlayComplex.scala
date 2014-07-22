@@ -35,9 +35,6 @@ class PlayComplex[A](seed : NCell[A]) extends MutableSkeletalComplex[A] {
     // Ummm ... really?
     var skeleton : NCell[CellType] = null
 
-    def faces : Array[CellType] = ???
-    def neighborhood : Array[CellType] = ???
-
   }
 
 }

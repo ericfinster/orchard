@@ -7,6 +7,8 @@
 
 package orchard.core.complex
 
+import scala.collection.mutable.ListBuffer
+
 import orchard.core.cell._
 import orchard.core.util._
 
@@ -19,6 +21,25 @@ trait SkeletalComplex[A] extends CellComplex[A] {
 
     var skeleton : NCell[CellType]
     def toNCell : NCell[A] = skeleton map (_.item)
+
+    override def faces : List[CellType] = {
+      val fs = new ListBuffer[CellType]
+      skeleton.map (f => { fs += f })
+      fs.toList
+    }
+
+    // We should be able to remove this ListBuffer dependency here.  The point should be the 
+    // traversal routines that you implemented and flatmap and what have you.  But what ever
+    // for right now ...
+
+    def neighborhood : List[CellType] = {
+      val neighbors = new ListBuffer[CellType]
+      topCell.skeleton map (face => { if (face.hasFace(this)) { neighbors += face } })
+      neighbors.toList
+    }
+
+    def hasFace(cell : CellType) : Boolean =
+      faces.contains(cell)
 
   }
 
