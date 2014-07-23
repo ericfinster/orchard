@@ -46,18 +46,6 @@ object Main extends js.JSApp {
     
     complex.renderAll
 
-    import JQueryCarousel._
-
-    // Now I need to run jcarousel and start him ...
-    jQuery(".jcarousel").jcarousel
-    jQuery(".jcarousel-prev").jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
-    jQuery(".jcarousel-next").jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
-
-    // Okay, I think rather the idea should be that you create a gallery with a given
-    // div, and the gallery (on creation) puts all it's content inside. and starts the
-    // carousel.  Then the call to renderall will infact set all of the sizes and render
-    // everything.
-
   }
 
 }

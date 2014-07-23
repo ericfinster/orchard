@@ -18,6 +18,8 @@ import scala.scalajs._
 import org.scalajs.dom
 import dom.document
 
+import org.scalajs.jquery.jQuery
+
 class JsComplex[A](
   container : dom.Element, 
   json : js.Any,
@@ -91,6 +93,13 @@ class JsComplex[A](
     carouselNext.setAttribute("href", "#")
     carouselNext.appendChild(document.createTextNode("Next"))
     container.appendChild(carouselNext)
+
+    import JQueryCarousel._
+
+    // Now I need to run jcarousel and start him ...
+    jQuery(carousel).jcarousel
+    jQuery(carouselPrev).jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
+    jQuery(carouselNext).jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
 
   }
 

@@ -1,111 +1,219 @@
 @(title: String)(content: Html)
 
 <!DOCTYPE html>
-
+<!--[if IE 8]><html class="ie8" lang="en"><![endif]-->
+<!--[if IE 9]><html class="ie9" lang="en"><![endif]-->
+<!--[if !IE]><!-->
 <html lang="en">
+  <!--<![endif]-->
+
+  <!-- start: HEAD -->
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Orchard Opetopic Editor">
-    <meta name="author" content="Eric Finster">
-    <link rel="icon" href="@routes.Assets.at("images/favicon.png")">
-
-    <title>Orchard Opetopic Proof Assistant</title>
-
-    <!-- Bootstrap core CSS-->
-    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+    <title>Orchard</title>
+    <!-- start: META -->
+    <meta charset="utf-8" />
+    <!--[if IE]><meta http-equiv='X-UA-Compatible' content="IE=edge,IE=9,IE=8,chrome=1" /><![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta content="orchard" name="description" />
+    <meta content="ericfinster" name="author" />
+    <!-- end: META -->
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,500,600,700,200,100,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/bootstrap/css/bootstrap.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/font-awesome/css/font-awesome.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/perfect-scrollbar/src/perfect-scrollbar.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/toastr/toastr.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/styles.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/styles-responsive.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/themes/theme-style2.css")" type="text/css" id="skin_color">
 
     <!-- Orchard Custom CSS -->
     <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/orchard.css")">
 
+    <link rel="shortcut icon" href="favicon.ico" />
+  </head>
+  <!-- end: HEAD -->
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
+  <body>
+    <div class="main-wrapper">
+      <!-- start: TOPBAR -->
+      <header class="topbar navbar navbar-inverse navbar-fixed-top inner">
+	<!-- start: TOPBAR CONTAINER -->
+	<div class="container">
+	  <div class="navbar-header">
+	    <a class="sb-toggle-left hidden-md hidden-lg" href="#main-navbar">
+	      <i class="fa fa-bars"></i>
+	    </a>
+	    <!-- start: LOGO -->
+	    <a class="navbar-brand" href="index.html">Orchard!</a>
+	    <!-- end: LOGO -->
+	  </div>
+	  <div class="topbar-tools">
+	    <!-- start: TOP NAVIGATION MENU -->
+	    <ul class="nav navbar-right">
+	      <!-- start: USER DROPDOWN -->
+	      <li class="dropdown current-user">
+		<a data-toggle="dropdown" data-hover="dropdown" class="dropdown-toggle" data-close-others="true" href="#">
+		  <img src="assets/images/avatar-1-small.jpg" class="img-circle" alt=""> <span class="username hidden-xs">Eric Finster</span> <i class="fa fa-caret-down "></i>
+		</a>
+		<ul class="dropdown-menu dropdown-dark">
+		  <li><a href="pages_user_profile.html">My Profile</a></li>
+		  <li><a href="login_lock_screen.html">Lock Screen</a></li>
+		  <li><a href="login_login.html">Log Out</a></li>
+		</ul>
+	      </li>
+	      <!-- end: USER DROPDOWN -->
+	      <li class="right-menu-toggle">
+		<a href="#" class="sb-toggle-right">
+		  <i class="fa fa-globe toggle-icon"></i> <i class="fa fa-caret-right"></i>
+		</a>
+	      </li>
+	    </ul>
+	    <!-- end: TOP NAVIGATION MENU -->
+	  </div>
+	</div>
+	<!-- end: TOPBAR CONTAINER -->
+      </header>
+      <!-- end: TOPBAR -->
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="@routes.Assets.at("javascripts/jquery-1.11.1.min.js")" type="text/javascript"></script>
 
-    <!-- jCarousel (for a nice carousel effect) -->
-    <script src="@routes.Assets.at("javascripts/jquery.jcarousel.min.js")" type="text/javascript"></script>
+      <!-- start: PAGESLIDE LEFT -->
+      <a class="closedbar inner hidden-sm hidden-xs" href="#"></a>
+      <nav id="pageslide-left" class="pageslide inner">
+	<div class="navbar-content">
+	  <!-- start: SIDEBAR -->
+	  <div class="main-navigation left-wrapper transition-left">
+	    <div class="navigation-toggler hidden-sm hidden-xs">
+	      <a href="#main-navbar" class="sb-toggle-left">
+	      </a>
+	    </div>
+	    <div class="user-profile border-top padding-horizontal-10 block">
+	      <div class="inline-block">
+		<img src="assets/images/avatar-1.jpg" alt="">
+	      </div>
+	      <div class="inline-block">
+		<h5 class="no-margin"> Welcome </h5>
+		<h4 class="no-margin"> Eric Finster </h4>
+		<a class="btn user-options sb_toggle">
+		  <i class="fa fa-cog"></i>
+		</a>
+	      </div>
+	    </div>
+	    <!-- start: MAIN NAVIGATION MENU -->
+	    <ul class="main-navigation-menu">
+	      <li class="active open">
+		<a href="index.html"><i class="fa fa-pencil"></i> <span class="title"> Editor </span></a>
+	      </li>
+	      <li>
+		<a href="#"><i class="fa fa-graduation-cap"></i><span class="title">Tutorial</span><i class="icon-arrow"></i></a>
+		<ul class="sub-menu">
+		  <li><a href="tutorial-1.html"><span class="title">Introduction</span></a></li>
+		  <li><a href="tutorial-2.html"><span class="title">Opetopes</span></a></li>
+		  <li><a href="tutorial-3.html"><span class="title">Opetopic Cardinals</span></a></li>
+		</ul>
+	      </li>
+	    </ul>
+	    <!-- end: MAIN NAVIGATION MENU -->
+	  </div>
+	  <!-- end: SIDEBAR -->
+	</div>
+	<div class="slide-tools">
+	  <div class="col-xs-6 text-right no-padding">
+	    <a class="btn btn-sm log-out text-right" href="login_login.html">
+	      <i class="fa fa-power-off"></i> Log Out
+	    </a>
+	  </div>
+	</div>
+      </nav>
+      <!-- end: PAGESLIDE LEFT -->
 
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="@routes.Assets.at("javascripts/bootstrap.min.js")" type="text/javascript"></script>
+      <!-- start: MAIN CONTAINER -->							
+      <div class="main-container inner">
+	<!-- start: PAGE -->
+	<div class="main-content">
+	  <div class="container">
+	    <!-- start: PAGE HEADER -->
+	    <!-- start: TOOLBAR -->
+	    <div class="toolbar row">
+	      <div class="col-sm-6 hidden-xs">
+		<div class="page-header">
+		  <h1>Editor <small>edit your opetopes!</small></h1>
+		</div>
+	      </div>
+	    </div>
+	    <!-- end: TOOLBAR -->
+	    <!-- end: PAGE HEADER -->
+	    <!-- start: BREADCRUMB -->
+	    <div class="row">
+	      <div class="col-md-12">
+		<ol class="breadcrumb">
+		  <li>
+		    <a href="#">
+		      Editor
+		    </a>
+		  </li>
+		  <li class="active">
+		    New guy
+		  </li>
+		</ol>
+	      </div>
+	    </div>
+	    <!-- end: BREADCRUMB -->
+	    <!-- start: PAGE CONTENT -->
+	    <div class="row">
+	      <div class="col-md-12">
+		<div class="panel panel-white">
+		  <div class="panel-body">
+		    @content
+		  </div>
+		</div>
+	      </div>
+	    </div>
+	    <!-- end: PAGE CONTENT-->
+	  </div>
+	</div>
+	<!-- end: PAGE -->
+      </div>
+      <!-- end: MAIN CONTAINER -->
 
-    <!-- Include Snap.svg SVG Library -->
-    <script src="@routes.Assets.at("javascripts/snap.svg.js")" type="text/javascript"></script>
+      <!-- start: FOOTER -->
+      <footer class="inner">
+	<div class="footer-inner">
+	  <div class="pull-left">
+	    2014 © Eric Finster
+	  </div>
+	  <div class="pull-right">
+	    <span class="go-top"><i class="fa fa-chevron-up"></i></span>
+	  </div>
+	</div>
+      </footer>
+      <!-- end: FOOTER -->
 
-    <!-- Orchard Javascript -->
+    </div>
+
+    <script src="@routes.Assets.at("plugins/jquery/jquery-2.1.1.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/bootstrap/js/bootstrap.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/perfect-scrollbar/src/jquery.mousewheel.js")"></script>
+    <script src="@routes.Assets.at("plugins/perfect-scrollbar/src/perfect-scrollbar.js")"></script>
+    <script src="@routes.Assets.at("plugins/jquery.scrollTo/jquery.scrollTo.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/ScrollToFixed/jquery-scrolltofixed-min.js")"></script>
+    <script src="@routes.Assets.at("plugins/toastr/toastr.js")"></script>
+    <script src="@routes.Assets.at("plugins/velocity/jquery.velocity.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/jcarousel/jquery.jcarousel.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/snap/snap.svg.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("javascripts/orchard-js-fastopt.js")" type="text/javascript"></script>
     <!-- for production (play dist), use the optimized version instead -->
     <!-- <script src="@routes.Assets.at("javascripts/scalajs-example-opt.js")" type="text/javascript"></script> -->
-
-    <!-- Orchard Launcher -->
     <script src="@routes.Assets.at("javascripts/orchard-js-launcher.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("javascripts/main.js")"></script>
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
+    <script>
+      jQuery(document).ready(function() {
+      Main.init();
+      });
+    </script>
 
-  <body>
-
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Orchard</a>
-        </div>
-        <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="#">Dashboard</a></li>
-            <li><a href="#">Settings</a></li>
-            <li><a href="#">Profile</a></li>
-            <li><a href="#">Help</a></li>
-          </ul>
-          <form class="navbar-form navbar-right">
-            <input type="text" class="form-control" placeholder="Search...">
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar">
-            <li class="active"><a href="#">Overview</a></li>
-            <li><a href="#">Reports</a></li>
-            <li><a href="#">Analytics</a></li>
-            <li><a href="#">Export</a></li>
-          </ul>
-          <ul class="nav nav-sidebar">
-            <li><a href="">Nav item</a></li>
-            <li><a href="">Nav item again</a></li>
-            <li><a href="">One more nav</a></li>
-            <li><a href="">Another nav item</a></li>
-            <li><a href="">More navigation</a></li>
-          </ul>
-          <ul class="nav nav-sidebar">
-            <li><a href="">Nav item again</a></li>
-            <li><a href="">One more nav</a></li>
-            <li><a href="">Another nav item</a></li>
-          </ul>
-        </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">Dashboard</h1>
-
-	  @content
-	  
-        </div>
-      </div>
-    </div>
-  </body>
+</body>
 </html>
+

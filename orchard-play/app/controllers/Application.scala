@@ -15,7 +15,7 @@ object Application extends Controller {
   }
 
   def getComplex = Action { 
-    val complex = new PlayComplex(Example.Psi)
+    val complex = new PlayComplex(Example1.w map (_.toString))
     val json = Json.toJson(complex)
     Ok(json)
   }
