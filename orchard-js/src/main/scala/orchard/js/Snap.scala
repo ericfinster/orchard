@@ -35,6 +35,11 @@ trait Element extends js.Object {
 
   def mouseover(handler : js.Function) : Unit
   def mouseout(handler : js.Function) : Unit
+  def click(handler : js.Function) : Unit
+  def dblclick(handler : js.Function) : Unit
+
+  def addClass(cls : String) : Unit
+  def removeClass(cls : String) : Unit
 
 }
 

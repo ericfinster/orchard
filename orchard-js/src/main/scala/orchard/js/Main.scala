@@ -22,7 +22,7 @@ object Main extends js.JSApp {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    jQuery.getJSON("/complex", success = ((data : js.Object) => {
+    jQuery.getJSON("/worksheet", success = ((data : js.Object) => {
       renderComplex(data)
     }) : js.Function1[js.Object, Unit])
 
@@ -39,11 +39,11 @@ object Main extends js.JSApp {
 
     val reader = JsJsonReader
 
-    val d = document.createElement("div")
-    jQuery(d).appendTo("#workspace")
-
-    val complex = new JsComplex[String](d, json, 300, 300, 3)
+    val d = document.getElementById("workspace")
+    val complex = new JsWorksheet(d, json, 200, 200, 3)
     
+    println("Finished deserializing, about to render ...")
+
     complex.renderAll
 
   }

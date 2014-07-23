@@ -20,31 +20,30 @@ import dom.document
 
 import org.scalajs.jquery.jQuery
 
-class JsComplex[A](
-  container : dom.Element, 
-  json : js.Any,
-  svgPanelWidth : Int, 
-  svgPanelHeight : Int, 
-  displayPanels : Int
-)(implicit aReader : JsonReadable[A, js.Any])
+abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js.Any])
     extends RenderableComplex[A] { thisComplex =>
 
-  type CellType = JsCell
+  type CellType <: JsCell
 
-  type PanelType = JsPanel
+  type PanelType <: JsPanel
 
-  type PanelCellType = JsPanelCell
-  type PanelEdgeType = JsPanelEdge
+  type PanelCellType <: JsPanelCell
+  type PanelEdgeType <: JsPanelEdge
+
+  def container : dom.Element
+  def galleryPanelWidth : Int
+  def galleryPanelHeight : Int
+  def displayPanels : Int
 
   def panelPadding = externalPadding * 2
+  def newPanel(i : Int) : PanelType
 
-  def newCell(item : A) : JsCell = new JsCell(item)
-  var topCell : JsCell = fromJson(json, JsJsonReader, aReader)
+  var topCell : CellType = fromJson(json, JsJsonReader, aReader)
 
   def generatePanels : Unit =
     for {
       (base, i) <- baseCells.zipWithIndex
-    } { base.panel = Some(new JsPanel(i)) }
+    } { base.panel = Some(newPanel(i)) }
 
   def clearPanels : Unit = 
     for {
@@ -61,15 +60,20 @@ class JsComplex[A](
 
   def initializeContent : Unit = {
 
-    val carousel = document.createElement("div")
-    carousel.setAttribute("id", "gallery")
-    carousel.setAttribute("class", "jcarousel")
-    carousel.style.width = ((svgPanelWidth * displayPanels).toString ++ "px")
-    carousel.style.height = (svgPanelHeight.toString ++ "px")
-    container.appendChild(carousel)
+    val galleryAssembly = document.createElement("div")
+    galleryAssembly.setAttribute("class", "orchard-gallery-assembly")
+    container.appendChild(galleryAssembly)
 
-    val carouselList = document.createElement("ul")
-    carousel.appendChild(carouselList)
+    val galleryWrapper = document.createElement("div")
+    galleryWrapper.setAttribute("class", "orchard-gallery-wrapper")
+    galleryAssembly.appendChild(galleryWrapper)
+
+    val gallery = document.createElement("div")
+    gallery.setAttribute("class", "orchard-gallery")
+    galleryWrapper.appendChild(gallery)
+
+    val galleryPanelList = document.createElement("ul")
+    gallery.appendChild(galleryPanelList)
 
     // Create the panels
     generatePanels
@@ -78,28 +82,39 @@ class JsComplex[A](
       base <- baseCells
       panel <- base.panel
     } { 
-      carouselList.appendChild(panel.getContent)
+      galleryPanelList.appendChild(panel.getContent)
     }
 
     // Generate the controls
-    val carouselPrev = document.createElement("a")
-    carouselPrev.setAttribute("class", "jcarousel-prev")
-    carouselPrev.setAttribute("href", "#")
-    carouselPrev.appendChild(document.createTextNode("Prev"))
-    container.appendChild(carouselPrev)
+    val galleryPrev = document.createElement("a")
+    galleryPrev.setAttribute("class", "orchard-gallery-control-prev")
+    galleryPrev.setAttribute("href", "#")
+    galleryAssembly.appendChild(galleryPrev)
 
-    val carouselNext = document.createElement("a")
-    carouselNext.setAttribute("class", "jcarousel-next")
-    carouselNext.setAttribute("href", "#")
-    carouselNext.appendChild(document.createTextNode("Next"))
-    container.appendChild(carouselNext)
+    val galleryPrevBtn = document.createElement("i")
+    galleryPrevBtn.setAttribute("class", "fa fa-chevron-circle-left fa-lg")
+    galleryPrev.appendChild(galleryPrevBtn)
+
+    val galleryNext = document.createElement("a")
+    galleryNext.setAttribute("class", "orchard-gallery-control-next")
+    galleryNext.setAttribute("href", "#")
+    galleryAssembly.appendChild(galleryNext)
+
+    val galleryNextBtn = document.createElement("i")
+    galleryNextBtn.setAttribute("class", "fa fa-chevron-circle-right fa-lg")
+    galleryNext.appendChild(galleryNextBtn)
+
+    val galleryPagination = document.createElement("p")
+    galleryPagination.setAttribute("class", "orchard-gallery-pagination")
+    galleryAssembly.appendChild(galleryPagination)
 
     import JQueryCarousel._
 
     // Now I need to run jcarousel and start him ...
-    jQuery(carousel).jcarousel
-    jQuery(carouselPrev).jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
-    jQuery(carouselNext).jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
+    jQuery(gallery).jcarousel
+    jQuery(galleryPrev).jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
+    jQuery(galleryNext).jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
+    jQuery(galleryPagination).jcarouselPagination(js.Dynamic.literal(("perPage" -> 1))) 
 
   }
 
@@ -109,36 +124,25 @@ class JsComplex[A](
   // JS CELL IMPLEMENTATION
   //
 
-  class JsCell(val item : A) extends GalleryCell { thisCell =>
+  abstract class JsCell extends GalleryCell { thisCell : CellType =>
 
-    var canopy : Option[RoseTree[JsCell, Int]] = None
-    var target : Option[JsCell] = None
-    var sources : Option[Vector[JsCell]] = None
-    var container : Option[JsCell] = None
+    var canopy : Option[RoseTree[CellType, Int]] = None
+    var target : Option[CellType] = None
+    var sources : Option[Vector[CellType]] = None
+    var container : Option[CellType] = None
     
-    var incoming : Option[JsCell] = None
-    var outgoing : Option[JsCell] = None
+    var incoming : Option[CellType] = None
+    var outgoing : Option[CellType] = None
 
-    var panel : Option[JsPanel] = None
+    var panel : Option[PanelType] = None
 
-    var faces : List[JsCell] = Nil
-
-    object MyPanelCell extends JsPanelCell {
-      def complexCell = thisCell
-    }
-
-    object MyPanelEdge extends JsPanelEdge {
-      def complexCell = thisCell
-    }
-
-    def panelCell = MyPanelCell
-    def panelEdge = MyPanelEdge
+    var faces : List[CellType] = Nil
 
     def neighborhood : List[CellType] = ???
 
   }
 
-  class JsPanel(index : Int) extends RenderablePanel {
+  class JsPanel(index : Int) extends RenderablePanel { thisPanel : PanelType =>
 
     def panelId = "panel-" ++ index.toString
 
@@ -151,8 +155,8 @@ class JsComplex[A](
       val svg = document.createElementNS(svgNS, "svg")
 
       val li = document.createElement("li")
-      li.style.width = svgPanelWidth.toString ++ "px"
-      li.style.height = svgPanelHeight.toString ++ "px"
+      li.style.width = galleryPanelWidth.toString ++ "px"
+      li.style.height = galleryPanelHeight.toString ++ "px"
       li.appendChild(svg)
 
       val paper = Snap(svg)
@@ -198,8 +202,8 @@ class JsComplex[A](
         paper <- paperElement
       } {
         paper.attr(js.Dynamic.literal(
-          "width" -> (svgPanelWidth - (2 * panelPadding)).toString,
-          "height" -> (svgPanelHeight - (2 * panelPadding)).toString,
+          "width" -> (galleryPanelWidth - (2 * panelPadding)).toString,
+          "height" -> (galleryPanelHeight - (2 * panelPadding)).toString,
           "viewBox" -> viewBoxString
         ))
       }
@@ -215,48 +219,76 @@ class JsComplex[A](
 
   }
 
-  trait JsPanelCell extends RenderableCell { thisCell =>
+  trait JsPanelCell extends RenderableCell { thisCell : PanelCellType =>
+
+    def styleBase : String = "orchard-cell"
+
+    var isStyleHovered : Boolean = false
+    var isStyleSelected : Boolean = false
 
     var groupElement : Option[Element] = None
     var rectElement : Option[Element] = None
     var labelElement : Option[Element] = None
 
+    def setRectStyle : Unit = 
+      for {
+        rect <- rectElement
+      } {
+        val classString = 
+          styleBase ++
+            (if (isStyleHovered) " " ++ styleBase ++ "-hovered" else "") ++
+            (if (isStyleSelected) " " ++ styleBase ++ "-selected" else "")
+
+        rect.attr(js.Dynamic.literal(("class" -> classString)))
+      }
+
     def labelWidth : Double = (labelElement map (_.getBBox().width)) getOrElse 0.0
     def labelHeight : Double = (labelElement map (_.getBBox().height)) getOrElse 0.0
 
-    def requestHovered : Unit = 
-      for {
-        r <- rectElement
-      } {
-        r.attr(js.Dynamic.literal(( "fill" -> "#f34")))
-      }
+    def requestHoveredStyle : Unit = {
+      isStyleHovered = true
+      setRectStyle
+    }
 
-    def requestUnhovered : Unit = 
-      for {
-        r <- rectElement
-      } {
-        r.attr(js.Dynamic.literal(( "fill" -> "#fff")))
-      }
+    def requestUnhoveredStyle : Unit = {
+      isStyleHovered = false
+      setRectStyle
+    }
 
-    def requestSelected : Unit = ()
-    def requestUnselected : Unit = ()
+    def requestSelectedStyle : Unit = ()
+    def requestUnselectedStyle : Unit = ()
 
-    def drawCellContent(p : Paper) : Element = {
+    def onMouseOver : Unit = for { f <- complexCell.faces } { f.panelCell.requestHoveredStyle }
+    def onMouseOut : Unit = for { f <- complexCell.faces } { f.panelCell.requestUnhoveredStyle }
+    def onMouseClick : Unit = ()
+    def onMouseDoubleClick : Unit = ()
+
+    def drawLabel(p : Paper) : Element = {
       val label = p.text(0, 0, item.toString)
+      label.attr(js.Dynamic.literal(("class" -> "orchard-label")))
+      labelElement = Some(label)
+      label
+    }
+
+    def drawRect(p : Paper) : Element = {
       val rect = p.rect(0, 0, 0, 0, 4, 4)
-      val group = p.g(new js.Array)
 
-      // Right.  Here we want to set up some callbacks
-      rect.mouseover((() => {
-        for { f <- complexCell.faces } { f.panelCell.requestHovered }
-      }) : js.Function)
-
-      rect.mouseout((() => {
-        for { f <- complexCell.faces } { f.panelCell.requestUnhovered }
-      }) : js.Function)
+      // Setup Mouse Event Callbacks
+      rect.mouseover((() => { onMouseOver }) : js.Function)
+      rect.mouseout((() => { onMouseOut }) : js.Function)
+      rect.click((() => { onMouseClick }) : js.Function)
+      rect.dblclick((() => { onMouseDoubleClick }) : js.Function)
 
       rectElement = Some(rect)
-      labelElement = Some(label)
+      setRectStyle
+
+      rect
+    }
+
+    def drawCellContent(p : Paper) : Element = {
+      val group = p.g(new js.Array)
+      val rect = drawRect(p)
+      val label = drawLabel(p)
 
       group.append(rect)
       group.append(label)
@@ -284,15 +316,13 @@ class JsComplex[A](
           "y" -> thisCell.y,
           "width" -> thisCell.width,
           "height" -> thisCell.height,
-          "fill" -> "#FFF",
           "stroke" -> "#000",
-          "strokeWidth" -> 2
+          "strokeWidth" -> "2px"
         ))
 
         label.attr(js.Dynamic.literal(
           "x" -> thisCell.labelX,
-          "y" -> thisCell.labelY,
-          "pointer-events" -> "none"
+          "y" -> thisCell.labelY
         ))
 
       }
@@ -305,12 +335,18 @@ class JsComplex[A](
 
   }
 
-  trait JsPanelEdge extends RenderableEdge {
+  trait JsPanelEdge extends RenderableEdge { thisEdge : PanelEdgeType => 
 
     var pathElement : Option[Element] = None
 
     def drawPath(p : Paper) : Element = {
       val path = p.path("")
+      path.attr(js.Dynamic.literal(
+        ("class" -> "orchard-edge"),
+        ("stroke" -> "#000"),
+        ("strokeWidth" -> "2px"),
+        ("fill" -> "none")
+      ))
       pathElement = Some(path)
       path
     }
@@ -330,13 +366,7 @@ class JsComplex[A](
           pathString ++= "H " ++ outgoingX.toString
         }
 
-      path.attr(js.Dynamic.literal(
-        ("d" -> pathString),
-        ("stroke" -> "#000"),
-        ("strokeWidth" -> 2),
-        ("fill" -> "none"),
-        ("pointer-events" -> "none")
-      ))
+      path.attr(js.Dynamic.literal(("d" -> pathString)))
     }
   }
 

@@ -24,8 +24,10 @@ object PlayJson {
 
   implicit def readsIsReadable[A](implicit r : Reads[A]) : JsonReadable[A, JsValue] = 
     new JsonReadable[A, JsValue] {
-      def read(x : JsValue, reader : JsonReader[JsValue]) : A = 
+      def read(x : JsValue, reader : JsonReader[JsValue]) : A = {
+        println("In Play read.")
         x.as[A]
+      }
     }
 
   object PlayJsonWriter extends JsonWriter[JsValue] {

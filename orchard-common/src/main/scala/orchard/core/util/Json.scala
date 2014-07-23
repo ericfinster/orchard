@@ -32,24 +32,35 @@ object JsonReadable {
     new JsonReadable[Boolean, P] {
       def read(x : P, reader : JsonReader[P]) : Boolean = 
         reader.readBoolean(x)
+
+      override def toString = "boolReader"
+
     }
 
   implicit def intIsReadable[P] : JsonReadable[Int, P] =
     new JsonReadable[Int, P] {
       def read(x : P, reader : JsonReader[P]) : Int =
         reader.readNumber(x).toInt
+
+      override def toString = "intReader"
+
     }
 
   implicit def doubleIsReadable[P] : JsonReadable[Double, P] =
     new JsonReadable[Double, P] {
       def read(x : P, reader : JsonReader[P]) : Double =
         reader.readNumber(x)
+
+      override def toString = "doubleReader"
+
     }
 
   implicit def stringIsReadable[P] : JsonReadable[String, P] =
     new JsonReadable[String, P] {
       def read(x : P, reader : JsonReader[P]) : String =
         reader.readString(x)
+
+      override def toString = "stringReader"
     }
 
 
@@ -67,6 +78,8 @@ object JsonReadable {
 
         vectorElems.toVector
       }
+
+      override def toString = "vectorReader"
     }
 
 
@@ -84,6 +97,8 @@ object JsonReadable {
 
         arrayElems.toArray
       }
+
+      override def toString = "arrayReader"
     }
 
   implicit def optionIsReadable[A, P](implicit ev : JsonReadable[A, P]) : JsonReadable[Option[A], P] = 
@@ -99,6 +114,8 @@ object JsonReadable {
           }
         }
       }
+
+      override def toString = "optionReader"
     }
 
 }

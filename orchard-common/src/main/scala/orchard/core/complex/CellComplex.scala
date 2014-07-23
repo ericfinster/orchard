@@ -281,6 +281,7 @@ trait CellComplex[A] { thisComplex =>
     val outgoingObj = reader.readObjectField(x, "outgoing")
     val loopsObj = reader.readObjectField(x, "loops")
     val facesObj = reader.readObjectField(x, "faces")
+
     val itemObj = reader.readObjectField(x, "item")
 
     new CellDescriptor {

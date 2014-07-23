@@ -5,7 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.core.complex
+package orchard.core.checker
 
 sealed trait WorksheetMarker {
 
@@ -79,6 +79,8 @@ object WorksheetMarker {
         }
 
       }
+
+      override def toString = "markerReader"
     }
 
   implicit def markerIsWritable[P] : JsonWritable[WorksheetMarker, P] =

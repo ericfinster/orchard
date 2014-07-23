@@ -75,7 +75,7 @@ trait RenderableComplex[A] extends GalleryComplex[A] { thisComplex =>
           val leftEdge = baseCell.sources.get.head
           baseCell.x - leftEdge.incomingX + strokeWidth
         } else {
-          0.0
+          strokeWidth
         }
       } else {
         strokeWidth
