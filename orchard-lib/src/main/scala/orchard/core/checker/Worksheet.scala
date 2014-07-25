@@ -8,45 +8,47 @@
 package orchard.core.checker
 
 import orchard.core.cell._
-import orchard.core.util._
 import orchard.core.complex._
 
-class Worksheet(seed : NCell[WorksheetMarker]) 
-    extends MutableSkeletalComplex[WorksheetMarker] 
-    with SelectableComplex[WorksheetMarker] {
-  thisWorksheet =>
+class Worksheet(seed : NCell[Polarity[Option[Expression]]]) extends AbstractWorksheet(seed) {
 
   type CellType = WorksheetCell
+  type FrameworkType = Worksheet
 
-  var topCell : WorksheetCell =
+  def newCell(item : Polarity[Option[Expression]]) : WorksheetCell = 
+    new WorksheetCell(item)
+
+  var topCell : WorksheetCell = 
     seed.regenerateFrom(ComplexGenerator).value
 
-  def newCell(marker : WorksheetMarker) = new WorksheetCell(marker)
+  def extract(cell : CellType) : Worksheet = 
+    new Worksheet(cell.toNCell)
 
-  class WorksheetCell(var item : WorksheetMarker) extends MutableSkeletalCell {
+  def invertibilityLevel: Option[Int] = None
+  def stabilityLevel: Option[Int] = None
+  def unicityLevel: Option[Int] = None
 
-    var canopy : Option[RoseTree[WorksheetCell, Int]] = None
-    var target : Option[WorksheetCell] = None
-    var sources : Option[Vector[WorksheetCell]] = None
-    var container : Option[WorksheetCell] = None
-    
-    var incoming : Option[WorksheetCell] = None
-    var outgoing : Option[WorksheetCell] = None
-
-    // Ummm ... really?
-    var skeleton : NCell[CellType] = null
-
+  class WorksheetCell(item : Polarity[Option[Expression]]) extends AbstractWorksheetCell(item) {
   }
+
+  def toMarkerComplex : MarkerComplex = 
+    new MarkerComplex(
+      topCell.skeleton map (cell => {
+        cell.item match {
+          case Positive => PositivePolarityMarker
+          case Negative => NegativePolarityMarker
+          case Neutral(None) => EmptyMarker(cell.isShell, cell.isExposedNook)
+          case Neutral(Some(e)) => ReferenceMarker(e.name, e.styleString)
+        }
+      })
+    )
 
 }
 
 object Worksheet {
 
-  val emptyWorksheetCell : NCell[WorksheetMarker] = 
-    Object(EmptyMarker(true, false)).glob(
-      PositivePolarityMarker, 
-      NegativePolarityMarker
-    )
+  val emptyWorksheetCell : NCell[Polarity[Option[Expression]]] = 
+    CardinalComplex(Object(None))
 
   def apply() : Worksheet = 
     new Worksheet(emptyWorksheetCell)

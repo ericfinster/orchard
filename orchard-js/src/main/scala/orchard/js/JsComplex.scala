@@ -56,24 +56,63 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
       panel <- base.panel
     } { panel.render }
 
-  // Now, I want to add some carousel type features.  How is that going to look?
+  //============================================================================================
+  // INITIALIZATION
+  //
+
+  val galleryAssembly = document.createElement("div")
+  galleryAssembly.setAttribute("class", "orchard-gallery-assembly")
+  container.appendChild(galleryAssembly)
+
+  val galleryWrapper = document.createElement("div")
+  galleryWrapper.setAttribute("class", "orchard-gallery-wrapper")
+  galleryAssembly.appendChild(galleryWrapper)
+
+  val gallery = document.createElement("div")
+  gallery.setAttribute("class", "orchard-gallery")
+  galleryWrapper.appendChild(gallery)
+
+  val galleryPanelList = document.createElement("ul")
+  gallery.appendChild(galleryPanelList)
+
+  // Generate the controls
+  val galleryPrev = document.createElement("a")
+  galleryPrev.setAttribute("class", "orchard-gallery-control-prev")
+  galleryPrev.setAttribute("href", "#")
+  galleryAssembly.appendChild(galleryPrev)
+
+  val galleryPrevBtn = document.createElement("i")
+  galleryPrevBtn.setAttribute("class", "fa fa-chevron-circle-left fa-lg")
+  galleryPrev.appendChild(galleryPrevBtn)
+
+  val galleryNext = document.createElement("a")
+  galleryNext.setAttribute("class", "orchard-gallery-control-next")
+  galleryNext.setAttribute("href", "#")
+  galleryAssembly.appendChild(galleryNext)
+
+  val galleryNextBtn = document.createElement("i")
+  galleryNextBtn.setAttribute("class", "fa fa-chevron-circle-right fa-lg")
+  galleryNext.appendChild(galleryNextBtn)
+
+  val galleryPagination = document.createElement("p")
+  galleryPagination.setAttribute("class", "orchard-gallery-pagination")
+  galleryAssembly.appendChild(galleryPagination)
+
+  import JQueryCarousel._
+
+  // Now I need to run jcarousel and start him ...
+  jQuery(gallery).jcarousel
+  jQuery(galleryPrev).jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
+  jQuery(galleryNext).jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
+  jQuery(galleryPagination).jcarouselPagination(js.Dynamic.literal(("perPage" -> 1)))
+
+  val carousel = jQuery(gallery).data("jcarousel").asInstanceOf[JCarousel]
+
+  initializeContent
 
   def initializeContent : Unit = {
 
-    val galleryAssembly = document.createElement("div")
-    galleryAssembly.setAttribute("class", "orchard-gallery-assembly")
-    container.appendChild(galleryAssembly)
-
-    val galleryWrapper = document.createElement("div")
-    galleryWrapper.setAttribute("class", "orchard-gallery-wrapper")
-    galleryAssembly.appendChild(galleryWrapper)
-
-    val gallery = document.createElement("div")
-    gallery.setAttribute("class", "orchard-gallery")
-    galleryWrapper.appendChild(gallery)
-
-    val galleryPanelList = document.createElement("ul")
-    gallery.appendChild(galleryPanelList)
+    jQuery(galleryPanelList).empty()
 
     // Create the panels
     generatePanels
@@ -85,40 +124,17 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
       galleryPanelList.appendChild(panel.getContent)
     }
 
-    // Generate the controls
-    val galleryPrev = document.createElement("a")
-    galleryPrev.setAttribute("class", "orchard-gallery-control-prev")
-    galleryPrev.setAttribute("href", "#")
-    galleryAssembly.appendChild(galleryPrev)
-
-    val galleryPrevBtn = document.createElement("i")
-    galleryPrevBtn.setAttribute("class", "fa fa-chevron-circle-left fa-lg")
-    galleryPrev.appendChild(galleryPrevBtn)
-
-    val galleryNext = document.createElement("a")
-    galleryNext.setAttribute("class", "orchard-gallery-control-next")
-    galleryNext.setAttribute("href", "#")
-    galleryAssembly.appendChild(galleryNext)
-
-    val galleryNextBtn = document.createElement("i")
-    galleryNextBtn.setAttribute("class", "fa fa-chevron-circle-right fa-lg")
-    galleryNext.appendChild(galleryNextBtn)
-
-    val galleryPagination = document.createElement("p")
-    galleryPagination.setAttribute("class", "orchard-gallery-pagination")
-    galleryAssembly.appendChild(galleryPagination)
-
-    import JQueryCarousel._
-
-    // Now I need to run jcarousel and start him ...
-    jQuery(gallery).jcarousel
-    jQuery(galleryPrev).jcarouselControl(js.Dynamic.literal(("target" -> "-=1")))
-    jQuery(galleryNext).jcarouselControl(js.Dynamic.literal(("target" -> "+=1")))
-    jQuery(galleryPagination).jcarouselPagination(js.Dynamic.literal(("perPage" -> 1))) 
+    carousel.reload(js.Dynamic.literal())
 
   }
 
-  initializeContent
+  def refreshFromJson(newJson : js.Any) : Unit = {
+
+    topCell = fromJson(newJson, JsJsonReader, aReader)
+    initializeContent
+    renderAll
+
+  }
 
   //============================================================================================
   // JS CELL IMPLEMENTATION
@@ -255,12 +271,19 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
       setRectStyle
     }
 
-    def requestSelectedStyle : Unit = ()
-    def requestUnselectedStyle : Unit = ()
+    def requestSelectedStyle : Unit = {
+      isStyleSelected = true
+      setRectStyle
+    }
+
+    def requestUnselectedStyle : Unit = {
+      isStyleSelected = false
+      setRectStyle
+    }
 
     def onMouseOver : Unit = for { f <- complexCell.faces } { f.panelCell.requestHoveredStyle }
     def onMouseOut : Unit = for { f <- complexCell.faces } { f.panelCell.requestUnhoveredStyle }
-    def onMouseClick : Unit = ()
+    def onMouseClick(e : js.Any) : Unit = ()
     def onMouseDoubleClick : Unit = ()
 
     def drawLabel(p : Paper) : Element = {
@@ -276,7 +299,7 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
       // Setup Mouse Event Callbacks
       rect.mouseover((() => { onMouseOver }) : js.Function)
       rect.mouseout((() => { onMouseOut }) : js.Function)
-      rect.click((() => { onMouseClick }) : js.Function)
+      rect.click(((e : js.Any) => { onMouseClick(e) }) : js.Function1[js.Any, Unit])
       rect.dblclick((() => { onMouseDoubleClick }) : js.Function)
 
       rectElement = Some(rect)

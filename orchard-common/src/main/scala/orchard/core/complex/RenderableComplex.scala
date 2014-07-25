@@ -10,6 +10,7 @@ package orchard.core.complex
 import scala.collection.mutable.ListBuffer
 
 import orchard.core.util._
+import ErrorM._
 
 trait RenderableComplex[A] extends GalleryComplex[A] { thisComplex =>
 
@@ -280,7 +281,7 @@ trait RenderableComplex[A] extends GalleryComplex[A] { thisComplex =>
                   // I think this works ... align if it is an outermost glob or if
                   // the unique branch begins with a node
                   if (mcell.isLoop) {
-                    if (! cell.isLoop || branches.head.rootElement.isDefined) {
+                    if (! cell.isLoop || branches.head.rootElement.isRight) {
                       val marker = branchMarkers.head
                       marker.owner.alignTo(mcell)
                       mcell.addHorizontalDependent(marker.owner)

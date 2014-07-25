@@ -2,6 +2,77 @@
  *  Orchard CSS
  */
 
+
+.module-entries {
+    list-style-type: none;
+}
+
+.module-entries .cursor {
+
+}
+
+/*
+ *  Bootstrap customizations
+ */
+
+.panel {
+  -webkit-box-shadow: 0 1px 5px #c3c3c3;
+  -moz-box-shadow: 0 1px 5px #c3c3c3;
+  box-shadow: 0 1px 5px #c3c3c3;
+}
+
+/* .panel:hover { */
+/*     box-shadow: 0 1px 5px #2f2f2f; */
+/* } */
+
+.panel-footer {
+    background-color: #fff;
+    border-top: 1px solid transparent;
+    padding: 15px;
+    min-height: 50px;
+}
+
+.panel-footer-tools {
+  position: absolute;
+  right: 10px;
+  bottom: 14px;
+  filter: alpha(opacity=0);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+  -moz-opacity: 0;
+  -khtml-opacity: 0;
+  opacity: 0;
+  -moz-transition: opacity 0.5s ease-in-out;
+  -o-transition: opacity 0.5s ease-in-out;
+  -webkit-transition: opacity 0.5s ease-in-out;
+  -ms-transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.panel:hover .panel-footer-tools {
+  filter: alpha(opacity=100);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+  -moz-opacity: 1;
+  -khtml-opacity: 1;
+  opacity: 1;
+}
+.panel-footer-tools .dropdown {
+  display: inline-block;
+}
+.panel-footer-tools .dropdown .dropdown-menu a > i {
+  margin-right: 10px;
+}
+.panel-footer-tools a {
+  color: #8b91a0 !important;
+  background: none;
+}
+.panel-footer-tools a:hover {
+  color: #595e6c !important;
+}
+
+/*
+ *  Gallery Css
+ */
+
 .orchard-gallery-assembly {
     position: relative;
     padding-left: 40px;
@@ -135,6 +206,7 @@
 
 .orchard-cell-empty { fill: #fff; }
 .orchard-cell-empty-hovered { fill: #f64; }
+.orchard-cell-empty-selected { fill: #c45; }
 
 .orchard-label {
     pointer-events: none;

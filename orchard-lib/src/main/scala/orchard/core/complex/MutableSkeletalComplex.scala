@@ -10,6 +10,8 @@ package orchard.core.complex
 import orchard.core.util._
 import orchard.core.cell._
 
+import ErrorM._
+
 trait MutableSkeletalComplex[A] extends MutableComplex[A] with SkeletalComplex[A] { 
   thisComplex =>
 

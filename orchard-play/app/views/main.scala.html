@@ -19,6 +19,7 @@
     <meta content="orchard" name="description" />
     <meta content="ericfinster" name="author" />
     <!-- end: META -->
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,500,600,700,200,100,800' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="@routes.Assets.at("plugins/bootstrap/css/bootstrap.min.css")">
     <link rel="stylesheet" href="@routes.Assets.at("plugins/font-awesome/css/font-awesome.min.css")">
     <link rel="stylesheet" href="@routes.Assets.at("plugins/perfect-scrollbar/src/perfect-scrollbar.css")">
@@ -35,6 +36,25 @@
   <!-- end: HEAD -->
 
   <body>
+    
+    <div id="newModuleModal" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="myModalLabel">New Module</h4>
+	  </div>
+	  <div class="modal-body">
+	    <input id="module-name" type="text" class="form-control">
+	  </div>
+	  <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Create</button>
+	  </div>
+	</div>
+      </div>
+    </div>
+
     <div class="main-wrapper">
       <!-- start: TOPBAR -->
       <header class="topbar navbar navbar-inverse navbar-fixed-top inner">
@@ -158,10 +178,18 @@
 	    <!-- end: BREADCRUMB -->
 	    <!-- start: PAGE CONTENT -->
 	    <div class="row">
-	      <div class="col-md-12">
+	      <div id="orchard-main" class="col-md-12">
+		@content
+	      </div>
+	    </div>
+	    <div class="row">
+	      <div id="orchard-control" class="col-md-12">
 		<div class="panel panel-white">
+		  <div class="panel-heading">
+		    <h4 class="panel-title">Controls</h4>
+		  </div>
 		  <div class="panel-body">
-		    @content
+		    <button id="newModuleButton" class="btn btn-default">New Module</button>
 		  </div>
 		</div>
 	      </div>
@@ -188,7 +216,7 @@
 
     </div>
 
-    <script src="@routes.Assets.at("plugins/jquery/jquery-2.1.1.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/jquery/jquery-2.1.1.js")"></script>
     <script src="@routes.Assets.at("plugins/bootstrap/js/bootstrap.min.js")"></script>
     <script src="@routes.Assets.at("plugins/perfect-scrollbar/src/jquery.mousewheel.js")"></script>
     <script src="@routes.Assets.at("plugins/perfect-scrollbar/src/perfect-scrollbar.js")"></script>

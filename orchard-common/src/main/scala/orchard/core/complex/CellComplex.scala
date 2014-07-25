@@ -11,6 +11,7 @@ import orchard.core.cell._
 import orchard.core.util._
 
 import Util._
+import ErrorM._
 
 trait CellComplex[A] { thisComplex =>
 
@@ -39,9 +40,9 @@ trait CellComplex[A] { thisComplex =>
     if (dimension > 0)
       baseCells(dimension - 1) foreachCell action
 
-  def seek(addr : CellAddress) : Option[CellType] = 
+  def seek(addr : CellAddress) : Error[CellType] = 
     addr match {
-      case Immediate => Some(topCell)
+      case Immediate => success(topCell)
       case Target(prefix) => 
         for { 
           pref <- seek(prefix) 

@@ -30,4 +30,6 @@ object JQueryCarousel {
 
 trait JCarousel extends js.Object {
 
+  def reload(conf : js.Object) : Unit = ???
+
 }

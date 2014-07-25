@@ -41,7 +41,7 @@ class PlayComplex[A](seed : NCell[A]) extends MutableSkeletalComplex[A] {
 
 object PlayComplex {
 
-  import PlayJson._
+  import PlayToOrchard._
 
   implicit def complexWrites[A](implicit aWrites : Writes[A]) : Writes[PlayComplex[A]] = 
     new Writes[PlayComplex[A]] {

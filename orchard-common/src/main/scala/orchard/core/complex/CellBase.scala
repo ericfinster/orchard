@@ -43,10 +43,7 @@ trait CellBase[C <: CellBase[C, E], E <: EdgeBase[C, E]] { thisCell : C =>
     canopy match {
       case None => false
       case Some(tree) => {
-        tree.rootElement match {
-          case None => false
-          case Some(_) => true
-        }
+        tree.rootElement.isRight
       }
     }
 

@@ -64,22 +64,22 @@ object JsonReadable {
     }
 
 
-  implicit def vectorIsReadable[A, P](implicit ev : JsonReadable[A, P]) : JsonReadable[Vector[A], P] = 
+  implicit def vectorIsReadable[A : ClassTag, P](implicit ev : JsonReadable[A, P]) : JsonReadable[Vector[A], P] = 
     new JsonReadable[Vector[A], P] {
       def read(x : P, reader : JsonReader[P]) : Vector[A] = {
-        val vectorLength = reader.readArrayLength(x)
-
-        val vectorElems = 
-          for {
-            i <- Range(0, vectorLength)
-          } yield {
-            ev.read(reader.readArrayElement(x, i), reader)
-          }
-
-        vectorElems.toVector
+        implicitly[JsonReadable[Array[A], P]].read(x, reader).toVector
       }
 
       override def toString = "vectorReader"
+    }
+
+  implicit def listIsReadable[A : ClassTag, P](implicit ev : JsonReadable[A, P]) : JsonReadable[List[A], P] = 
+    new JsonReadable[List[A], P] {
+      def read(x : P, reader : JsonReader[P]) : List[A] = {
+        implicitly[JsonReadable[Array[A], P]].read(x, reader).toList
+      }
+
+      override def toString = "listReader"
     }
 
 
@@ -168,7 +168,22 @@ object JsonWritable {
   implicit def arrayIsWritable[A : ClassTag, P](implicit ev : JsonWritable[A, P]) : JsonWritable[Array[A], P] = 
     new JsonWritable[Array[A], P] {
       def write(arr : Array[A], writer : JsonWriter[P]) : P = {
-        writer.writeArray(arr map (ev.write(_, writer)) : _*)
+        val elems = arr map (ev.write(_, writer))
+        writer.writeArray(elems : _*)
+      }
+    }
+
+  implicit def vectorIsWritable[A : ClassTag, P](implicit ev : JsonWritable[A, P]) : JsonWritable[Vector[A], P] = 
+    new JsonWritable[Vector[A], P] {
+      def write(lst : Vector[A], writer : JsonWriter[P]) : P = {
+        implicitly[JsonWritable[Array[A], P]].write(lst.toArray, writer)
+      }
+    }
+
+  implicit def listIsWritable[A : ClassTag, P](implicit ev : JsonWritable[A, P]) : JsonWritable[List[A], P] = 
+    new JsonWritable[List[A], P] {
+      def write(lst : List[A], writer : JsonWriter[P]) : P = {
+        implicitly[JsonWritable[Array[A], P]].write(lst.toArray, writer)
       }
     }
 

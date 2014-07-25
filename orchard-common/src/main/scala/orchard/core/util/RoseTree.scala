@@ -9,6 +9,8 @@ package orchard.core.util
 
 import scala.collection.mutable.ListBuffer
 
+import ErrorM._
+
 sealed trait RoseTree[+A, +B]
 case class Rose[B](value : B) extends RoseTree[Nothing, B] { override def toString = "(Leaf " ++ value.toString ++ ")" }
 case class Branch[A, B](value : A, branches : Vector[RoseTree[A, B]]) extends RoseTree[A, B]
@@ -67,10 +69,10 @@ object RoseTree {
         case _ => false
       }
 
-    def rootElement : Option[A] =
+    def rootElement : Error[A] =
       tree match {
-        case Rose(_) => None
-        case Branch(value, _) => Some(value)
+        case Rose(_) => fail("Root element called on a rose.")
+        case Branch(value, _) => success(value)
       }
   }
 
@@ -140,11 +142,11 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
           RoseZipper(Branch(value, left ++ List(focus) ++ right), cs).zip
       }
 
-  def zipOnce : Option[RoseZipper[A, B]] =
+  def zipOnce : Error[RoseZipper[A, B]] =
     context match {
       case RoseContext(value, left, right) :: cs => 
-        Some(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
-      case _ => None
+        success(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
+      case _ => fail("Cannot unzip empty context.")
     }
 
   def toAddrBuffer : ListBuffer[Int] = 
@@ -156,40 +158,40 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
 
   def toAddr : List[Int] = toAddrBuffer.toList
 
-  def leftSibling : Option[RoseZipper[A, B]] =
+  def leftSibling : Error[RoseZipper[A, B]] =
       context match {
         case RoseContext(value, left, right) :: cs => {
           for {
             leftSib <- left.lastOption
           } yield RoseZipper(leftSib, RoseContext(value, left.init, focus +: right) :: cs)
         }
-        case _ => None
+        case _ => fail("No left sibling")
       }
 
-  def rightSibling : Option[RoseZipper[A, B]] =
+  def rightSibling : Error[RoseZipper[A, B]] =
       context match {
         case RoseContext(value, left, right) :: cs => {
           for {
             rightSib <- right.headOption
           } yield RoseZipper(rightSib, RoseContext(value, left :+ focus, right.tail) :: cs)
         }
-        case _ => None
+        case _ => fail("No right sibling")
       }
 
-  def visitBranch(i : Int) : Option[RoseZipper[A, B]] =
+  def visitBranch(i : Int) : Error[RoseZipper[A, B]] =
       focus match {
-        case Rose(_) => None
+        case Rose(_) => fail("No branch here.")
         case Branch(value, branches) => {
           if (i > branches.length - 1) None else {
             val (left, rightPlus) = branches.splitAt(i)
-            Some(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
+            success(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
           }
         }
       }
 
-  def seek(addr : List[Int]) : Option[RoseZipper[A, B]] =
+  def seek(addr : List[Int]) : Error[RoseZipper[A, B]] =
       addr match {
-        case Nil => Some(this)
+        case Nil => success(this)
         case i :: is => 
           for {
             next <- visitBranch(i)
@@ -197,28 +199,28 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
           } yield res
       }
 
-  def find(branchProp : A => Boolean, roseProp : B => Boolean) : Option[RoseZipper[A, B]] = 
+  def find(branchProp : A => Boolean, roseProp : B => Boolean) : Error[RoseZipper[A, B]] = 
     focus match {
-      case Rose(value) => if (roseProp(value)) Some(this) else None
+      case Rose(value) => if (roseProp(value)) success(this) else fail("Find failed.")
       case Branch(value, branches) => {
-        if (branchProp(value)) Some(this) else {
+        if (branchProp(value)) success(this) else {
           // Ummm ... got a better way?
           var i : Int = 0
 
           while (i < branches.length) {
             val res = visitBranch(i).get.find(branchProp, roseProp)
-            if (res != None) return res
+            if (res.isSuccess) return res
             i += 1
           }
 
-          None
+          fail("Find failed.")
         }
       }
     }
 
-  def find(prop : A => Boolean) : Option[RoseZipper[A, B]] =
+  def find(prop : A => Boolean) : Error[RoseZipper[A, B]] =
     find(prop, (_ => false))
 
-  def lookup(v : A) : Option[RoseZipper[A, B]] =
+  def lookup(v : A) : Error[RoseZipper[A, B]] =
     find((a => v == a))
 }

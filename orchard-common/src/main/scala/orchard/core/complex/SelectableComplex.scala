@@ -11,6 +11,7 @@ import scala.collection.mutable.Set
 import scala.collection.mutable.HashSet
 
 import orchard.core.util._
+import ErrorM._
 
 trait SelectableComplex[A] extends CellComplex[A] {
 
@@ -18,13 +19,13 @@ trait SelectableComplex[A] extends CellComplex[A] {
   val selectedCells : Set[CellType] = new HashSet
 
   def deselectAll : Unit = {
-    // selectedCells foreach
-    // (cell => cell.owner.emitToFaces(RequestCellDeselected))
-    selectedCells.clear
+    for { c <- selectedCells } { deselect(c) }
     selectionBase = None
   }
 
-  def deselect(cell : CellType) : Unit = ???
+  def deselect(cell : CellType) : Unit = {
+    selectedCells remove cell
+  }
 
   def clearAndSelect(cell : CellType) : Unit = {
     deselectAll
@@ -43,6 +44,9 @@ trait SelectableComplex[A] extends CellComplex[A] {
     selectedCells.size == 1
 
   def trySelect(cell : CellType) : Boolean = {
+    // Is this okay?
+    if (isSelected(cell)) return true
+
     // This should be guaranteed by the cardinal structure
     val base = selectionBase.get
     val baseContainer = base.container.get
@@ -77,8 +81,27 @@ trait SelectableComplex[A] extends CellComplex[A] {
   }
 
   def select(cell : CellType) : Unit = {
-    // cell.owner.emitToFaces(RequestCellSelected)
     selectedCells add cell
   }
 
+  def descriptor : SelectionDescriptor = {
+    val base = selectionBase map (_.address)
+    val cells = selectedCells.toList map (_.address)
+    SelectionDescriptor(base, cells)
+  }
+
+  def selectFromDescriptor(desc : SelectionDescriptor) : Error[Unit] = {
+    deselectAll
+
+    desc.base match {
+      case None => success(())
+      case Some(bAddr) => 
+        for {
+          newBase <- seek(bAddr)
+          children <- sequence(desc.cells map (seek(_)))
+          _ = selectAsBase(newBase)
+          _ <- ensure(children forall (trySelect(_)), "A child failed to select")
+        } yield ()
+    }
+  }
 }

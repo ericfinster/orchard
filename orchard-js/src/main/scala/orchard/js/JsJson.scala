@@ -8,7 +8,6 @@
 package orchard.js
 
 import orchard.core.util._
-
 import scala.scalajs._
 
 object JsJsonWriter extends JsonWriter[js.Any] {
@@ -17,7 +16,19 @@ object JsJsonWriter extends JsonWriter[js.Any] {
   def writeBoolean(b : Boolean) : js.Any = b
   def writeDouble(x : Double) : js.Any = x
   def writeString(s : String) : js.Any = s
-  def writeArray(elems : js.Any*) : js.Any = js.Array(elems : _*)
+  def writeArray(elems : js.Any*) : js.Any = {
+    // I think there is a bug which makes the obvious thing not work ...
+    // js.Array(elems)
+    val arr = new js.Array[js.Any](elems.length)
+
+    for {
+      (e, i) <- elems.zipWithIndex
+    } {
+      arr(i) = e
+    }
+
+    arr
+  }
   def writeObject(fields : (String, js.Any)*) : js.Any = {
     val result = js.Dictionary.empty[js.Any]
     for ((prop, value) <- fields)

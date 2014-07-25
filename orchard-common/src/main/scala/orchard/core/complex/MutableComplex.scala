@@ -11,6 +11,7 @@ import orchard.core.cell._
 import orchard.core.util._
 
 import Util._
+import ErrorM._
 
 trait MutableComplex[A] extends CellComplex[A] { thisComplex =>
 

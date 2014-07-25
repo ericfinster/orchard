@@ -12,6 +12,7 @@ import org.scalajs.dom
 import dom.document
 import org.scalajs.jquery.jQuery
 
+import orchard.core.complex._
 import orchard.core.checker._
 
 class JsWorksheet(
@@ -20,7 +21,8 @@ class JsWorksheet(
   val galleryPanelWidth : Int,
   val galleryPanelHeight : Int,
   val displayPanels : Int
-) extends JsComplex[WorksheetMarker](json) {
+) extends JsComplex[WorksheetMarker](json) 
+    with SelectableComplex[WorksheetMarker] {
 
   type CellType = JsWorksheetCell
 
@@ -32,6 +34,23 @@ class JsWorksheet(
   def newPanel(i : Int) : PanelType = new JsPanel(i)
   def newCell(item : WorksheetMarker) : JsWorksheetCell = 
     new JsWorksheetCell(item)
+
+  override def select(cell : JsWorksheetCell) = {
+    super.select(cell)
+    for { f <- cell.faces } { f.panelCell.requestSelectedStyle }
+  }
+
+  override def deselect(cell : JsWorksheetCell) = {
+    super.deselect(cell)
+    for { f <- cell.faces } { f.panelCell.requestUnselectedStyle }
+  }
+
+  override def refreshFromJson(newJson : js.Any) : Unit = {
+    deselectAll
+    super.refreshFromJson(newJson)
+    // clear all the selections.  Will this help?
+  }
+
 
   class JsWorksheetCell(var item : WorksheetMarker) extends JsCell { thisCell =>
 
@@ -71,10 +90,60 @@ class JsWorksheet(
       }
     }
 
-    override def onMouseClick : Unit = {
-      
-      for { f <- complexCell.faces } { f.panelCell.requestSelectedStyle }
+    override def onMouseClick(e : js.Any) : Unit = {
+
+      import JsJsonReader._
+
+      val isControl = readBoolean(readObjectField(e, "ctrlKey"))
+
+      if (isControl) {
+        selectionBase match {
+          case None => if (complexCell.item.isNeutral) selectAsBase(complexCell)
+          case Some(base) => {
+            if (complexCell != base) {
+              if (! complexCell.item.isNeutral) {
+                deselectAll
+              } else {
+                if (! trySelect(complexCell)) clearAndSelect(complexCell)
+              }
+            }
+          }
+        }
+      } else {
+        if (complexCell.item.isNeutral) {
+          clearAndSelect(complexCell)
+        } else {
+          deselectAll
+        }
+      }
     }
+
+    // case CellClicked(c) => {
+    //   val cell = c.owner.asInstanceOf[cmplx.CellType]
+
+    //   if (cell.isNeutral) {
+    //     cmplx.clearAndSelect(cell)
+    //   } else {
+    //     cmplx.deselectAll
+    //   }
+    // }
+
+    // case CellCtrlClicked(c) => {
+    //   val cell = c.owner.asInstanceOf[cmplx.CellType]
+
+    //   cmplx.selectionBase match {
+    //     case None => if (cell.isNeutral) cmplx.selectAsBase(cell)
+    //     case Some(base) => {
+    //       if (cell != base) {
+    //         if (cell.isPolarized) {
+    //           cmplx.deselectAll
+    //         } else {
+    //           if (! cmplx.trySelect(cell)) cmplx.clearAndSelect(cell)
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
   }
 
