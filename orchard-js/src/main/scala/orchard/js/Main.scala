@@ -32,11 +32,34 @@ object Main extends js.JSApp {
   // UI INITIALIZATION
   //
 
-  val mainDiv : JQuery = jQuery("#orchard-main")
+  import JQueryImplicits._
 
-  jQuery("#newModuleButton").click((() => { 
-    NewModuleModal.show
-  }) : js.Function)
+  val jqOrchardMain : JQuery = jQuery("#orchard-main")
+  val jqOrchardControl : JQuery = jQuery(".orchard-control-content")
+  val jqOrchardSplitSlider : JQuery = jQuery(".orchard-split-pane-slider")
+
+  jqOrchardSplitSlider.mousedown((e : JQueryEventObject) => {
+
+    val mouseOriginY : Double = e.pageY
+    val controlHeight : Double = jqOrchardControl.height()
+
+    val mousemoveHandler : js.Function1[JQueryEventObject, js.Any] = 
+      ((me : JQueryEventObject) => {
+        me.preventDefault
+        jqOrchardControl.css("height", controlHeight + (mouseOriginY - me.pageY))
+      })
+
+    jQuery(document).on("mousemove", mousemoveHandler)
+    jQuery(document).one("mouseup", (e : JQueryEventObject) => {
+      jQuery(document).off("mousemove", mousemoveHandler)
+    })
+
+  })
+
+  val windowWidth = jQuery(dom.window).width()
+  val windowHeight = jQuery(dom.window).height()
+
+  jQuery(".main-content").css("min-height", windowHeight)
 
   //============================================================================================
   // DIALOG DEFINITIONS
@@ -89,84 +112,14 @@ object Main extends js.JSApp {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    // jQuery(".panel").each(((i : js.Any, el : dom.Element) => {
-
-      // jQuery(el).mouseover(((e: JQueryEventObject) => { 
-      //   jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
-      // }) : js.Function1[JQueryEventObject, js.Any])
-
-      // jQuery(el).mouseout(((e: JQueryEventObject) => { 
-      //   jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
-      // }) : js.Function1[JQueryEventObject, js.Any])
-
-      // jQuery(el).hover(
-      //   ((e: JQueryEventObject) => {
-      //     println("hoverIn")
-      //     jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
-      //   }) : js.Function1[JQueryEventObject, js.Any],
-      //   ((e: JQueryEventObject) => {
-      //     println("hoverOut")
-      //     jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
-      //   }) : js.Function1[JQueryEventObject, js.Any]
-      // )
-
-    // }) : js.Function2[js.Any, dom.Element, js.Any])
-
-
     requestModule("Prelude") onSuccess { 
       case xmlReq => {
         val desc = new JsModuleDescription("Prelude", xmlReq.responseText, Vector.empty)
-        mainDiv.append(desc.panelDiv)
+        jqOrchardMain.append(desc.panelDiv)
         val rm = Module(desc, Vector.empty)
         rootModule = Some(rm)
       }
     }
-
-  }
-
-  def refreshModuleAddresses : Unit = 
-    for {
-      root <- rootModule
-    } {
-      ModuleZipper(root, Nil) foreachWithAddress {
-        case (addr, desc) => {
-          println("Setting address of " ++ desc.name ++ " to " ++ addr.toString)
-          desc.address = addr
-        }
-      }
-    }
-
-  def processModuleHtml(moduleId : String, html : String) : Unit = {
-
-    // Now, what's the idea here?
-
-    // Okay, we are going to set the various even handlers and whatnot.  But the point is that we
-    // are going to look at the current div pointed to by the module pointer and add the processed
-    // data to that div.
-
-    // val moduleDesc = new JsModuleDescription(moduleId, html)
-
-
-    // val parentDiv = 
-    //   modulePointer match {
-    //     case None => mainDiv
-    //     case Some(ModuleZipper(focus, _)) => focus.desc.asInstanceOf[JsModuleDescription].moduleDiv
-    //   }
-
-    // parentDiv.append(html)
-
-    // Now we need to actually create the module. But we need the name ...
-
-    // val module = Module(new JsModuleDescription(moduleId, parentDiv.find(".panel-body")), Vector.empty)
-
-    // Now what we want to do is set the module pointer to point to the new module.  I guess
-    // eventuall this should be done with select somehow, but for now ...
-
-    // modulePointer = 
-    //   modulePointer match {
-    //     case None => Some(ModuleZipper(module, Nil))
-    //     case Some(ptr) => Some(ptr.appendEntry(module).get)
-    //   }
 
   }
 
@@ -182,10 +135,33 @@ object Main extends js.JSApp {
     )
   }
 
+
   //============================================================================================
   // OLD TESTS AND EXAMPLES
   //
 
+  // jQuery(".panel").each(((i : js.Any, el : dom.Element) => {
+
+  // jQuery(el).mouseover(((e: JQueryEventObject) => {
+  //   jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
+  // }) : js.Function1[JQueryEventObject, js.Any])
+
+  // jQuery(el).mouseout(((e: JQueryEventObject) => {
+  //   jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
+  // }) : js.Function1[JQueryEventObject, js.Any])
+
+  // jQuery(el).hover(
+  //   ((e: JQueryEventObject) => {
+  //     println("hoverIn")
+  //     jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
+  //   }) : js.Function1[JQueryEventObject, js.Any],
+  //   ((e: JQueryEventObject) => {
+  //     println("hoverOut")
+  //     jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
+  //   }) : js.Function1[JQueryEventObject, js.Any]
+  // )
+
+  // }) : js.Function2[js.Any, dom.Element, js.Any])
 
   var currentComplex : Option[JsWorksheet] = None
 
@@ -234,5 +210,13 @@ object Main extends js.JSApp {
     currentComplex = Some(complex)
 
   }
+
+}
+
+
+object JQueryImplicits {
+
+  implicit def jqEventHandlerAction(handler : JQueryEventObject => Unit) : js.Function1[JQueryEventObject, js.Any] =
+    ((e : JQueryEventObject) => { handler(e) ; (true : js.Any) }) : js.Function1[JQueryEventObject, js.Any]
 
 }

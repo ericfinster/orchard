@@ -11,6 +11,66 @@
 
 }
 
+.orchard-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #697380;
+    margin-left: 260px;
+}
+
+.orchard-control-container {
+    position: relative;
+    margin-left: 0px;
+    margin-right: 0px;
+    width: 100%;
+}
+
+.orchard-control-panel-row {
+    padding-left: 10px;
+    padding-top: 25px;
+}
+
+.orchard-control-content {
+    /* height: 160px; */
+    background-color: #dddddd;
+    position: relative;
+}
+
+.orchard-control-panel-body {
+    height: 150px;
+}
+
+.orchard-control-panel {
+}
+
+.orchard-split-pane-slider {
+    height: 6px;
+    background-color: #c3c3c3;
+}
+
+.orchard-split-pane-slider:hover {
+    background-color: #b3b3b3;
+    cursor: ns-resize;
+}
+
+.orchard-footer-inner {
+  padding: 0 20px;
+  line-height: 50px;
+}
+
+li.cursor {
+    margin-bottom: 20px;
+    position: relative;
+    min-height: 13px;
+}
+
+li.cursor i {
+    position: absolute;
+    left: -35px;
+}
+
 /*
  *  Bootstrap customizations
  */

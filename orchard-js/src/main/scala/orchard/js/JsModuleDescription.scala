@@ -15,8 +15,6 @@ import orchard.core.checker._
 
 class JsModuleDescription(val name : String, val panelHtml : String, addr : Vector[Int]) extends ModuleDescription {
 
-  println("Creating a descriptor for " ++ name)
-
   var address : Vector[Int] = addr
 
   val panelDiv : JQuery = jQuery(panelHtml)
@@ -53,14 +51,9 @@ class JsModuleDescription(val name : String, val panelHtml : String, addr : Vect
   }
 
   def refreshCursorIndicies : Unit = {
-    println("Refreshing cursor entries for " ++ name)
-
     entriesList.find("> .cursor").each(((i : js.Any, el : dom.Element) => {
 
       val index : Int = i.asInstanceOf[js.Number].toInt
-
-      // Now, let's see we want to
-      println("Found a cursor. Setting index to " ++ index.toString)
 
       jQuery(el).attr("data-index", index.toString)
 
