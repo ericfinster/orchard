@@ -34,19 +34,21 @@ object Main extends js.JSApp {
 
   import JQueryImplicits._
 
-  val jqOrchardMain : JQuery = jQuery("#orchard-main")
-  val jqOrchardControl : JQuery = jQuery(".orchard-control-content")
-  val jqOrchardSplitSlider : JQuery = jQuery(".orchard-split-pane-slider")
+  val jqHtml : JQuery = jQuery("html")
+  val jqMain : JQuery = jQuery(".main")
+  val jqControlPanel : JQuery = jQuery(".control-panel")
+  val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
+  val jqFooter : JQuery = jQuery(".footer")
 
-  jqOrchardSplitSlider.mousedown((e : JQueryEventObject) => {
+  jqControlPaneSlider.mousedown((e : JQueryEventObject) => {
 
     val mouseOriginY : Double = e.pageY
-    val controlHeight : Double = jqOrchardControl.height()
+    val footerHeight : Double = jqFooter.height()
 
     val mousemoveHandler : js.Function1[JQueryEventObject, js.Any] = 
       ((me : JQueryEventObject) => {
         me.preventDefault
-        jqOrchardControl.css("height", controlHeight + (mouseOriginY - me.pageY))
+        jqFooter.css("height", footerHeight + (mouseOriginY - me.pageY))
       })
 
     jQuery(document).on("mousemove", mousemoveHandler)
@@ -56,16 +58,20 @@ object Main extends js.JSApp {
 
   })
 
-  val windowWidth = jQuery(dom.window).width()
-  val windowHeight = jQuery(dom.window).height()
+  // layoutEditor
 
-  jQuery(".main-content").css("min-height", windowHeight)
+  // def layoutEditor : Unit = {
+  //   val windowWidth = jQuery(dom.window).width()
+  //   val windowHeight = jQuery(dom.window).height()
+
+  //   jqHtml.css("height", windowHeight + 200)
+  // }
 
   //============================================================================================
   // DIALOG DEFINITIONS
   //
 
-  object NewModuleModal extends BootstrapModal("newModuleModal") {
+  object NewModuleModal extends BootstrapModal("orchard-new-module-modal") {
 
     var targetAddress : Vector[Int] = Vector.empty
 
@@ -115,7 +121,7 @@ object Main extends js.JSApp {
     requestModule("Prelude") onSuccess { 
       case xmlReq => {
         val desc = new JsModuleDescription("Prelude", xmlReq.responseText, Vector.empty)
-        jqOrchardMain.append(desc.panelDiv)
+        jqMain.append(desc.panelDiv)
         val rm = Module(desc, Vector.empty)
         rootModule = Some(rm)
       }
