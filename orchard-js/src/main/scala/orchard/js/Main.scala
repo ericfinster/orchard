@@ -34,37 +34,39 @@ object Main extends js.JSApp {
 
   import JQueryImplicits._
 
-  val jqHtml : JQuery = jQuery("html")
   val jqMain : JQuery = jQuery(".main")
-  val jqControlPanel : JQuery = jQuery(".control-panel")
-  val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
-  val jqFooter : JQuery = jQuery(".footer")
+  val jqControlPanelNav : JQuery = jQuery(".control-panel-nav")
 
-  jqControlPaneSlider.mousedown((e : JQueryEventObject) => {
+  // val jqControlPanel : JQuery = jQuery(".control-panel")
+  // val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
 
-    val mouseOriginY : Double = e.pageY
-    val footerHeight : Double = jqFooter.height()
+  // jqControlPaneSlider.mousedown((e : JQueryEventObject) => {
 
-    val mousemoveHandler : js.Function1[JQueryEventObject, js.Any] = 
-      ((me : JQueryEventObject) => {
-        me.preventDefault
-        jqFooter.css("height", footerHeight + (mouseOriginY - me.pageY))
-      })
+  //   val mouseOriginY : Double = e.pageY
+  //   val footerHeight : Double = jqFooter.height()
 
-    jQuery(document).on("mousemove", mousemoveHandler)
-    jQuery(document).one("mouseup", (e : JQueryEventObject) => {
-      jQuery(document).off("mousemove", mousemoveHandler)
-    })
+  //   val mousemoveHandler : js.Function1[JQueryEventObject, js.Any] = 
+  //     ((me : JQueryEventObject) => {
+  //       me.preventDefault
+  //       jqFooter.css("height", footerHeight + (mouseOriginY - me.pageY))
+  //     })
 
-  })
+  //   jQuery(document).on("mousemove", mousemoveHandler)
+  //   jQuery(document).one("mouseup", (e : JQueryEventObject) => {
+  //     jQuery(document).off("mousemove", mousemoveHandler)
+  //   })
+
+  // })
 
   // layoutEditor
 
   // def layoutEditor : Unit = {
-  //   val windowWidth = jQuery(dom.window).width()
   //   val windowHeight = jQuery(dom.window).height()
 
-  //   jqHtml.css("height", windowHeight + 200)
+  //   val controlPanelOuterHeight = jQuery(".control-panel-nav").outerHeight()
+  //   val headerOuterHeight = jQuery(".header-nav").outerHeight()
+
+  //   jqMain.css("height", windowHeight - headerOuterHeight)
   // }
 
   //============================================================================================
