@@ -24,9 +24,11 @@ import orchard.core.util._
 import orchard.core.complex._
 import orchard.core.checker._
 
+import orchard.js.plugins._
+
 import ErrorM._
 
-object Main extends js.JSApp {
+object Main extends js.JSApp with JsModuleSystem {
 
   //============================================================================================
   // UI INITIALIZATION
@@ -106,7 +108,7 @@ object Main extends js.JSApp {
 
       requestModule(moduleId) onSuccess {
         case xmlReq => {
-          val desc = new JsModuleDescription(moduleId, xmlReq.responseText, Vector.empty)
+          val node = new JsModuleNode(moduleId, xmlReq.responseText)
 
           // Now what? We have to append this guy to the correct spot in the module which
           // we are pointing at.
@@ -114,7 +116,7 @@ object Main extends js.JSApp {
           for {
             root <- rootModule
             insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
-            ptr <- insertionPtr.insertAt(Module(desc, Vector.empty), activeCursorIndex)
+            ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorIndex)
           } {
             rootModule = Some(ptr.zip.asInstanceOf[Module])
             setCursorPosition(activeModuleAddress, activeCursorIndex + 1)
@@ -145,7 +147,7 @@ object Main extends js.JSApp {
     for {
       module <- seekModule(addr)
     } yield {
-      jQuery(module.desc.asInstanceOf[JsModuleDescription].cursorsJQ.get(index))
+      jQuery(module.node.cursorsJQ.get(index))
     }
 
   def activeModule : Error[Module] = 
@@ -190,14 +192,14 @@ object Main extends js.JSApp {
 
     requestModule("Prelude") onSuccess { 
       case xmlReq => {
-        val desc = new JsModuleDescription("Prelude", xmlReq.responseText, Vector.empty)
+        val node = new JsModuleNode("Prelude", xmlReq.responseText)
 
-        desc.cursorsJQ.each((i : js.Any, el : dom.Element) => {
+        node.cursorsJQ.each((i : js.Any, el : dom.Element) => {
           jQuery(el).find(".cursor-bar").addClass("active")
         })
 
-        jqMain.append(desc.panelDiv)
-        val rm = Module(desc, Vector.empty)
+        jqMain.append(node.panelJQ)
+        val rm = Module(node, Vector.empty)
         rootModule = Some(rm)
       }
     }

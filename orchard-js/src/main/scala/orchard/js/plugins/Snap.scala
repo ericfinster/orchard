@@ -5,7 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.js
+package orchard.js.plugins
 
 import scala.scalajs._
 

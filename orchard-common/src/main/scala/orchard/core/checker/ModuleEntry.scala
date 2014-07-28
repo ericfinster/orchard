@@ -9,11 +9,6 @@ package orchard.core.checker
 
 import orchard.core.util.ErrorM._
 
-// Here's what you could do:  the descriptions could have like 
-// insertion events, which could be called from the zipper routines
-// when insertions and removals take place.  But maybe this is a 
-// bit complicated.  Anyway, something to think about ...
-
 trait Description { def name : String ; var address : Vector[Int] }
 trait ModuleDescription extends Description { def insertEntryAt(e : ModuleEntry, i : Int) }
 trait ParameterDescription extends Description

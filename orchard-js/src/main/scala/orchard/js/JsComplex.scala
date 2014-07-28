@@ -10,15 +10,17 @@ package orchard.js
 import scala.language.existentials
 import scala.collection.mutable.ListBuffer
 
-import orchard.core.cell._
-import orchard.core.util._
-import orchard.core.complex._
-
 import scala.scalajs._
 import org.scalajs.dom
 import dom.document
 
 import org.scalajs.jquery.jQuery
+
+import orchard.core.cell._
+import orchard.core.util._
+import orchard.core.complex._
+
+import orchard.js.plugins._
 
 abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js.Any])
     extends RenderableComplex[A] { thisComplex =>

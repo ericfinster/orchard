@@ -15,6 +15,8 @@ import org.scalajs.jquery.jQuery
 import orchard.core.complex._
 import orchard.core.checker._
 
+import orchard.js.plugins._
+
 class JsWorksheet(
   val container : dom.Element,
   json : js.Any,
