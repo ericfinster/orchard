@@ -58,16 +58,10 @@ object Main extends js.JSApp {
 
   // })
 
-  // layoutEditor
-
-  // def layoutEditor : Unit = {
-  //   val windowHeight = jQuery(dom.window).height()
-
-  //   val controlPanelOuterHeight = jQuery(".control-panel-nav").outerHeight()
-  //   val headerOuterHeight = jQuery(".header-nav").outerHeight()
-
-  //   jqMain.css("height", windowHeight - headerOuterHeight)
-  // }
+  jQuery("#new-module-btn").click(() => {
+    println("New module button clicked ...") 
+    NewModuleModal.show
+  })
 
   //============================================================================================
   // DIALOG DEFINITIONS
@@ -75,10 +69,9 @@ object Main extends js.JSApp {
 
   object NewModuleModal extends BootstrapModal("orchard-new-module-modal") {
 
-    var targetAddress : Vector[Int] = Vector.empty
-
     override def onShow = { 
-      println("Running new module with target " ++ targetAddress.toString)
+      println("Active module address: " ++ activeModuleAddress.toString)
+      println("Active cursor index: " ++ activeCursorIndex.toString)
     }
 
     override def onHide = {
@@ -94,11 +87,11 @@ object Main extends js.JSApp {
 
           for {
             root <- rootModule
-            insertionPtr <- ModuleZipper(root, Nil).seek(targetAddress.init)
-            ptr <- insertionPtr.insertAt(Module(desc, Vector.empty), targetAddress.last)
+            insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
+            ptr <- insertionPtr.insertAt(Module(desc, Vector.empty), activeCursorIndex)
           } {
-            println("Completed insertion")
             rootModule = Some(ptr.zip.asInstanceOf[Module])
+            setCursorPosition(activeModuleAddress, activeCursorIndex + 1)
           }
         }
       }
@@ -110,8 +103,41 @@ object Main extends js.JSApp {
   // EDITOR VARIABLES
   //
 
-  var rootModule : Option[Module] = None
-  var modulePointer : Option[ModuleZipper] = None
+  var rootModule : Error[Module] = fail("No active module.")
+
+  var activeModuleAddress : Vector[Int] = Vector.empty
+  var activeCursorIndex : Int = 0
+
+  def seekModule(addr : Vector[Int]) : Error[Module] = 
+    for {
+      root <- rootModule
+      modulePtr <- ModuleZipper(root, Nil).seek(addr)
+      module <- modulePtr.focusedModule
+    } yield module
+
+  def cursorJQ(addr : Vector[Int], index : Int) : Error[JQuery] = 
+    for {
+      module <- seekModule(addr)
+    } yield {
+      jQuery(module.desc.asInstanceOf[JsModuleDescription].cursorsJQ.get(index))
+    }
+
+  def activeModule : Error[Module] = 
+    seekModule(activeModuleAddress)
+
+  def activeCursorJQ : Error[JQuery] = 
+    cursorJQ(activeModuleAddress, activeCursorIndex)
+
+  def setCursorPosition(moduleAddress : Vector[Int], cursorIndex : Int) : Unit = 
+    for {
+      acJQ <- activeCursorJQ
+      cJQ <- cursorJQ(moduleAddress, cursorIndex)
+    } {
+      acJQ.find(".cursor-bar").removeClass("active")
+      cJQ.find(".cursor-bar").addClass("active")
+      activeModuleAddress = moduleAddress
+      activeCursorIndex = cursorIndex
+    }
 
   //============================================================================================
   // EDITOR ROUTINES
@@ -123,12 +149,16 @@ object Main extends js.JSApp {
     requestModule("Prelude") onSuccess { 
       case xmlReq => {
         val desc = new JsModuleDescription("Prelude", xmlReq.responseText, Vector.empty)
+
+        desc.cursorsJQ.each((i : js.Any, el : dom.Element) => {
+          jQuery(el).find(".cursor-bar").addClass("active")
+        })
+
         jqMain.append(desc.panelDiv)
         val rm = Module(desc, Vector.empty)
         rootModule = Some(rm)
       }
     }
-
   }
 
   def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
@@ -142,7 +172,6 @@ object Main extends js.JSApp {
       false
     )
   }
-
 
   //============================================================================================
   // OLD TESTS AND EXAMPLES
@@ -226,5 +255,8 @@ object JQueryImplicits {
 
   implicit def jqEventHandlerAction(handler : JQueryEventObject => Unit) : js.Function1[JQueryEventObject, js.Any] =
     ((e : JQueryEventObject) => { handler(e) ; (true : js.Any) }) : js.Function1[JQueryEventObject, js.Any]
+
+  implicit def jqEachIterator(handler : (js.Any, dom.Element) => Unit) : js.Function2[js.Any, dom.Element, js.Any] = 
+    ((i : js.Any, el : dom.Element) => { handler(i, el) ; (true : js.Any) }) : js.Function2[js.Any, dom.Element, js.Any]
 
 }

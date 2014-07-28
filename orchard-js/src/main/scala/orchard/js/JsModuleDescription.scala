@@ -39,7 +39,7 @@ class JsModuleDescription(val name : String, val panelHtml : String, addr : Vect
     // Okay, we have the html.  We just need to select the right place in the
     // jQuery object and append the new module html, plus a new cursor object
 
-    val cursorJquery = jQuery("<li class=\"cursor\"><a href=\"#\"><i class=\"fa fa-chevron-circle-right\"></i></a></li>")
+    val cursorJquery = jQuery("<li class=\"cursor\"><a href=\"#\"><div class=\"cursor-bar\"></div></a></li>")
     entriesList.find("> li[data-index=" ++ index.toString ++ "]").after(cursorJquery).after(desc.panelDiv)
 
     // Okay, I think I see what we should do.  On each cursor we should set a data
@@ -50,16 +50,17 @@ class JsModuleDescription(val name : String, val panelHtml : String, addr : Vect
     refreshCursorIndicies
   }
 
+  def cursorsJQ : JQuery = entriesList.find("> .cursor")
+
   def refreshCursorIndicies : Unit = {
-    entriesList.find("> .cursor").each(((i : js.Any, el : dom.Element) => {
+    cursorsJQ.each(((i : js.Any, el : dom.Element) => {
 
       val index : Int = i.asInstanceOf[js.Number].toInt
 
       jQuery(el).attr("data-index", index.toString)
 
       jQuery(el).click((() => { 
-        Main.NewModuleModal.targetAddress = address :+ index
-        Main.NewModuleModal.show
+        Main.setCursorPosition(address, index)
       }) : js.Function)
 
     }) : js.Function2[js.Any, dom.Element, js.Any])

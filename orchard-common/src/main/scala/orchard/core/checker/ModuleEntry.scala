@@ -168,4 +168,9 @@ case class ModuleZipper(val focus : ModuleEntry, val context : List[ModuleContex
       case d : Definition => f(toAddress, d.desc)
     }
 
+  def focusedModule : Error[Module] =
+    focus match {
+      case m : Module => success(m)
+      case _ => fail("Focused entry is not a module.")
+    }
 }

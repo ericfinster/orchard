@@ -75,7 +75,7 @@ html, body {
 }
 
 .module-panel {
-    margin-bottom: 0;
+    /* margin-bottom: 0; */
 }
 
 .module-entries {
@@ -118,28 +118,32 @@ html, body {
  */
 
 .cursor {
-    color: black;
-    position: relative;
     min-height: 20px;
+    text-align: center;
 }
 
-.cursor i {
-    position: absolute;
-    left: -20px;
-    top: 3px;
+.cursor-bar {
+    background-color: #eee;
+    height: 8px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
     filter: alpha(opacity=0);
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
     -moz-opacity: 0;
     -khtml-opacity: 0;
     opacity: 0;
-    -moz-transition: opacity 0.5s ease-in-out;
-    -o-transition: opacity 0.5s ease-in-out;
-    -webkit-transition: opacity 0.5s ease-in-out;
-    -ms-transition: opacity 0.5s ease-in-out;
-    transition: opacity 0.5s ease-in-out;
+    -moz-transition: opacity 0.5s, width 0.5s ease-in-out;
+    -o-transition: opacity 0.5s, width 0.5s ease-in-out;
+    -webkit-transition: opacity 0.5s, width 0.5s ease-in-out;
+    -ms-transition: opacity 0.5s, width 0.5s ease-in-out;
+    transition: opacity 0.5s, width 0.5s ease-in-out;
+    -webkit-border-radius: 4px; 
+    -moz-border-radius: 4px; 
+    border-radius: 4px;
 }
 
-.cursor i:hover {
+.cursor-bar:hover {
     filter: alpha(opacity=100);
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
     -moz-opacity: 1;
@@ -147,6 +151,8 @@ html, body {
     opacity: 1;
 }
 
-.cursor .active {
-    color: red;
+.cursor-bar.active {
+    width: 5%;
+    background-color: red;
+    opacity: 1;
 }
