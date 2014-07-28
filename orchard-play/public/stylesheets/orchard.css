@@ -20,7 +20,7 @@ html, body {
     top: 51px;
     bottom: 0;
     left: 0;
-    z-index: 1040;
+    z-index: 1050;
     display: block;
     padding: 20px;
     overflow-x: hidden;
@@ -55,7 +55,7 @@ html, body {
 .main-content {
     position: fixed;
     top: 50px;
-    bottom: 228px;
+    bottom: 285px;
     left: 0px;
     right: 0px;
     overflow: auto;
@@ -88,19 +88,36 @@ html, body {
  *  Footer and Control Panel
  */
 
+.control-panel-nav {
+    z-index: 0;
+}
+
 .control-panel-nav > .container {
   padding-right: 15px;
   padding-left: 15px;
 }
 
 .control-panel {
-    padding: 20px;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    min-height: 150px;
 }
 @media (min-width: 768px) {
     .control-panel {
 	padding-right: 40px;
 	padding-left: 40px;
     }
+}
+
+/* Restore drop-down status to menus in the footer */
+.navbar-fixed-bottom .dropdown .caret {
+  content: "";
+  border-top: 4px solid;
+  border-bottom: none;
+}
+.navbar-fixed-bottom .dropdown .dropdown-menu {
+    top: 100%;
+    bottom: auto;
 }
 
 /* .control-pane-slider { */
@@ -155,4 +172,156 @@ html, body {
     width: 5%;
     background-color: red;
     opacity: 1;
+}
+
+/*
+ *  Gallery Css
+ */
+
+.orchard-gallery-assembly {
+    position: relative;
+    padding-left: 40px;
+    padding-right: 40px;
+    margin-bottom: 20px;
+}
+
+.orchard-gallery-wrapper {
+    /* margin: 20px auto; */
+    position: relative;
+    border: 10px solid #fff;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 0 0 2px #999;
+    -moz-box-shadow: 0 0 2px #999;
+    box-shadow: 0 0 2px #999;
+    background: #dddddd;
+}
+
+.orchard-gallery {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.orchard-gallery ul {
+    width: 20000em;
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.orchard-gallery li {
+    float: left;
+    width: 200px;
+    padding: 10px;
+    /* border: 1px solid #fff; */
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background: #dddddd;
+}
+
+.orchard-gallery svg {
+    /* background-color: #fff; */
+}
+
+/** Carousel Controls **/
+
+.orchard-gallery-control-prev,
+.orchard-gallery-control-next {
+    position: absolute;
+    top: 50%;
+    margin-top: -15px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    /* background: #4E443C; */
+    color: #000;
+    /* text-decoration: none; */
+    /* text-shadow: 0 0 1px #000; */
+    /* font: 24px/27px Arial, sans-serif; */
+    /* -webkit-border-radius: 30px; */
+    /* -moz-border-radius: 30px; */
+    /* border-radius: 30px; */
+    /* -webkit-box-shadow: 0 0 4px #F0EFE7; */
+    /* -moz-box-shadow: 0 0 4px #F0EFE7; */
+    /* box-shadow: 0 0 4px #F0EFE7; */
+}
+
+.orchard-gallery-control-prev {
+    left: 5px;
+}
+
+.orchard-gallery-control-next {
+    right: 5px;
+}
+
+/** Carousel Pagination **/
+
+.orchard-gallery-pagination {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    -webkit-transform: translate(-50%, 0);
+    -ms-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+    margin: 0;
+}
+
+.orchard-gallery-pagination a {
+    text-decoration: none;
+    display: inline-block;
+
+    font-size: 11px;
+    height: 10px;
+    width: 10px;
+    line-height: 10px;
+
+    background: #fff;
+    color: #4E443C;
+    border-radius: 10px;
+    text-indent: -9999px;
+
+    margin-right: 7px;
+
+    -webkit-box-shadow: 0 0 2px #4E443C;
+    -moz-box-shadow: 0 0 2px #4E443C;
+    box-shadow: 0 0 2px #4E443C;
+}
+
+.orchard-gallery-pagination a.active {
+    background: #4E443C;
+    color: #fff;
+    opacity: 1;
+
+    -webkit-box-shadow: 0 0 2px #F0EFE7;
+    -moz-box-shadow: 0 0 2px #F0EFE7;
+    box-shadow: 0 0 2px #F0EFE7;
+}
+
+/*
+ *  Cell class definitions
+ */
+
+.orchard-cell { fill: #fff; }
+
+.orchard-cell-polarized { fill: #dddddd; }
+
+.orchard-cell-empty { fill: #fff; }
+.orchard-cell-empty-hovered { fill: #f64; }
+.orchard-cell-empty-selected { fill: #c45; }
+
+.orchard-label {
+    pointer-events: none;
+}
+
+.orchard-empty-label {
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.orchard-edge {
+    pointer-events: none;
 }

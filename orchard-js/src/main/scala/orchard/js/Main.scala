@@ -35,7 +35,6 @@ object Main extends js.JSApp {
   import JQueryImplicits._
 
   val jqMain : JQuery = jQuery(".main")
-  val jqControlPanelNav : JQuery = jQuery(".control-panel-nav")
 
   // val jqControlPanel : JQuery = jQuery(".control-panel")
   // val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
@@ -61,6 +60,33 @@ object Main extends js.JSApp {
   jQuery("#new-module-btn").click(() => {
     println("New module button clicked ...") 
     NewModuleModal.show
+  })
+
+  jQuery("#extrude-btn").click(() => {
+    for {
+      complex <- currentComplex
+    } {
+      val descWriter = implicitly[JsonWritable[SelectionDescriptor, js.Any]]
+      val desc = descWriter.write(complex.descriptor, JsJsonWriter).asInstanceOf[js.Object]
+
+      val f =
+        Ajax.post(
+          "http://localhost:9000/extrude",
+          js.JSON.stringify(desc),
+          0,
+          Seq(("Content-type" -> "application/json")),
+          false
+        )
+
+      f.onSuccess {
+        case xmlReq => {
+          println("Success!")
+          val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
+          complex.refreshFromJson(newJson("message"))
+        }
+      }
+      f.onFailure { case _ => println("Failure.") }
+    }
   })
 
   //============================================================================================
@@ -140,7 +166,23 @@ object Main extends js.JSApp {
     }
 
   //============================================================================================
-  // EDITOR ROUTINES
+  // AJAX REQUESTS
+  //
+
+  def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
+    val request = js.Dynamic.literal( "moduleId" -> moduleId )
+
+    Ajax.post(
+      "/newmodule",
+      js.JSON.stringify(request),
+      0,
+      Seq(("Content-type" -> "application/json")),
+      false
+    )
+  }
+
+  //============================================================================================
+  // MAIN ENTRY POINT
   //
 
   def main(): Unit = {
@@ -159,18 +201,11 @@ object Main extends js.JSApp {
         rootModule = Some(rm)
       }
     }
-  }
 
-  def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
-    val request = js.Dynamic.literal( "moduleId" -> moduleId )
+    jQuery.getJSON("/worksheet", success = ((data : js.Object) => {
+      renderComplex(data)
+    }) : js.Function1[js.Object, Unit])
 
-    Ajax.post(
-      "/newmodule",
-      js.JSON.stringify(request),
-      0,
-      Seq(("Content-type" -> "application/json")),
-      false
-    )
   }
 
   //============================================================================================
@@ -202,47 +237,15 @@ object Main extends js.JSApp {
 
   var currentComplex : Option[JsWorksheet] = None
 
-  def initializeExtrudeButton : Unit = {
-
-    jQuery("#extrude").click((() => {
-      for {
-        complex <- currentComplex
-      } {
-        val descWriter = implicitly[JsonWritable[SelectionDescriptor, js.Any]]
-        val desc = descWriter.write(complex.descriptor, JsJsonWriter).asInstanceOf[js.Object]
-
-        val f =
-          Ajax.post(
-            "http://localhost:9000/extrude",
-            js.JSON.stringify(desc),
-            0,
-            Seq(("Content-type" -> "application/json")),
-            false
-          )
-
-        f.onSuccess {
-          case xmlReq => {
-            println("Success!")
-            val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-            complex.refreshFromJson(newJson("message"))
-          }
-        }
-        f.onFailure { case _ => println("Failure.") }
-      }
-    }) : js.Function)
-
-  }
-
   def renderComplex(json : js.Any) : Unit = {
 
-    jQuery.getJSON("/worksheet", success = ((data : js.Object) => {
-      renderComplex(data)
-    }) : js.Function1[js.Object, Unit])
+    val controlPanelJQ = jQuery(".control-panel-gallery")
+    val controlPanelDiv = controlPanelJQ.get(0)
 
+    controlPanelJQ.empty()
 
-    val d = document.getElementById("workspace")
-    jQuery(d).empty()
-    val complex = new JsWorksheet(d, json, 200, 200, 3)
+    val complex = new JsWorksheet(controlPanelDiv.asInstanceOf[dom.Element], json, 100, 100, 3)
+
     complex.renderAll
     currentComplex = Some(complex)
 

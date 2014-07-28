@@ -72,10 +72,22 @@ class JsWorksheet(
     override def styleBase = "orchard-cell-" ++ complexCell.item.styleString
 
     override def drawLabel(p : Paper) = {
-      val label = p.text(0, 0, item.name)
-      label.attr(js.Dynamic.literal(("class" -> "orchard-label")))
-      labelElement = Some(label)
-      label
+      import js.Dynamic.{literal => lit}
+
+      item match {
+        case e : EmptyMarker => {
+          val markerRect = p.rect(0, 0, 10, 10)
+          markerRect.attr(lit("class" -> "orchard-empty-label"))
+          labelElement = Some(markerRect)
+          markerRect
+        }
+        case _ => {
+          val label = p.text(0, 0, item.name)
+          label.attr(lit(("class" -> "orchard-label")))
+          labelElement = Some(label)
+          label
+        }
+      }
     }
 
     override def onMouseOver : Unit = {

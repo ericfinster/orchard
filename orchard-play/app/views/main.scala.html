@@ -92,21 +92,47 @@
     <div class="navbar navbar-default navbar-fixed-bottom control-panel-nav" role="navigation">
       <div class="container-fluid">
     	<div class="row">
-
     	  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 control-panel">
     	    <div class="panel panel-default">
+
+	      <div class="panel-heading">
+		<div class="btn-group">
+
+		  <div class="btn-group">
+		    <button class="btn btn-default dropdown-toggle" type="button" id="insert-menu" data-toggle="dropdown">
+		      Insert
+		      <span class="caret"></span>
+		    </button>
+		    <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
+		      <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li>
+		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Parameter</a></li>
+		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Definition</a></li>
+		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Import</a></li>
+		    </ul>
+		  </div>
+
+		  <div class="btn-group">
+		    <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown">
+		      Shape
+		      <span class="caret"></span>
+		    </button>
+		    <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
+		      <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li>
+		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li>
+		    </ul>
+		  </div>
+
+		</div>
+	      </div>
+
     	      <div class="panel-body">
-    		<div class="control-panel">
-    		  <div class="btn-group-vertical">
-    		    <button type="button" id="new-module-btn" class="btn btn-default">New Module</button>
-    		    <button type="button" class="btn btn-default">New Parameter</button>
-    		    <button type="button" class="btn btn-default">New Definition</button>
+    		<div class="control-panel-gallery">
     		</div>
     	      </div>
+
     	    </div>
     	  </div>
-
-    	</div>
+	</div>
       </div>
     </div>
 
