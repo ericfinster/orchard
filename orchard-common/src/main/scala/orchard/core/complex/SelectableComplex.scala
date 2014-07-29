@@ -63,7 +63,7 @@ trait SelectableComplex[A] extends CellComplex[A] {
     var ptrOpt = zipper.lookup(cell).get.zipOnce
 
     // Step back through the zipper and look for the base selection
-    while (ptrOpt != None) {
+    while (ptrOpt.isSuccess) {
       val ptr = ptrOpt.get
       val testCell = ptr.focus.rootElement.get
 

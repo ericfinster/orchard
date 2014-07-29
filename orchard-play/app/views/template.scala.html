@@ -1,0 +1,125 @@
+@(title: String)
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Orchard Opetope Editor">
+    <meta name="author" content="Eric Finster">
+
+    <title>@title</title>
+
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/bootstrap/css/bootstrap.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/font-awesome/css/font-awesome.min.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/perfect-scrollbar/perfect-scrollbar.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/template.css")">
+
+    <link rel="shortcut icon" href="favicon.ico" />
+  </head>
+
+  <body>
+
+    <!--- Top Navigation Menu -->
+    <div class="navbar navbar-default navbar-fixed-top header-nav" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Orchard</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Profile</a></li>
+            <li><a href="#">Help</a></li>
+          </ul>
+          <form class="navbar-form navbar-right">
+            <input type="text" class="form-control" placeholder="Search...">
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="wrapper">
+      <div class="container-fluid main-container">
+	<div class="row main-row">
+
+	  <!-- Side Navigation Bar -->
+          <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+              <li class="active"><a href="#">Editor</a></li>
+              <li><a href="#">Tutorial</a></li>
+              <li><a href="#">Theory</a></li>
+              <li><a href="#">Blog</a></li>
+            </ul>
+          </div>
+
+	  <!-- Content Area -->
+          <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+
+	    <div class="workspace">
+              <div class="module-view">
+
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vel nulla ut purus pretium condimentum. Nunc fringilla eu neque ac dignissim. Sed eros nisl, venenatis vel egestas ut, pulvinar non leo. Praesent sit amet porta orci. Nulla consectetur neque ut velit sollicitudin, vitae commodo mi commodo. Nullam iaculis eros non ultrices porttitor. Nulla eu laoreet enim. Pellentesque commodo sapien id semper ultrices. Praesent purus mauris, fringilla at scelerisque id, condimentum vel nisl. Quisque ante lectus, tincidunt quis sollicitudin eget, condimentum ac eros. Pellentesque ut enim eu risus imperdiet condimentum. Donec placerat arcu sed massa congue tincidunt ut viverra arcu. Vivamus rhoncus pulvinar porta.
+
+		Sed a ligula id ante egestas auctor vitae non nisi. Quisque in elementum risus. Nam accumsan felis quis quam ultricies, ac blandit nulla iaculis. Nullam viverra ligula sit amet mollis feugiat. Phasellus luctus fermentum nibh eget aliquet. Donec condimentum mauris arcu, non rutrum erat ultrices vel. Donec euismod aliquet eros a cursus. Maecenas condimentum lacinia sapien, nec mollis leo consequat at. Pellentesque vitae rhoncus tellus.
+
+		Sed at erat vestibulum, fermentum odio quis, facilisis nulla. Curabitur feugiat leo eu nulla dapibus, ut faucibus neque pharetra. Pellentesque commodo, tortor at laoreet tempor, magna urna varius tellus, quis rhoncus elit ante vel est. In hac habitasse platea dictumst. Nunc vitae erat dui. Cras eget ante ac dui tempor gravida quis eu mi. Sed erat elit, laoreet quis turpis ac, accumsan elementum ante. Vestibulum sodales vestibulum ante. Aenean sed tincidunt velit, sit amet luctus leo.
+
+		Praesent accumsan sapien ligula, sit amet dignissim leo rutrum quis. Fusce lacinia ligula velit, id tincidunt odio cursus eu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eleifend metus eget ligula porttitor vehicula. Aliquam eu odio eros. Donec nec leo sodales, rhoncus elit iaculis, tempor metus. Sed interdum varius justo, sit amet laoreet sapien fermentum eget. Etiam commodo erat at erat tincidunt gravida. Sed et lectus vel mi condimentum tempus. Phasellus gravida vitae lectus ut malesuada. Etiam suscipit suscipit mauris, eu aliquam velit porta nec.
+
+		Etiam vulputate commodo tellus. In ullamcorper hendrerit arcu ornare gravida. Donec feugiat lorem urna. Nunc aliquet fermentum bibendum. Vestibulum vehicula, leo quis placerat bibendum, nisl sapien blandit velit, id viverra nisi metus eget felis. Duis id augue mollis, cursus lacus feugiat, imperdiet magna. Phasellus interdum non metus id commodo. Duis sit amet iaculis urna.
+
+	      </div>
+
+	      <div class="worksheet-view">
+
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vel nulla ut purus pretium condimentum. Nunc fringilla eu neque ac dignissim. Sed eros nisl, venenatis vel egestas ut, pulvinar non leo. Praesent sit amet porta orci. Nulla consectetur neque ut velit sollicitudin, vitae commodo mi commodo. Nullam iaculis eros non ultrices porttitor. Nulla eu laoreet enim. Pellentesque commodo sapien id semper ultrices. Praesent purus mauris, fringilla at scelerisque id, condimentum vel nisl. Quisque ante lectus, tincidunt quis sollicitudin eget, condimentum ac eros. Pellentesque ut enim eu risus imperdiet condimentum. Donec placerat arcu sed massa congue tincidunt ut viverra arcu. Vivamus rhoncus pulvinar porta.
+
+		Sed a ligula id ante egestas auctor vitae non nisi. Quisque in elementum risus. Nam accumsan felis quis quam ultricies, ac blandit nulla iaculis. Nullam viverra ligula sit amet mollis feugiat. Phasellus luctus fermentum nibh eget aliquet. Donec condimentum mauris arcu, non rutrum erat ultrices vel. Donec euismod aliquet eros a cursus. Maecenas condimentum lacinia sapien, nec mollis leo consequat at. Pellentesque vitae rhoncus tellus.
+
+		Sed at erat vestibulum, fermentum odio quis, facilisis nulla. Curabitur feugiat leo eu nulla dapibus, ut faucibus neque pharetra. Pellentesque commodo, tortor at laoreet tempor, magna urna varius tellus, quis rhoncus elit ante vel est. In hac habitasse platea dictumst. Nunc vitae erat dui. Cras eget ante ac dui tempor gravida quis eu mi. Sed erat elit, laoreet quis turpis ac, accumsan elementum ante. Vestibulum sodales vestibulum ante. Aenean sed tincidunt velit, sit amet luctus leo.
+
+		Praesent accumsan sapien ligula, sit amet dignissim leo rutrum quis. Fusce lacinia ligula velit, id tincidunt odio cursus eu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eleifend metus eget ligula porttitor vehicula. Aliquam eu odio eros. Donec nec leo sodales, rhoncus elit iaculis, tempor metus. Sed interdum varius justo, sit amet laoreet sapien fermentum eget. Etiam commodo erat at erat tincidunt gravida. Sed et lectus vel mi condimentum tempus. Phasellus gravida vitae lectus ut malesuada. Etiam suscipit suscipit mauris, eu aliquam velit porta nec.
+
+		Etiam vulputate commodo tellus. In ullamcorper hendrerit arcu ornare gravida. Donec feugiat lorem urna. Nunc aliquet fermentum bibendum. Vestibulum vehicula, leo quis placerat bibendum, nisl sapien blandit velit, id viverra nisi metus eget felis. Duis id augue mollis, cursus lacus feugiat, imperdiet magna. Phasellus interdum non metus id commodo. Duis sit amet iaculis urna.
+
+	      </div>
+	    </div>
+
+	  </div>
+
+	</div>
+      </div>
+    </div>
+
+    <div class="navbar navbar-default navbar-fixed-bottom control-panel-nav" role="navigation">
+      <div class="container-fluid">
+    	<div class="row">
+	  <div class="col-sm-12 col-md-12">
+	    <p>The footer.</p>
+	  </div>
+	</div>
+      </div>
+    </div>
+
+    <!-- Javascript Libraries -->
+    <script src="@routes.Assets.at("plugins/jquery/jquery-2.1.1.js")"></script>
+    <script src="@routes.Assets.at("plugins/bootstrap/js/bootstrap.min.js")"></script>
+    <script src="@routes.Assets.at("plugins/perfect-scrollbar/perfect-scrollbar.js")"></script>
+    <script src="@routes.Assets.at("javascripts/orchard-js-fastopt.js")" type="text/javascript"></script>
+
+    <script type="text/javascript">
+      Template().initialize();
+    </script>
+
+  </body>
+</html>

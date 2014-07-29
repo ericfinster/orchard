@@ -15,6 +15,115 @@ import models.PlayComplex
 
 object Application extends Controller {
 
+  val workspace = new Workspace
+
+  def newWorksheet = Action {
+    import models.OrchardToPlay._
+    val worksheet = workspace.newWorksheet
+    Ok(Json.obj(
+      "status" -> "OK",
+      "message" -> Json.toJson(worksheet.toMarkerComplex)
+    ))
+  }
+
+  def requestEnvironment = Action(BodyParsers.parse.json) { request =>
+    // workspace.getEnvironment
+    ???
+  }
+
+  def requestWorksheet = Action(BodyParsers.parse.json) { request =>
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+
+    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
+      BadRequest(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
+    } else {
+        import models.OrchardToPlay._
+        val worksheet = workspace.worksheetMap(worksheetId)
+        Ok(Json.obj(
+          "status" -> "OK", 
+          "message" -> Json.toJson(worksheet.toMarkerComplex)
+        ))
+    }
+  }
+
+  def extrudeWorksheet = Action(BodyParsers.parse.json) { request =>
+
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+
+    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
+      BadRequest(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
+    } else {
+      import models.OrchardToPlay._
+
+      val worksheet = workspace.worksheetMap(worksheetId)
+      val descriptorResult = (request.body \ "selectionDesciptor").validate[SelectionDescriptor]
+
+      descriptorResult.fold(
+        errors => {
+          BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toFlatJson(errors)))
+        },
+        descriptor => {
+          val extrusionResult =
+            for {
+              _ <- worksheet.selectFromDescriptor(descriptor)
+              _ <- worksheet.emptyExtrusion
+            } yield ()
+
+          extrusionResult match {
+            case Right(()) => {
+              Ok(Json.obj("status" -> "OK", "message" -> worksheetJson))
+            }
+            case Left(msg) => {
+              BadRequest(Json.obj("status" -> "KO", "message" -> msg))
+            }
+          }
+        }
+      )
+    }
+  }
+
+  def newModule = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
+
+    val moduleId = (request.body \ "moduleId").as[String]
+    val checkerAddress = (request.body \ "address").as[CheckerAddress]
+
+    Logger.debug("Requesting module: " ++ moduleId)
+
+    val insertionCommand = workspace.insertModule(moduleId, checkerAddress.cursorOffset)
+
+    workspace.runCommandAtAddress(insertionCommand, checkerAddress) match {
+      case Left(msg) => Ok(Json.obj("status" -> "KO", "message" -> msg))
+      case Right(moduleNode) => Ok(Json.obj("status" -> "OK").toString)
+    }
+  }
+
+  def newParameter = Action(BodyParsers.parse.json) { request => 
+
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+
+    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
+      Ok(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
+    } else {
+      import models.OrchardToPlay._
+
+      val worksheet = workspace.worksheetMap(worksheetId)
+
+      val cellAddress = (request.body \ "cellAddress").as[CellAddress]
+      val identString = (request.body \ "identString").as[String]
+
+      // Now what? We need to pass this off to the workspace which should check that the cell
+      // can be filled with a parameter and parse the identifier ...
+
+      Ok(Json.obj("status" -> "OK"))
+    }
+
+  }
+
+  //============================================================================================
+  // OLD EXPERIMENTS AND SNIPPETS
+  //
+
   val worksheet = Worksheet()
 
   def worksheetJson = {
@@ -31,15 +140,6 @@ object Application extends Controller {
     Logger.debug("Received a json post:")
     Logger.debug(Json.prettyPrint(request.body))
     Ok(Json.obj("status" -> "OK", "message" -> "all done"))
-  }
-
-  def newModule = Action(BodyParsers.parse.json) { request =>
-
-    // Grab the name from the json body
-    val moduleId = (request.body \ "moduleId").as[String]
-
-    Ok(views.html.module(moduleId))
-
   }
 
   def extrude = Action(BodyParsers.parse.json) { request =>
@@ -59,6 +159,7 @@ object Application extends Controller {
         val extrusionResult = 
           for {
             _ <- worksheet.selectFromDescriptor(descriptor)
+            _ <- ensure(worksheet.selectionIsExtrudable, "Selection is not extrudable.")
             _ <- worksheet.emptyExtrusion
           } yield ()
 
@@ -67,8 +168,7 @@ object Application extends Controller {
             Ok(Json.obj("status" -> "OK", "message" -> worksheetJson))
           }
           case Left(msg) => {
-            Logger.debug("There was an error in semantics.")
-            BadRequest(Json.obj("status" -> "KO", "message" -> msg))
+            Ok(Json.obj("status" -> "KO", "message" -> msg))
           }
         }
       }
@@ -81,6 +181,10 @@ object Application extends Controller {
 
   def index = Action {
     Ok(views.html.index("This is some content which goes in a panel."))
+  }
+
+  def template = Action {
+    Ok(views.html.template("Template"))
   }
 
   def getComplex = Action { 

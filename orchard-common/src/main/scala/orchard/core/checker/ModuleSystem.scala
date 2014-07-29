@@ -93,6 +93,14 @@ trait ModuleSystem {
           ModuleZipper(Module(node, left ++ Vector(focus) ++ right), cs).zip
       }
 
+    def collectLefts : Vector[ModuleEntry] = 
+      context match {
+        case Nil => Vector.empty
+        case ModuleContext(node, left, right) :: cs => {
+          ModuleZipper(Module(node, left ++ Vector(focus) ++ right), cs).collectLefts ++ left
+        }
+      }
+
     def toAddress : Vector[Int] =
       context match {
         case Nil => Vector.empty

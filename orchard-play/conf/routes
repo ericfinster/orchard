@@ -5,6 +5,8 @@
 # Home page
 GET     /                           controllers.Application.index
 
+GET     /template                   controllers.Application.template
+
 GET     /complex                    controllers.Application.getComplex
 
 GET     /worksheet                  controllers.Application.getWorksheet

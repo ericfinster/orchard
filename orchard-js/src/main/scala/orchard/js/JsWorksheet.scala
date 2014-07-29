@@ -18,22 +18,18 @@ import orchard.core.checker._
 import orchard.js.plugins._
 
 class JsWorksheet(
-  val container : dom.Element,
+  container : dom.Element,
   json : js.Any,
-  val galleryPanelWidth : Int,
-  val galleryPanelHeight : Int,
-  val displayPanels : Int
-) extends JsComplex[WorksheetMarker](json) 
+  panelSize : Int
+) extends JsScrollableComplex[WorksheetMarker](container, json, panelSize) 
     with SelectableComplex[WorksheetMarker] {
 
   type CellType = JsWorksheetCell
 
-  type PanelType = JsPanel
-
   type PanelCellType = JsWorksheetPanelCell
   type PanelEdgeType = JsWorksheetPanelEdge
 
-  def newPanel(i : Int) : PanelType = new JsPanel(i)
+  def newPanel(i : Int) : PanelType = new JsScrollablePanel(i)
   def newCell(item : WorksheetMarker) : JsWorksheetCell = 
     new JsWorksheetCell(item)
 

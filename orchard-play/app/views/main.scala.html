@@ -13,7 +13,8 @@
 
     <link rel="stylesheet" href="@routes.Assets.at("plugins/bootstrap/css/bootstrap.min.css")">
     <link rel="stylesheet" href="@routes.Assets.at("plugins/font-awesome/css/font-awesome.min.css")">
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/orchard.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("plugins/toastr/toastr.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/orchard.css")">
 
     <link rel="shortcut icon" href="favicon.ico" />
   </head>
@@ -82,7 +83,68 @@
 
 	  <!-- Content Area -->
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h1 class="page-header">Editor</h1>
+
+	    <div class="workspace-view">
+	      <div class="module-view">
+	      </div>
+
+	      <div class="worksheet-view">
+
+		<!-- <div class="col-sm-3 col-md-2 environment-panel"> -->
+    		<!--   <div class="panel panel-default"> -->
+		<!--     <div class="panel-heading"> -->
+	    	<!--       <h3 class="panel-title">Environment</h3> -->
+		<!--     </div> -->
+		<!--     <div class="panel-body"> -->
+	    	<!--       <p>This is the environment view.</p> -->
+		<!--     </div> -->
+		<!--   </div> -->
+		<!-- </div> -->
+		
+
+    		<!-- <div class="col-sm-9 col-md-10 control-panel"> -->
+    		  <div class="panel panel-default">
+		    
+		    <div class="panel-heading">
+		      <div class="btn-group">
+			
+			<div class="btn-group">
+			  <button class="btn btn-default dropdown-toggle" type="button" id="insert-menu" data-toggle="dropdown">
+			    Insert
+			    <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
+			    <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li>
+			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Parameter</a></li>
+			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Definition</a></li>
+			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Import</a></li>
+			  </ul>
+			</div>
+
+			<div class="btn-group">
+			  <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown">
+			    Shape
+			    <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
+			    <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li>
+			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li>
+			  </ul>
+			</div>
+
+		      </div>
+		    </div>
+
+    		    <div class="panel-body">
+    		      <div class="control-panel-gallery">
+    		      </div>
+    		    </div>
+
+    		  </div>
+    		<!-- </div> -->
+
+	      </div>
+	    </div>
 	  </div>
 
 	</div>
@@ -92,46 +154,7 @@
     <div class="navbar navbar-default navbar-fixed-bottom control-panel-nav" role="navigation">
       <div class="container-fluid">
     	<div class="row">
-    	  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 control-panel">
-    	    <div class="panel panel-default">
 
-	      <div class="panel-heading">
-		<div class="btn-group">
-
-		  <div class="btn-group">
-		    <button class="btn btn-default dropdown-toggle" type="button" id="insert-menu" data-toggle="dropdown">
-		      Insert
-		      <span class="caret"></span>
-		    </button>
-		    <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
-		      <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li>
-		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Parameter</a></li>
-		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Definition</a></li>
-		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Import</a></li>
-		    </ul>
-		  </div>
-
-		  <div class="btn-group">
-		    <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown">
-		      Shape
-		      <span class="caret"></span>
-		    </button>
-		    <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
-		      <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li>
-		      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li>
-		    </ul>
-		  </div>
-
-		</div>
-	      </div>
-
-    	      <div class="panel-body">
-    		<div class="control-panel-gallery">
-    		</div>
-    	      </div>
-
-    	    </div>
-    	  </div>
 	</div>
       </div>
     </div>
@@ -141,6 +164,7 @@
     <script src="@routes.Assets.at("plugins/bootstrap/js/bootstrap.min.js")"></script>
     <script src="@routes.Assets.at("plugins/jcarousel/jquery.jcarousel.min.js")"></script>
     <script src="@routes.Assets.at("plugins/snap/snap.svg.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("plugins/toastr/toastr.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("javascripts/orchard-js-fastopt.js")" type="text/javascript"></script>
     <!-- for production (play dist), use the optimized version instead -->
     <!-- <script src="@routes.Assets.at("javascripts/scalajs-example-opt.js")" type="text/javascript"></script> -->

@@ -110,7 +110,8 @@ object Dependencies {
   val orchardPlay = Seq() ++ shared
 
   val orchardJs = Seq(
-    "org.scala-lang.modules.scalajs" %%% "scalajs-jquery" % Versions.scalajsJQuery
+    "org.scala-lang.modules.scalajs" %%% "scalajs-jquery" % Versions.scalajsJQuery,
+     "com.scalatags" %%% "scalatags" % Versions.scalaTags
   ) ++ shared
 
   val orchardLib = Seq(
@@ -124,4 +125,5 @@ object Versions {
   val app = "0.1.0-SNAPSHOT"
   val scala = "2.11.1"
   val scalajsJQuery = "0.6"
+  val scalaTags = "0.3.8"
 }

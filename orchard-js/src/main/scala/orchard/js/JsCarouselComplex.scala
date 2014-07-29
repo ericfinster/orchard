@@ -1,5 +1,5 @@
 /**
-  * JsComplex.scala - A Client Side Complex
+  * JsCarouselComplex.scala - A Client Side Complex
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -22,7 +22,7 @@ import orchard.core.complex._
 
 import orchard.js.plugins._
 
-abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js.Any])
+abstract class JsCarouselComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js.Any])
     extends RenderableComplex[A] { thisComplex =>
 
   type CellType <: JsCell
@@ -32,7 +32,10 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
   type PanelCellType <: JsPanelCell
   type PanelEdgeType <: JsPanelEdge
 
-  val svgNS = "http://www.w3.org/2000/svg"
+  def container : dom.Element
+  def galleryPanelWidth : Int
+  def galleryPanelHeight : Int
+  def displayPanels : Int
 
   def panelPadding = externalPadding * 2
   def newPanel(i : Int) : PanelType
@@ -56,6 +59,80 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
     } { panel.render }
 
   //============================================================================================
+  // INITIALIZATION
+  //
+
+  val galleryAssembly = document.createElement("div")
+  galleryAssembly.setAttribute("class", "orchard-gallery-assembly")
+  container.appendChild(galleryAssembly)
+
+  val galleryWrapper = document.createElement("div")
+  galleryWrapper.setAttribute("class", "orchard-gallery-wrapper")
+  galleryAssembly.appendChild(galleryWrapper)
+
+  val gallery = document.createElement("div")
+  gallery.setAttribute("class", "orchard-gallery")
+  galleryWrapper.appendChild(gallery)
+
+  val galleryPanelList = document.createElement("ul")
+  gallery.appendChild(galleryPanelList)
+
+  // Generate the controls
+  val galleryPrev = document.createElement("a")
+  galleryPrev.setAttribute("class", "orchard-gallery-control-prev")
+  galleryPrev.setAttribute("href", "#")
+  galleryAssembly.appendChild(galleryPrev)
+
+  val galleryPrevBtn = document.createElement("i")
+  galleryPrevBtn.setAttribute("class", "fa fa-chevron-circle-left fa-lg")
+  galleryPrev.appendChild(galleryPrevBtn)
+
+  val galleryNext = document.createElement("a")
+  galleryNext.setAttribute("class", "orchard-gallery-control-next")
+  galleryNext.setAttribute("href", "#")
+  galleryAssembly.appendChild(galleryNext)
+
+  val galleryNextBtn = document.createElement("i")
+  galleryNextBtn.setAttribute("class", "fa fa-chevron-circle-right fa-lg")
+  galleryNext.appendChild(galleryNextBtn)
+
+  val galleryPagination = document.createElement("p")
+  galleryPagination.setAttribute("class", "orchard-gallery-pagination")
+  galleryAssembly.appendChild(galleryPagination)
+
+  initializeContent
+
+  import plugins.JQueryCarousel._
+
+  val carousel = jQuery(gallery).jcarousel()
+
+  def initializeContent : Unit = {
+
+    jQuery(galleryPanelList).empty()
+
+    // Create the panels
+    generatePanels
+
+    for {
+      base <- baseCells
+      panel <- base.panel
+    } { 
+      galleryPanelList.appendChild(panel.getContent)
+    }
+
+    carousel.reload(js.Dynamic.literal())
+
+  }
+
+  def refreshFromJson(newJson : js.Any) : Unit = {
+
+    topCell = fromJson(newJson, JsJsonReader, aReader)
+    initializeContent
+    renderAll
+
+  }
+
+  //============================================================================================
   // JS CELL IMPLEMENTATION
   //
 
@@ -77,20 +154,37 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
 
   }
 
-  abstract class JsPanel(index : Int) extends RenderablePanel { thisPanel : PanelType =>
+  class JsPanel(index : Int) extends RenderablePanel { thisPanel : PanelType =>
+
+    def panelId = "panel-" ++ index.toString
 
     var paperElement : Option[Paper] = None
 
-    def renderContent(container : dom.Element) : Unit = {
+    def getContent : dom.Element = {
+
+      val svgNS = "http://www.w3.org/2000/svg"
 
       val svg = document.createElementNS(svgNS, "svg")
+
+      val li = document.createElement("li")
+      li.style.width = galleryPanelWidth.toString ++ "px"
+      li.style.height = galleryPanelHeight.toString ++ "px"
+      li.appendChild(svg)
 
       val paper = Snap(svg)
       paperElement = Some(paper)
 
       // Add the cell content
-      baseCell.renderContent(paper)
-      container.appendChild(svg)
+      baseCell.drawCellContent(paper)
+
+      // Add the edge content
+      for { tgt <- baseCell.target ; baseGroup <- baseCell.groupElement } {
+        tgt foreachEdge (edge => {
+          baseGroup.append(edge.drawPath(paper))
+        })
+      }
+
+      li
 
     }
 
@@ -110,6 +204,22 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
         })
       }
       
+      val viewBoxString = 
+        panelX.toString ++ " " ++ 
+          panelY.toString ++ " " ++ 
+          panelWidth.toString ++ " " ++ 
+          panelHeight.toString
+
+      for {
+        paper <- paperElement
+      } {
+        paper.attr(js.Dynamic.literal(
+          "width" -> (galleryPanelWidth - (2 * panelPadding)).toString,
+          "height" -> (galleryPanelHeight - (2 * panelPadding)).toString,
+          "viewBox" -> viewBoxString
+        ))
+      }
+
     }
 
     override def clearRenderState : Unit = {
@@ -194,7 +304,7 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
       rect
     }
 
-    def renderContent(p : Paper) : Unit = {
+    def drawCellContent(p : Paper) : Element = {
       val group = p.g(new js.Array)
       val rect = drawRect(p)
       val label = drawLabel(p)
@@ -207,21 +317,11 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
         tree <- canopy
       } {
         tree foreachCell (cell => {
-          cell.renderContent(p)
-          cell.groupElement foreach (group.append(_))
+          group.append(cell.drawCellContent(p))
         })
       }
 
-      if (isBase) {
-        // Add the edge content
-        for { tgt <- target } {
-          tgt foreachEdge (edge => {
-            edge.renderContent(p)
-            edge.pathElement foreach (group.append(_))
-          })
-        }
-      }
-
+      group
     }
 
     def setDimensions : Unit = {
@@ -258,7 +358,7 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
 
     var pathElement : Option[Element] = None
 
-    def renderContent(p : Paper) : Element = {
+    def drawPath(p : Paper) : Element = {
       val path = p.path("")
       path.attr(js.Dynamic.literal(
         ("class" -> "orchard-edge"),

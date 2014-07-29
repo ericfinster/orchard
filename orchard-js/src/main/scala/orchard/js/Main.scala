@@ -13,6 +13,7 @@ import scala.scalajs._
 import org.scalajs.dom
 import dom.document
 import dom.extensions._
+import js.Dynamic.{literal => lit}
 
 import org.scalajs.jquery._
 
@@ -37,6 +38,7 @@ object Main extends js.JSApp with JsModuleSystem {
   import JQueryImplicits._
 
   val jqMain : JQuery = jQuery(".main")
+  val jqModuleView : JQuery = jQuery(".module-view")
 
   // val jqControlPanel : JQuery = jQuery(".control-panel")
   // val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
@@ -82,14 +84,20 @@ object Main extends js.JSApp with JsModuleSystem {
 
       f.onSuccess {
         case xmlReq => {
-          println("Success!")
           val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-          complex.refreshFromJson(newJson("message"))
+
+          newJson("status").asInstanceOf[js.String] match {
+            case "OK" => complex.refreshFromJson(newJson("message"))
+            case "KO" => Toastr.error(newJson("message").asInstanceOf[js.String])
+          }
+
         }
       }
-      f.onFailure { case _ => println("Failure.") }
     }
   })
+
+  // Put our toasts in the right place
+  Toastr.options.positionClass = "toast-bottom-full-width"
 
   //============================================================================================
   // DIALOG DEFINITIONS
@@ -108,19 +116,30 @@ object Main extends js.JSApp with JsModuleSystem {
 
       requestModule(moduleId) onSuccess {
         case xmlReq => {
-          val node = new JsModuleNode(moduleId, xmlReq.responseText)
 
-          // Now what? We have to append this guy to the correct spot in the module which
-          // we are pointing at.
+          val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
+          
+          newJson("status").asInstanceOf[js.String] match {
+            case "OK" => {
+              val node = new JsModuleNode(moduleId, getModuleHtml(moduleId))
 
-          for {
-            root <- rootModule
-            insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
-            ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorIndex)
-          } {
-            rootModule = Some(ptr.zip.asInstanceOf[Module])
-            setCursorPosition(activeModuleAddress, activeCursorIndex + 1)
+              for {
+                root <- rootModule
+                insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
+                ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorIndex)
+              } {
+                rootModule = Some(ptr.zip.asInstanceOf[Module])
+                setCursorPosition(activeModuleAddress, activeCursorIndex + 1)
+                Toastr.success("Created module: " ++ moduleId)
+              }
+
+            }
+            case "KO" => {
+              val msg = newJson("message").asInstanceOf[js.String]
+              Toastr.error(msg)
+            }
           }
+
         }
       }
     }
@@ -167,12 +186,44 @@ object Main extends js.JSApp with JsModuleSystem {
       activeCursorIndex = cursorIndex
     }
 
+  def runErrorToast[A](err : Error[A], successMessage : String) : Unit = 
+    err match {
+      case Right(_) => Toastr.success(successMessage)
+      case Left(msg) => Toastr.error(msg)
+    }
+
+  def getModuleHtml(moduleId : String) : String = {
+
+    import scalatags.Text.all._
+
+    val modHtml = 
+      div(`class`:="panel panel-default module-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(moduleId)
+        ),
+        div(`class`:="panel-body")(
+          ul(`class`:="module-entries")(
+            li(`class`:="cursor")(a(href:="#")(div(`class`:="cursor-bar")))
+          )
+        )
+      )
+
+    modHtml.toString
+
+  }
+
   //============================================================================================
   // AJAX REQUESTS
   //
 
   def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
-    val request = js.Dynamic.literal( "moduleId" -> moduleId )
+    val checkerWriter = implicitly[JsonWritable[CheckerAddress, js.Any]]
+    val checkerAddress = CheckerAddress(activeModuleAddress, activeCursorIndex)
+
+    val request = lit( 
+      "moduleId" -> moduleId,
+      "address" -> checkerWriter.write(checkerAddress, JsJsonWriter)
+    )
 
     Ajax.post(
       "/newmodule",
@@ -190,19 +241,15 @@ object Main extends js.JSApp with JsModuleSystem {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    requestModule("Prelude") onSuccess { 
-      case xmlReq => {
-        val node = new JsModuleNode("Prelude", xmlReq.responseText)
+    val node = new JsModuleNode("Prelude", getModuleHtml("Prelude"))
 
-        node.cursorsJQ.each((i : js.Any, el : dom.Element) => {
-          jQuery(el).find(".cursor-bar").addClass("active")
-        })
+    node.cursorsJQ.each((i : js.Any, el : dom.Element) => {
+      jQuery(el).find(".cursor-bar").addClass("active")
+    })
 
-        jqMain.append(node.panelJQ)
-        val rm = Module(node, Vector.empty)
-        rootModule = Some(rm)
-      }
-    }
+    jqModuleView.append(node.panelJQ)
+    val rm = Module(node, Vector.empty)
+    rootModule = Some(rm)
 
     jQuery.getJSON("/worksheet", success = ((data : js.Object) => {
       renderComplex(data)
@@ -242,13 +289,13 @@ object Main extends js.JSApp with JsModuleSystem {
   def renderComplex(json : js.Any) : Unit = {
 
     val controlPanelJQ = jQuery(".control-panel-gallery")
-    val controlPanelDiv = controlPanelJQ.get(0)
 
     controlPanelJQ.empty()
 
-    val complex = new JsWorksheet(controlPanelDiv.asInstanceOf[dom.Element], json, 100, 100, 3)
-
+    val complex = new JsWorksheet(controlPanelJQ.get(0).asInstanceOf[dom.Element], json, 200)
+    // What else do you need?
     complex.renderAll
+
     currentComplex = Some(complex)
 
   }

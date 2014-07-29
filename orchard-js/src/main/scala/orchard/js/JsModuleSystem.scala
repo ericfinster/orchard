@@ -32,6 +32,8 @@ trait JsModuleSystem extends ModuleSystem {
     val panelJQ : JQuery = jQuery(panelHtml)
     val entriesListJQ : JQuery = panelJQ.find(".module-entries")
 
+    refreshCursorIndicies
+
     def insertEntryAt(entry : ModuleEntry, index : Int) : Unit = {
       entry match {
         case m : Module => {
