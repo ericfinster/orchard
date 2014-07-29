@@ -24,6 +24,8 @@ trait CellComplex[A] { thisComplex =>
   def dimension : Int = baseCells.length - 1
   def apply(idx : Int) : CellType = baseCells(idx)
 
+  def serializationId : Int = thisComplex.hashCode
+
   def forAllCells(action : CellType => Unit) : Unit = {
     baseCells foreach (base => base foreachCell action)
   }
@@ -328,7 +330,7 @@ trait CellComplex[A] { thisComplex =>
     // We need to see if we can loop over objects, because this
     // here is a bit inefficient ...
     writer.writeObject(
-      ("complex" -> writer.writeDouble(hashCode)),
+      ("complex" -> writer.writeDouble(serializationId)),
       ("ids" -> writer.writeArray(idArray : _*)),
       ("cells" -> writer.writeObject(fields : _*)),
       ("topCell" -> writer.writeDouble(topCell.hashCode))

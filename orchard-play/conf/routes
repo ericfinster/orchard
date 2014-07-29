@@ -7,15 +7,13 @@ GET     /                           controllers.Application.index
 
 GET     /template                   controllers.Application.template
 
-GET     /complex                    controllers.Application.getComplex
+GET     /new-worksheet              controllers.Application.newWorksheet
 
-GET     /worksheet                  controllers.Application.getWorksheet
+POST    /new-module                 controllers.Application.newModule
 
-POST    /extrude                    controllers.Application.extrude
+POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
 
 POST    /debug                      controllers.Application.debug
-
-POST    /newmodule                  controllers.Application.newModule
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

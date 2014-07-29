@@ -15,6 +15,7 @@ import org.scalajs.jquery.JQuery
 trait JQueryCarousel extends JQuery {
 
   def jcarousel() : JCarousel = ???
+  def jcarousel(cmd : String, conf : js.Object) : JQueryCarousel = ???
   def jcarousel(conf : js.Object) : JCarousel = ???
   def jcarouselControl(conf : js.Object) : Unit = ???
   def jcarouselPagination(conf : js.Object) : Unit = ???
@@ -30,6 +31,7 @@ object JQueryCarousel {
 
 trait JCarousel extends js.Object {
 
+  def reload() : Unit = ???
   def reload(conf : js.Object) : Unit = ???
 
 }

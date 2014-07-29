@@ -40,7 +40,8 @@ class Worksheet(seed : NCell[Polarity[Option[Expression]]]) extends AbstractWork
           case Neutral(None) => EmptyMarker(cell.isShell, cell.isExposedNook)
           case Neutral(Some(e)) => ReferenceMarker(e.name, e.styleString)
         }
-      })
+      }),
+      this
     )
 
 }

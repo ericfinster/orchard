@@ -66,17 +66,32 @@ object Main extends js.JSApp with JsModuleSystem {
     NewModuleModal.show
   })
 
+  jQuery("#new-worksheet-btn").click(() => {
+    println("Getting a new worksheet ...")
+
+    jQuery.getJSON("/new-worksheet", success = ((data : js.Dynamic) => {
+      appendWorksheet(data.message)
+    }) : js.Function1[js.Dynamic, Unit])
+  })
+
   jQuery("#extrude-btn").click(() => {
     for {
       complex <- currentComplex
     } {
+      println("Making a request for worksheet: " ++ complex.remoteId.toString)
+
       val descWriter = implicitly[JsonWritable[SelectionDescriptor, js.Any]]
-      val desc = descWriter.write(complex.descriptor, JsJsonWriter).asInstanceOf[js.Object]
+      val desc = descWriter.write(complex.descriptor, JsJsonWriter)
+
+      val extrudeRequest = lit(
+        "worksheetId" -> complex.remoteId,
+        "selectionDescriptor" -> desc
+      )
 
       val f =
         Ajax.post(
-          "http://localhost:9000/extrude",
-          js.JSON.stringify(desc),
+          "/extrude-worksheet",
+          js.JSON.stringify(extrudeRequest),
           0,
           Seq(("Content-type" -> "application/json")),
           false
@@ -99,6 +114,21 @@ object Main extends js.JSApp with JsModuleSystem {
   // Put our toasts in the right place
   Toastr.options.positionClass = "toast-bottom-full-width"
 
+  import JQueryCarousel._
+
+  // Let's initialize the worksheet carousel
+  jQuery(".worksheet-carousel").jcarousel(lit(
+    "vertical" -> true
+  ))
+
+  jQuery(".worksheet-carousel-prev").jcarouselControl(lit(
+    "target" -> "-=1"
+  ))
+
+  jQuery(".worksheet-carousel-next").jcarouselControl(lit(
+    "target" -> "+=1"
+  ))
+  
   //============================================================================================
   // DIALOG DEFINITIONS
   //
@@ -226,7 +256,7 @@ object Main extends js.JSApp with JsModuleSystem {
     )
 
     Ajax.post(
-      "/newmodule",
+      "/new-module",
       js.JSON.stringify(request),
       0,
       Seq(("Content-type" -> "application/json")),
@@ -251,9 +281,30 @@ object Main extends js.JSApp with JsModuleSystem {
     val rm = Module(node, Vector.empty)
     rootModule = Some(rm)
 
-    jQuery.getJSON("/worksheet", success = ((data : js.Object) => {
-      renderComplex(data)
-    }) : js.Function1[js.Object, Unit])
+  }
+
+
+  def appendWorksheet(json : js.Any) : Unit = {
+
+    val listElement = document.createElement("li")
+    jQuery(".worksheet-carousel ul").append(listElement)
+
+    val worksheet = new JsWorksheet(listElement, json, 200)
+    worksheet.renderAll
+
+    println("Successfully parsed a worksheet with id: " ++ worksheet.remoteId.toString)
+
+    import JQueryCarousel._
+
+    jQuery(".worksheet-carousel").jcarousel("reload", lit())
+
+    jQuery(listElement).
+      on("jcarousel:targetin", (e : JQueryEventObject, c : JCarousel) => {
+        currentComplex = Some(worksheet)
+      })
+
+    jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
+    currentComplex = Some(worksheet) 
 
   }
 
@@ -285,20 +336,6 @@ object Main extends js.JSApp with JsModuleSystem {
   // }) : js.Function2[js.Any, dom.Element, js.Any])
 
   var currentComplex : Option[JsWorksheet] = None
-
-  def renderComplex(json : js.Any) : Unit = {
-
-    val controlPanelJQ = jQuery(".control-panel-gallery")
-
-    controlPanelJQ.empty()
-
-    val complex = new JsWorksheet(controlPanelJQ.get(0).asInstanceOf[dom.Element], json, 200)
-    // What else do you need?
-    complex.renderAll
-
-    currentComplex = Some(complex)
-
-  }
 
 }
 

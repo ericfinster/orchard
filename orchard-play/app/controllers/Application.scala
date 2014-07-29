@@ -20,6 +20,7 @@ object Application extends Controller {
   def newWorksheet = Action {
     import models.OrchardToPlay._
     val worksheet = workspace.newWorksheet
+    Logger.debug("Returning a worksheet with id: " ++ worksheet.hashCode.toString)
     Ok(Json.obj(
       "status" -> "OK",
       "message" -> Json.toJson(worksheet.toMarkerComplex)
@@ -51,12 +52,14 @@ object Application extends Controller {
     val worksheetId = (request.body \ "worksheetId").as[Int]
 
     if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
-      BadRequest(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
+      Ok(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
     } else {
       import models.OrchardToPlay._
 
+      Logger.debug("Extruding on worksheet: " ++ worksheetId.toString)
+
       val worksheet = workspace.worksheetMap(worksheetId)
-      val descriptorResult = (request.body \ "selectionDesciptor").validate[SelectionDescriptor]
+      val descriptorResult = (request.body \ "selectionDescriptor").validate[SelectionDescriptor]
 
       descriptorResult.fold(
         errors => {
@@ -66,15 +69,16 @@ object Application extends Controller {
           val extrusionResult =
             for {
               _ <- worksheet.selectFromDescriptor(descriptor)
+              _ <- ensure(worksheet.selectionIsExtrudable, "Selection is not extrudable.")
               _ <- worksheet.emptyExtrusion
             } yield ()
 
           extrusionResult match {
             case Right(()) => {
-              Ok(Json.obj("status" -> "OK", "message" -> worksheetJson))
+              Ok(Json.obj("status" -> "OK", "message" -> Json.toJson(worksheet.toMarkerComplex)))
             }
             case Left(msg) => {
-              BadRequest(Json.obj("status" -> "KO", "message" -> msg))
+              Ok(Json.obj("status" -> "KO", "message" -> msg))
             }
           }
         }
@@ -121,61 +125,6 @@ object Application extends Controller {
   }
 
   //============================================================================================
-  // OLD EXPERIMENTS AND SNIPPETS
-  //
-
-  val worksheet = Worksheet()
-
-  def worksheetJson = {
-    import models.OrchardToPlay._
-    Json.toJson(worksheet.toMarkerComplex)
-  }
-
-  def getWorksheet = Action {
-    Logger.debug("Getting the worksheet data.")
-    Ok(worksheetJson)
-  }
-
-  def debug = Action(BodyParsers.parse.json) { request =>
-    Logger.debug("Received a json post:")
-    Logger.debug(Json.prettyPrint(request.body))
-    Ok(Json.obj("status" -> "OK", "message" -> "all done"))
-  }
-
-  def extrude = Action(BodyParsers.parse.json) { request =>
-    import models.OrchardToPlay._
-
-    Logger.debug("Got an extrude request ...")
-    // Logger.debug(Json.prettyPrint(request.body))
-
-    val descriptorResult = request.body.validate[SelectionDescriptor]
-
-    descriptorResult.fold(
-      errors => { 
-        Logger.debug("Could not parse the request.")
-        BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toFlatJson(errors)))
-      },
-      descriptor => {
-        val extrusionResult = 
-          for {
-            _ <- worksheet.selectFromDescriptor(descriptor)
-            _ <- ensure(worksheet.selectionIsExtrudable, "Selection is not extrudable.")
-            _ <- worksheet.emptyExtrusion
-          } yield ()
-
-        extrusionResult match {
-          case Right(()) => {
-            Ok(Json.obj("status" -> "OK", "message" -> worksheetJson))
-          }
-          case Left(msg) => {
-            Ok(Json.obj("status" -> "KO", "message" -> msg))
-          }
-        }
-      }
-    )
-  }
-
-  //============================================================================================
   // OLD STUFF
   //
 
@@ -187,10 +136,10 @@ object Application extends Controller {
     Ok(views.html.template("Template"))
   }
 
-  def getComplex = Action { 
-    val complex = new PlayComplex(Example.Psi)
-    val json = Json.toJson(complex)
-    Ok(json)
+  def debug = Action(BodyParsers.parse.json) { request =>
+    Logger.debug("Received a json post:")
+    Logger.debug(Json.prettyPrint(request.body))
+    Ok(Json.obj("status" -> "OK", "message" -> "all done"))
   }
 
 }

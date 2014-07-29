@@ -37,6 +37,7 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
   def panelPadding = externalPadding * 2
   def newPanel(i : Int) : PanelType
 
+  var remoteId : Int = 0
   var topCell : CellType = fromJson(json, JsJsonReader, aReader)
 
   def generatePanels : Unit =
@@ -297,4 +298,16 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
     super.cellFromDescriptor(cell, desc, cellMap)
     cell.faces = desc.faces map (cellMap(_))
   }
+
+  override def fromJson[P](
+    x : P,
+    reader : JsonReader[P],
+    aReader : JsonReadable[A, P]
+  ) : CellType = {
+    val cell = super.fromJson(x, reader,aReader)
+    // Grab the remote id as well
+    remoteId = reader.readObjectField(x, "complex").asInstanceOf[js.Number].toInt
+    cell
+  }
+
 }

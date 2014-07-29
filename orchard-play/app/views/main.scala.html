@@ -90,19 +90,19 @@
 
 	      <div class="worksheet-view">
 
-		<!-- <div class="col-sm-3 col-md-2 environment-panel"> -->
-    		<!--   <div class="panel panel-default"> -->
-		<!--     <div class="panel-heading"> -->
-	    	<!--       <h3 class="panel-title">Environment</h3> -->
-		<!--     </div> -->
-		<!--     <div class="panel-body"> -->
-	    	<!--       <p>This is the environment view.</p> -->
-		<!--     </div> -->
-		<!--   </div> -->
-		<!-- </div> -->
+		<div class="col-sm-3 col-md-2 environment-panel">
+    		  <div class="panel panel-default">
+		    <div class="panel-heading">
+	    	      <h3 class="panel-title">Environment</h3>
+		    </div>
+		    <div class="panel-body">
+	    	      <p>This is the environment view.</p>
+		    </div>
+		  </div>
+		</div>
 		
 
-    		<!-- <div class="col-sm-9 col-md-10 control-panel"> -->
+    		<div class="col-sm-9 col-md-10 control-panel">
     		  <div class="panel panel-default">
 		    
 		    <div class="panel-heading">
@@ -123,10 +123,12 @@
 
 			<div class="btn-group">
 			  <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown">
-			    Shape
+			    Worksheet
 			    <span class="caret"></span>
 			  </button>
 			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
+			    <li role="presentation"><a id="new-worksheet-btn" role="menuitem" tabindex="-1" href="#">New Worksheet</a></li>
+			    <li role="presentation" class="divider"></li>
 			    <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li>
 			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li>
 			  </ul>
@@ -136,12 +138,21 @@
 		    </div>
 
     		    <div class="panel-body">
-    		      <div class="control-panel-gallery">
-    		      </div>
-    		    </div>
+		      <div class="worksheet-carousel-wrapper">
 
+		      	<div class="worksheet-carousel">
+		      	  <ul>
+		      	  </ul>
+		      	</div>
+
+			<a href="#" class="worksheet-carousel-prev">Prev</a>
+			<a href="#" class="worksheet-carousel-next">Next</a>
+
+		      </div>
+    		    </div>
+		    
     		  </div>
-    		<!-- </div> -->
+    		</div>
 
 	      </div>
 	    </div>

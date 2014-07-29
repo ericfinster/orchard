@@ -11,7 +11,7 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
-class MarkerComplex(seed : NCell[WorksheetMarker]) 
+class MarkerComplex(seed : NCell[WorksheetMarker], owner : Worksheet) 
     extends MutableSkeletalComplex[WorksheetMarker] 
     with SelectableComplex[WorksheetMarker] {
   thisComplex =>
@@ -22,6 +22,7 @@ class MarkerComplex(seed : NCell[WorksheetMarker])
     seed.regenerateFrom(ComplexGenerator).value
 
   def newCell(marker : WorksheetMarker) = new MarkerComplexCell(marker)
+  override def serializationId = owner.serializationId
 
   class MarkerComplexCell(var item : WorksheetMarker) extends MutableSkeletalCell {
 
@@ -41,14 +42,14 @@ class MarkerComplex(seed : NCell[WorksheetMarker])
 
 object MarkerComplex {
 
-  val emptyComplexCell : NCell[WorksheetMarker] = 
-    Object(EmptyMarker(true, false)).glob(
-      PositivePolarityMarker, 
-      NegativePolarityMarker
-    )
+  // val emptyComplexCell : NCell[WorksheetMarker] = 
+  //   Object(EmptyMarker(true, false)).glob(
+  //     PositivePolarityMarker, 
+  //     NegativePolarityMarker
+  //   )
 
-  def apply() : MarkerComplex = 
-    new MarkerComplex(emptyComplexCell)
+  // def apply() : MarkerComplex = 
+  //   new MarkerComplex(emptyComplexCell)
 
   implicit def markerComplexWritable[P] : JsonWritable[MarkerComplex, P] = 
     new JsonWritable[MarkerComplex, P] {

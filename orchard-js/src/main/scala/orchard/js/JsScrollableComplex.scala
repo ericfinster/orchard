@@ -50,6 +50,10 @@ abstract class JsScrollableComplex[A](container : dom.Element, json : js.Any, pa
       panel.renderContent(panelDiv)
     }
 
+    // val galleryShim = dom.document.createElement("br")
+    // galleryShim.setAttribute("class", "scollable-gallery-shim")
+    // galleryList.appendChild(galleryShim)
+
   }
 
   def refreshFromJson(newJson : js.Any) : Unit = {

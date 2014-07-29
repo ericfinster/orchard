@@ -184,10 +184,10 @@ html, body {
  *  Scollable Gallery
  */
 
-
 .scrollable-gallery .scrollable-gallery-panels {
     position: relative;
-    list-style: none;
+    overflow: hidden;
+    width: 100%;
     padding: 0;
     margin: 0;
 }
@@ -197,6 +197,66 @@ html, body {
     padding: 10px;
     background: #fff;
 }
+
+/*
+ * Worksheet Carousels
+ */
+
+.worksheet-carousel-wrapper {
+    position: relative;
+}
+
+.worksheet-carousel {
+    position: relative;
+    width: 100%;
+    height: 206px;
+    overflow: hidden;
+}
+
+.worksheet-carousel ul {
+    height: 20000em;
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.worksheet-carousel li {
+    float: top;
+    border: 1px solid #fff;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+/* .worksheet-carousel-prev, */
+/* .worksheet-carousel-next { */
+/*     position: absolute; */
+/*     top: 50%; */
+/*     margin-top: -15px; */
+/*     width: 30px; */
+/*     height: 30px; */
+/*     text-align: center; */
+/*     background: #4E443C; */
+/*     color: #fff; */
+/*     text-decoration: none; */
+/*     text-shadow: 0 0 1px #000; */
+/*     font: 24px/27px Arial, sans-serif; */
+/*     -webkit-border-radius: 30px; */
+/*     -moz-border-radius: 30px; */
+/*     border-radius: 30px; */
+/*     -webkit-box-shadow: 0 0 4px #F0EFE7; */
+/*     -moz-box-shadow: 0 0 4px #F0EFE7; */
+/*     box-shadow: 0 0 4px #F0EFE7; */
+/* } */
+
+/* .worksheet-carousel-prev { */
+/*     left: 15px; */
+/* } */
+
+/* .worksheet-carousel-next { */
+/*     right: 15px; */
+/* } */
 
 /*
  *  Cell class definitions
