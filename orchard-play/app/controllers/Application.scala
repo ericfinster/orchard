@@ -28,8 +28,15 @@ object Application extends Controller {
   }
 
   def requestEnvironment = Action(BodyParsers.parse.json) { request =>
-    // workspace.getEnvironment
-    ???
+    import models.OrchardToPlay._
+
+    val checkerAddress = (request.body \ "address").as[CheckerAddress]
+
+    workspace.runCommandAtAddress(workspace.environmentTree, checkerAddress) match {
+      case Left(msg) => Ok(Json.obj("status" -> "KO", "message" -> msg))
+      case Right(envTree) => Ok(Json.obj("status" -> "OK", "message" -> Json.toJson(envTree)))
+    }
+
   }
 
   def requestWorksheet = Action(BodyParsers.parse.json) { request =>

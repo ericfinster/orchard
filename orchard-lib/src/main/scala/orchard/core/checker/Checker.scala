@@ -21,6 +21,32 @@ trait Checker extends CheckerModuleSystem {
   val M = MonadState[CheckerS, ModuleZipper]
   import M._
 
+  def environmentTree : CheckerM[RoseTree[String, String]] =
+    for {
+      ptr <- get
+    } yield {
+      val environmentEntries = ptr.collectLefts
+
+      val test = environmentEntries map {
+        case m : Module => ???
+        case p : Parameter => Rose(p.node.name)
+        case d : Definition => {
+          // Here is where you can make entries for the filler and the boundary ...
+          Rose(d.node.name)
+        }
+        case i : Import => {
+          // This is the interesting case ...
+          ???
+        }
+      }
+
+      Branch("root", test)
+    }
+
+  // From the above method, we can grab the nodes of the tree which will correspond
+  // to module imports or do futher processing depending on exactly what we are looking
+  // for ...
+
   def getEnvironment(offset : Int) : CheckerM[Vector[String]] = 
     for {
       ptr <- get

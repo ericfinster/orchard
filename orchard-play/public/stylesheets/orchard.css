@@ -62,14 +62,11 @@ html, body {
 }
 
 .main {
-  padding: 20px 0px 20px 0px;
+  padding-top: 20px;
 }
 
 .main .page-header {
   margin-top: 0;
-}
-
-.module-panel {
 }
 
 .module-entries {
@@ -77,15 +74,15 @@ html, body {
     padding-left: 15px;
 }
 
-.module-view {
-    padding-left: 40px;
-    padding-right: 40px;
-}
+/* .module-view { */
+/*     padding-left: 40px; */
+/*     padding-right: 40px; */
+/* } */
 
-.worksheet-view {
-    padding-left: 40px;
-    padding-right: 40px;
-}
+/* .worksheet-view { */
+/*     padding-left: 40px; */
+/*     padding-right: 40px; */
+/* } */
 
 /*
  *  Footer and Control Panel
@@ -96,34 +93,8 @@ html, body {
   padding-left: 15px;
 }
 
-.control-panel {
-    padding-top: 20px;
-    padding-bottom: 10px;
-    min-height: 150px;
-}
-@media (min-width: 768px) {
-    .control-panel {
-	padding-right: 40px;
-	padding-left: 40px;
-    }
-}
-
 .environment-panel {
-    padding-top: 20px;
-    padding-bottom: 10px;
     min-height: 150px;
-}
-
-
-/* Restore drop-down status to menus in the footer */
-.navbar-fixed-bottom .dropdown .caret {
-  content: "";
-  border-top: 4px solid;
-  border-bottom: none;
-}
-.navbar-fixed-bottom .dropdown .dropdown-menu {
-    top: 100%;
-    bottom: auto;
 }
 
 /* .control-pane-slider { */

@@ -62,6 +62,10 @@ trait ModuleSystem {
     def node = definitionNode
   }
 
+  case class Import(val importNode : ImportNodeType) extends ModuleEntry {
+    def node = importNode
+  }
+
   //============================================================================================
   // MODULE CONTEXTS AND ZIPPERS
   //

@@ -38,7 +38,7 @@ object Main extends js.JSApp with JsModuleSystem {
   import JQueryImplicits._
 
   val jqMain : JQuery = jQuery(".main")
-  val jqModuleView : JQuery = jQuery(".module-view")
+  val jqModuleWrapper : JQuery = jQuery(".module-wrapper")
 
   // val jqControlPanel : JQuery = jQuery(".control-panel")
   // val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
@@ -214,6 +214,7 @@ object Main extends js.JSApp with JsModuleSystem {
       cJQ.find(".cursor-bar").addClass("active")
       activeModuleAddress = moduleAddress
       activeCursorIndex = cursorIndex
+      updateEnvironment
     }
 
   def runErrorToast[A](err : Error[A], successMessage : String) : Unit = 
@@ -264,6 +265,24 @@ object Main extends js.JSApp with JsModuleSystem {
     )
   }
 
+  def requestEnvironment : Future[dom.XMLHttpRequest] = {
+
+    val checkerWriter = implicitly[JsonWritable[CheckerAddress, js.Any]]
+    val checkerAddress = CheckerAddress(activeModuleAddress, activeCursorIndex)
+
+    val request = lit(
+      "address" -> checkerWriter.write(checkerAddress, JsJsonWriter)
+    )
+
+    Ajax.post(
+      "/environment",
+      js.JSON.stringify(request),
+      0,
+      Seq(("Content-type" -> "application/json")),
+      false
+    )
+  }
+
   //============================================================================================
   // MAIN ENTRY POINT
   //
@@ -277,9 +296,11 @@ object Main extends js.JSApp with JsModuleSystem {
       jQuery(el).find(".cursor-bar").addClass("active")
     })
 
-    jqModuleView.append(node.panelJQ)
+    jqModuleWrapper.append(node.panelJQ)
     val rm = Module(node, Vector.empty)
     rootModule = Some(rm)
+
+    setCursorPosition(Vector.empty, 0)
 
   }
 
@@ -306,6 +327,52 @@ object Main extends js.JSApp with JsModuleSystem {
     jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
     currentComplex = Some(worksheet) 
 
+  }
+
+  var hasEnvironment : Boolean = false
+
+  def updateEnvironment : Unit = {
+
+    import BootstrapTreeview._
+
+    if (hasEnvironment) {
+      jQuery("#env-tree").treeview("remove")
+      hasEnvironment = false
+    }
+
+    requestEnvironment onSuccess {
+      case xmlReq => {
+
+        val jsonResponse = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
+        
+        jsonResponse("status").asInstanceOf[js.String] match {
+          case "OK" => {
+
+            val treeReader = implicitly[JsonReadable[RoseTree[String, String], js.Any]]
+            val envRoseTree = treeReader.read(jsonResponse("message"), JsJsonReader)
+
+            def roseTreeToJs(t : RoseTree[String, String]) : js.Any = 
+              t match {
+                case Rose(s) => lit(text = s)
+                case Branch(s, brs) => lit(
+                  text = s,
+                  nodes = js.Array(brs map (roseTreeToJs(_)) : _*)
+                )
+              }
+
+            jQuery("#env-tree").treeview(lit(
+              data = js.Array(roseTreeToJs(envRoseTree))
+            ))
+
+            hasEnvironment = true
+          }
+          case "KO" => {
+            val msg = jsonResponse("message").asInstanceOf[js.String]
+            Toastr.error(msg)
+          }
+        }
+      }
+    }
   }
 
   //============================================================================================
