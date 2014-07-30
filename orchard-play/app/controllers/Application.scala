@@ -126,6 +126,16 @@ object Application extends Controller {
       // Now what? We need to pass this off to the workspace which should check that the cell
       // can be filled with a parameter and parse the identifier ...
 
+      // Great, now here's the problem: should we check that the body of the pointed to cell
+      // is valid in the current environment?  Yes, I think so.  There can be some kind of
+      // more elaborate worksheet management later.  For now we will just do as mentioned:
+      // look at the identifiers on the shell and make sure they are in fact visible in
+      // the scope provided.  If not, we will reject the request at this point by saying
+      // so.
+
+      // So, for the next step, we're going to have to resurrect the identifier parsing and 
+      // start getting serious about how these guys are stored.  Ok, ok.  We'll get there.
+
       Ok(Json.obj("status" -> "OK"))
     }
 

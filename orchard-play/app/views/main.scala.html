@@ -41,6 +41,25 @@
       </div>
     </div>
 
+
+    <div id="orchard-new-parameter-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="myModalLabel">New Parameter</h4>
+	  </div>
+	  <div class="modal-body">
+	    <input id="module-name" type="text" class="form-control">
+	  </div>
+	  <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Create</button>
+	  </div>
+	</div>
+      </div>
+    </div>
+
     <!--- Top Navigation Menu -->
     <div class="navbar navbar-default navbar-fixed-top header-nav" role="navigation">
       <div class="container-fluid">
@@ -119,9 +138,9 @@
 			  </button>
 			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
 			    <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li>
-			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Parameter</a></li>
-			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Definition</a></li>
-			    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Import</a></li>
+			    <li role="presentation"><a id="new-parameter-btn" role="menuitem" tabindex="-1" href="#">Parameter</a></li>
+			    <li role="presentation"><a id="new-defn-btn" role="menuitem" tabindex="-1" href="#">Definition</a></li>
+			    <li role="presentation"><a id="new-import-btn" role="menuitem" tabindex="-1" href="#">Import</a></li>
 			  </ul>
 			</div>
 

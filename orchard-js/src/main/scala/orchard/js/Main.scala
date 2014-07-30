@@ -40,35 +40,15 @@ object Main extends js.JSApp with JsModuleSystem {
   val jqMain : JQuery = jQuery(".main")
   val jqModuleWrapper : JQuery = jQuery(".module-wrapper")
 
-  // val jqControlPanel : JQuery = jQuery(".control-panel")
-  // val jqControlPaneSlider : JQuery = jQuery(".control-pane-slider")
-
-  // jqControlPaneSlider.mousedown((e : JQueryEventObject) => {
-
-  //   val mouseOriginY : Double = e.pageY
-  //   val footerHeight : Double = jqFooter.height()
-
-  //   val mousemoveHandler : js.Function1[JQueryEventObject, js.Any] = 
-  //     ((me : JQueryEventObject) => {
-  //       me.preventDefault
-  //       jqFooter.css("height", footerHeight + (mouseOriginY - me.pageY))
-  //     })
-
-  //   jQuery(document).on("mousemove", mousemoveHandler)
-  //   jQuery(document).one("mouseup", (e : JQueryEventObject) => {
-  //     jQuery(document).off("mousemove", mousemoveHandler)
-  //   })
-
-  // })
-
   jQuery("#new-module-btn").click(() => {
-    println("New module button clicked ...") 
     NewModuleModal.show
   })
 
-  jQuery("#new-worksheet-btn").click(() => {
-    println("Getting a new worksheet ...")
+  jQuery("#new-parameter-btn").click(() => {
+    NewParameterModal.show
+  })
 
+  jQuery("#new-worksheet-btn").click(() => {
     jQuery.getJSON("/new-worksheet", success = ((data : js.Dynamic) => {
       appendWorksheet(data.message)
     }) : js.Function1[js.Dynamic, Unit])
@@ -78,14 +58,10 @@ object Main extends js.JSApp with JsModuleSystem {
     for {
       complex <- currentComplex
     } {
-      println("Making a request for worksheet: " ++ complex.remoteId.toString)
-
-      val descWriter = implicitly[JsonWritable[SelectionDescriptor, js.Any]]
-      val desc = descWriter.write(complex.descriptor, JsJsonWriter)
 
       val extrudeRequest = lit(
         "worksheetId" -> complex.remoteId,
-        "selectionDescriptor" -> desc
+        "selectionDescriptor" -> JsJsonWriter.write(complex.descriptor)
       )
 
       val f =
@@ -136,8 +112,8 @@ object Main extends js.JSApp with JsModuleSystem {
   object NewModuleModal extends BootstrapModal("orchard-new-module-modal") {
 
     override def onShow = { 
-      println("Active module address: " ++ activeModuleAddress.toString)
-      println("Active cursor index: " ++ activeCursorIndex.toString)
+      // println("Active module address: " ++ activeModuleAddress.toString)
+      // println("Active cursor index: " ++ activeCursorOffset.toString)
     }
 
     override def onHide = {
@@ -156,10 +132,10 @@ object Main extends js.JSApp with JsModuleSystem {
               for {
                 root <- rootModule
                 insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
-                ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorIndex)
+                ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorOffset)
               } {
                 rootModule = Some(ptr.zip.asInstanceOf[Module])
-                setCursorPosition(activeModuleAddress, activeCursorIndex + 1)
+                setCursorPosition(activeModuleAddress, activeCursorOffset + 1)
                 Toastr.success("Created module: " ++ moduleId)
               }
 
@@ -176,14 +152,30 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  object NewParameterModal extends BootstrapModal("orchard-new-parameter-modal") {
+
+    override def onShow = {
+      println("Showing new parameter dialog")
+    }
+
+    override def onHide = {
+      println("Hiding new parameter dialog")
+    }
+
+  }
+
   //============================================================================================
   // EDITOR VARIABLES
   //
 
   var rootModule : Error[Module] = fail("No active module.")
+  var hasEnvironment : Boolean = false
+  var currentComplex : Option[JsWorksheet] = None
+  var activeCheckerAddress : CheckerAddress = 
+    CheckerAddress(Vector.empty, 0)
 
-  var activeModuleAddress : Vector[Int] = Vector.empty
-  var activeCursorIndex : Int = 0
+  def activeModuleAddress = activeCheckerAddress.moduleAddress
+  def activeCursorOffset = activeCheckerAddress.cursorOffset
 
   def seekModule(addr : Vector[Int]) : Error[Module] = 
     for {
@@ -203,7 +195,7 @@ object Main extends js.JSApp with JsModuleSystem {
     seekModule(activeModuleAddress)
 
   def activeCursorJQ : Error[JQuery] = 
-    cursorJQ(activeModuleAddress, activeCursorIndex)
+    cursorJQ(activeModuleAddress, activeCursorOffset)
 
   def setCursorPosition(moduleAddress : Vector[Int], cursorIndex : Int) : Unit = 
     for {
@@ -212,8 +204,7 @@ object Main extends js.JSApp with JsModuleSystem {
     } {
       acJQ.find(".cursor-bar").removeClass("active")
       cJQ.find(".cursor-bar").addClass("active")
-      activeModuleAddress = moduleAddress
-      activeCursorIndex = cursorIndex
+      activeCheckerAddress = CheckerAddress(moduleAddress, cursorIndex)
       updateEnvironment
     }
 
@@ -248,12 +239,10 @@ object Main extends js.JSApp with JsModuleSystem {
   //
 
   def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
-    val checkerWriter = implicitly[JsonWritable[CheckerAddress, js.Any]]
-    val checkerAddress = CheckerAddress(activeModuleAddress, activeCursorIndex)
 
     val request = lit( 
       "moduleId" -> moduleId,
-      "address" -> checkerWriter.write(checkerAddress, JsJsonWriter)
+      "address" -> JsJsonWriter.write(activeCheckerAddress)
     )
 
     Ajax.post(
@@ -267,11 +256,8 @@ object Main extends js.JSApp with JsModuleSystem {
 
   def requestEnvironment : Future[dom.XMLHttpRequest] = {
 
-    val checkerWriter = implicitly[JsonWritable[CheckerAddress, js.Any]]
-    val checkerAddress = CheckerAddress(activeModuleAddress, activeCursorIndex)
-
     val request = lit(
-      "address" -> checkerWriter.write(checkerAddress, JsJsonWriter)
+      "address" -> JsJsonWriter.write(activeCheckerAddress)
     )
 
     Ajax.post(
@@ -329,8 +315,6 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
-  var hasEnvironment : Boolean = false
-
   def updateEnvironment : Unit = {
 
     import BootstrapTreeview._
@@ -348,8 +332,7 @@ object Main extends js.JSApp with JsModuleSystem {
         jsonResponse("status").asInstanceOf[js.String] match {
           case "OK" => {
 
-            val treeReader = implicitly[JsonReadable[RoseTree[String, String], js.Any]]
-            val envRoseTree = treeReader.read(jsonResponse("message"), JsJsonReader)
+            val envRoseTree = jsonResponse("message").as[RoseTree[String, String]]
 
             def roseTreeToJs(t : RoseTree[String, String]) : js.Any = 
               t match {
@@ -375,34 +358,12 @@ object Main extends js.JSApp with JsModuleSystem {
     }
   }
 
-  //============================================================================================
-  // OLD TESTS AND EXAMPLES
-  //
+  implicit class JsAnyOps(x : js.Any) {
 
-  // jQuery(".panel").each(((i : js.Any, el : dom.Element) => {
+    def as[A](implicit aReader : JsonReadable[A, js.Any]) : A = 
+      aReader.read(x, JsJsonReader)
 
-  // jQuery(el).mouseover(((e: JQueryEventObject) => {
-  //   jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
-  // }) : js.Function1[JQueryEventObject, js.Any])
-
-  // jQuery(el).mouseout(((e: JQueryEventObject) => {
-  //   jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
-  // }) : js.Function1[JQueryEventObject, js.Any])
-
-  // jQuery(el).hover(
-  //   ((e: JQueryEventObject) => {
-  //     println("hoverIn")
-  //     jQuery(el).css("box-shadow", "0 1px 5px #2f2f2f")
-  //   }) : js.Function1[JQueryEventObject, js.Any],
-  //   ((e: JQueryEventObject) => {
-  //     println("hoverOut")
-  //     jQuery(el).css("box-shadow", "0 1px 5px #c3c3c3")
-  //   }) : js.Function1[JQueryEventObject, js.Any]
-  // )
-
-  // }) : js.Function2[js.Any, dom.Element, js.Any])
-
-  var currentComplex : Option[JsWorksheet] = None
+  }
 
 }
 

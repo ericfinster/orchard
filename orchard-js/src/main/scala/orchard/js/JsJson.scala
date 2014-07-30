@@ -36,6 +36,9 @@ object JsJsonWriter extends JsonWriter[js.Any] {
     result
   }
 
+  def write[A](a : A)(implicit aWriter : JsonWritable[A, js.Any]) : js.Any = 
+    aWriter.write(a, this)
+
 }
 
 object JsJsonReader extends JsonReader[js.Any] {
@@ -50,5 +53,8 @@ object JsJsonReader extends JsonReader[js.Any] {
     x.asInstanceOf[js.Array[js.Any]].apply(index)
   def readObjectField(x: js.Any, field: String): js.Any =
     x.asInstanceOf[js.Dictionary[js.Any]].apply(field)
+
+  def read[A](x : js.Any)(implicit aReader : JsonReadable[A, js.Any]) : A = 
+    aReader.read(x, this)
 
 }
