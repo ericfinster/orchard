@@ -15,24 +15,94 @@ import ErrorMonad._
 
 trait Checker extends CheckerModuleSystem {
 
-  type CheckerM[+A] = StateT[Error, ModuleZipper, A]
+  type CheckerState = (ModuleZipper, Int)
+  type CheckerM[+A] = StateT[Error, CheckerState, A]
   type CheckerS[S, +A] = StateT[Error, S , A]
 
-  val M = MonadState[CheckerS, ModuleZipper]
+  val M = MonadState[CheckerS, CheckerState]
   import M._
+
+  def getZipper : CheckerM[ModuleZipper] = 
+    for {
+      st <- get
+    } yield st._1
+
+  def getOffset : CheckerM[Int] = 
+    for {
+      st <- get
+    } yield st._2
+
+  def enclosingEnvironment : CheckerM[Vector[ModuleEntry]] =
+    for {
+      zipper <- getZipper
+    } yield {
+      zipper.collectLefts
+    }
+
+  def localEnvironment : CheckerM[Vector[ModuleEntry]] =
+    for {
+      zipper <- getZipper
+      offset <- getOffset
+      _ <- liftError(ensure(zipper.focus.isInstanceOf[Module], "Focus is not a module."))
+    } yield {
+      zipper.focus.asInstanceOf[Module].entries.take(offset)
+    }
+
+  def environment : CheckerM[Vector[ModuleEntry]] =
+    for {
+      encEnv <- enclosingEnvironment
+      localEnv <- localEnvironment
+    } yield (encEnv ++ localEnv)
+
+  def modules : CheckerM[Vector[Module]] = 
+    for {
+      env <- environment
+    } yield {
+      (env map {
+        case m : Module => Some(m)
+        case _ => None
+      }).flatten
+    }
+
+  def parameters : CheckerM[Vector[Parameter]] = 
+    for {
+      env <- environment
+    } yield {
+      (env map {
+        case p : Parameter => Some(p)
+        case _ => None
+      }).flatten
+    }
+
+  def parameterQualNames : CheckerM[Vector[String]] = 
+    for {
+      params <- parameters
+    } yield {
+      params map (_.node.qualifiedName)
+    }
+
+  def identifiers : CheckerM[Vector[String]] = 
+    for {
+      env <- environment
+    } yield {
+      (env map {
+        case p : Parameter => Some(p.node.name)
+        case d : Definition => Some(d.node.name)
+        case _ => None
+      }).flatten
+    }
 
   def environmentTree : CheckerM[RoseTree[String, String]] =
     for {
-      ptr <- get
+      env <- environment
     } yield {
-      val environmentEntries = ptr.collectLefts
 
-      val test = environmentEntries map {
-        case m : Module => ???
-        case p : Parameter => Rose(p.node.name)
+      val brs = env map {
+        case m : Module => None
+        case p : Parameter => Some(Rose(p.node.name))
         case d : Definition => {
           // Here is where you can make entries for the filler and the boundary ...
-          Rose(d.node.name)
+          Some(Rose(d.node.name))
         }
         case i : Import => {
           // This is the interesting case ...
@@ -40,39 +110,67 @@ trait Checker extends CheckerModuleSystem {
         }
       }
 
-      Branch("root", test)
+      Branch("root", brs.flatten)
     }
 
-  // From the above method, we can grab the nodes of the tree which will correspond
-  // to module imports or do futher processing depending on exactly what we are looking
-  // for ...
-
-  def getEnvironment(offset : Int) : CheckerM[Vector[String]] = 
+  def insertModule(moduleId : String) : CheckerM[CheckerModuleNode] =
     for {
-      ptr <- get
-    } yield {
-      val outerEnvironment = ptr.collectLefts map (_.node.name)
-
-      ptr.focus match {
-        case m : Module => outerEnvironment ++ (m.entries.take(offset) map (_.node.name))
-        case _ => outerEnvironment
-      }
-    }
-
-  def insertModule(moduleId : String, offset : Int) : CheckerM[CheckerModuleNode] = 
-    for {
-      ptr <- get
-      env <- getEnvironment(offset)
-      _ <- liftError(ensure(!(env contains moduleId), "Identifier already exists."))
+      zipper <- getZipper
+      offset <- getOffset
+      mods <- modules
+      modIds = mods map (_.node.name)
+      _ <- liftError(ensureNot(modIds contains moduleId, "Module name already exists."))
       moduleNode = new CheckerModuleNode(moduleId)
-      res <- liftError(ptr.insertAt(Module(moduleNode, Vector.empty), offset))
-      _ <- put(res)
+      res <- liftError(zipper.insertAt(Module(moduleNode, Vector.empty), offset))
+      _ <- put(res, 0)
     } yield moduleNode
 
-  def insertParameter(identString : String) : CheckerM[CheckerParameterNode] = ???
+
+  def insertParameter(identString : String, shell : Shell, isThin : Boolean) : CheckerM[CheckerParameterNode] =
+    for {
+      zipper <- getZipper
+      offset <- getOffset
+      rawIdent <- parseIdentifierString(identString)
+      ident <- resolveRawIdentifier(rawIdent)
+      envIdents <- identifiers
+      _ <- liftError(ensureNot(envIdents contains (ident.expand), "Parameter name already exists."))
+      parameterNode = new CheckerParameterNode(ident, shell, isThin)
+      res <- liftError(zipper.insertAt(Parameter(parameterNode), offset))
+      _ <- put(res, offset + 1)
+    } yield parameterNode
+
+
+  def resolveRawIdentifier(rawIdent : RawIdentifier) : CheckerM[Identifier] = {
+
+    val resolveList = 
+      rawIdent.tokens map {
+        case RawLiteralToken(lit) => liftError(success(LiteralToken(lit)))
+        case RawReferenceToken(ref) => 
+          for {
+            params <- parameters
+            param <- liftError(fromOption(
+              params find (p => p.node.name == ref),
+              "Failed to resolve identifier reference: " ++ ref
+            ))
+          } yield ReferenceToken(param)
+      }
+
+    import scalaz.std.list._
+
+    for {
+      newToks <- sequence(resolveList)
+    } yield Identifier(newToks)
+
+  }
+
+  def parseIdentifierString(identString : String) : CheckerM[RawIdentifier] =
+    IdentParser(identString) match {
+      case IdentParser.Success(rawIdent, _) => liftError(success(rawIdent))
+      case _ => liftError(fail("Failed to parse identifier string: " ++ identString))
+    }
 
   def liftError[A](e : Error[A]) : CheckerM[A] =
-    StateT[Error, ModuleZipper, A]((ptr : ModuleZipper) => { e map (a => (ptr, a)) })
+    StateT[Error, CheckerState, A]((st : CheckerState) => { e map (a => (st, a)) })
 
 }
 

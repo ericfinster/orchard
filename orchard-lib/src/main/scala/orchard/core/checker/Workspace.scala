@@ -11,6 +11,7 @@ import scala.collection.mutable.HashMap
 
 import orchard.core.util._
 import orchard.core.cell._
+import orchard.core.complex._
 
 import ErrorM._
 import ErrorMonad._
@@ -19,6 +20,11 @@ class Workspace extends Checker {
 
   var rootModule : Error[Module] = 
     Right(Module(new CheckerModuleNode("Prelude"), Vector.empty))
+
+  def rootZipper : Error[ModuleZipper] = 
+    for {
+      rootM <- rootModule
+    } yield ModuleZipper(rootM, Nil)
 
   val worksheetMap : HashMap[Int, Worksheet] = HashMap.empty
 
@@ -29,42 +35,46 @@ class Workspace extends Checker {
   }
 
   def runCommand[A](cmd : CheckerM[A]) : Error[A] = 
-    for {
-      root <- rootModule
-      res <- (cmd run (ModuleZipper(root, Nil)))
-    } yield {
-      rootModule = Right(res._1.zip.asInstanceOf[Module])
-      res._2
-    }
+    runCommandAtAddress(cmd, CheckerAddress(Vector.empty, 0))
 
   def runCommandAtAddress[A](cmd : CheckerM[A], addr : CheckerAddress) : Error[A] = 
     for {
       root <- rootModule
-      ptr <- (ModuleZipper(root, Nil)).seek(addr.moduleAddress)
-      res <- (cmd run ptr)
+      zipper <- (ModuleZipper(root, Nil)).seek(addr.moduleAddress)
+      res <- (cmd run (zipper,  addr.cursorOffset))
     } yield {
-      rootModule = Right(res._1.zip.asInstanceOf[Module])
+      val newRoot = res._1._1.zip.asInstanceOf[Module]
+      println(newRoot.toString)
+      rootModule = Right(newRoot)
       res._2
     }
 
-  def newParameter(workspaceId : Int, address : CellAddress, identString : String) : Error[Unit] = {
-    if (worksheetMap.isDefinedAt(workspaceId)) {
 
-      // Now what?  Well, aside from the string parsing and whatnot, don't we need to know some
-      // kind of location in the module to see what exactly is in scope?
-
-      // Yes, we do.  A new case class?  CheckerAddress?  It should consist of a Vector[Int] specifying
-      // the module which we are in and an Int specifying the cursor offset.  With this information,
-      // we can ask the type checker for the currently valid environment and then check to see if there
-      // is any kind of identifier conflict.
-
-      // Right.  We're going to need this to be up and running before we can do any interesting semantic
-      // manipulation.  So I think that is the next task.
-
-      success(())
-    } else {
+  def getWorksheet(worksheetId : Int) : Error[Worksheet] =
+    if (worksheetMap.isDefinedAt(worksheetId))
+      success(worksheetMap(worksheetId))
+    else
       fail("Requested worksheet not found.")
+
+  def newParameter(
+    worksheetId : Int, 
+    address : CellAddress, 
+    identString : String, 
+    isThin : Boolean, 
+    checkerAddress : CheckerAddress
+  ) : Error[String] =
+    for {
+      worksheet <- getWorksheet(worksheetId)
+      targetCell <- worksheet.seek(address)
+      _ <- ensure(targetCell.isShell, "Selected cell is not a shell.")
+      shell = new Shell(targetCell.neutralNCell)
+      parameterNode <- runCommandAtAddress(
+        insertParameter(identString, shell, isThin),
+        checkerAddress
+      )
+    } yield {
+      targetCell.item = Neutral(Some(parameterNode.variableExpression))
+      parameterNode.name
     }
-  }
 
 }

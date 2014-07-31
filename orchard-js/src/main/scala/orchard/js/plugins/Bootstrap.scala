@@ -59,7 +59,6 @@ abstract class BootstrapModal(id : String) {
   def onHidden : Unit = ()
 
   def show : Unit = {
-    println("Attempting show.")
     modalJQuery.modal("show")
   }
 

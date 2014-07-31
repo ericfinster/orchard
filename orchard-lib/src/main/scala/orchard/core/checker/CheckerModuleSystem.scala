@@ -7,7 +7,7 @@
 
 package orchard.core.checker
 
-trait CheckerModuleSystem extends ModuleSystem {
+trait CheckerModuleSystem extends ModuleSystem { thisChecker : Checker =>
 
   type NodeType = CheckerNode
   type ModuleNodeType = CheckerModuleNode
@@ -15,17 +15,33 @@ trait CheckerModuleSystem extends ModuleSystem {
   type DefinitionNodeType = CheckerDefinitionNode
   type ImportNodeType = CheckerImportNode
 
-  class CheckerNode extends Node {
-    def name : String = "Unknown"
+  abstract class CheckerNode extends Node {
+    def name : String
   }
 
   class CheckerModuleNode(val moduleId : String) extends CheckerNode with ModuleNode {
     def insertEntryAt(entry : ModuleEntry, index : Int) : Unit = ()
-    override def name = moduleId
+    def name = moduleId
   }
 
-  class CheckerParameterNode extends CheckerNode with ParameterNode
-  class CheckerDefinitionNode extends CheckerNode with DefinitionNode
-  class CheckerImportNode extends CheckerNode with ImportNode
+  class CheckerParameterNode(val identifier : Identifier, val shell : Shell, val isThin : Boolean) extends CheckerNode with ParameterNode {
+
+    def name : String = identifier.expand
+
+    def variableExpression : Variable = Variable(identifier, shell, isThin)
+
+  }
+
+  class CheckerDefinitionNode extends CheckerNode with DefinitionNode {
+
+    def name : String = ???
+
+  }
+
+  class CheckerImportNode extends CheckerNode with ImportNode {
+
+    def name : String = ???
+
+  }
 
 }

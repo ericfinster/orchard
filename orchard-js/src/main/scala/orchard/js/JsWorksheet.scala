@@ -12,6 +12,7 @@ import org.scalajs.dom
 import dom.document
 import org.scalajs.jquery.jQuery
 
+import orchard.core.util._
 import orchard.core.complex._
 import orchard.core.checker._
 
@@ -158,5 +159,24 @@ class JsWorksheet(
   }
 
   trait JsWorksheetPanelEdge extends JsPanelEdge
+
+}
+
+object JsWorksheet {
+
+  sealed trait WorksheetReadType
+  case class WorksheetCreate(el : dom.Element, panelSize : Int) extends WorksheetReadType
+  case class WorksheetRefresh(worksheet : JsWorksheet) extends WorksheetReadType
+
+  implicit def worksheetIsReadable(
+    implicit readType : WorksheetReadType
+  ) : JsonReadable[JsWorksheet, js.Any] =
+    new JsonReadable[JsWorksheet, js.Any] {
+      def read(x : js.Any, reader : JsonReader[js.Any]) : JsWorksheet = 
+        readType match {
+          case WorksheetCreate(el, panelSize) => new JsWorksheet(el, x, panelSize)
+          case WorksheetRefresh(worksheet) => { worksheet.refreshFromJson(x) ; worksheet }
+        }
+    }
 
 }

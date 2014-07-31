@@ -21,6 +21,7 @@ import js.annotation.JSExport
 
 import scala.concurrent.Future
 
+import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 import orchard.core.checker._
@@ -49,41 +50,16 @@ object Main extends js.JSApp with JsModuleSystem {
   })
 
   jQuery("#new-worksheet-btn").click(() => {
-    jQuery.getJSON("/new-worksheet", success = ((data : js.Dynamic) => {
-      appendWorksheet(data.message)
-    }) : js.Function1[js.Dynamic, Unit])
+    requestNewWorksheet onSuccess {
+      case worksheet => activeWorksheet = Some(worksheet)
+    }
   })
 
   jQuery("#extrude-btn").click(() => {
     for {
-      complex <- currentComplex
+      worksheet <- activeWorksheet
     } {
-
-      val extrudeRequest = lit(
-        "worksheetId" -> complex.remoteId,
-        "selectionDescriptor" -> JsJsonWriter.write(complex.descriptor)
-      )
-
-      val f =
-        Ajax.post(
-          "/extrude-worksheet",
-          js.JSON.stringify(extrudeRequest),
-          0,
-          Seq(("Content-type" -> "application/json")),
-          false
-        )
-
-      f.onSuccess {
-        case xmlReq => {
-          val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-
-          newJson("status").asInstanceOf[js.String] match {
-            case "OK" => complex.refreshFromJson(newJson("message"))
-            case "KO" => Toastr.error(newJson("message").asInstanceOf[js.String])
-          }
-
-        }
-      }
+      requestExtrusion(worksheet)
     }
   })
 
@@ -111,57 +87,63 @@ object Main extends js.JSApp with JsModuleSystem {
 
   object NewModuleModal extends BootstrapModal("orchard-new-module-modal") {
 
-    override def onShow = { 
-      // println("Active module address: " ++ activeModuleAddress.toString)
-      // println("Active cursor index: " ++ activeCursorOffset.toString)
-    }
-
     override def onHide = {
       // Really we need to check the response status ...
-      val moduleId: String = modalJQuery.find("#module-name").value.asInstanceOf[js.String]
+      val moduleId : String = modalJQuery.find("#module-name").value.asInstanceOf[js.String]
+      val modAddr = activeCheckerAddress.moduleAddress
+      val curOff = activeCheckerAddress.cursorOffset
 
       requestModule(moduleId) onSuccess {
-        case xmlReq => {
+        case returnedId : String => {
 
-          val newJson = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-          
-          newJson("status").asInstanceOf[js.String] match {
-            case "OK" => {
-              val node = new JsModuleNode(moduleId, getModuleHtml(moduleId))
+          val node = new JsModuleNode(returnedId, getModuleHtml(returnedId))
 
-              for {
-                root <- rootModule
-                insertionPtr <- ModuleZipper(root, Nil).seek(activeModuleAddress)
-                ptr <- insertionPtr.insertAt(Module(node, Vector.empty), activeCursorOffset)
-              } {
-                rootModule = Some(ptr.zip.asInstanceOf[Module])
-                setCursorPosition(activeModuleAddress, activeCursorOffset + 1)
-                Toastr.success("Created module: " ++ moduleId)
-              }
-
-            }
-            case "KO" => {
-              val msg = newJson("message").asInstanceOf[js.String]
-              Toastr.error(msg)
-            }
+          for {
+            rootZ <- rootZipper
+            insertionPtr <- rootZ.seek(modAddr)
+            ptr <- insertionPtr.insertAt(Module(node, Vector.empty), curOff)
+          } {
+            rootModule = Some(ptr.zip.asInstanceOf[Module])
+            setCursorPosition(modAddr, curOff + 1)
+            Toastr.success("Created module: " ++ returnedId)
           }
-
         }
       }
     }
-
   }
 
   object NewParameterModal extends BootstrapModal("orchard-new-parameter-modal") {
 
-    override def onShow = {
-      println("Showing new parameter dialog")
-    }
-
     override def onHide = {
-      println("Hiding new parameter dialog")
-    }
 
+      for {
+        worksheet <- activeWorksheet
+        targetCell <- worksheet.selectionBase
+      } {
+
+        val parameterIdent: String = modalJQuery.find("#parameter-name").value.asInstanceOf[js.String]
+        val modAddr = activeCheckerAddress.moduleAddress
+        val curOff = activeCheckerAddress.cursorOffset
+
+        requestParameter(worksheet.remoteId, targetCell.address, parameterIdent, false) onSuccess {
+          case parameterName => {
+
+            val node = new JsParameterNode(parameterName, getParameterHtml(parameterName))
+
+            for {
+              rootZ <- rootZipper
+              insertionPtr <- rootZ.seek(modAddr)
+              ptr <- insertionPtr.insertAt(Parameter(node), curOff)
+            } {
+              rootModule = Some(ptr.zip.asInstanceOf[Module])
+              setCursorPosition(modAddr, curOff + 1)
+              refreshWorksheet(worksheet)
+              Toastr.success("Created parameter: " ++ parameterName)
+            }
+          }
+        }
+      }
+    }
   }
 
   //============================================================================================
@@ -169,8 +151,14 @@ object Main extends js.JSApp with JsModuleSystem {
   //
 
   var rootModule : Error[Module] = fail("No active module.")
+
+  def rootZipper : Error[ModuleZipper] = 
+    for {
+      rootM <- rootModule
+    } yield ModuleZipper(rootM, Nil)
+
   var hasEnvironment : Boolean = false
-  var currentComplex : Option[JsWorksheet] = None
+  var activeWorksheet : Option[JsWorksheet] = None
   var activeCheckerAddress : CheckerAddress = 
     CheckerAddress(Vector.empty, 0)
 
@@ -234,39 +222,241 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  def getParameterHtml(parameterId : String) : String = {
+
+    import scalatags.Text.all._
+
+    val paramHtml = 
+      div(`class`:="panel panel-default parameter-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(parameterId)
+        ),
+        div(`class`:="panel-body")(
+        )
+      )
+
+    paramHtml.toString
+
+  }
+
+  def updateEnvironment : Unit = {
+
+    import BootstrapTreeview._
+
+    if (hasEnvironment) {
+      jQuery("#env-tree").treeview("remove")
+      hasEnvironment = false
+    }
+
+    requestEnvironment onSuccess {
+      case envRoseTree : RoseTree[String, String] => {
+
+        def roseTreeToJs(t : RoseTree[String, String]) : js.Any =
+          t match {
+            case Rose(s) => { println("Passing rose:" ++ s) ; lit(text = s) }
+            case Branch(s, brs) => {
+              println("Passing branch: " ++ s)
+              val branchArray = new js.Array[js.Any](brs.length)
+
+              for {
+                (b, i) <- brs.zipWithIndex
+              } {
+                branchArray(i) = roseTreeToJs(b)
+              }
+
+              lit(
+                text = s,
+                nodes = branchArray
+              )
+            }
+          }
+
+        jQuery("#env-tree").treeview(lit(
+          data = js.Array(roseTreeToJs(envRoseTree))
+        ))
+
+        hasEnvironment = true
+      }
+    }
+  }
+
   //============================================================================================
   // AJAX REQUESTS
   //
 
-  def requestModule(moduleId : String) : Future[dom.XMLHttpRequest] = {
+  case class GetRequest[A](val address : String)(implicit val aReader : JsonReadable[A, js.Any])
+  case class PostRequest[A](val address : String, val request : js.Any)(implicit val aReader : JsonReadable[A, js.Any])
 
-    val request = lit( 
-      "moduleId" -> moduleId,
-      "address" -> JsJsonWriter.write(activeCheckerAddress)
-    )
+  def doGetRequest[A](getReq : GetRequest[A]) : Future[A] = 
+    for {
+      xmlReq <- Ajax.get(getReq.address, headers = Seq(("Content-type" -> "application/json")))
+    } yield {
 
-    Ajax.post(
-      "/new-module",
-      js.JSON.stringify(request),
-      0,
-      Seq(("Content-type" -> "application/json")),
-      false
-    )
+      implicit val reader = getReq.aReader
+
+      js.JSON.parse(xmlReq.responseText).as[Error[A]] match {
+        case Right(a) => a
+        case Left(msg) => {
+          Toastr.error(msg)
+          throw new Exception("Request returned an error.")
+        }
+      }
+    }
+
+  def doPostRequest[A](postReq : PostRequest[A]) : Future[A] = 
+    for {
+      xmlReq <- Ajax.post(postReq.address, 
+        js.JSON.stringify(postReq.request), 0,
+        Seq(("Content-type" -> "application/json")), false)
+    } yield {
+
+      implicit val reader = postReq.aReader
+
+      js.JSON.parse(xmlReq.responseText).as[Error[A]] match {
+        case Right(a) => a
+        case Left(msg) => {
+          Toastr.error(msg)
+          throw new Exception("Request returned an error.")
+        }
+      }
+    }
+
+  def serverRequest(addr : String, reqObj : js.Any) : Future[js.Any] = 
+    for {
+      xmlReq <- Ajax.post(addr, js.JSON.stringify(reqObj), 0, 
+        Seq(("Content-type" -> "application/json")), false)
+    } yield {
+
+        val jsonResponse = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
+        
+        jsonResponse("status").as[String] match {
+          case "OK" => {
+            jsonResponse("message")
+          }
+          case "KO" => {
+            val msg = jsonResponse("message").as[String]
+            Toastr.error(msg)
+
+            // Do we fail the future by just throwing an exception?
+            throw new Exception("Request failed.")
+          }
+        }
+    }
+
+  def requestModule(moduleId : String) : Future[String] = {
+
+    val request = 
+      PostRequest[String](
+        "/new-module",
+        lit(
+          "moduleId" -> moduleId,
+          "address" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    doPostRequest(request)
+
   }
 
-  def requestEnvironment : Future[dom.XMLHttpRequest] = {
+  def requestNewWorksheet : Future[JsWorksheet] = {
 
-    val request = lit(
-      "address" -> JsJsonWriter.write(activeCheckerAddress)
+    val listElement = document.createElement("li")
+    jQuery(".worksheet-carousel ul").append(listElement)
+
+    implicit val readType = JsWorksheet.WorksheetCreate(listElement, 200)
+
+    val request = 
+      GetRequest[JsWorksheet](
+        "/new-worksheet"
+      )
+
+    for {
+      newWorksheet <- doGetRequest(request)
+    } yield {
+
+      newWorksheet.renderAll
+
+      import JQueryCarousel._
+
+      jQuery(".worksheet-carousel").jcarousel("reload", lit())
+
+      jQuery(listElement).
+        on("jcarousel:targetin", (e : JQueryEventObject, c : JCarousel) => {
+          activeWorksheet = Some(newWorksheet)
+        })
+
+      jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
+
+      newWorksheet
+    } 
+
+  }
+
+  def refreshWorksheet(worksheet : JsWorksheet) : Future[JsWorksheet] = {
+
+    implicit val readType = JsWorksheet.WorksheetRefresh(worksheet)
+
+    val request = PostRequest[JsWorksheet](
+      "/request-worksheet",
+      lit("worksheetId" -> worksheet.remoteId)
     )
 
-    Ajax.post(
-      "/environment",
-      js.JSON.stringify(request),
-      0,
-      Seq(("Content-type" -> "application/json")),
-      false
-    )
+    doPostRequest(request)
+
+  }
+
+  def requestExtrusion(worksheet : JsWorksheet) : Future[JsWorksheet] = {
+
+    implicit val readType = JsWorksheet.WorksheetRefresh(worksheet)
+
+    val request = 
+      PostRequest[JsWorksheet](
+        "/extrude-worksheet",
+        lit(
+          "worksheetId" -> worksheet.remoteId,
+          "selectionDescriptor" -> JsJsonWriter.write(worksheet.descriptor)
+        )
+      )
+
+    doPostRequest(request)
+
+  }
+
+  def requestEnvironment : Future[RoseTree[String, String]] = {
+
+    val request = 
+      PostRequest[RoseTree[String, String]](
+        "/environment",
+        lit(
+          "address" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    doPostRequest(request)
+
+  }
+
+  def requestParameter(
+    worksheetId : Int,
+    cellAddress : CellAddress, 
+    identString : String,
+    isThin : Boolean
+  ) : Future[String] = {
+
+    val request = 
+      PostRequest[String](
+        "/new-parameter",
+        lit(
+          "worksheetId" -> worksheetId,
+          "cellAddress" -> JsJsonWriter.write(cellAddress),
+          "identString" -> identString,
+          "isThin" -> isThin,
+          "checkerAddress" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    doPostRequest(request)
+
   }
 
   //============================================================================================
@@ -282,80 +472,12 @@ object Main extends js.JSApp with JsModuleSystem {
       jQuery(el).find(".cursor-bar").addClass("active")
     })
 
-    jqModuleWrapper.append(node.panelJQ)
+    jqModuleWrapper.append(node.panelJq)
     val rm = Module(node, Vector.empty)
     rootModule = Some(rm)
 
     setCursorPosition(Vector.empty, 0)
 
-  }
-
-
-  def appendWorksheet(json : js.Any) : Unit = {
-
-    val listElement = document.createElement("li")
-    jQuery(".worksheet-carousel ul").append(listElement)
-
-    val worksheet = new JsWorksheet(listElement, json, 200)
-    worksheet.renderAll
-
-    println("Successfully parsed a worksheet with id: " ++ worksheet.remoteId.toString)
-
-    import JQueryCarousel._
-
-    jQuery(".worksheet-carousel").jcarousel("reload", lit())
-
-    jQuery(listElement).
-      on("jcarousel:targetin", (e : JQueryEventObject, c : JCarousel) => {
-        currentComplex = Some(worksheet)
-      })
-
-    jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
-    currentComplex = Some(worksheet) 
-
-  }
-
-  def updateEnvironment : Unit = {
-
-    import BootstrapTreeview._
-
-    if (hasEnvironment) {
-      jQuery("#env-tree").treeview("remove")
-      hasEnvironment = false
-    }
-
-    requestEnvironment onSuccess {
-      case xmlReq => {
-
-        val jsonResponse = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-        
-        jsonResponse("status").asInstanceOf[js.String] match {
-          case "OK" => {
-
-            val envRoseTree = jsonResponse("message").as[RoseTree[String, String]]
-
-            def roseTreeToJs(t : RoseTree[String, String]) : js.Any = 
-              t match {
-                case Rose(s) => lit(text = s)
-                case Branch(s, brs) => lit(
-                  text = s,
-                  nodes = js.Array(brs map (roseTreeToJs(_)) : _*)
-                )
-              }
-
-            jQuery("#env-tree").treeview(lit(
-              data = js.Array(roseTreeToJs(envRoseTree))
-            ))
-
-            hasEnvironment = true
-          }
-          case "KO" => {
-            val msg = jsonResponse("message").asInstanceOf[js.String]
-            Toastr.error(msg)
-          }
-        }
-      }
-    }
   }
 
   implicit class JsAnyOps(x : js.Any) {

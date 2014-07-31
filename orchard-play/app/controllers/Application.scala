@@ -21,76 +21,38 @@ object Application extends Controller {
     import models.OrchardToPlay._
     val worksheet = workspace.newWorksheet
     Logger.debug("Returning a worksheet with id: " ++ worksheet.hashCode.toString)
-    Ok(Json.obj(
-      "status" -> "OK",
-      "message" -> Json.toJson(worksheet.toMarkerComplex)
-    ))
-  }
-
-  def requestEnvironment = Action(BodyParsers.parse.json) { request =>
-    import models.OrchardToPlay._
-
-    val checkerAddress = (request.body \ "address").as[CheckerAddress]
-
-    workspace.runCommandAtAddress(workspace.environmentTree, checkerAddress) match {
-      case Left(msg) => Ok(Json.obj("status" -> "KO", "message" -> msg))
-      case Right(envTree) => Ok(Json.obj("status" -> "OK", "message" -> Json.toJson(envTree)))
-    }
-
+    Ok(Json.toJson(success(worksheet.toMarkerComplex)))
   }
 
   def requestWorksheet = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
     val worksheetId = (request.body \ "worksheetId").as[Int]
 
-    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
-      BadRequest(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
-    } else {
-        import models.OrchardToPlay._
-        val worksheet = workspace.worksheetMap(worksheetId)
-        Ok(Json.obj(
-          "status" -> "OK", 
-          "message" -> Json.toJson(worksheet.toMarkerComplex)
-        ))
-    }
+    val markerComplex = 
+      for {
+        worksheet <- workspace.getWorksheet(worksheetId)
+      } yield worksheet.toMarkerComplex
+
+    Ok(Json.toJson(markerComplex))
   }
 
   def extrudeWorksheet = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
 
     val worksheetId = (request.body \ "worksheetId").as[Int]
+    val selectionDescriptor = (request.body \ "selectionDescriptor").as[SelectionDescriptor]
 
-    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
-      Ok(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
-    } else {
-      import models.OrchardToPlay._
+    val extrudedWorksheet = 
+      for {
+        worksheet <- workspace.getWorksheet(worksheetId)
+        _ <- worksheet.selectFromDescriptor(selectionDescriptor)
+        _ <- ensure(worksheet.selectionIsExtrudable, "Selection is not extrudable.")
+        _ <- worksheet.emptyExtrusion
+      } yield worksheet.toMarkerComplex
 
-      Logger.debug("Extruding on worksheet: " ++ worksheetId.toString)
 
-      val worksheet = workspace.worksheetMap(worksheetId)
-      val descriptorResult = (request.body \ "selectionDescriptor").validate[SelectionDescriptor]
+    Ok(Json.toJson(extrudedWorksheet))
 
-      descriptorResult.fold(
-        errors => {
-          BadRequest(Json.obj("status" -> "KO", "message" -> JsError.toFlatJson(errors)))
-        },
-        descriptor => {
-          val extrusionResult =
-            for {
-              _ <- worksheet.selectFromDescriptor(descriptor)
-              _ <- ensure(worksheet.selectionIsExtrudable, "Selection is not extrudable.")
-              _ <- worksheet.emptyExtrusion
-            } yield ()
-
-          extrusionResult match {
-            case Right(()) => {
-              Ok(Json.obj("status" -> "OK", "message" -> Json.toJson(worksheet.toMarkerComplex)))
-            }
-            case Left(msg) => {
-              Ok(Json.obj("status" -> "KO", "message" -> msg))
-            }
-          }
-        }
-      )
-    }
   }
 
   def newModule = Action(BodyParsers.parse.json) { request =>
@@ -101,43 +63,51 @@ object Application extends Controller {
 
     Logger.debug("Requesting module: " ++ moduleId)
 
-    val insertionCommand = workspace.insertModule(moduleId, checkerAddress.cursorOffset)
+    val insertionCommand = workspace.insertModule(moduleId)
 
-    workspace.runCommandAtAddress(insertionCommand, checkerAddress) match {
-      case Left(msg) => Ok(Json.obj("status" -> "KO", "message" -> msg))
-      case Right(moduleNode) => Ok(Json.obj("status" -> "OK").toString)
-    }
+    val result = 
+      for {
+        moduleNode <- workspace.runCommandAtAddress(insertionCommand, checkerAddress)
+      } yield moduleNode.name
+
+
+    Ok(Json.toJson(result))
   }
 
   def newParameter = Action(BodyParsers.parse.json) { request => 
 
+    import models.OrchardToPlay._
+
     val worksheetId = (request.body \ "worksheetId").as[Int]
+    val cellAddress = (request.body \ "cellAddress").as[CellAddress]
+    val identString = (request.body \ "identString").as[String]
+    val isThin = (request.body \ "isThin").as[Boolean]
+    val checkerAddress = (request.body \ "checkerAddress").as[CheckerAddress]
 
-    if (! workspace.worksheetMap.isDefinedAt(worksheetId)) {
-      Ok(Json.obj("status" -> "KO", "message" -> "Requested worksheet not found."))
-    } else {
-      import models.OrchardToPlay._
+    val parameterResult = 
+      workspace.newParameter(
+        worksheetId,
+        cellAddress,
+        identString,
+        isThin,
+        checkerAddress
+      )
 
-      val worksheet = workspace.worksheetMap(worksheetId)
+    Ok(Json.toJson(parameterResult))
 
-      val cellAddress = (request.body \ "cellAddress").as[CellAddress]
-      val identString = (request.body \ "identString").as[String]
+  }
 
-      // Now what? We need to pass this off to the workspace which should check that the cell
-      // can be filled with a parameter and parse the identifier ...
+  def requestEnvironment = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
 
-      // Great, now here's the problem: should we check that the body of the pointed to cell
-      // is valid in the current environment?  Yes, I think so.  There can be some kind of
-      // more elaborate worksheet management later.  For now we will just do as mentioned:
-      // look at the identifiers on the shell and make sure they are in fact visible in
-      // the scope provided.  If not, we will reject the request at this point by saying
-      // so.
+    val checkerAddress = (request.body \ "address").as[CheckerAddress]
 
-      // So, for the next step, we're going to have to resurrect the identifier parsing and 
-      // start getting serious about how these guys are stored.  Ok, ok.  We'll get there.
+    val envResult = workspace.runCommandAtAddress(
+      workspace.environmentTree, 
+      checkerAddress
+    ) 
 
-      Ok(Json.obj("status" -> "OK"))
-    }
+    Ok(Json.toJson(envResult))
 
   }
 

@@ -238,8 +238,12 @@ html, body {
 .orchard-cell-polarized { fill: #dddddd; }
 
 .orchard-cell-empty { fill: #fff; }
-.orchard-cell-empty-hovered { fill: #f64; }
-.orchard-cell-empty-selected { fill: #c45; }
+.orchard-cell-empty-hovered { fill: #838eaf; }
+.orchard-cell-empty-selected { fill: #5e70a6; }
+
+.orchard-cell-variable { fill: #fff5e0; }
+.orchard-cell-variable-hovered { fill: #e4cfa3; }
+.orchard-cell-variable-selected { fill: #d9b974; }
 
 .orchard-label {
     pointer-events: none;

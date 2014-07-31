@@ -17,6 +17,7 @@ trait ModuleSystem {
   type DefinitionNodeType <: NodeType with DefinitionNode
   type ImportNodeType <: NodeType with ImportNode
 
+  def rootZipper : Error[ModuleZipper]
 
   trait Node {
     thisNode : NodeType =>
@@ -24,16 +25,31 @@ trait ModuleSystem {
     def name : String 
 
     var address : Vector[Int] = Vector.empty
+
+    def parentNode : Error[Node] = 
+      for {
+        root <- rootZipper
+        zipper <- root.seek(address.init)
+      } yield zipper.focus.node
+
+    def qualifiedName : String = 
+      parentNode match {
+        case Right(node) => node.qualifiedName ++ "." ++ name
+        case Left(_) => name
+      }
+
   }
 
   trait ModuleNode extends Node { 
     thisNode : ModuleNodeType =>
 
     def insertEntryAt(me : ModuleEntry, i : Int) 
+
   }
 
   trait ParameterNode extends Node { 
     thisNode : ParameterNodeType =>
+
   }
 
   trait DefinitionNode extends Node {
@@ -48,14 +64,22 @@ trait ModuleSystem {
   // MODULE ENTRIES
   //
 
-  sealed trait ModuleEntry { def node : NodeType }
+  sealed trait ModuleEntry { def node : NodeType } 
 
   case class Module(val moduleNode : ModuleNodeType, val entries : Vector[ModuleEntry]) extends ModuleEntry {
     def node = moduleNode
+
+    override def toString =
+      (entries map (_.toString)).mkString("Begin module: " ++ moduleNode.name ++ "\n", "\n", "\nEnd module: " ++ moduleNode.name)
+
   }
 
   case class Parameter(val parameterNode : ParameterNodeType) extends ModuleEntry {
     def node = parameterNode
+
+    override def toString = 
+      "Parameter: " ++ parameterNode.name
+
   }
 
   case class Definition(val definitionNode : DefinitionNodeType) extends ModuleEntry { 
@@ -149,7 +173,6 @@ trait ModuleSystem {
           } {
             child.foreachWithAddress {
               case (addr, node) => {
-                println("Setting address of " ++ node.name ++ " to " ++ addr.toString)
                 node.address = addr
               }
             }
@@ -220,6 +243,7 @@ trait ModuleSystem {
         }
         case p : Parameter => f(toAddress, p.node)
         case d : Definition => f(toAddress, d.node)
+        case i : Import => ???
       }
 
     def focusedModule : Error[Module] =

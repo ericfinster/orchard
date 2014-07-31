@@ -14,3 +14,11 @@ sealed trait Expression {
   def isThin : Boolean
 
 }
+
+case class Variable(val ident : Identifier, val shell : Shell, val isThin : Boolean) extends Expression {
+
+  def name = ident.expand
+  def styleString = "variable"
+
+}
+

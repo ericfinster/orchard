@@ -5,7 +5,9 @@
   * @version 0.1 
   */
 
-package orchard.core.expression
+package orchard.core.checker
+
+import scala.util.parsing.combinator.RegexParsers
 
 //============================================================================================
 // IDENTIFIERS
@@ -26,9 +28,11 @@ case class LiteralToken(val literal : String) extends IdentifierToken {
   override def toString : String = "Lit(" ++ literal ++ ")"
 }
 
-case class ReferenceToken(val name : String) extends IdentifierToken {
-  def expand = name
-  override def toString : String = "Ref(" ++ name ++ ")"
+// Right.  What does the reference reference?  A module entry?  It would be
+// nice to be more type specific ...
+case class ReferenceToken(val entry : Checker#ModuleEntry) extends IdentifierToken {
+  def expand = entry.node.name
+  override def toString : String = "Ref(" ++ expand ++ ")"
 }
 
 

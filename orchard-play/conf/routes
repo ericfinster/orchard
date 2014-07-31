@@ -9,9 +9,13 @@ GET     /template                   controllers.Application.template
 
 GET     /new-worksheet              controllers.Application.newWorksheet
 
+POST    /request-worksheet          controllers.Application.requestWorksheet
+
 POST    /environment                controllers.Application.requestEnvironment
 
 POST    /new-module                 controllers.Application.newModule
+
+POST    /new-parameter              controllers.Application.newParameter
 
 POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
 
