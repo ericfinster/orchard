@@ -137,6 +137,7 @@ object Application extends Controller {
   //
 
   def index = Action {
+    workspace.reset
     Ok(views.html.index("This is some content which goes in a panel."))
   }
 

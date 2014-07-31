@@ -21,6 +21,11 @@ class Workspace extends Checker {
   var rootModule : Error[Module] = 
     Right(Module(new CheckerModuleNode("Prelude"), Vector.empty))
 
+  def reset : Unit = {
+    worksheetMap.clear
+    rootModule = Right(Module(new CheckerModuleNode("Prelude"), Vector.empty))
+  }
+
   def rootZipper : Error[ModuleZipper] = 
     for {
       rootM <- rootModule

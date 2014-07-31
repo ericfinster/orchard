@@ -250,30 +250,34 @@ object Main extends js.JSApp with JsModuleSystem {
     }
 
     requestEnvironment onSuccess {
-      case envRoseTree : RoseTree[String, String] => {
+      case Branch("root", branches) => {
+
+        def processBranches(brs : Vector[RoseTree[String, String]]) : js.Array[js.Any] = {
+          val branchArray = new js.Array[js.Any](brs.length)
+
+          for {
+            (b, i) <- brs.zipWithIndex
+          } {
+            branchArray(i) = roseTreeToJs(b)
+          }
+
+          branchArray
+        }
 
         def roseTreeToJs(t : RoseTree[String, String]) : js.Any =
           t match {
             case Rose(s) => lit(text = s, icon = "none")
             case Branch(s, brs) => {
-              val branchArray = new js.Array[js.Any](brs.length)
-
-              for {
-                (b, i) <- brs.zipWithIndex
-              } {
-                branchArray(i) = roseTreeToJs(b)
-              }
-
               lit(
                 text = s,
-                nodes = branchArray,
+                nodes = processBranches(brs),
                 icon = "none"
               )
             }
           }
 
         jQuery("#env-tree").treeview(lit(
-          data = js.Array(roseTreeToJs(envRoseTree))
+          data = processBranches(branches)
         ))
 
         hasEnvironment = true

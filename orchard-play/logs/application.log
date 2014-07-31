@@ -2250,3 +2250,74 @@ Application started (Dev)
 2014-07-31 14:53:30,237 - [DEBUG] - from application in play-akka.actor.default-dispatcher-503 
 Returning a worksheet with id: 773538778
 
+2014-07-31 14:59:47,925 - [ERROR] - from application in New I/O worker #9 
+
+
+! @6j40k06h1 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[type mismatch;
+ found   : scalaz.IndexedStateT[[+A]scala.util.Either[String,A],(_1.ModuleZipper, Int),(_1.ModuleZipper, Int),_1.CheckerModuleNode] where val _1: orchard.core.checker.Workspace
+ required: scalaz.IndexedStateT[[+A]scala.util.Either[String,A],(_2.ModuleZipper, Int),(_2.ModuleZipper, Int),?] where val _2: orchard.core.checker.Workspace]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-07-31 15:01:35,639 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:05:40,972 - [DEBUG] - from application in play-akka.actor.default-dispatcher-506 
+Returning a worksheet with id: 96188737
+
+2014-07-31 15:05:52,577 - [DEBUG] - from application in play-akka.actor.default-dispatcher-506 
+Requesting module: Composition
+
+2014-07-31 15:15:23,751 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:15:24,753 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:16:21,073 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:16:21,133 - [DEBUG] - from application in play-akka.actor.default-dispatcher-532 
+Returning a worksheet with id: 939621796
+
+2014-07-31 15:16:27,894 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:16:36,433 - [DEBUG] - from application in play-akka.actor.default-dispatcher-532 
+Returning a worksheet with id: 1840536737
+
+2014-07-31 15:56:44,521 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:56:59,303 - [DEBUG] - from application in play-akka.actor.default-dispatcher-543 
+Returning a worksheet with id: 2091260647
+
+2014-07-31 15:57:55,009 - [INFO] - from play in play-internal-execution-context-36 
+Application started (Dev)
+
+2014-07-31 15:57:59,805 - [DEBUG] - from application in play-akka.actor.default-dispatcher-546 
+Returning a worksheet with id: 2146373081
+
+2014-07-31 15:59:24,803 - [DEBUG] - from application in play-akka.actor.default-dispatcher-551 
+Requesting module: Fred
+
