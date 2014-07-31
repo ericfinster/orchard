@@ -17,6 +17,8 @@ POST    /new-module                 controllers.Application.newModule
 
 POST    /new-parameter              controllers.Application.newParameter
 
+POST    /new-definition             controllers.Application.newDefinition
+
 POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
 
 POST    /debug                      controllers.Application.debug

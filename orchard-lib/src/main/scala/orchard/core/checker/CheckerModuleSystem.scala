@@ -32,9 +32,11 @@ trait CheckerModuleSystem extends ModuleSystem { thisChecker : Checker =>
 
   }
 
-  class CheckerDefinitionNode extends CheckerNode with DefinitionNode {
+  class CheckerDefinitionNode(val identifier : Identifier, val nook : Nook) extends CheckerNode with DefinitionNode {
 
-    def name : String = ???
+    def name : String = identifier.expand
+
+    def fillerExpression : Filler = Filler(identifier, nook)
 
   }
 

@@ -77,4 +77,29 @@ class Workspace extends Checker {
       parameterNode.name
     }
 
+  def newDefinition(
+    worksheetId : Int,
+    address : CellAddress,
+    identString : String,
+    checkerAddress : CheckerAddress
+  ) : Error[String] = 
+    for {
+      worksheet <- getWorksheet(worksheetId)
+      targetCell <- worksheet.seek(address)
+      _ <- ensure(targetCell.isFillable, "Selected cell is not fillable.")
+      nook = new Nook (targetCell.neutralNCell, targetCell.isThinBoundary)
+      definitionNode <- runCommandAtAddress(
+        insertDefinition(identString, nook),
+        checkerAddress
+      )
+    } yield {
+
+      targetCell.boundaryFace.item = Neutral(Some(definitionNode.fillerExpression.Boundary))
+      targetCell.item = Neutral(Some(definitionNode.fillerExpression))
+
+      // Put the expressions in the worksheet
+      definitionNode.name
+
+    }
+
 }

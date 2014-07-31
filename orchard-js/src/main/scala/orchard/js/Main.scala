@@ -49,6 +49,10 @@ object Main extends js.JSApp with JsModuleSystem {
     NewParameterModal.show
   })
 
+  jQuery("#new-defn-btn").click(() => {
+    NewDefinitionModal.show
+  })
+
   jQuery("#new-worksheet-btn").click(() => {
     requestNewWorksheet onSuccess {
       case worksheet => activeWorksheet = Some(worksheet)
@@ -96,7 +100,7 @@ object Main extends js.JSApp with JsModuleSystem {
       requestModule(moduleId) onSuccess {
         case returnedId : String => {
 
-          val node = new JsModuleNode(returnedId, getModuleHtml(returnedId))
+          val node = new JsModuleNode(returnedId)
 
           for {
             rootZ <- rootZipper
@@ -128,7 +132,7 @@ object Main extends js.JSApp with JsModuleSystem {
         requestParameter(worksheet.remoteId, targetCell.address, parameterIdent, false) onSuccess {
           case parameterName => {
 
-            val node = new JsParameterNode(parameterName, getParameterHtml(parameterName))
+            val node = new JsParameterNode(parameterName)
 
             for {
               rootZ <- rootZipper
@@ -139,6 +143,40 @@ object Main extends js.JSApp with JsModuleSystem {
               setCursorPosition(modAddr, curOff + 1)
               refreshWorksheet(worksheet)
               Toastr.success("Created parameter: " ++ parameterName)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  object NewDefinitionModal extends BootstrapModal("orchard-new-definition-modal") {
+
+    override def onHide = {
+
+      for {
+        worksheet <- activeWorksheet
+        targetCell <- worksheet.selectionBase
+      } {
+
+        val definitionIdent: String = modalJQuery.find("#definition-name").value.asInstanceOf[js.String]
+        val modAddr = activeCheckerAddress.moduleAddress
+        val curOff = activeCheckerAddress.cursorOffset
+
+        requestDefinition(worksheet.remoteId, targetCell.address, definitionIdent) onSuccess {
+          case definitionName => {
+
+            val node = new JsDefinitionNode(definitionName)
+
+            for {
+              rootZ <- rootZipper
+              insertionPtr <- rootZ.seek(modAddr)
+              ptr <- insertionPtr.insertAt(Definition(node), curOff)
+            } {
+              rootModule = Some(ptr.zip.asInstanceOf[Module])
+              setCursorPosition(modAddr, curOff + 1)
+              refreshWorksheet(worksheet)
+              Toastr.success("Created definition: " ++ definitionName)
             }
           }
         }
@@ -202,43 +240,6 @@ object Main extends js.JSApp with JsModuleSystem {
       case Left(msg) => Toastr.error(msg)
     }
 
-  def getModuleHtml(moduleId : String) : String = {
-
-    import scalatags.Text.all._
-
-    val modHtml = 
-      div(`class`:="panel panel-default module-panel")(
-        div(`class`:="panel-heading")(
-          h3(`class`:="panel-title")(moduleId)
-        ),
-        div(`class`:="panel-body")(
-          ul(`class`:="module-entries")(
-            li(`class`:="cursor")(a(href:="#")(div(`class`:="cursor-bar")))
-          )
-        )
-      )
-
-    modHtml.toString
-
-  }
-
-  def getParameterHtml(parameterId : String) : String = {
-
-    import scalatags.Text.all._
-
-    val paramHtml = 
-      div(`class`:="panel panel-default parameter-panel")(
-        div(`class`:="panel-heading")(
-          h3(`class`:="panel-title")(parameterId)
-        ),
-        div(`class`:="panel-body")(
-        )
-      )
-
-    paramHtml.toString
-
-  }
-
   def updateEnvironment : Unit = {
 
     import BootstrapTreeview._
@@ -253,9 +254,8 @@ object Main extends js.JSApp with JsModuleSystem {
 
         def roseTreeToJs(t : RoseTree[String, String]) : js.Any =
           t match {
-            case Rose(s) => { println("Passing rose:" ++ s) ; lit(text = s) }
+            case Rose(s) => lit(text = s, icon = "none")
             case Branch(s, brs) => {
-              println("Passing branch: " ++ s)
               val branchArray = new js.Array[js.Any](brs.length)
 
               for {
@@ -266,7 +266,8 @@ object Main extends js.JSApp with JsModuleSystem {
 
               lit(
                 text = s,
-                nodes = branchArray
+                nodes = branchArray,
+                icon = "none"
               )
             }
           }
@@ -319,28 +320,6 @@ object Main extends js.JSApp with JsModuleSystem {
           throw new Exception("Request returned an error.")
         }
       }
-    }
-
-  def serverRequest(addr : String, reqObj : js.Any) : Future[js.Any] = 
-    for {
-      xmlReq <- Ajax.post(addr, js.JSON.stringify(reqObj), 0, 
-        Seq(("Content-type" -> "application/json")), false)
-    } yield {
-
-        val jsonResponse = js.JSON.parse(xmlReq.responseText).asInstanceOf[js.Dictionary[js.Any]]
-        
-        jsonResponse("status").as[String] match {
-          case "OK" => {
-            jsonResponse("message")
-          }
-          case "KO" => {
-            val msg = jsonResponse("message").as[String]
-            Toastr.error(msg)
-
-            // Do we fail the future by just throwing an exception?
-            throw new Exception("Request failed.")
-          }
-        }
     }
 
   def requestModule(moduleId : String) : Future[String] = {
@@ -459,6 +438,27 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  def requestDefinition(
+    worksheetId : Int,
+    cellAddress : CellAddress, 
+    identString : String
+  ) : Future[String] = {
+
+    val request = 
+      PostRequest[String](
+        "/new-definition",
+        lit(
+          "worksheetId" -> worksheetId,
+          "cellAddress" -> JsJsonWriter.write(cellAddress),
+          "identString" -> identString,
+          "checkerAddress" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    doPostRequest(request)
+
+  }
+
   //============================================================================================
   // MAIN ENTRY POINT
   //
@@ -466,7 +466,7 @@ object Main extends js.JSApp with JsModuleSystem {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    val node = new JsModuleNode("Prelude", getModuleHtml("Prelude"))
+    val node = new JsModuleNode("Prelude")
 
     node.cursorsJQ.each((i : js.Any, el : dom.Element) => {
       jQuery(el).find(".cursor-bar").addClass("active")

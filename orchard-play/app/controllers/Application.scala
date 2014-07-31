@@ -97,6 +97,27 @@ object Application extends Controller {
 
   }
 
+  def newDefinition = Action(BodyParsers.parse.json) { request => 
+
+    import models.OrchardToPlay._
+
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+    val cellAddress = (request.body \ "cellAddress").as[CellAddress]
+    val identString = (request.body \ "identString").as[String]
+    val checkerAddress = (request.body \ "checkerAddress").as[CheckerAddress]
+
+    val definitionResult = 
+      workspace.newDefinition(
+        worksheetId,
+        cellAddress,
+        identString,
+        checkerAddress
+      )
+
+    Ok(Json.toJson(definitionResult))
+
+  }
+
   def requestEnvironment = Action(BodyParsers.parse.json) { request =>
     import models.OrchardToPlay._
 

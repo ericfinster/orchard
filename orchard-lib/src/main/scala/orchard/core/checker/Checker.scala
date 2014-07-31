@@ -139,6 +139,18 @@ trait Checker extends CheckerModuleSystem {
       _ <- put(res, offset + 1)
     } yield parameterNode
 
+  def insertDefinition(identString : String, nook : Nook) : CheckerM[CheckerDefinitionNode] = 
+    for {
+      zipper <- getZipper
+      offset <- getOffset
+      rawIdent <- parseIdentifierString(identString)
+      ident <- resolveRawIdentifier(rawIdent)
+      envIdents <- identifiers
+      _ <- liftError(ensureNot(envIdents contains (ident.expand), "Filler name already exists."))
+      definitionNode = new CheckerDefinitionNode(ident, nook)
+      res <- liftError(zipper.insertAt(Definition(definitionNode), offset))
+      _ <- put(res, offset + 1)
+    } yield definitionNode
 
   def resolveRawIdentifier(rawIdent : RawIdentifier) : CheckerM[Identifier] = {
 

@@ -13,6 +13,8 @@ import scala.scalajs._
 import org.scalajs.dom
 import org.scalajs.jquery._
 
+import scalatags.JsDom.all._
+
 import JQueryImplicits._
 
 trait JsModuleSystem extends ModuleSystem {
@@ -28,9 +30,21 @@ trait JsModuleSystem extends ModuleSystem {
     def panelJq : JQuery
   }
 
-  class JsModuleNode(override val name : String, val panelHtml : String) extends JsNode with ModuleNode {
+  class JsModuleNode(override val name : String) extends JsNode with ModuleNode {
 
-    val panelJq : JQuery = jQuery(panelHtml)
+    val modElement =
+      div(`class`:="panel panel-default module-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(name)
+        ),
+        div(`class`:="panel-body")(
+          ul(`class`:="module-entries")(
+            li(`class`:="cursor")(a(href:="#")(div(`class`:="cursor-bar")))
+          )
+        )
+      ).render
+
+    val panelJq : JQuery = jQuery(modElement)
     val entriesListJQ : JQuery = panelJq.find(".module-entries")
     def cursorsJQ : JQuery = entriesListJQ.find("> .cursor")
 
@@ -57,15 +71,33 @@ trait JsModuleSystem extends ModuleSystem {
     }
   }
 
-  class JsParameterNode(override val name : String, parameterHtml : String) extends JsNode with ParameterNode {
+  class JsParameterNode(override val name : String) extends JsNode with ParameterNode {
 
-    val panelJq : JQuery = jQuery(parameterHtml)
+    val parameterElement = 
+      div(`class`:="panel panel-default parameter-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(name)
+        ),
+        div(`class`:="panel-body")(
+        )
+      ).render
+
+    val panelJq : JQuery = jQuery(parameterElement)
 
   }
 
-  class JsDefinitionNode extends JsNode with DefinitionNode {
+  class JsDefinitionNode(override val name : String) extends JsNode with DefinitionNode {
 
-    val panelJq : JQuery = ???
+    val definitionElement = 
+      div(`class`:="panel panel-default definition-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(name)
+        ),
+        div(`class`:="panel-body")(
+        )
+      ).render
+
+    val panelJq : JQuery = jQuery(definitionElement)
 
   }
 

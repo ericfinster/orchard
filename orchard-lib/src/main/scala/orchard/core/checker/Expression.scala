@@ -22,3 +22,22 @@ case class Variable(val ident : Identifier, val shell : Shell, val isThin : Bool
 
 }
 
+case class Filler(val ident : Identifier, val nook : Nook) extends Expression {
+
+  def name = "def-" ++ ident.expand
+  def styleString = "filler"
+  def isThin = true
+
+  trait BoundaryExpression extends Expression {
+
+    def name = ident.expand
+    def styleString = "boundary"
+
+    // Right, the idea is that this is part of the nook ....
+    def isThin = nook.boundaryIsThin
+
+  }
+
+  object Boundary extends BoundaryExpression
+
+}

@@ -74,38 +74,20 @@ html, body {
     padding-left: 15px;
 }
 
-/* .module-view { */
-/*     padding-left: 40px; */
-/*     padding-right: 40px; */
-/* } */
-
-/* .worksheet-view { */
-/*     padding-left: 40px; */
-/*     padding-right: 40px; */
-/* } */
-
-/*
- *  Footer and Control Panel
- */
-
-.control-panel-nav > .container {
-  padding-right: 15px;
-  padding-left: 15px;
-}
-
 .environment-panel {
     min-height: 150px;
 }
 
-/* .control-pane-slider { */
-/*     height: 3px; */
-/*     background-color: #eee; */
-/* } */
+.module-panel {
+}
 
-/* .control-pane-slider:hover { */
-/*     background-color: #bbb; */
-/*     cursor: ns-resize; */
-/* } */
+.parameter-panel .panel-heading {
+    background-color: #fff5e0;
+}
+
+.definition-panel .panel-heading {
+    background-color: #ffe0e0;
+}
 
 /*
  *  Cursor and related
@@ -244,6 +226,18 @@ html, body {
 .orchard-cell-variable { fill: #fff5e0; }
 .orchard-cell-variable-hovered { fill: #e4cfa3; }
 .orchard-cell-variable-selected { fill: #d9b974; }
+
+.orchard-cell-filler { fill: #d3d9ec; }
+.orchard-cell-filler-hovered { fill: #838eaf; }
+.orchard-cell-filler-selected { fill: #5e70a6; }
+
+.orchard-cell-boundary { fill: #ffe0e0; }
+.orchard-cell-boundary-hovered { fill: #e4a3a3; }
+.orchard-cell-boundary-selected { fill: #d97474; }
+
+.orchard-cell-boundary-thin { fill: #d3d9ec; }
+.orchard-cell-boundary-thin-hovered { fill: #838eaf; }
+.orchard-cell-boundary-thin-selected { fill: #5e70a6; }
 
 .orchard-label {
     pointer-events: none;
