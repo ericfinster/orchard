@@ -78,6 +78,10 @@ html, body {
     height: 225px;
 }
 
+.environment-panel .panel-body {
+    overflow: auto;
+}
+
 /*
  *  Module Panel Styling
  */

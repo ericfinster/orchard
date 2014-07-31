@@ -3639,3 +3639,21 @@ Requesting module: Horizontal Composition
 2014-07-31 19:37:46,411 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1120 
 Returning a worksheet with id: 2641282
 
+2014-07-31 19:40:46,899 - [INFO] - from play in play-internal-execution-context-87 
+Application started (Dev)
+
+2014-07-31 19:40:47,699 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1126 
+Returning a worksheet with id: 1930838243
+
+2014-07-31 19:40:58,239 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1128 
+Requesting module: Composition
+
+2014-07-31 19:41:26,808 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1129 
+Returning a worksheet with id: 949795273
+
+2014-07-31 19:45:25,008 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1131 
+Requesting module: Horizontal Composition
+
+2014-07-31 19:45:28,742 - [DEBUG] - from application in play-akka.actor.default-dispatcher-1131 
+Returning a worksheet with id: 609510672
+
