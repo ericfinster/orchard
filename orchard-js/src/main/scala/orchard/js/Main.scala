@@ -41,61 +41,40 @@ object Main extends js.JSApp with JsModuleSystem {
   val jqMain : JQuery = jQuery(".main")
   val jqModuleWrapper : JQuery = jQuery(".module-wrapper")
 
-  jQuery(dom.window).resize(() => {
-    doLayout
-  })
+  jQuery("#new-module-btn").click(() => { onNewModule })
+  jQuery("#new-parameter-btn").click(() => { onNewParameter })
+  jQuery("#new-defn-btn").click(() => { onNewDefinition })
+  jQuery("#new-worksheet-btn").click(() => { onNewWorksheet })
+  jQuery("#extrude-btn").click(() => { onExtrude })
 
-  jQuery("#new-module-btn").click(() => {
-    NewModuleModal.show
-  })
+  val keyHandler : js.Function1[JQueryEventObject, js.Boolean] = 
+    (e : JQueryEventObject) => {
+      val keyCode : Int = e.which
 
-  jQuery("#new-parameter-btn").click(() => {
-    NewParameterModal.show
-  })
-
-  jQuery("#new-defn-btn").click(() => {
-    NewDefinitionModal.show
-  })
-
-  jQuery("#new-worksheet-btn").click(() => {
-
-    val listElement = document.createElement("li")
-    jQuery(".worksheet-carousel ul").append(listElement)
-
-    requestNewWorksheet(listElement, 200) onSuccess {
-      case worksheet => {
-
-        worksheet.renderAll
-
-        import JCarousel._
-
-        jQuery(".worksheet-carousel").jcarousel("reload")
-        jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
-
-        jQuery(listElement).
-          on("jcarousel:targetin", "li", (e : JQueryEventObject, c : JCarousel) => {
-            activeWorksheet = Some(worksheet)
-          })
-
-        activeWorksheet = Some(worksheet)
-
+      e.which match {
+        case 69 => onExtrude         // e
+        case 77 => onNewModule       // m
+        case 80 => onNewParameter    // p
+        case 70 => onNewDefinition   // f
+        case 87 => onNewWorksheet    // w
+        case _ => ()
       }
+
+      true
     }
-  })
 
-  jQuery("#extrude-btn").click(() => {
-    for {
-      worksheet <- activeWorksheet
-    } {
-      requestExtrusion(worksheet)
-    }
-  })
+  def installKeyHandler : Unit = {
+    jQuery(dom.document).on("keydown", keyHandler)
+  }
 
-  // Put our toasts in the right place
-  Toastr.options.positionClass = "toast-bottom-full-width"
+  def removeKeyHandler : Unit = {
+    jQuery(dom.document).off("keydown", keyHandler)
+  }
 
+  jQuery(dom.window).resize(() => { doLayout })
 
   doLayout
+  installKeyHandler
 
   def doLayout : Unit = {
 
@@ -110,15 +89,20 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  // Put our toasts in the right place
+  Toastr.options.positionClass = "toast-bottom-full-width"
+
   //============================================================================================
   // DIALOG DEFINITIONS
   //
 
   object NewModuleModal extends BootstrapModal("orchard-new-module-modal") {
 
-    override def onHide = {
+    val inputJq = modalJq.find("#module-name")
+
+    modalJq.find("#module-form").on("submit", () => {
       // Really we need to check the response status ...
-      val moduleId : String = modalJQuery.find("#module-name").value.asInstanceOf[js.String]
+      val moduleId : String = modalJq.find("#module-name").value.asInstanceOf[js.String]
       val modAddr = activeCheckerAddress.moduleAddress
       val curOff = activeCheckerAddress.cursorOffset
 
@@ -138,19 +122,38 @@ object Main extends js.JSApp with JsModuleSystem {
           }
         }
       }
+
+      hide
+      false
+    })
+
+    override def onShow = {
+      removeKeyHandler
+    }
+
+    override def onShown = {
+      inputJq.focus()
+    }
+
+
+    override def onHide = {
+      installKeyHandler
+      inputJq.value("")
     }
   }
 
   object NewParameterModal extends BootstrapModal("orchard-new-parameter-modal") {
 
-    override def onHide = {
+    val inputJq = modalJq.find("#parameter-name")
+
+    modalJq.find("#parameter-form").on("submit", () => {
 
       for {
         worksheet <- activeWorksheet
         targetCell <- worksheet.selectionBase
       } {
 
-        val parameterIdent: String = modalJQuery.find("#parameter-name").value.asInstanceOf[js.String]
+        val parameterIdent: String = modalJq.find("#parameter-name").value.asInstanceOf[js.String]
         val modAddr = activeCheckerAddress.moduleAddress
         val curOff = activeCheckerAddress.cursorOffset
 
@@ -172,19 +175,38 @@ object Main extends js.JSApp with JsModuleSystem {
           }
         }
       }
+
+      hide
+      false
+
+    })
+
+    override def onShow = {
+      removeKeyHandler
+    }
+
+    override def onShown = {
+      inputJq.focus()
+    }
+
+    override def onHide = {
+      installKeyHandler
+      inputJq.value("")
     }
   }
 
   object NewDefinitionModal extends BootstrapModal("orchard-new-definition-modal") {
 
-    override def onHide = {
+    val inputJq = modalJq.find("#definition-name")
+
+    modalJq.find("#definition-form").on("submit", () => {
 
       for {
         worksheet <- activeWorksheet
         targetCell <- worksheet.selectionBase
       } {
 
-        val definitionIdent: String = modalJQuery.find("#definition-name").value.asInstanceOf[js.String]
+        val definitionIdent: String = modalJq.find("#definition-name").value.asInstanceOf[js.String]
         val modAddr = activeCheckerAddress.moduleAddress
         val curOff = activeCheckerAddress.cursorOffset
 
@@ -206,6 +228,23 @@ object Main extends js.JSApp with JsModuleSystem {
           }
         }
       }
+
+      hide
+      false
+
+    })
+
+    override def onShow = {
+      removeKeyHandler
+    }
+
+    override def onShown = {
+      inputJq.focus()
+    }
+
+    override def onHide = {
+      installKeyHandler
+      inputJq.value("")
     }
   }
 
@@ -309,6 +348,58 @@ object Main extends js.JSApp with JsModuleSystem {
       }
     }
   }
+
+  //============================================================================================
+  // EVENTS
+  //
+
+  def onNewWorksheet : Unit = {
+
+    val listElement = document.createElement("li")
+    jQuery(".worksheet-carousel ul").append(listElement)
+
+    requestNewWorksheet(listElement, 200) onSuccess {
+      case worksheet => {
+
+        worksheet.renderAll
+
+        import JCarousel._
+
+        jQuery(".worksheet-carousel").jcarousel("reload")
+        jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
+
+        jQuery(listElement).
+          on("jcarousel:targetin", "li", (e : JQueryEventObject, c : JCarousel) => {
+            activeWorksheet = Some(worksheet)
+          })
+
+        activeWorksheet = Some(worksheet)
+
+      }
+    }
+
+  }
+
+  def onExtrude : Unit = {
+    for {
+      worksheet <- activeWorksheet
+    } {
+      requestExtrusion(worksheet)
+    }
+  }
+
+  def onNewParameter : Unit = {
+    NewParameterModal.show
+  }
+
+  def onNewDefinition : Unit = {
+    NewDefinitionModal.show
+  }
+
+  def onNewModule : Unit = {
+    NewModuleModal.show
+  }
+
 
   //============================================================================================
   // AJAX REQUESTS

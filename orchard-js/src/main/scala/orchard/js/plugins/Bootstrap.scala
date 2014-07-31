@@ -31,23 +31,23 @@ abstract class BootstrapModal(id : String) {
 
   import BootstrapJQuery._
 
-  val modalJQuery = jQuery("#" ++ id)
+  val modalJq = jQuery("#" ++ id)
 
-  modalJQuery.modal(js.Dynamic.literal())
+  modalJq.modal(js.Dynamic.literal())
 
-  modalJQuery.on("show.bs.modal", ((e : js.Any) => {
+  modalJq.on("show.bs.modal", ((e : js.Any) => {
     onShow
   }) : js.Function1[js.Any, Unit])
 
-  modalJQuery.on("shown.bs.modal", ((e : js.Any) => {
+  modalJq.on("shown.bs.modal", ((e : js.Any) => {
     onShown
   }) : js.Function1[js.Any, Unit])
 
-  modalJQuery.on("hide.bs.modal", ((e : js.Any) => {
+  modalJq.on("hide.bs.modal", ((e : js.Any) => {
     onHide
   }) : js.Function1[js.Any, Unit])
 
-  modalJQuery.on("hidden.bs.modal", ((e : js.Any) => {
+  modalJq.on("hidden.bs.modal", ((e : js.Any) => {
     onHidden
   }) : js.Function1[js.Any, Unit])
 
@@ -59,11 +59,11 @@ abstract class BootstrapModal(id : String) {
   def onHidden : Unit = ()
 
   def show : Unit = {
-    modalJQuery.modal("show")
+    modalJq.modal("show")
   }
 
   def hide : Unit = {
-    modalJQuery.modal("hide")
+    modalJq.modal("hide")
   }
 
 }
