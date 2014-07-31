@@ -35,7 +35,10 @@ trait JsModuleSystem extends ModuleSystem {
     val modElement =
       div(`class`:="panel panel-default module-panel")(
         div(`class`:="panel-heading")(
-          h3(`class`:="panel-title")(name)
+          h3(`class`:="panel-title")(name),
+          div(`class`:="panel-tools")(
+            a(`class`:="btn btn-link btn-sm panel-collapse", `href`:="#")(i(`class`:="fa fa-chevron-down"))
+          )
         ),
         div(`class`:="panel-body")(
           ul(`class`:="module-entries")(
@@ -45,8 +48,24 @@ trait JsModuleSystem extends ModuleSystem {
       ).render
 
     val panelJq : JQuery = jQuery(modElement)
-    val entriesListJQ : JQuery = panelJq.find(".module-entries")
+    val panelHeadingJq : JQuery = panelJq.children(".panel-heading")
+    val panelBodyJq : JQuery = panelJq.children(".panel-body")
+    val entriesListJQ : JQuery = panelBodyJq.children(".module-entries")
+
     def cursorsJQ : JQuery = entriesListJQ.find("> .cursor")
+
+
+    panelHeadingJq.find(".panel-collapse").click(() => {
+      if (panelBodyJq.hasClass("panel-collapsed")) {
+        panelBodyJq.slideDown(200, () => {
+          panelBodyJq.removeClass("panel-collapsed")
+        })
+      } else {
+        panelBodyJq.slideUp(200, () => {
+          panelBodyJq.addClass("panel-collapsed")
+        })
+      }
+    })
 
     refreshCursorIndicies
 
@@ -76,13 +95,29 @@ trait JsModuleSystem extends ModuleSystem {
     val parameterElement = 
       div(`class`:="panel panel-default parameter-panel")(
         div(`class`:="panel-heading")(
-          h3(`class`:="panel-title")(name)
+          h3(`class`:="panel-title")(name),
+          div(`class`:="panel-tools")(
+            a(`class`:="btn btn-link btn-sm panel-collapse", `href`:="#")(i(`class`:="fa fa-chevron-down"))
+          )
         ),
-        div(`class`:="panel-body")(
-        )
+        div(`class`:="panel-body panel-collapsed")()
       ).render
 
     val panelJq : JQuery = jQuery(parameterElement)
+    val panelHeadingJq : JQuery = panelJq.children(".panel-heading")
+    val panelBodyJq : JQuery = panelJq.children(".panel-body")
+
+    panelHeadingJq.find(".panel-collapse").click(() => {
+      if (panelBodyJq.hasClass("panel-collapsed")) {
+        panelBodyJq.slideDown(200, () => {
+          panelBodyJq.removeClass("panel-collapsed")
+        })
+      } else {
+        panelBodyJq.slideUp(200, () => {
+          panelBodyJq.addClass("panel-collapsed")
+        })
+      }
+    })
 
   }
 
@@ -91,13 +126,29 @@ trait JsModuleSystem extends ModuleSystem {
     val definitionElement = 
       div(`class`:="panel panel-default definition-panel")(
         div(`class`:="panel-heading")(
-          h3(`class`:="panel-title")(name)
+          h3(`class`:="panel-title")(name),
+          div(`class`:="panel-tools")(
+            a(`class`:="btn btn-link btn-sm panel-collapse", `href`:="#")(i(`class`:="fa fa-chevron-down"))
+          )
         ),
-        div(`class`:="panel-body")(
-        )
+        div(`class`:="panel-body panel-collapsed")()
       ).render
 
     val panelJq : JQuery = jQuery(definitionElement)
+    val panelHeadingJq : JQuery = panelJq.children(".panel-heading")
+    val panelBodyJq : JQuery = panelJq.children(".panel-body")
+
+    panelHeadingJq.find(".panel-collapse").click(() => {
+      if (panelBodyJq.hasClass("panel-collapsed")) {
+        panelBodyJq.slideDown(200, () => {
+          panelBodyJq.removeClass("panel-collapsed")
+        })
+      } else {
+        panelBodyJq.slideUp(200, () => {
+          panelBodyJq.addClass("panel-collapsed")
+        })
+      }
+    })
 
   }
 

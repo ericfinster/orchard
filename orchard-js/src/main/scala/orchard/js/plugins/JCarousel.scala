@@ -12,26 +12,20 @@ import scala.language.implicitConversions
 import scala.scalajs._
 import org.scalajs.jquery.JQuery
 
-trait JQueryCarousel extends JQuery {
+trait JCarousel extends JQuery {
 
   def jcarousel() : JCarousel = ???
-  def jcarousel(cmd : String, conf : js.Object) : JQueryCarousel = ???
-  def jcarousel(conf : js.Object) : JCarousel = ???
-  def jcarouselControl(conf : js.Object) : Unit = ???
-  def jcarouselPagination(conf : js.Object) : Unit = ???
+  def jcarousel(data : js.Any) : JCarousel = ???
+  def jcarousel(data : js.Any, element : js.Any) : JCarousel = ???
+  def jcarouselControl(data : js.Any) : JCarousel = ???
+  def jcarouselPagination() : JCarousel = ???
+  def jcarouselPagination(data : js.Any) : JCarousel = ???
 
 }
 
-object JQueryCarousel {
+object JCarousel {
 
-  implicit def jq2Carousel(jq : JQuery): JQueryCarousel = 
-    jq.asInstanceOf[JQueryCarousel]
-
-}
-
-trait JCarousel extends js.Object {
-
-  def reload() : Unit = ???
-  def reload(conf : js.Object) : Unit = ???
+  implicit def jq2Carousel(jq : JQuery): JCarousel = 
+    jq.asInstanceOf[JCarousel]
 
 }

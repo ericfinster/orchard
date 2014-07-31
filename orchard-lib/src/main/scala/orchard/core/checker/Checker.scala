@@ -86,9 +86,9 @@ trait Checker extends CheckerModuleSystem {
       env <- environment
     } yield {
       (env map {
-        case p : Parameter => Some(p.node.name)
-        case d : Definition => Some(d.node.name)
-        case _ => None
+        case p : Parameter => Vector(p.node.name)
+        case d : Definition => Vector(d.node.name, d.node.fillerExpression.name)
+        case _ => Vector.empty
       }).flatten
     }
 
@@ -102,7 +102,7 @@ trait Checker extends CheckerModuleSystem {
         case p : Parameter => Some(Rose(p.node.name))
         case d : Definition => {
           // Here is where you can make entries for the filler and the boundary ...
-          Some(Rose(d.node.name))
+          Some(Branch(d.node.name, Vector(Rose(d.node.fillerExpression.name))))
         }
         case i : Import => {
           // This is the interesting case ...

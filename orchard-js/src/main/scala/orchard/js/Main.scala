@@ -41,6 +41,10 @@ object Main extends js.JSApp with JsModuleSystem {
   val jqMain : JQuery = jQuery(".main")
   val jqModuleWrapper : JQuery = jQuery(".module-wrapper")
 
+  jQuery(dom.window).resize(() => {
+    doLayout
+  })
+
   jQuery("#new-module-btn").click(() => {
     NewModuleModal.show
   })
@@ -54,8 +58,28 @@ object Main extends js.JSApp with JsModuleSystem {
   })
 
   jQuery("#new-worksheet-btn").click(() => {
-    requestNewWorksheet onSuccess {
-      case worksheet => activeWorksheet = Some(worksheet)
+
+    val listElement = document.createElement("li")
+    jQuery(".worksheet-carousel ul").append(listElement)
+
+    requestNewWorksheet(listElement, 200) onSuccess {
+      case worksheet => {
+
+        worksheet.renderAll
+
+        import JCarousel._
+
+        jQuery(".worksheet-carousel").jcarousel("reload")
+        jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
+
+        jQuery(listElement).
+          on("jcarousel:targetin", "li", (e : JQueryEventObject, c : JCarousel) => {
+            activeWorksheet = Some(worksheet)
+          })
+
+        activeWorksheet = Some(worksheet)
+
+      }
     }
   })
 
@@ -70,21 +94,22 @@ object Main extends js.JSApp with JsModuleSystem {
   // Put our toasts in the right place
   Toastr.options.positionClass = "toast-bottom-full-width"
 
-  import JQueryCarousel._
 
-  // Let's initialize the worksheet carousel
-  jQuery(".worksheet-carousel").jcarousel(lit(
-    "vertical" -> true
-  ))
+  doLayout
 
-  jQuery(".worksheet-carousel-prev").jcarouselControl(lit(
-    "target" -> "-=1"
-  ))
+  def doLayout : Unit = {
 
-  jQuery(".worksheet-carousel-next").jcarouselControl(lit(
-    "target" -> "+=1"
-  ))
-  
+    val windowHeight = jQuery(dom.window).height()
+    val headerNavHeight = jQuery(".header-nav").outerHeight()
+    val footerNavHeight = jQuery(".footer-nav").outerHeight()
+    val worksheetViewHeight = jQuery(".worksheet-view").outerHeight()
+
+    val moduleViewJq = jQuery(".module-view").height(
+      windowHeight - headerNavHeight - footerNavHeight - worksheetViewHeight - 20 - 20
+    )
+
+  }
+
   //============================================================================================
   // DIALOG DEFINITIONS
   //
@@ -341,37 +366,16 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
-  def requestNewWorksheet : Future[JsWorksheet] = {
+  def requestNewWorksheet(target : dom.Element, panelSize : Int) : Future[JsWorksheet] = {
 
-    val listElement = document.createElement("li")
-    jQuery(".worksheet-carousel ul").append(listElement)
-
-    implicit val readType = JsWorksheet.WorksheetCreate(listElement, 200)
+    implicit val readType = JsWorksheet.WorksheetCreate(target, panelSize)
 
     val request = 
       GetRequest[JsWorksheet](
         "/new-worksheet"
       )
 
-    for {
-      newWorksheet <- doGetRequest(request)
-    } yield {
-
-      newWorksheet.renderAll
-
-      import JQueryCarousel._
-
-      jQuery(".worksheet-carousel").jcarousel("reload", lit())
-
-      jQuery(listElement).
-        on("jcarousel:targetin", (e : JQueryEventObject, c : JCarousel) => {
-          activeWorksheet = Some(newWorksheet)
-        })
-
-      jQuery(".worksheet-carousel").jcarousel("scroll", jQuery(listElement))
-
-      newWorksheet
-    } 
+    doGetRequest(request)
 
   }
 
@@ -482,6 +486,41 @@ object Main extends js.JSApp with JsModuleSystem {
 
     setCursorPosition(Vector.empty, 0)
 
+    val listElement = document.createElement("li")
+    jQuery(".worksheet-carousel ul").append(listElement)
+
+    requestNewWorksheet(listElement, 200) onSuccess {
+      case worksheet => {
+
+        worksheet.renderAll
+
+        import JCarousel._
+
+        // Let's initialize the worksheet carousel
+        jQuery(".worksheet-carousel").jcarousel(lit(
+          "vertical" -> true
+        )).on("jcarousel:reloadend", (e : JQueryEventObject, c : JCarousel) => {
+          jQuery(".worksheet-carousel-pagination").jcarouselPagination("reloadCarouselItems");
+        })
+
+        jQuery(".worksheet-carousel-prev").jcarouselControl(lit(
+          "target" -> "-=1"
+        ))
+
+        jQuery(".worksheet-carousel-next").jcarouselControl(lit(
+          "target" -> "+=1"
+        ))
+        
+        jQuery(".worksheet-carousel-pagination").jcarouselPagination(
+          lit(
+            "item" -> (((page : js.String) => {
+              "<a href=\"#" ++ page.toString + "\"><i class=\"fa fa-circle\"></i></a></li>"
+            }) : js.Function1[js.String, js.String])
+          )
+        )
+
+      }
+    }
   }
 
   implicit class JsAnyOps(x : js.Any) {

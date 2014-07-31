@@ -102,7 +102,7 @@ abstract class JsCarouselComplex[A](json : js.Any)(implicit aReader : JsonReadab
 
   initializeContent
 
-  import plugins.JQueryCarousel._
+  import plugins.JCarousel._
 
   val carousel = jQuery(gallery).jcarousel()
 
@@ -120,7 +120,7 @@ abstract class JsCarouselComplex[A](json : js.Any)(implicit aReader : JsonReadab
       galleryPanelList.appendChild(panel.getContent)
     }
 
-    carousel.reload(js.Dynamic.literal())
+    carousel.jcarousel("reload")
 
   }
 

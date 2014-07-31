@@ -65,20 +65,43 @@ html, body {
   padding-top: 20px;
 }
 
-.main .page-header {
-  margin-top: 0;
+.module-view {
+    overflow: auto;
+    margin-bottom: 20px;
+}
+
+.worksheet-view {
+    height: 350px;
+}
+
+.worksheet-view .treeview {
+    height: 225px;
+}
+
+/*
+ *  Module Panel Styling
+ */
+
+.panel-heading {
+    position: relative;
+}
+
+.panel-tools {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+}
+
+.panel-collapsed {
+    display: none;
+}
+
+.module-panel {
 }
 
 .module-entries {
     list-style-type: none;
     padding-left: 15px;
-}
-
-.environment-panel {
-    min-height: 150px;
-}
-
-.module-panel {
 }
 
 .parameter-panel .panel-heading {
@@ -164,6 +187,8 @@ html, body {
     width: 100%;
     height: 206px;
     overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 .worksheet-carousel ul {
@@ -182,33 +207,41 @@ html, body {
     box-sizing: border-box;
 }
 
-/* .worksheet-carousel-prev, */
-/* .worksheet-carousel-next { */
-/*     position: absolute; */
-/*     top: 50%; */
-/*     margin-top: -15px; */
-/*     width: 30px; */
-/*     height: 30px; */
-/*     text-align: center; */
+.worksheet-carousel-controls {
+    text-align: center;
+    padding-top: 10px;
+}
+
+.worksheet-carousel-prev,
+.worksheet-carousel-next,
+.worksheet-carousel-pagination {
+    color: #bbb;
+    display: inline-block;
+}
+
+.worksheet-carousel-prev:hover,
+.worksheet-carousel-next:hover {
+    color: #aaa;
+}
+
+.worksheet-carousel-next {
+    margin-left: -3px;
+}
+
+.worksheet-carousel-pagination a {
+    color: #bbb;
+    margin-right: 3px;
+}
+
+.worksheet-carousel-pagination a:hover {
+    color: #aaa;
+}
+
+/* .worksheet-carousel-pagination a.active { */
 /*     background: #4E443C; */
 /*     color: #fff; */
-/*     text-decoration: none; */
-/*     text-shadow: 0 0 1px #000; */
-/*     font: 24px/27px Arial, sans-serif; */
-/*     -webkit-border-radius: 30px; */
-/*     -moz-border-radius: 30px; */
-/*     border-radius: 30px; */
-/*     -webkit-box-shadow: 0 0 4px #F0EFE7; */
-/*     -moz-box-shadow: 0 0 4px #F0EFE7; */
-/*     box-shadow: 0 0 4px #F0EFE7; */
-/* } */
-
-/* .worksheet-carousel-prev { */
-/*     left: 15px; */
-/* } */
-
-/* .worksheet-carousel-next { */
-/*     right: 15px; */
+/*     opacity: 1; */
+/*     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.75); */
 /* } */
 
 /*
