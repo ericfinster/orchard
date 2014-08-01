@@ -74,6 +74,28 @@ object Application extends Controller {
 
   }
 
+  def paste = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
+
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+    val cellAddress = (request.body \ "cellAddress").as[CellAddress]
+    val checkerAddress = (request.body \ "checkerAddress").as[CheckerAddress]
+    val identifier = (request.body \ "identifier").as[String]
+
+    val pastedWorksheet = 
+      for {
+        worksheet <- workspace.paste(
+          worksheetId,
+          cellAddress,
+          identifier,
+          checkerAddress
+        )
+      } yield worksheet.toMarkerComplex
+
+    Ok(Json.toJson(fail[String]("Pasting not implemented")))
+
+  }
+
   def newModule = Action(BodyParsers.parse.json) { request =>
     import models.OrchardToPlay._
 

@@ -23,6 +23,8 @@ POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
 
 POST    /drop-worksheet             controllers.Application.dropWorksheet
 
+POST    /paste                      controllers.Application.paste
+
 POST    /debug                      controllers.Application.debug
 
 # Map static resources from the /public folder to the /assets URL path

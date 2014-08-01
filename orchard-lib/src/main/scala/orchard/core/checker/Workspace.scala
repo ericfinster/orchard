@@ -107,4 +107,17 @@ class Workspace extends Checker {
 
     }
 
+  def paste(
+    worksheetId : Int,
+    address : CellAddress,
+    identifier : String,
+    checkerAddress : CheckerAddress
+  ) : Error[Worksheet] = 
+    for {
+      worksheet <- getWorksheet(worksheetId)
+      targetCell <- worksheet.seek(address)
+      _ <- ensure(targetCell.isEmpty, "Selected cell is not empty.")
+    } yield {
+      worksheet
+    }
 }

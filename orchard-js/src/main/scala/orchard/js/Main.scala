@@ -38,15 +38,13 @@ object Main extends js.JSApp with JsModuleSystem {
 
   import JQueryImplicits._
 
-  val jqMain : JQuery = jQuery(".main")
-  val jqModuleWrapper : JQuery = jQuery(".module-wrapper")
-
   jQuery("#new-module-btn").click(() => { onNewModule })
   jQuery("#new-parameter-btn").click(() => { onNewParameter })
   jQuery("#new-defn-btn").click(() => { onNewDefinition })
   jQuery("#new-worksheet-btn").click(() => { onNewWorksheet })
   jQuery("#extrude-btn").click(() => { onExtrude })
   jQuery("#drop-btn").click(() => { onDrop })
+  jQuery("#paste-btn").click(() => { onPaste })
 
   val keyHandler : js.Function1[JQueryEventObject, js.Boolean] = 
     (e : JQueryEventObject) => {
@@ -264,6 +262,7 @@ object Main extends js.JSApp with JsModuleSystem {
     } yield ModuleZipper(rootM, Nil)
 
   var hasEnvironment : Boolean = false
+  var activeEnvironmentIdentifier : Option[String] = None
   var activeWorksheet : Option[JsWorksheet] = None
   var activeCheckerAddress : CheckerAddress = 
     CheckerAddress(Vector.empty, 0)
@@ -315,6 +314,7 @@ object Main extends js.JSApp with JsModuleSystem {
     if (hasEnvironment) {
       jQuery("#env-tree").treeview("remove")
       hasEnvironment = false
+      activeEnvironmentIdentifier = None
     }
 
     requestEnvironment onSuccess {
@@ -346,7 +346,10 @@ object Main extends js.JSApp with JsModuleSystem {
 
         jQuery("#env-tree").treeview(lit(
           data = processBranches(branches)
-        ))
+        )).on("nodeSelected", (e : JQueryEventObject, node : js.Dictionary[js.Any]) => {
+          val nodeText = node("text").asInstanceOf[js.String]
+          activeEnvironmentIdentifier = Some(nodeText)
+        })
 
         hasEnvironment = true
       }
@@ -397,6 +400,18 @@ object Main extends js.JSApp with JsModuleSystem {
       worksheet <- activeWorksheet
     } {
       requestDrop(worksheet)
+    }
+  }
+
+  def onPaste : Unit = {
+    for {
+      identifier <- activeEnvironmentIdentifier
+      worksheet <- activeWorksheet
+      targetCell <- worksheet.selectionBase
+    } {
+
+      requestPaste(identifier, targetCell.address, worksheet)
+
     }
   }
 
@@ -543,6 +558,29 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  def requestPaste(
+    identifier : String, 
+    targetAddress : CellAddress, 
+    worksheet : JsWorksheet
+  ) : Future[JsWorksheet] = {
+
+    implicit val readType = JsWorksheet.WorksheetRefresh(worksheet)
+
+    val request =
+      PostRequest[JsWorksheet](
+        "/paste",
+        lit (
+          "worksheetId" -> worksheet.remoteId,
+          "cellAddress" -> JsJsonWriter.write(targetAddress),
+          "checkerAddress" -> JsJsonWriter.write(activeCheckerAddress),
+          "identifier" -> identifier
+        )
+      )
+
+    doPostRequest(request)
+
+  }
+
   def requestParameter(
     worksheetId : Int,
     cellAddress : CellAddress, 
@@ -600,7 +638,7 @@ object Main extends js.JSApp with JsModuleSystem {
       jQuery(el).find(".cursor-bar").addClass("active")
     })
 
-    jqModuleWrapper.append(node.panelJq)
+    jQuery(".module-wrapper").append(node.panelJq)
     val rm = Module(node, Vector.empty)
     rootModule = Some(rm)
 

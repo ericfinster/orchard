@@ -10,6 +10,8 @@ package orchard.core.cell
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
+import scalaz._
+
 import orchard.core.util._
 import Nats._
 
@@ -321,85 +323,74 @@ object NCell {
   implicit def ncellHasOps[A](ncell : NCell[A]) : Cell.CellOps[ncell.dim.Self, A] = 
       ncell.cell
 
+  // WARNING!!! This implementation, I believe suffers from the same difficulty as the original
+  // map implementation did in that it seems some of the computations will run more than once, 
+  // seeing how we pass *all* off them and you know that there are duplicates possible within
+  // this implementation of opetopic cells.
 
-  // // I'm going to try to do it for a monad first, and then I'll see if I just need the
-  // // applicable instance
+  // This means you must be extremely carefult that any computations are purely functional. In
+  // particular, modifying state inside such a sequence may lead to unexpected results ...
 
-  // import scalaz._
+  def sequence[A, M[+_]](ncell : NCell[M[A]])(implicit m : Monad[M]) : M[NCell[A]] = {
+    import m.functorSyntax._
+    sequenceCell(ncell.cell) map (cellIsNCell(_))
+  }
 
-  // // WARNING!!! This implementation, I believe suffers from the same difficulty as the original
-  // // map implementation did in that it seems some of the computations will run more than once, 
-  // // seeing how we pass *all* off them and you know that there are duplicates possible within
-  // // this implementation of opetopic cells.
+  def sequenceCell[D <: Nat, A, M[+_]](cell : Cell[D, M[A]])(implicit m : Monad[M]) : M[Cell[D, A]] = {
+    import m.monadSyntax._
 
-  // // You have been thinking of another representation recently, by the way.  The idea is fairly
-  // // simple.  Instead of having a cell tree consist of cells, it could consist of tags around 
-  // // cells and cell trees themselves.  That is, internal to the node, you could stick either a
-  // // cell wrapped in a little tag (meaning that it was external) or else a cell tree of one
-  // // dimension higher (meaning that we were supposed to look at the "output" of that
-  // // tree.)  This is how you do it in the example file in order to avoid repetitions.  It's 
-  // // probably worth playing with this idea at some point
+    cell match {
+      case Object(value, ev) => {
+        implicit val isZero = ev
 
-  // def sequence[A, M[+_]](ncell : NCell[M[A]])(implicit m : Monad[M]) : M[NCell[A]] = {
-  //   import m.functorSyntax._
-  //   sequenceCell(ncell.cell) map (cellIsNCell(_))
-  // }
+        for {
+          a <- value
+        } yield ObjectCell(a)
+      }
+      case Composite(value, srcTree, tgtValue, ev) => {
+        implicit val hasPred = ev
 
-  // def sequenceCell[D <: Nat, A, M[+_]](cell : Cell[D, M[A]])(implicit m : Monad[M]) : M[Cell[D, A]] = {
-  //   import m.monadSyntax._
-
-  //   cell match {
-  //     case Object(value, ev) => {
-  //       implicit val isZero = ev
-
-  //       for {
-  //         a <- value
-  //       } yield ObjectCell(a)
-  //     }
-  //     case Composite(value, srcTree, tgtValue, ev) => {
-  //       implicit val hasPred = ev
-
-  //       for {
-  //         v <- value
-  //         tv <- tgtValue
-  //         resTree <- sequenceTree(srcTree)
-  //       } yield CompositeCell(v, resTree, tv)
-  //     }
-  //   }
-  // }
+        for {
+          v <- value
+          tv <- tgtValue
+          resTree <- sequenceTree(srcTree)
+        } yield CompositeCell(v, resTree, tv)
+      }
+    }
+  }
 
 
-  // def sequenceTree[D <: Nat, A, M[+_]](tree : CellTree[D, M[A]])(implicit m : Monad[M]) : M[CellTree[D, A]] = {
-  //   import m.monadSyntax._
+  def sequenceTree[D <: Nat, A, M[+_]](tree : CellTree[D, M[A]])(implicit m : Monad[M]) : M[CellTree[D, A]] = {
+    import m.monadSyntax._
 
-  //   tree match {
-  //     case Seed(obj, ev) => {
-  //       implicit val isZero = ev
+    tree match {
+      case Seed(obj, ev) => {
+        implicit val isZero = ev
 
-  //       for {
-  //         newObj <- sequenceCell(obj)
-  //       } yield SeedClass(newObj.asInstanceOf[ObjectCell[D, A]])
-  //     }
-  //     case Leaf(shape, ev) => {
-  //       implicit val hasPred = ev
+        for {
+          newObj <- sequenceCell(obj)
+        } yield SeedClass(newObj.asInstanceOf[ObjectCell[D, A]])
+      }
+      case Leaf(shape, ev) => {
+        implicit val hasPred = ev
 
-  //       for {
-  //         newShape <- sequenceCell(shape)
-  //       } yield LeafClass(newShape)
-  //     }
-  //     case Graft(cell, branches, ev) => {
-  //       implicit val hasPred = ev
-  //       import scalaz.std.vector._
-  //       val T = Traverse[Vector]
+        for {
+          newShape <- sequenceCell(shape)
+        } yield LeafClass(newShape)
+      }
+      case Graft(cell, branches, ev) => {
+        implicit val hasPred = ev
+        import scalaz.std.vector._
+        val T = Traverse[Vector]
 
-  //       for {
-  //         newCell <- sequenceCell(cell)
-  //         newBranches <- T.sequence(branches map (sequenceTree(_)))
-  //       } yield GraftClass(newCell, newBranches)
-  //     }
-  //   }
+        for {
+          newCell <- sequenceCell(cell)
+          newBranches <- T.sequence(branches map (sequenceTree(_)))
+        } yield GraftClass(newCell, newBranches)
+      }
+    }
+  }
 
-  // }
 }
 
 //
