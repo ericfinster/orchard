@@ -92,7 +92,7 @@ object Application extends Controller {
         )
       } yield worksheet.toMarkerComplex
 
-    Ok(Json.toJson(fail[String]("Pasting not implemented")))
+    Ok(Json.toJson(pastedWorksheet))
 
   }
 
@@ -102,15 +102,31 @@ object Application extends Controller {
     val moduleId = (request.body \ "moduleId").as[String]
     val checkerAddress = (request.body \ "address").as[CheckerAddress]
 
-    Logger.debug("Requesting module: " ++ moduleId)
+    val result : Error[workspace.ModuleEntry] = 
+      workspace.newModule(moduleId, checkerAddress)
 
-    val insertionCommand = workspace.insertModule(moduleId)
+    Ok(Json.toJson(result))
+  }
 
-    val result = 
-      for {
-        moduleNode <- workspace.runCommandAtAddress(insertionCommand, checkerAddress)
-      } yield moduleNode.name
 
+  def newImport = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
+
+    val name = (request.body \ "name").as[String]
+    val moduleName = (request.body \ "moduleName").as[String]
+    val isOpen = (request.body \ "isOpen").as[Boolean]
+    val checkerAddress = (request.body \ "address").as[CheckerAddress]
+
+    val result : Error[workspace.ModuleEntry] = 
+      workspace.newImport(name, moduleName, isOpen, checkerAddress)
+
+    println("Finished new import, returning.")
+
+    if (result.isSuccess) {
+      println("creation was a success")
+    } else {
+      println("creation failed")
+    }
 
     Ok(Json.toJson(result))
   }
@@ -125,7 +141,7 @@ object Application extends Controller {
     val isThin = (request.body \ "isThin").as[Boolean]
     val checkerAddress = (request.body \ "checkerAddress").as[CheckerAddress]
 
-    val parameterResult = 
+    val parameterResult : Error[workspace.ModuleEntry] = 
       workspace.newParameter(
         worksheetId,
         cellAddress,
@@ -147,7 +163,7 @@ object Application extends Controller {
     val identString = (request.body \ "identString").as[String]
     val checkerAddress = (request.body \ "checkerAddress").as[CheckerAddress]
 
-    val definitionResult = 
+    val definitionResult : Error[workspace.ModuleEntry] = 
       workspace.newDefinition(
         worksheetId,
         cellAddress,
@@ -170,6 +186,22 @@ object Application extends Controller {
     ) 
 
     Ok(Json.toJson(envResult))
+
+  }
+
+  def requestModule = Action(BodyParsers.parse.json) { request => 
+    import models.OrchardToPlay._
+
+    val checkerAddress = (request.body \ "address").as[CheckerAddress]
+    val moduleId = (request.body \ "moduleId").as[String]
+
+    val moduleResult : Error[workspace.ModuleEntry] = 
+      workspace.runCommandAtAddress(
+        workspace.getModule(moduleId),
+        checkerAddress
+      )
+
+    Ok(Json.toJson(moduleResult))
 
   }
 

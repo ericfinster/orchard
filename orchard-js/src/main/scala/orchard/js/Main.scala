@@ -39,6 +39,7 @@ object Main extends js.JSApp with JsModuleSystem {
   import JQueryImplicits._
 
   jQuery("#new-module-btn").click(() => { onNewModule })
+  jQuery("#new-import-btn").click(() => { onImport })
   jQuery("#new-parameter-btn").click(() => { onNewParameter })
   jQuery("#new-defn-btn").click(() => { onNewDefinition })
   jQuery("#new-worksheet-btn").click(() => { onNewWorksheet })
@@ -57,10 +58,11 @@ object Main extends js.JSApp with JsModuleSystem {
         case 70 => onNewDefinition   // f
         case 87 => onNewWorksheet    // w
         case 68 => onDrop            // d
+        case 73 => onImport          // i
         case _ => ()
       }
 
-      //println("Keycode: " ++ keyCode.toString)
+      // println("Keycode: " ++ keyCode.toString)
 
       true
     }
@@ -108,21 +110,25 @@ object Main extends js.JSApp with JsModuleSystem {
       val modAddr = activeCheckerAddress.moduleAddress
       val curOff = activeCheckerAddress.cursorOffset
 
-      requestModule(moduleId) onSuccess {
-        case returnedId : String => {
+      val futureMod = requestNewModule(moduleId)
 
-          val node = new JsModuleNode(returnedId)
+      futureMod onSuccess {
+        case module : Module => {
 
           for {
             rootZ <- rootZipper
             insertionPtr <- rootZ.seek(modAddr)
-            ptr <- insertionPtr.insertAt(Module(node, Vector.empty), curOff)
+            ptr <- insertionPtr.insertAt(module, curOff)
           } {
             rootModule = Some(ptr.zip.asInstanceOf[Module])
-            setCursorPosition(modAddr, curOff + 1)
-            Toastr.success("Created module: " ++ returnedId)
+            setCursorPosition(modAddr ++ Vector(curOff), 0)
+            Toastr.success("Created module: " ++ module.node.name)
           }
         }
+      }
+
+      futureMod onFailure {
+        case e => println("Module request failed: " ++ e.getMessage)
       }
 
       hide
@@ -144,6 +150,63 @@ object Main extends js.JSApp with JsModuleSystem {
     }
   }
 
+  object ImportModal extends BootstrapModal("orchard-import-modal") {
+
+    val moduleIdJq = modalJq.find("#module-identifier")
+
+    modalJq.find("#import-form").on("submit", () => {
+
+      val moduleId = moduleIdJq.value.as[String]
+      val isOpen = if (modalJq.find("#open-checkbox").is(":checked")) true else false
+      val modAddr = activeCheckerAddress.moduleAddress
+      val curOff = activeCheckerAddress.cursorOffset
+
+      val futureImport = requestNewImport(moduleId, moduleId, isOpen)
+
+      futureImport onSuccess {
+        case imprt : Import => {
+
+          println("Created import named " ++ imprt.node.name ++ " for module " ++ imprt.node.moduleName)
+
+          for {
+            rootZ <- rootZipper
+            insertionPtr <- rootZ.seek(modAddr)
+            ptr <- insertionPtr.insertAt(imprt, curOff)
+          } {
+            rootModule = Some(ptr.zip.asInstanceOf[Module])
+            setCursorPosition(modAddr, curOff + 1)
+            Toastr.success("Created import: " ++ imprt.node.name)
+          }
+
+
+        }
+      }
+
+      futureImport onFailure {
+        case e => println("Import failed: " ++ e.getMessage)
+      }
+
+      hide
+      false
+
+    })
+
+    override def onShow = {
+      removeKeyHandler
+    }
+
+    override def onShown = {
+      moduleIdJq.focus()
+    }
+
+
+    override def onHide = {
+      installKeyHandler
+      moduleIdJq.value("")
+    }
+
+  }
+
   object NewParameterModal extends BootstrapModal("orchard-new-parameter-modal") {
 
     val inputJq = modalJq.find("#parameter-name")
@@ -155,26 +218,31 @@ object Main extends js.JSApp with JsModuleSystem {
         targetCell <- worksheet.selectionBase
       } {
 
-        val parameterIdent: String = modalJq.find("#parameter-name").value.asInstanceOf[js.String]
+        val parameterIdent : String = modalJq.find("#parameter-name").value.asInstanceOf[js.String]
+        val isThin : Boolean = if (modalJq.find("#thin-checkbox").is(":checked")) true else false
         val modAddr = activeCheckerAddress.moduleAddress
         val curOff = activeCheckerAddress.cursorOffset
 
-        requestParameter(worksheet.remoteId, targetCell.address, parameterIdent, false) onSuccess {
-          case parameterName => {
+        val futureParam = requestParameter(worksheet.remoteId, targetCell.address, parameterIdent, isThin) 
 
-            val node = new JsParameterNode(parameterName)
+        futureParam onSuccess {
+          case parameter : Parameter => {
 
             for {
               rootZ <- rootZipper
               insertionPtr <- rootZ.seek(modAddr)
-              ptr <- insertionPtr.insertAt(Parameter(node), curOff)
+              ptr <- insertionPtr.insertAt(parameter, curOff)
             } {
               rootModule = Some(ptr.zip.asInstanceOf[Module])
               setCursorPosition(modAddr, curOff + 1)
               refreshWorksheet(worksheet)
-              Toastr.success("Created parameter: " ++ parameterName)
+              Toastr.success("Created parameter: " ++ parameter.node.name)
             }
           }
+        }
+
+        futureParam onFailure {
+          case e => println("Parameter request failed: " ++ e.getMessage)
         }
       }
 
@@ -212,22 +280,26 @@ object Main extends js.JSApp with JsModuleSystem {
         val modAddr = activeCheckerAddress.moduleAddress
         val curOff = activeCheckerAddress.cursorOffset
 
-        requestDefinition(worksheet.remoteId, targetCell.address, definitionIdent) onSuccess {
-          case definitionName => {
-
-            val node = new JsDefinitionNode(definitionName)
+        val futureDef = requestDefinition(worksheet.remoteId, targetCell.address, definitionIdent) 
+        
+        futureDef onSuccess {
+          case definition : Definition => {
 
             for {
               rootZ <- rootZipper
               insertionPtr <- rootZ.seek(modAddr)
-              ptr <- insertionPtr.insertAt(Definition(node), curOff)
+              ptr <- insertionPtr.insertAt(definition, curOff)
             } {
               rootModule = Some(ptr.zip.asInstanceOf[Module])
               setCursorPosition(modAddr, curOff + 1)
               refreshWorksheet(worksheet)
-              Toastr.success("Created definition: " ++ definitionName)
+              Toastr.success("Created definition: " ++ definition.node.name)
             }
           }
+        }
+
+        futureDef onFailure {
+          case e => println("Definition request failed: " ++ e.getMessage)
         }
       }
 
@@ -427,6 +499,9 @@ object Main extends js.JSApp with JsModuleSystem {
     NewModuleModal.show
   }
 
+  def onImport : Unit = {
+    ImportModal.show
+  }
 
   //============================================================================================
   // AJAX REQUESTS
@@ -469,10 +544,12 @@ object Main extends js.JSApp with JsModuleSystem {
       }
     }
 
-  def requestModule(moduleId : String) : Future[String] = {
+  def requestNewModule(moduleId : String) : Future[Module] = {
+
+    import JsNode._
 
     val request = 
-      PostRequest[String](
+      PostRequest[ModuleEntry](
         "/new-module",
         lit(
           "moduleId" -> moduleId,
@@ -480,7 +557,33 @@ object Main extends js.JSApp with JsModuleSystem {
         )
       )
 
-    doPostRequest(request)
+    for {
+      entry <- doPostRequest(request)
+    } yield entry.asInstanceOf[Module]
+
+  }
+
+  def requestNewImport(name : String, moduleName : String, isOpen : Boolean) : Future[Import] = {
+
+    import JsNode._
+
+    val request = 
+      PostRequest[ModuleEntry](
+        "/new-import",
+        lit(
+          "name" -> name,
+          "moduleName" -> moduleName,
+          "isOpen" -> isOpen,
+          "address" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    for {
+      entry <- doPostRequest(request)
+    } yield {
+      println("got a module entry")
+      entry.asInstanceOf[Import]
+    }
 
   }
 
@@ -558,6 +661,25 @@ object Main extends js.JSApp with JsModuleSystem {
 
   }
 
+  def requestModule(moduleId : String) : Future[Module] = {
+
+    import JsNode._
+
+    val request = 
+      PostRequest[ModuleEntry](
+        "/request-module",
+        lit(
+          "moduleId" -> moduleId,
+          "address" -> JsJsonWriter.write(activeCheckerAddress)
+        )
+      )
+
+    for {
+      entry <- doPostRequest(request)
+    } yield entry.asInstanceOf[Module]
+
+  }
+
   def requestPaste(
     identifier : String, 
     targetAddress : CellAddress, 
@@ -586,10 +708,12 @@ object Main extends js.JSApp with JsModuleSystem {
     cellAddress : CellAddress, 
     identString : String,
     isThin : Boolean
-  ) : Future[String] = {
+  ) : Future[Parameter] = {
+
+    import JsNode._
 
     val request = 
-      PostRequest[String](
+      PostRequest[ModuleEntry](
         "/new-parameter",
         lit(
           "worksheetId" -> worksheetId,
@@ -600,7 +724,9 @@ object Main extends js.JSApp with JsModuleSystem {
         )
       )
 
-    doPostRequest(request)
+    for {
+      entry <- doPostRequest(request)
+    } yield entry.asInstanceOf[Parameter]
 
   }
 
@@ -608,10 +734,12 @@ object Main extends js.JSApp with JsModuleSystem {
     worksheetId : Int,
     cellAddress : CellAddress, 
     identString : String
-  ) : Future[String] = {
+  ) : Future[Definition] = {
+
+    import JsNode._
 
     val request = 
-      PostRequest[String](
+      PostRequest[ModuleEntry](
         "/new-definition",
         lit(
           "worksheetId" -> worksheetId,
@@ -621,7 +749,9 @@ object Main extends js.JSApp with JsModuleSystem {
         )
       )
 
-    doPostRequest(request)
+    for {
+      entry <- doPostRequest(request)
+    } yield entry.asInstanceOf[Definition]
 
   }
 
@@ -632,17 +762,15 @@ object Main extends js.JSApp with JsModuleSystem {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    val node = new JsModuleNode("Prelude")
+    requestNewModule("Prelude") onSuccess {
+      case module : Module => {
+        jQuery(".module-wrapper").append(module.node.panelJq)
+        rootModule = Some(module)
 
-    node.cursorsJQ.each((i : js.Any, el : dom.Element) => {
-      jQuery(el).find(".cursor-bar").addClass("active")
-    })
+        setCursorPosition(Vector.empty, 0)
 
-    jQuery(".module-wrapper").append(node.panelJq)
-    val rm = Module(node, Vector.empty)
-    rootModule = Some(rm)
-
-    setCursorPosition(Vector.empty, 0)
+      }
+    }
 
     val listElement = document.createElement("li")
     jQuery(".worksheet-carousel ul").append(listElement)

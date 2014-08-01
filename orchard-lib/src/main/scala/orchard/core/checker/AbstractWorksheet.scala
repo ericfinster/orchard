@@ -33,6 +33,15 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
       myItem = newItm
       // emit(ChangeEvents.ItemChangedEvent(oldItem))
     }
+
+    def bindingSkeleton : NCell[Either[CellAddress, Expression]] =
+      skeleton map (cell =>
+        cell.item match {
+          case Neutral(Some(expr)) => Right(expr)
+          case Neutral(None) => Left(cell.address)
+          case _ => throw new Exception("Binding skeleton included a polarized cell.")
+        }
+      )
   }
 
   def extend = glob(Negative, Positive)
@@ -96,24 +105,6 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
       }
     }
   }
-
-  // def extrude = {
-  //   if (selectionIsExtrudable) {
-  //     emptyExtrusion
-  //   } else {
-  //     //CheckerFailure("Selection is not extrudable.")
-  //     println("Selection is not extrudable.")
-  //   }
-  // }
-
-  // def drop = {
-  //   if (selectionIsDroppable) {
-  //     emptyDrop
-  //   } else {
-  //     //CheckerFailure("Selection is not droppable.")
-  //     println("Selection is not droppable.")
-  //   }
-  // }
 
   def emptyExtrusion : Error[Unit] =
     extrudeAtSelection(None, None)

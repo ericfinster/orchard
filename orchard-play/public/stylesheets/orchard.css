@@ -108,6 +108,10 @@ html, body {
     padding-left: 15px;
 }
 
+.import-panel .panel-heading {
+    background-color: #c4f5b3;
+}
+
 .parameter-panel .panel-heading {
     background-color: #fff5e0;
 }
@@ -267,6 +271,10 @@ html, body {
 .orchard-cell-variable { fill: #fff5e0; }
 .orchard-cell-variable-hovered { fill: #e4cfa3; }
 .orchard-cell-variable-selected { fill: #d9b974; }
+
+.orchard-cell-variable-thin { fill: #e2d1ec; }
+.orchard-cell-variable-thin-hovered { fill: #9d7fae; }
+.orchard-cell-variable-thin-selected { fill: #8b5ba5; }
 
 .orchard-cell-filler { fill: #d3d9ec; }
 .orchard-cell-filler-hovered { fill: #838eaf; }

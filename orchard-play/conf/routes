@@ -11,9 +11,13 @@ GET     /new-worksheet              controllers.Application.newWorksheet
 
 POST    /request-worksheet          controllers.Application.requestWorksheet
 
+POST    /request-module             controllers.Application.requestModule
+
 POST    /environment                controllers.Application.requestEnvironment
 
 POST    /new-module                 controllers.Application.newModule
+
+POST    /new-import                 controllers.Application.newImport
 
 POST    /new-parameter              controllers.Application.newParameter
 

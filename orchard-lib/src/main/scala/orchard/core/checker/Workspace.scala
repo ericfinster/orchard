@@ -61,25 +61,48 @@ class Workspace extends Checker {
     else
       fail("Requested worksheet not found.")
 
+  def newModule(
+    moduleId : String, 
+    checkerAddress : CheckerAddress
+  ) : Error[Module] =
+    for {
+      module <- runCommandAtAddress(
+        insertModule(moduleId),
+        checkerAddress
+      )
+    } yield module
+
+  def newImport(
+    name : String,
+    moduleName : String,
+    isOpen : Boolean,
+    checkerAddress : CheckerAddress
+  ) : Error[Import] = 
+    for {
+      imprt <- runCommandAtAddress(
+        insertImport(name, moduleName, isOpen),
+        checkerAddress
+      )
+    } yield imprt
+
   def newParameter(
     worksheetId : Int, 
     address : CellAddress, 
     identString : String, 
     isThin : Boolean, 
     checkerAddress : CheckerAddress
-  ) : Error[String] =
+  ) : Error[Parameter] =
     for {
       worksheet <- getWorksheet(worksheetId)
       targetCell <- worksheet.seek(address)
       _ <- ensure(targetCell.isShell, "Selected cell is not a shell.")
-      shell = new Shell(targetCell.neutralNCell)
-      parameterNode <- runCommandAtAddress(
-        insertParameter(identString, shell, isThin),
+      parameter <- runCommandAtAddress(
+        insertParameter(identString, targetCell.neutralNCell, isThin),
         checkerAddress
       )
     } yield {
-      targetCell.item = Neutral(Some(parameterNode.variableExpression))
-      parameterNode.name
+      targetCell.item = Neutral(Some(parameter.node.variableExpression))
+      parameter
     }
 
   def newDefinition(
@@ -87,23 +110,21 @@ class Workspace extends Checker {
     address : CellAddress,
     identString : String,
     checkerAddress : CheckerAddress
-  ) : Error[String] = 
+  ) : Error[Definition] = 
     for {
       worksheet <- getWorksheet(worksheetId)
       targetCell <- worksheet.seek(address)
       _ <- ensure(targetCell.isFillable, "Selected cell is not fillable.")
-      nook = new Nook (targetCell.neutralNCell, targetCell.isThinBoundary)
-      definitionNode <- runCommandAtAddress(
-        insertDefinition(identString, nook),
+      definition <- runCommandAtAddress(
+        insertDefinition(identString, targetCell.neutralNCell),
         checkerAddress
       )
     } yield {
 
-      targetCell.boundaryFace.item = Neutral(Some(definitionNode.fillerExpression.Boundary))
-      targetCell.item = Neutral(Some(definitionNode.fillerExpression))
+      targetCell.boundaryFace.item = Neutral(Some(definition.node.fillerExpression.Boundary))
+      targetCell.item = Neutral(Some(definition.node.fillerExpression))
 
-      // Put the expressions in the worksheet
-      definitionNode.name
+      definition
 
     }
 
@@ -117,7 +138,25 @@ class Workspace extends Checker {
       worksheet <- getWorksheet(worksheetId)
       targetCell <- worksheet.seek(address)
       _ <- ensure(targetCell.isEmpty, "Selected cell is not empty.")
+      exprNCell <- runCommandAtAddress(
+        validatePaste(identifier, targetCell.bindingSkeleton),
+        checkerAddress
+      )
     } yield {
+
+      // Place all the expressions in their new homes.
+
+      val zippedNCell =  targetCell.skeleton.zip(exprNCell).get
+
+      zippedNCell map {
+        case (cell, e) => 
+          cell.item match {
+            case Neutral(None) => cell.item = Neutral(Some(e))
+            case _ => ()
+          }
+      }
+
       worksheet
+
     }
 }

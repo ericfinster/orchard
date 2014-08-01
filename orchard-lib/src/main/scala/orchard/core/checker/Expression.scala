@@ -21,7 +21,7 @@ sealed trait Expression {
 case class Variable(val ident : Identifier, val shell : Shell, val isThin : Boolean) extends Expression {
 
   def name = ident.expand
-  def ncell = ??? // shell.withFillingExpression(this)
+  def ncell = shell.withFillingExpression(this)
   def styleString = if (isThin) "variable-thin" else "variable"
 
   def canEqual(other : Any) : Boolean =
@@ -50,12 +50,12 @@ case class Variable(val ident : Identifier, val shell : Shell, val isThin : Bool
 case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expression { thisFiller =>
 
   def name = "def-" ++ bdryIdent.expand
-  def ncell = ??? // nook.withFiller(this)
+  def ncell = nook.withFiller(this)
   def isThin = true
   def styleString = "filler"
 
-  // def bdryAddress : CellAddress =
-  //   nook.framework.topCell.boundaryAddress
+  def bdryAddress : CellAddress =
+    nook.framework.topCell.boundaryAddress
 
   def canEqual(other : Any) : Boolean =
     other.isInstanceOf[Filler]
@@ -76,10 +76,10 @@ case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expressio
 
     def name = bdryIdent.expand
     def isThin = nook.isThinBoundary
-    def styleString = if (isThin) "bdry-thin" else "bdry"
+    def styleString = if (isThin) "boundary-thin" else "boundary"
 
     def interior = thisFiller
-    def ncell = ??? // interior.ncell.seek(bdryAddress).get
+    def ncell = interior.ncell.seek(bdryAddress).get
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Filler#BoundaryExpr]

@@ -12,10 +12,12 @@ import orchard.core.util.ErrorM._
 trait ModuleSystem {
 
   type NodeType <: Node
-  type ModuleNodeType <: NodeType with ModuleNode
-  type ParameterNodeType <: NodeType with ParameterNode
-  type DefinitionNodeType <: NodeType with DefinitionNode
-  type ImportNodeType <: NodeType with ImportNode
+  type ContainerNodeType <: NodeType with ContainerNode
+  type ExpressionNodeType <: NodeType with ExpressionNode
+  type ModuleNodeType <: ContainerNodeType with ModuleNode
+  type ImportNodeType <: ContainerNodeType with ImportNode
+  type ParameterNodeType <: ExpressionNodeType with ParameterNode
+  type DefinitionNodeType <: ExpressionNodeType with DefinitionNode
 
   def rootZipper : Error[ModuleZipper]
 
@@ -23,6 +25,7 @@ trait ModuleSystem {
     thisNode : NodeType =>
 
     def name : String 
+    def nodeType : String
 
     var address : Vector[Int] = Vector.empty
 
@@ -40,24 +43,101 @@ trait ModuleSystem {
 
   }
 
-  trait ModuleNode extends Node { 
+  trait ContainerNode extends Node { thisNode : ContainerNodeType => }
+  trait ExpressionNode extends Node { thisNode : ExpressionNodeType => }
+
+  trait ModuleNode extends ContainerNode { 
     thisNode : ModuleNodeType =>
 
-    def insertEntryAt(me : ModuleEntry, i : Int) 
+    def nodeType = "moduleNode"
+    def insertEntryAt(me : ModuleEntry, i : Int) : Unit
 
   }
 
-  trait ParameterNode extends Node { 
+  trait ImportNode extends ContainerNode {
+    thisNode : ImportNodeType =>
+
+    def nodeType = "importNode"
+
+    def moduleName : String
+    def isOpen : Boolean
+
+  }
+
+
+  trait ParameterNode extends ExpressionNode { 
     thisNode : ParameterNodeType =>
 
+    def nodeType = "parameterNode"
+
   }
 
-  trait DefinitionNode extends Node {
+  trait DefinitionNode extends ExpressionNode {
     thisNode : DefinitionNodeType =>
+
+    def nodeType = "definitionNode"
+
   }
 
-  trait ImportNode extends Node {
-    thisNode : ImportNodeType =>
+  object Node {
+
+    import orchard.core.util._
+
+    trait SummaryNodeGenerator {
+      def createModule(name : String) : ModuleNodeType
+      def createImport(name : String, moduleName : String, isOpen : Boolean) : ImportNodeType
+      def createParameter(name : String) : ParameterNodeType
+      def createDefinition(name : String) : DefinitionNodeType
+    }
+
+    implicit def nodeIsReadable[P](implicit gen : SummaryNodeGenerator) : JsonReadable[NodeType, P] =
+      new JsonReadable[NodeType, P] {
+        def read(x : P, reader : JsonReader[P]): NodeType = {
+          val nodeType = reader.readString(reader.readObjectField(x, "type"))
+          val name = reader.readString(reader.readObjectField(x, "name"))
+
+          nodeType match {
+            case "moduleNode" => {
+              gen.createModule(name)
+            }
+            case "importNode" => {
+              val moduleName = reader.readString(reader.readObjectField(x, "moduleName"))
+              val isOpen = reader.readBoolean(reader.readObjectField(x, "isOpen"))
+
+              gen.createImport(name, moduleName, isOpen)
+            }
+            case "parameterNode" => {
+              gen.createParameter(name)
+            }
+            case "definitionNode" => {
+              gen.createDefinition(name)
+            }
+          }
+        }
+      }
+
+    implicit def nodeIsWritable[P] : JsonWritable[Node, P] =
+      new JsonWritable[Node, P] {
+        def write(node : Node, writer : JsonWriter[P]) : P = {
+          node match {
+            case i : ImportNode => {
+              writer.writeObject(
+                "type" -> writer.writeString(i.nodeType),
+                "name" -> writer.writeString(i.name),
+                "moduleName" -> writer.writeString(i.moduleName),
+                "isOpen" -> writer.writeBoolean(i.isOpen)
+              )
+            } 
+            case _ => {
+              writer.writeObject(
+                "type" -> writer.writeString(node.nodeType),
+                "name" -> writer.writeString(node.name)
+              )
+            }
+          }
+        }
+      }
+    
   }
 
   //============================================================================================
@@ -74,6 +154,10 @@ trait ModuleSystem {
 
   }
 
+  case class Import(val importNode : ImportNodeType, val entries : Vector[ModuleEntry]) extends ModuleEntry {
+    def node = importNode
+  }
+
   case class Parameter(val parameterNode : ParameterNodeType) extends ModuleEntry {
     def node = parameterNode
 
@@ -86,9 +170,81 @@ trait ModuleSystem {
     def node = definitionNode
   }
 
-  case class Import(val importNode : ImportNodeType) extends ModuleEntry {
-    def node = importNode
+  object ModuleEntry {
+
+    import orchard.core.util._
+
+    implicit def moduleEntryIsReadable[P](implicit gen : Node.SummaryNodeGenerator) : JsonReadable[ModuleEntry, P] =
+      new JsonReadable[ModuleEntry, P] {
+        def read(x : P, reader : JsonReader[P]) : ModuleEntry = {
+          val nodeReader = implicitly[JsonReadable[NodeType, P]]
+          val entryReader = implicitly[JsonReadable[Vector[ModuleEntry], P]]
+
+          val nodeType = reader.readString(reader.readObjectField(x, "type"))
+
+
+          nodeType match {
+            case "module" => {
+              val entries = entryReader.read(reader.readObjectField(x, "entries"), reader)
+              val node = nodeReader.read(reader.readObjectField(x, "node"), reader).asInstanceOf[ModuleNodeType]
+              Module(node, entries)
+            }
+            case "import" => {
+              val entries = entryReader.read(reader.readObjectField(x, "entries"), reader)
+              val node = nodeReader.read(reader.readObjectField(x, "node"), reader).asInstanceOf[ImportNodeType]
+              Import(node, entries)
+            }
+            case "parameter" => {
+              val node = nodeReader.read(reader.readObjectField(x, "node"), reader).asInstanceOf[ParameterNodeType]
+              Parameter(node)
+            }
+            case "definition" => {
+              val node = nodeReader.read(reader.readObjectField(x, "node"), reader).asInstanceOf[DefinitionNodeType]
+              Definition(node)
+            }
+          }
+        }
+      }
+
+    implicit def moduleEntryIsWritable[P] : JsonWritable[ModuleEntry, P] =
+      new JsonWritable[ModuleEntry, P] {
+        def write(entry : ModuleEntry, writer : JsonWriter[P]) : P = {
+          val nodeWriter = implicitly[JsonWritable[Node, P]]
+          val entryWriter = implicitly[JsonWritable[Vector[ModuleEntry], P]]
+
+          entry match {
+            case m : Module => {
+              writer.writeObject(
+                "type" -> writer.writeString("module"),
+                "node" -> nodeWriter.write(m.node, writer),
+                "entries" -> entryWriter.write(m.entries, writer)
+              )
+            }
+            case i : Import => {
+              writer.writeObject(
+                "type" -> writer.writeString("import"),
+                "node" -> nodeWriter.write(i.node, writer),
+                "entries" -> entryWriter.write(i.entries, writer)
+              )
+            }
+            case p : Parameter => {
+              writer.writeObject(
+                "type" -> writer.writeString("parameter"),
+                "node" -> nodeWriter.write(p.node, writer)
+              )
+            }
+            case d : Definition => {
+              writer.writeObject(
+                "type" -> writer.writeString("definition"),
+                "node" -> nodeWriter.write(d.node, writer)
+              )
+            }
+          }
+        }
+      }
+    
   }
+
 
   //============================================================================================
   // MODULE CONTEXTS AND ZIPPERS
@@ -243,7 +399,10 @@ trait ModuleSystem {
         }
         case p : Parameter => f(toAddress, p.node)
         case d : Definition => f(toAddress, d.node)
-        case i : Import => ???
+        case i : Import => {
+          // This is not right, but we will have to think about it as the semantics improve
+          f(toAddress, i.node)
+        }
       }
 
     def focusedModule : Error[Module] =

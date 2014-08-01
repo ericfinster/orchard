@@ -20,17 +20,35 @@ import JQueryImplicits._
 trait JsModuleSystem extends ModuleSystem {
 
   type NodeType = JsNode
+  type ContainerNodeType = JsContainerNode
+  type ExpressionNodeType = JsExpressionNode
   type ModuleNodeType = JsModuleNode
   type ParameterNodeType = JsParameterNode
   type DefinitionNodeType = JsDefinitionNode
   type ImportNodeType = JsImportNode
 
   abstract class JsNode extends Node {
-    def name : String = "Unknown"
     def panelJq : JQuery
   }
 
-  class JsModuleNode(override val name : String) extends JsNode with ModuleNode {
+  object JsNode {
+
+    import Node._
+
+    implicit object JsNodeGenerator extends SummaryNodeGenerator {
+      def createModule(name : String) : ModuleNodeType = new JsModuleNode(name)
+      def createImport(name : String, moduleName : String, isOpen : Boolean) : ImportNodeType = 
+        new JsImportNode(name, moduleName, isOpen)
+      def createParameter(name : String) : ParameterNodeType = new JsParameterNode(name)
+      def createDefinition(name : String) : DefinitionNodeType = new JsDefinitionNode(name)
+    }
+
+  }
+
+  abstract class JsContainerNode extends JsNode with ContainerNode
+  abstract class JsExpressionNode extends JsNode with ExpressionNode
+
+  class JsModuleNode(val name : String) extends JsContainerNode with ModuleNode {
 
     val modElement =
       div(`class`:="panel panel-default module-panel")(
@@ -90,7 +108,39 @@ trait JsModuleSystem extends ModuleSystem {
     }
   }
 
-  class JsParameterNode(override val name : String) extends JsNode with ParameterNode {
+  class JsImportNode(val name : String, val moduleName : String, val isOpen : Boolean) extends JsContainerNode with ImportNode {
+
+    val importElement = 
+      div(`class`:="panel panel-default import-panel")(
+        div(`class`:="panel-heading")(
+          h3(`class`:="panel-title")(name),
+          div(`class`:="panel-tools")(
+            a(`class`:="btn btn-link btn-sm panel-collapse", `href`:="#")(i(`class`:="fa fa-chevron-down"))
+          )
+        ),
+        div(`class`:="panel-body panel-collapsed")()
+      ).render
+
+    val panelJq : JQuery = jQuery(importElement)
+    val panelHeadingJq : JQuery = panelJq.children(".panel-heading")
+    val panelBodyJq : JQuery = panelJq.children(".panel-body")
+
+    panelHeadingJq.find(".panel-collapse").click(() => {
+      if (panelBodyJq.hasClass("panel-collapsed")) {
+        panelBodyJq.slideDown(200, () => {
+          panelBodyJq.removeClass("panel-collapsed")
+        })
+      } else {
+        panelBodyJq.slideUp(200, () => {
+          panelBodyJq.addClass("panel-collapsed")
+        })
+      }
+    })
+
+  }
+
+
+  class JsParameterNode(val name : String) extends JsExpressionNode with ParameterNode {
 
     val parameterElement = 
       div(`class`:="panel panel-default parameter-panel")(
@@ -121,7 +171,7 @@ trait JsModuleSystem extends ModuleSystem {
 
   }
 
-  class JsDefinitionNode(override val name : String) extends JsNode with DefinitionNode {
+  class JsDefinitionNode(val name : String) extends JsExpressionNode with DefinitionNode {
 
     val definitionElement = 
       div(`class`:="panel panel-default definition-panel")(
@@ -149,12 +199,6 @@ trait JsModuleSystem extends ModuleSystem {
         })
       }
     })
-
-  }
-
-  class JsImportNode extends JsNode with ImportNode {
-
-    val panelJq : JQuery = ???
 
   }
 

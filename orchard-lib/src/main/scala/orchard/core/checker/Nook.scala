@@ -9,7 +9,22 @@ package orchard.core.checker
 
 import orchard.core.cell._
 
-class Nook(val ncell : NCell[Option[Expression]], val isThinBoundary : Boolean) {
+class Nook(val framework : Framework[Option[Expression]]) {
+
+  val ncell : NCell[Option[Expression]] = framework.topCell.toNCell
+
+  def isThinBoundary : Boolean =
+    framework.topCell.isThinBoundary
+
+  def withFiller(filler : Filler) : NCell[Expression] =
+    withFillerAndBoundary(filler, filler.Boundary)
+
+  def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
+    val frameworkCopy = framework.duplicate
+    frameworkCopy.topCell.item = Some(filler)
+    frameworkCopy.topCell.boundaryFace.item = Some(boundary)
+    frameworkCopy.topCell.toNCell map (_.get)
+  }
 
   def canEqual(other : Any) : Boolean =
     other.isInstanceOf[Nook]
@@ -42,8 +57,6 @@ class Nook(val ncell : NCell[Option[Expression]], val isThinBoundary : Boolean) 
 
 //   val ncell : NCell[A] = framework.topCell.toNCell
 
-//   def isThinBoundary : Boolean =
-//     framework.topCell.isThinBoundary
 
 
 // }

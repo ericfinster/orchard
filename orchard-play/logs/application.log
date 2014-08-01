@@ -1,14 +1,26 @@
-2014-08-01 11:07:27,124 - [INFO] - from play in pool-4-thread-3 
+2014-08-01 18:21:03,554 - [INFO] - from play in pool-4-thread-2 
 Listening for HTTP on /0:0:0:0:0:0:0:0:9000
 
-2014-08-01 11:07:38,138 - [ERROR] - from application in New I/O worker #1 
+2014-08-01 18:21:08,803 - [INFO] - from play in play-internal-execution-context-1 
+Application started (Dev)
+
+2014-08-01 18:21:10,337 - [DEBUG] - from application in play-akka.actor.default-dispatcher-2 
+Returning a worksheet with id: 791851163
+
+2014-08-01 18:22:51,428 - [INFO] - from play in play-internal-execution-context-1 
+Application started (Dev)
+
+2014-08-01 18:22:52,312 - [DEBUG] - from application in play-akka.actor.default-dispatcher-12 
+Returning a worksheet with id: 1379269976
+
+2014-08-01 18:27:33,873 - [ERROR] - from application in New I/O worker #5 
 
 
-! @6j46mfd2i - Internal server error, for (GET) [/] ->
+! @6j4929819 - Internal server error, for (GET) [/] ->
 
 play.PlayExceptions$CompilationException: Compilation error[type mismatch;
- found   : scala.scalajs.js.Dynamic
- required: scala.collection.GenTraversableOnce[?]]
+ found   : Unit
+ required: ModuleSystem.this.NodeType]
 	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
 	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
 	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
@@ -30,96 +42,36 @@ play.PlayExceptions$CompilationException: Compilation error[type mismatch;
 	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
 	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
 
-2014-08-01 11:07:38,218 - [WARN] - from play in New I/O worker #1 
-No application found at invoker init
-
-2014-08-01 11:07:57,721 - [ERROR] - from application in New I/O worker #1 
-
-
-! @6j46mgg24 - Internal server error, for (GET) [/] ->
-
-play.PlayExceptions$CompilationException: Compilation error[type mismatch;
- found   : scala.scalajs.js.Dynamic
- required: scala.scalajs.js.String
-    (which expands to)  String]
-	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
-	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
-	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
-	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
-	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
-	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
-	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
-	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
-
-2014-08-01 11:08:52,474 - [INFO] - from play in play-internal-execution-context-1 
+2014-08-01 18:28:02,260 - [INFO] - from play in play-internal-execution-context-1 
 Application started (Dev)
 
-2014-08-01 11:08:53,758 - [DEBUG] - from application in play-akka.actor.default-dispatcher-11 
-Returning a worksheet with id: 225346566
+2014-08-01 18:28:03,248 - [DEBUG] - from application in play-akka.actor.default-dispatcher-19 
+Returning a worksheet with id: 226582927
 
-2014-08-01 11:08:57,007 - [DEBUG] - from application in play-akka.actor.default-dispatcher-9 
-Returning a worksheet with id: 1125634692
-
-2014-08-01 11:09:47,476 - [INFO] - from play in play-internal-execution-context-1 
+2014-08-01 18:31:36,515 - [INFO] - from play in play-internal-execution-context-1 
 Application started (Dev)
 
-2014-08-01 11:09:48,378 - [DEBUG] - from application in play-akka.actor.default-dispatcher-16 
-Returning a worksheet with id: 2104756509
+2014-08-01 18:31:37,369 - [DEBUG] - from application in play-akka.actor.default-dispatcher-25 
+Returning a worksheet with id: 1119572471
 
-2014-08-01 11:09:50,274 - [DEBUG] - from application in play-akka.actor.default-dispatcher-8 
-Returning a worksheet with id: 2128571102
-
-2014-08-01 11:12:51,231 - [INFO] - from play in play-internal-execution-context-2 
+2014-08-01 18:33:42,070 - [INFO] - from play in play-internal-execution-context-1 
 Application started (Dev)
 
-2014-08-01 11:12:52,087 - [DEBUG] - from application in play-akka.actor.default-dispatcher-19 
-Returning a worksheet with id: 1177764897
-
-2014-08-01 11:12:56,717 - [DEBUG] - from application in play-akka.actor.default-dispatcher-20 
-Returning a worksheet with id: 589698019
-
-2014-08-01 11:17:17,062 - [ERROR] - from application in New I/O worker #1 
-
-
-! @6j46nmbd6 - Internal server error, for (GET) [/] ->
-
-play.PlayExceptions$CompilationException: Compilation error[illegal start of simple expression]
-	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
-	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
-	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
-	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
-	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
-	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
-	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
-	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
-	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
-	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
-	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
-
-2014-08-01 11:17:26,190 - [INFO] - from play in play-internal-execution-context-3 
+2014-08-01 18:33:43,150 - [INFO] - from play in play-internal-execution-context-1 
 Application started (Dev)
 
-2014-08-01 11:17:27,001 - [DEBUG] - from application in play-akka.actor.default-dispatcher-27 
-Returning a worksheet with id: 774446796
+2014-08-01 18:33:43,962 - [DEBUG] - from application in play-akka.actor.default-dispatcher-33 
+Returning a worksheet with id: 500031066
+
+2014-08-01 18:34:01,781 - [INFO] - from play in play-internal-execution-context-1 
+Application started (Dev)
+
+2014-08-01 18:34:02,965 - [DEBUG] - from application in play-akka.actor.default-dispatcher-31 
+Returning a worksheet with id: 204088052
+
+2014-08-01 18:34:57,450 - [INFO] - from play in play-internal-execution-context-1 
+Application started (Dev)
+
+2014-08-01 18:34:58,248 - [DEBUG] - from application in play-akka.actor.default-dispatcher-35 
+Returning a worksheet with id: 1975931240
 
