@@ -41,6 +41,8 @@ trait Element extends js.Object {
   def addClass(cls : String) : Unit
   def removeClass(cls : String) : Unit
 
+  def node : dom.Element 
+
 }
 
 trait BBox extends js.Object {

@@ -55,6 +55,25 @@ object Application extends Controller {
 
   }
 
+  def dropWorksheet = Action(BodyParsers.parse.json) { request =>
+    import models.OrchardToPlay._
+
+    val worksheetId = (request.body \ "worksheetId").as[Int]
+    val selectionDescriptor = (request.body \ "selectionDescriptor").as[SelectionDescriptor]
+
+    val droppedWorksheet = 
+      for {
+        worksheet <- workspace.getWorksheet(worksheetId)
+        _ <- worksheet.selectFromDescriptor(selectionDescriptor)
+        _ <- ensure(worksheet.selectionIsDroppable, "Cannot insert a drop here.")
+        _ <- worksheet.emptyDrop
+      } yield worksheet.toMarkerComplex
+
+
+    Ok(Json.toJson(droppedWorksheet))
+
+  }
+
   def newModule = Action(BodyParsers.parse.json) { request =>
     import models.OrchardToPlay._
 

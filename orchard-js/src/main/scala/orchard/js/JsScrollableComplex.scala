@@ -16,6 +16,8 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
+import plugins.PerfectScrollbar._
+
 abstract class JsScrollableComplex[A](container : dom.Element, json : js.Any, panelSize : Int)(implicit aReader : JsonReadable[A, js.Any])
     extends JsComplex[A](json) { thisComplex =>
 
@@ -35,6 +37,8 @@ abstract class JsScrollableComplex[A](container : dom.Element, json : js.Any, pa
 
   renderContent
 
+  // jQuery(galleryDiv).perfectScrollbar()
+
   def renderContent : Unit = {
 
     // Create the panels
@@ -50,9 +54,8 @@ abstract class JsScrollableComplex[A](container : dom.Element, json : js.Any, pa
       panel.renderContent(panelDiv)
     }
 
-    // val galleryShim = dom.document.createElement("br")
-    // galleryShim.setAttribute("class", "scollable-gallery-shim")
-    // galleryList.appendChild(galleryShim)
+    // Now, we need to set the size of the panels ul element to be large enough ...
+    jQuery(galleryList).width(panelSize * baseCells.length)
 
   }
 
@@ -63,6 +66,7 @@ abstract class JsScrollableComplex[A](container : dom.Element, json : js.Any, pa
     topCell = fromJson(newJson, JsJsonReader, aReader)
     renderContent
     renderAll
+    // jQuery(galleryDiv).perfectScrollbar("update")
   }
 
   //============================================================================================

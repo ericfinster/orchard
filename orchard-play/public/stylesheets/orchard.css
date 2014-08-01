@@ -164,16 +164,20 @@ html, body {
  *  Scollable Gallery
  */
 
-.scrollable-gallery .scrollable-gallery-panels {
+.scrollable-gallery {
+    width: 100%;
     position: relative;
     overflow: hidden;
+}
+
+.scrollable-gallery .scrollable-gallery-panels {
     width: 100%;
     padding: 0;
     margin: 0;
 }
 
 .scrollable-gallery .scrollable-gallery-panel {
-    float: left;
+    display: inline-block;
     padding: 10px;
     background: #fff;
 }

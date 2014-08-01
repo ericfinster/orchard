@@ -145,8 +145,8 @@ abstract class JsComplex[A](json : js.Any)(implicit aReader : JsonReadable[A, js
         rect.attr(js.Dynamic.literal(("class" -> classString)))
       }
 
-    def labelWidth : Double = (labelElement map (_.getBBox().width)) getOrElse 0.0
-    def labelHeight : Double = (labelElement map (_.getBBox().height)) getOrElse 0.0
+    def labelWidth : Double = (labelElement map (_.node.getBoundingClientRect().width)) getOrElse 0.0
+    def labelHeight : Double = (labelElement map (_.node.getBoundingClientRect().height)) getOrElse 0.0
 
     def requestHoveredStyle : Unit = {
       isStyleHovered = true

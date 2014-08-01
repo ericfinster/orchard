@@ -97,23 +97,23 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
     }
   }
 
-  def extrude = {
-    if (selectionIsExtrudable) {
-      emptyExtrusion
-    } else {
-      //CheckerFailure("Selection is not extrudable.")
-      println("Selection is not extrudable.")
-    }
-  }
+  // def extrude = {
+  //   if (selectionIsExtrudable) {
+  //     emptyExtrusion
+  //   } else {
+  //     //CheckerFailure("Selection is not extrudable.")
+  //     println("Selection is not extrudable.")
+  //   }
+  // }
 
-  def drop = {
-    if (selectionIsDroppable) {
-      emptyDrop
-    } else {
-      //CheckerFailure("Selection is not droppable.")
-      println("Selection is not droppable.")
-    }
-  }
+  // def drop = {
+  //   if (selectionIsDroppable) {
+  //     emptyDrop
+  //   } else {
+  //     //CheckerFailure("Selection is not droppable.")
+  //     println("Selection is not droppable.")
+  //   }
+  // }
 
   def emptyExtrusion : Error[Unit] =
     extrudeAtSelection(None, None)
@@ -141,12 +141,12 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
     }
   }
 
-  def emptyDrop =
+  def emptyDrop : Error[Unit] =
     dropAtSelection(None, None)
 
-  def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) : Unit =
+  def dropAtSelection(compositeExpr : Option[Expression], fillerExpr : Option[Expression]) : Error[Unit] =
     selectionBase match {
-      case None => println("Nothing selected.") //CheckerFailure("Nothing selected")
+      case None => fail("Nothing selected.") //CheckerFailure("Nothing selected")
       case Some(base) => {
         if (base.dimension == dimension - 2) {
           extend
@@ -183,6 +183,8 @@ abstract class AbstractWorksheet(seed : NCell[Polarity[Option[Expression]]])
           positiveBase.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (_ => false))
 
         clearAndSelect(targetCell)
+
+        success(())
       }
     }
 }

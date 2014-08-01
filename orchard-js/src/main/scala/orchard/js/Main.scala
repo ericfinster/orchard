@@ -46,6 +46,7 @@ object Main extends js.JSApp with JsModuleSystem {
   jQuery("#new-defn-btn").click(() => { onNewDefinition })
   jQuery("#new-worksheet-btn").click(() => { onNewWorksheet })
   jQuery("#extrude-btn").click(() => { onExtrude })
+  jQuery("#drop-btn").click(() => { onDrop })
 
   val keyHandler : js.Function1[JQueryEventObject, js.Boolean] = 
     (e : JQueryEventObject) => {
@@ -57,8 +58,11 @@ object Main extends js.JSApp with JsModuleSystem {
         case 80 => onNewParameter    // p
         case 70 => onNewDefinition   // f
         case 87 => onNewWorksheet    // w
+        case 68 => onDrop            // d
         case _ => ()
       }
+
+      //println("Keycode: " ++ keyCode.toString)
 
       true
     }
@@ -388,6 +392,14 @@ object Main extends js.JSApp with JsModuleSystem {
     }
   }
 
+  def onDrop : Unit = {
+    for {
+      worksheet <- activeWorksheet
+    } {
+      requestDrop(worksheet)
+    }
+  }
+
   def onNewParameter : Unit = {
     NewParameterModal.show
   }
@@ -490,6 +502,23 @@ object Main extends js.JSApp with JsModuleSystem {
     val request = 
       PostRequest[JsWorksheet](
         "/extrude-worksheet",
+        lit(
+          "worksheetId" -> worksheet.remoteId,
+          "selectionDescriptor" -> JsJsonWriter.write(worksheet.descriptor)
+        )
+      )
+
+    doPostRequest(request)
+
+  }
+
+  def requestDrop(worksheet : JsWorksheet) : Future[JsWorksheet] = {
+
+    implicit val readType = JsWorksheet.WorksheetRefresh(worksheet)
+
+    val request = 
+      PostRequest[JsWorksheet](
+        "/drop-worksheet",
         lit(
           "worksheetId" -> worksheet.remoteId,
           "selectionDescriptor" -> JsJsonWriter.write(worksheet.descriptor)

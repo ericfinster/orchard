@@ -21,6 +21,8 @@ POST    /new-definition             controllers.Application.newDefinition
 
 POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
 
+POST    /drop-worksheet             controllers.Application.dropWorksheet
+
 POST    /debug                      controllers.Application.debug
 
 # Map static resources from the /public folder to the /assets URL path
