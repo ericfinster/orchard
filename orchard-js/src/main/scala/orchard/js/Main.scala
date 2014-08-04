@@ -762,51 +762,51 @@ object Main extends js.JSApp with JsModuleSystem {
   def main(): Unit = {
     println("Starting Orchard ...")
 
-    requestNewModule("Prelude") onSuccess {
-      case module : Module => {
-        jQuery(".module-wrapper").append(module.node.panelJq)
-        rootModule = Some(module)
+    // requestNewModule("Prelude") onSuccess {
+    //   case module : Module => {
+    //     jQuery(".module-wrapper").append(module.node.panelJq)
+    //     rootModule = Some(module)
 
-        setCursorPosition(Vector.empty, 0)
+    //     setCursorPosition(Vector.empty, 0)
 
-      }
-    }
+    //   }
+    // }
 
-    val listElement = document.createElement("li")
-    jQuery(".worksheet-carousel ul").append(listElement)
+    // val listElement = document.createElement("li")
+    // jQuery(".worksheet-carousel ul").append(listElement)
 
-    requestNewWorksheet(listElement, 200) onSuccess {
-      case worksheet => {
+    // requestNewWorksheet(listElement, 200) onSuccess {
+    //   case worksheet => {
 
-        worksheet.renderAll
+    //     worksheet.renderAll
 
-        import JCarousel._
+    //     import JCarousel._
 
-        // Let's initialize the worksheet carousel
-        jQuery(".worksheet-carousel").jcarousel(lit(
-          "vertical" -> true
-        )).on("jcarousel:reloadend", (e : JQueryEventObject, c : JCarousel) => {
-          jQuery(".worksheet-carousel-pagination").jcarouselPagination("reloadCarouselItems");
-        })
+    //     // Let's initialize the worksheet carousel
+    //     jQuery(".worksheet-carousel").jcarousel(lit(
+    //       "vertical" -> true
+    //     )).on("jcarousel:reloadend", (e : JQueryEventObject, c : JCarousel) => {
+    //       jQuery(".worksheet-carousel-pagination").jcarouselPagination("reloadCarouselItems");
+    //     })
 
-        jQuery(".worksheet-carousel-prev").jcarouselControl(lit(
-          "target" -> "-=1"
-        ))
+    //     jQuery(".worksheet-carousel-prev").jcarouselControl(lit(
+    //       "target" -> "-=1"
+    //     ))
 
-        jQuery(".worksheet-carousel-next").jcarouselControl(lit(
-          "target" -> "+=1"
-        ))
+    //     jQuery(".worksheet-carousel-next").jcarouselControl(lit(
+    //       "target" -> "+=1"
+    //     ))
         
-        jQuery(".worksheet-carousel-pagination").jcarouselPagination(
-          lit(
-            "item" -> (((page : js.String) => {
-              "<a href=\"#" ++ page.toString + "\"><i class=\"fa fa-circle\"></i></a></li>"
-            }) : js.Function1[js.String, js.String])
-          )
-        )
+    //     jQuery(".worksheet-carousel-pagination").jcarouselPagination(
+    //       lit(
+    //         "item" -> (((page : js.String) => {
+    //           "<a href=\"#" ++ page.toString + "\"><i class=\"fa fa-circle\"></i></a></li>"
+    //         }) : js.Function1[js.String, js.String])
+    //       )
+    //     )
 
-      }
-    }
+    //   }
+    // }
   }
 
   implicit class JsAnyOps(x : js.Any) {

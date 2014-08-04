@@ -11,52 +11,56 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
-class MarkerComplex(seed : NCell[WorksheetMarker], owner : Worksheet) 
-    extends MutableSkeletalComplex[WorksheetMarker] 
-    with SelectableComplex[WorksheetMarker] {
-  thisComplex =>
+trait CheckerMarkers { thisChecker : Checker =>
 
-  type CellType = MarkerComplexCell
+  class MarkerComplex(seed : NCell[WorksheetMarker], owner : CheckerWorksheet)
+      extends MutableSkeletalComplex[WorksheetMarker]
+      with SelectableComplex[WorksheetMarker] {
+    thisComplex =>
 
-  var topCell : MarkerComplexCell =
-    seed.regenerateFrom(ComplexGenerator).value
+    type CellType = MarkerComplexCell
 
-  def newCell(marker : WorksheetMarker) = new MarkerComplexCell(marker)
-  override def serializationId = owner.serializationId
+    var topCell : MarkerComplexCell =
+      seed.regenerateFrom(ComplexGenerator).value
 
-  class MarkerComplexCell(var item : WorksheetMarker) extends MutableSkeletalCell {
+    def newCell(marker : WorksheetMarker) = new MarkerComplexCell(marker)
+    override def serializationId = owner.serializationId
 
-    var canopy : Option[RoseTree[MarkerComplexCell, Int]] = None
-    var target : Option[MarkerComplexCell] = None
-    var sources : Option[Vector[MarkerComplexCell]] = None
-    var container : Option[MarkerComplexCell] = None
-    
-    var incoming : Option[MarkerComplexCell] = None
-    var outgoing : Option[MarkerComplexCell] = None
+    class MarkerComplexCell(var item : WorksheetMarker) extends MutableSkeletalCell {
 
-    // Ummm ... really?
-    var skeleton : NCell[CellType] = null
+      var canopy : Option[RoseTree[MarkerComplexCell, Int]] = None
+      var target : Option[MarkerComplexCell] = None
+      var sources : Option[Vector[MarkerComplexCell]] = None
+      var container : Option[MarkerComplexCell] = None
+      
+      var incoming : Option[MarkerComplexCell] = None
+      var outgoing : Option[MarkerComplexCell] = None
+
+      // Ummm ... really?
+      var skeleton : NCell[CellType] = null
+
+    }
+  }
+
+  object MarkerComplex {
+
+    // val emptyComplexCell : NCell[WorksheetMarker] =
+    //   Object(EmptyMarker(true, false)).glob(
+    //     PositivePolarityMarker,
+    //     NegativePolarityMarker
+    //   )
+
+    // def apply() : MarkerComplex =
+    //   new MarkerComplex(emptyComplexCell)
+
+    implicit def markerComplexWritable[P] : JsonWritable[MarkerComplex, P] =
+      new JsonWritable[MarkerComplex, P] {
+        def write(worksheet : MarkerComplex, writer : JsonWriter[P]): P = {
+          val markerWriter = implicitly[JsonWritable[WorksheetMarker, P]]
+          worksheet.toJson(writer, markerWriter)
+        }
+      }
 
   }
-}
-
-object MarkerComplex {
-
-  // val emptyComplexCell : NCell[WorksheetMarker] = 
-  //   Object(EmptyMarker(true, false)).glob(
-  //     PositivePolarityMarker, 
-  //     NegativePolarityMarker
-  //   )
-
-  // def apply() : MarkerComplex = 
-  //   new MarkerComplex(emptyComplexCell)
-
-  implicit def markerComplexWritable[P] : JsonWritable[MarkerComplex, P] = 
-    new JsonWritable[MarkerComplex, P] {
-      def write(worksheet : MarkerComplex, writer : JsonWriter[P]): P = {
-        val markerWriter = implicitly[JsonWritable[WorksheetMarker, P]]
-        worksheet.toJson(writer, markerWriter)
-      }
-    }
 
 }

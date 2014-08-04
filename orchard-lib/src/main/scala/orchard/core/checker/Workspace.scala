@@ -31,10 +31,10 @@ class Workspace extends Checker {
       rootM <- rootModule
     } yield ModuleZipper(rootM, Nil)
 
-  val worksheetMap : HashMap[Int, Worksheet] = HashMap.empty
+  val worksheetMap : HashMap[Int, CheckerWorksheet] = HashMap.empty
 
-  def newWorksheet : Worksheet = {
-    val worksheet = Worksheet()
+  def newWorksheet : CheckerWorksheet = {
+    val worksheet = CheckerWorksheet()
     worksheetMap(worksheet.hashCode) = worksheet
     worksheet
   }
@@ -55,7 +55,7 @@ class Workspace extends Checker {
     }
 
 
-  def getWorksheet(worksheetId : Int) : Error[Worksheet] =
+  def getWorksheet(worksheetId : Int) : Error[CheckerWorksheet] =
     if (worksheetMap.isDefinedAt(worksheetId))
       success(worksheetMap(worksheetId))
     else
@@ -133,7 +133,7 @@ class Workspace extends Checker {
     address : CellAddress,
     identifier : String,
     checkerAddress : CheckerAddress
-  ) : Error[Worksheet] = 
+  ) : Error[CheckerWorksheet] = 
     for {
       worksheet <- getWorksheet(worksheetId)
       targetCell <- worksheet.seek(address)

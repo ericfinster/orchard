@@ -19,12 +19,16 @@ case class Branch[A, B](value : A, branches : Vector[RoseTree[A, B]]) extends Ro
 object RoseTree {
 
   implicit class RoseTreeOps[A, B](tree : RoseTree[A, B]) {
+
     def map[S, T](f : A => S, g : B => T) : RoseTree[S, T] = 
       tree match {
         case Rose(value) => Rose(g(value))
         case Branch(value, branches) => 
           Branch(f(value), branches map (b => b.map(f, g)))
       }
+
+    def mapCells[S](f : A => S) : RoseTree[S, B] = 
+      map(f, (r => r))
 
     def foreach(branchAction : A => Unit, 
                 roseAction : B => Unit) : Unit =
@@ -38,6 +42,14 @@ object RoseTree {
 
     def foreachCell(action : A => Unit) : Unit =
       foreach(action, _ => ())
+
+    def forallCells(p : A => Boolean) : Boolean = 
+      tree match {
+        case Rose(_) => true
+        case Branch(value, branches) => {
+          if (p(value)) { branches forall (_.forallCells(p)) } else false
+        }
+      }
 
     def leaves : Vector[B] =
       tree match {
@@ -74,6 +86,8 @@ object RoseTree {
         case Rose(_) => fail("Root element called on a rose.")
         case Branch(value, _) => success(value)
       }
+
+
   }
 
   implicit def roseTreeIsReadable[A, B, P](

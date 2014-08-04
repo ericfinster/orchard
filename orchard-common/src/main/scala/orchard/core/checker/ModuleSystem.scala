@@ -62,6 +62,11 @@ trait ModuleSystem {
     def moduleName : String
     def isOpen : Boolean
 
+    trait ImportedParameter extends ParameterNode { thisNode : ParameterNodeType => }
+    trait ImportedModule extends ModuleNode { thisNode : ModuleNodeType => }
+    trait ImportedDefinition extends DefinitionNode { thisNode : DefinitionNodeType => }
+    trait ImportedImport extends ImportNode { thisNode : ImportNodeType => }
+
   }
 
 
@@ -277,11 +282,11 @@ trait ModuleSystem {
           ModuleZipper(Module(node, left ++ Vector(focus) ++ right), cs).zip
       }
 
-    def collectLefts : Vector[ModuleEntry] = 
+    def upperSlice : Vector[ModuleEntry] = 
       context match {
         case Nil => Vector.empty
         case ModuleContext(node, left, right) :: cs => {
-          ModuleZipper(Module(node, left ++ Vector(focus) ++ right), cs).collectLefts ++ left
+          ModuleZipper(Module(node, left ++ Vector(focus) ++ right), cs).upperSlice ++ left
         }
       }
 

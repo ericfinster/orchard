@@ -1,5 +1,5 @@
 /**
-  * Checker.scala - A Type Checker for Orchard
+  * Checker.scala - Core type checking
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -8,36 +8,38 @@
 package orchard.core.typechecker
 
 import scalaz._
-import Free._
+import Kleisli._
 
-class Checker extends CheckerMonad {
+import orchard.core.util._
+import ErrorM._
+import MonadUtils._
 
-  type StatementSeq = Free[Statement, Unit]
+trait Checker extends CheckerExpressions with CheckerIdentifiers with CheckerFrameworks {
 
-  private var environment : Environment = Map.empty
+  type CheckerEnv = Seq[Expression]
+  type CheckerM[+A] = Kleisli[Error, CheckerEnv, A]
+  type CheckerR[E, A] = Kleisli[Error, E, A]
 
-  def interpret(seq : StatementSeq) : CheckerM[Unit] =
-    seq match {
-      case Suspend(BeginModule(name, next)) => 
-        for {
-          _ <- beginModule(name)
-          _ <- interpret(next)
-        } yield ()
-      case Suspend(EndModule(name, next)) =>
-        for {
-          _ <- endModule(name)
-          _ <- interpret(next)
-        } yield ()
-      case Suspend(ParameterDec(name, next)) =>
-        for {
-          _ <- createParameter(name, ???)
-          _ <- interpret(next)
-        } yield ()
-      case Suspend(LiftDec(name, next)) =>
-        for {
-          _ <- createLift(name, ???)
-          _ <- interpret(next)
-        } yield ()
-    }
+  type EnvironmentKey
+
+  val R = MonadReader[CheckerR, CheckerEnv]
+  import R._
+
+  def lookup(key : EnvironmentKey) : CheckerM[Expression] = ???
+    // for {
+    //   env <- ask
+    //   _ <- liftError(
+    //     ensure(
+    //       env.isDefinedAt(index),
+    //       "Requested environment index " ++ index.toString ++ " is out of range."
+    //     )
+    //   )
+    // } yield env(index)
+
+  def liftError[A](e : Error[A]) : CheckerM[A] = kleisli(env => e)
+
+  def checkerSucceed[A](a : A) : CheckerM[A] = liftError(success(a))
+  def checkerFail[A](msg : String) : CheckerM[A] = liftError(fail(msg))
+
 
 }

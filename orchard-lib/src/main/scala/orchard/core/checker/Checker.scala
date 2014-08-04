@@ -15,7 +15,7 @@ import orchard.core.cell._
 import ErrorM._
 import ErrorMonad._
 
-trait Checker extends CheckerModuleSystem with CheckerFrameworks {
+trait Checker extends CheckerModuleSystem with CheckerExpressions with CheckerIdentifiers with CheckerFrameworks with CheckerWorksheets with CheckerMarkers {
 
   type CheckerState = (ModuleZipper, Int)
   type CheckerM[+A] = StateT[Error, CheckerState, A]
@@ -38,7 +38,7 @@ trait Checker extends CheckerModuleSystem with CheckerFrameworks {
     for {
       zipper <- getZipper
     } yield {
-      zipper.collectLefts
+      zipper.upperSlice
     }
 
   def localEnvironment : CheckerM[Vector[ModuleEntry]] =
@@ -259,7 +259,8 @@ trait Checker extends CheckerModuleSystem with CheckerFrameworks {
       _ <- liftError(
         ensure(matches.length < 2, "Internal error: multiple expressions match identifier " ++ identifier)
       )
-    } yield matches.head.ncell
+      exprNCell <- matches.head.ncell
+    } yield exprNCell
 
   def getModule(moduleId : String) : CheckerM[Module] = 
     for {
@@ -303,6 +304,9 @@ trait Checker extends CheckerModuleSystem with CheckerFrameworks {
 
   def liftError[A](e : Error[A]) : CheckerM[A] =
     StateT[Error, CheckerState, A]((st : CheckerState) => { e map (a => (st, a)) })
+
+  def checkerSucceed[A](a : A) : CheckerM[A] = liftError(success(a))
+  def checkerFail[A](msg : String) : CheckerM[A] = liftError(fail(msg))
 
 }
 

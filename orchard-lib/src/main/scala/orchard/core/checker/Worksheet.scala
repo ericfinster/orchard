@@ -8,50 +8,24 @@
 package orchard.core.checker
 
 import orchard.core.cell._
+import orchard.core.util._
 import orchard.core.complex._
 
-class Worksheet(seed : NCell[Polarity[Option[Expression]]]) extends AbstractWorksheet(seed) {
+// trait WorksheetEntry extends FrameworkEntry {
 
-  type CellType = WorksheetCell
-  type FrameworkType = Worksheet
+//   def isNeutral : Boolean
+//   def isPositive : Boolean
+//   def isNegative : Boolean
 
-  def newCell(item : Polarity[Option[Expression]]) : WorksheetCell = 
-    new WorksheetCell(item)
+// }
 
-  var topCell : WorksheetCell = 
-    seed.regenerateFrom(ComplexGenerator).value
+// trait Worksheet[A <: WorksheetEntry] extends Framework[A] {
 
-  def extract(cell : CellType) : Worksheet = 
-    new Worksheet(cell.toNCell)
+//   type CellType <: WorksheetCell
 
-  def invertibilityLevel: Option[Int] = None
-  def stabilityLevel: Option[Int] = None
-  def unicityLevel: Option[Int] = None
+//   trait WorksheetCell extends FrameworkCell { thisCell : CellType =>
 
-  class WorksheetCell(item : Polarity[Option[Expression]]) extends AbstractWorksheetCell(item) {
-  }
 
-  def toMarkerComplex : MarkerComplex = 
-    new MarkerComplex(
-      topCell.skeleton map (cell => {
-        cell.item match {
-          case Positive => PositivePolarityMarker
-          case Negative => NegativePolarityMarker
-          case Neutral(None) => EmptyMarker(cell.isShell, cell.isExposedNook)
-          case Neutral(Some(e)) => ReferenceMarker(e.name, e.styleString)
-        }
-      }),
-      this
-    )
+//   }
 
-}
-
-object Worksheet {
-
-  val emptyWorksheetCell : NCell[Polarity[Option[Expression]]] = 
-    CardinalComplex(Object(None))
-
-  def apply() : Worksheet = 
-    new Worksheet(emptyWorksheetCell)
-
-}
+// }

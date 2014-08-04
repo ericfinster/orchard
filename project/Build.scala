@@ -73,7 +73,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       version := Versions.app,
       scalaVersion := Versions.scala,
       scalacOptions ++= Seq("-feature", "-deprecation"),
-      excludeFilter in unmanagedSources ~= { _ || "svg*" || "expression*" || "typechecker*" },
+      excludeFilter in unmanagedSources ~= { _ || "svg*" || "expression*" },
       libraryDependencies ++= Dependencies.orchardLib
     ) ++ sharedDirectorySettings
 

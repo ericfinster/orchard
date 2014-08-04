@@ -1,13 +1,19 @@
 /**
-  * Identifier.scala - Routines for identifiers
+  * Identifier.scala - Identifiers
   * 
   * @author Eric Finster
   * @version 0.1 
   */
 
-package orchard.core.checker
+package orchard.core.typechecker
 
 import scala.util.parsing.combinator.RegexParsers
+
+import scalaz._
+import Kleisli._
+import MonadUtils._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
 
 trait CheckerIdentifiers { thisChecker : Checker =>
 
@@ -17,24 +23,37 @@ trait CheckerIdentifiers { thisChecker : Checker =>
 
   case class Identifier(val tokens : List[IdentifierToken]) {
 
-    def expand : String = (tokens map (_.expand)).mkString
+    def expand : CheckerM[String] = 
+      for {
+        expandedTokens <- (tokens map (_.expand)).sequence
+      } yield expandedTokens.mkString
 
   }
 
   sealed trait IdentifierToken {
-    def expand : String
+
+    def expand : CheckerM[String]
+
   }
 
   case class LiteralToken(val literal : String) extends IdentifierToken {
-    def expand : String = literal
+
+    def expand : CheckerM[String] = checkerSucceed(literal)
+
     override def toString : String = "Lit(" ++ literal ++ ")"
+
   }
 
-  // Right.  What does the reference reference?  A module entry?  It would be
-  // nice to be more type specific ...
-  case class ReferenceToken(val entry : Checker#ModuleEntry) extends IdentifierToken {
-    def expand = entry.node.name
-    override def toString : String = "Ref(" ++ expand ++ ")"
+  case class ReferenceToken(val key : EnvironmentKey) extends IdentifierToken {
+
+    def expand : CheckerM[String] = 
+      for {
+        expr <- lookup(key)
+        exprName <- expr.name
+      } yield exprName
+
+    override def toString : String = "Ref(" ++ key.toString ++ ")"
+
   }
 
 

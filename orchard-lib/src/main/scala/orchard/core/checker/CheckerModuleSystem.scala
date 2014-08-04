@@ -32,7 +32,7 @@ trait CheckerModuleSystem extends ModuleSystem { thisChecker : Checker =>
   class CheckerImportNode(val name : String, val module : Module, val isOpen : Boolean) extends CheckerContainerNode with ImportNode {
 
     def moduleName = module.node.name
-    
+
   }
 
   class CheckerParameterNode(val identifier : Identifier, val shell : Shell, val isThin : Boolean) extends CheckerExpressionNode with ParameterNode {
