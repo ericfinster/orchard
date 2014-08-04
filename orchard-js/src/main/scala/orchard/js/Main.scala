@@ -30,7 +30,7 @@ import orchard.js.plugins._
 
 import ErrorM._
 
-object Main extends js.JSApp with JsModuleSystem {
+object Main extends JsModuleSystem {
 
   //============================================================================================
   // UI INITIALIZATION
@@ -759,8 +759,8 @@ object Main extends js.JSApp with JsModuleSystem {
   // MAIN ENTRY POINT
   //
 
-  def main(): Unit = {
-    println("Starting Orchard ...")
+  // def main(): Unit = {
+  //   println("Starting Orchard ...")
 
     // requestNewModule("Prelude") onSuccess {
     //   case module : Module => {
@@ -807,7 +807,7 @@ object Main extends js.JSApp with JsModuleSystem {
 
     //   }
     // }
-  }
+  // }
 
   implicit class JsAnyOps(x : js.Any) {
 

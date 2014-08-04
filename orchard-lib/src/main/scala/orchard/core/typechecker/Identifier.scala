@@ -23,7 +23,7 @@ trait CheckerIdentifiers { thisChecker : Checker =>
 
   case class Identifier(val tokens : List[IdentifierToken]) {
 
-    def expand : CheckerM[String] = 
+    def expand : Scoped[String] = 
       for {
         expandedTokens <- (tokens map (_.expand)).sequence
       } yield expandedTokens.mkString
@@ -32,13 +32,13 @@ trait CheckerIdentifiers { thisChecker : Checker =>
 
   sealed trait IdentifierToken {
 
-    def expand : CheckerM[String]
+    def expand : Scoped[String]
 
   }
 
   case class LiteralToken(val literal : String) extends IdentifierToken {
 
-    def expand : CheckerM[String] = checkerSucceed(literal)
+    def expand : Scoped[String] = scopedSucceed(literal)
 
     override def toString : String = "Lit(" ++ literal ++ ")"
 
@@ -46,7 +46,7 @@ trait CheckerIdentifiers { thisChecker : Checker =>
 
   case class ReferenceToken(val key : EnvironmentKey) extends IdentifierToken {
 
-    def expand : CheckerM[String] = 
+    def expand : Scoped[String] = 
       for {
         expr <- lookup(key)
         exprName <- expr.name

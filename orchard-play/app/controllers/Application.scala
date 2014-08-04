@@ -11,9 +11,17 @@ import orchard.core.complex._
 import orchard.core.checker._
 
 import ErrorM._
-import models.PlayComplex
 
 object Application extends Controller {
+
+  val checker = new PlayChecker
+
+  
+
+
+  //============================================================================================
+  // OLD VERSION
+  //
 
   val workspace = new Workspace
 

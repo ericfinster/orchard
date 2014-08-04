@@ -5703,3 +5703,1085 @@ Application started (Dev)
 2014-08-04 14:09:34,234 - [INFO] - from play in play-internal-execution-context-67 
 Application started (Dev)
 
+2014-08-04 14:24:42,716 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53hhh14 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type ModuleEntry]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:26:03,723 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53hm6mm - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type ModuleEntry]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:26:30,704 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53hnkkg - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[bad symbolic reference to orchard.core.typechecker.ModuleChecker encountered in class file 'CheckerModuleSystem.class'.
+Cannot access type ModuleChecker in package orchard.core.typechecker. The current classpath may be
+missing a definition for orchard.core.typechecker.ModuleChecker, or CheckerModuleSystem.class may have been compiled against a version that's
+incompatible with the one found on the current classpath.]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:27:28,516 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:31:40,010 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:32:49,475 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j53ij92h - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value env]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:33:02,920 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:34:29,702 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53ip19e - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[type mismatch;
+ found   : orchard.core.util.ErrorM.Error[A]
+    (which expands to)  scala.util.Either[String,A]
+ required: Checker.this.Scoped[A]
+    (which expands to)  scalaz.Kleisli[orchard.core.util.ErrorM.Error,Checker.this.ModuleEntry,A]]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:34:51,857 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53j083g - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[reference to point is ambiguous;
+it is imported twice in the same scope by
+import LocatedReader._
+and import ScopedReader._]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:37:03,484 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:37:37,940 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:38:54,884 - [INFO] - from play in play-internal-execution-context-67 
+Application started (Dev)
+
+2014-08-04 14:41:43,441 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53jnipm - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value checkerSucceed]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:42:07,223 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53jp24d - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value scopedSuccess]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:43:20,975 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53k3773 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value checkerSucceed]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:43:52,632 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53k522i - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value liftError]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:44:13,663 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53k675f - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value checkerSucceed]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:44:39,457 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53k7j9h - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[overriding method isThin in trait Expression of type => CheckerExpressions.this.CheckerM[Boolean];
+ method isThin has incompatible type]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:45:20,261 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53ka1j2 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type CheckerM]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:46:14,508 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53kd3pc - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value liftError]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:46:30,418 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53ke1da - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[could not find implicit value for parameter F: scalaz.Monad[Cancellable]]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:48:04,462 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53kjagd - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[could not find implicit value for parameter F: scalaz.Monad[Cancellable]]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:50:08,244 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53l0bj8 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[could not find implicit value for parameter F: scalaz.Monad[Cancellable]]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:50:34,071 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j53l1noh - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[kinds of the type arguments (CheckerFrameworks.this.Scoped,Unit) do not conform to the expected kinds of the type parameters (type F,type A).
+CheckerFrameworks.this.Scoped's type parameters do not match type F's expected parameters:
+type A is invariant, but type _ is declared covariant]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 14:51:41,162 - [INFO] - from play in play-internal-execution-context-69 
+Application started (Dev)
+
+2014-08-04 15:06:23,575 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:06:24,507 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:08:46,416 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j53nc1lo - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[value node is not a member of orchard.core.typechecker.Checker#Module]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:08:59,297 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j53nckna - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[value moduleName is not a member of orchard.core.typechecker.Checker#ModuleNode]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:10:09,302 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:10:10,241 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:14:33,733 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:14:34,647 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:21:17,454 - [ERROR] - from application in New I/O worker #12 
+
+
+! @6j53p2km1 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type Checker]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:22:00,328 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:24:53,808 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:41:30,111 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j541jkih - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[';' expected but 'with' found.]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:41:48,027 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:46:12,227 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j5429m17 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value js]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:46:22,825 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j542abin - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value js]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:46:51,573 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j542c26g - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value dom]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:47:11,112 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j542d542 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value dom]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:47:27,473 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:47:50,885 - [INFO] - from play in play-internal-execution-context-71 
+Application started (Dev)
+
+2014-08-04 15:49:26,809 - [ERROR] - from application in New I/O worker #10 
+
+
+! @6j542knn6 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value js]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:49:42,732 - [ERROR] - from application in New I/O worker #10 
+
+
+! @6j542llbh - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value onNewModule]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:50:58,129 - [INFO] - from play in play-internal-execution-context-73 
+Application started (Dev)
+
+2014-08-04 15:53:57,770 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j543a8ik - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type Future]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:54:10,489 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j543b1do - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[Error does not take type parameters
+error after rewriting to scala.scalajs.js.JSON.parse(xmlReq.responseText, scala.scalajs.js.JSON.parse$default$2).selectDynamic[Error[A]]("as")
+possible cause: maybe a wrong Dynamic method signature?]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:54:23,227 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j543bk9o - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[method selectDynamic: (name: String)scala.scalajs.js.Dynamic does not take type parameters.
+error after rewriting to scala.scalajs.js.JSON.parse(xmlReq.responseText, scala.scalajs.js.JSON.parse$default$2).selectDynamic[Error[A]]("as")
+possible cause: maybe a wrong Dynamic method signature?]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:56:30,995 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j543j1a2 - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type JsonReadable]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:56:44,448 - [ERROR] - from application in New I/O worker #8 
+
+
+! @6j543jl7d - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value Toastr]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 15:57:32,246 - [INFO] - from play in play-internal-execution-context-73 
+Application started (Dev)
+
+2014-08-04 16:02:36,987 - [ERROR] - from application in New I/O worker #4 
+
+
+! @6j544dmki - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value js]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 16:02:49,224 - [INFO] - from play in play-internal-execution-context-73 
+Application started (Dev)
+
+2014-08-04 16:04:18,928 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j544jhfd - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value NewModuleDialog]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 16:04:46,645 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j544l6fd - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: value NewModuleModal]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 16:05:10,750 - [ERROR] - from application in New I/O worker #7 
+
+
+! @6j544mg6h - Internal server error, for (GET) [/] ->
+
+play.PlayExceptions$CompilationException: Compilation error[not found: type EditorDialogs]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at play.PlayExceptions$CompilationException$.apply(PlayExceptions.scala:27) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:297) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$play$PlayReloader$$anon$$taskFailureHandler$1.apply(PlayReloader.scala:292) ~[na:na]
+	at scala.Option.map(Option.scala:145) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.play$PlayReloader$$anon$$taskFailureHandler(PlayReloader.scala:292) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at play.PlayReloader$$anon$1$$anonfun$reload$2.apply(PlayReloader.scala:325) ~[na:na]
+	at scala.util.Either$LeftProjection.map(Either.scala:377) ~[scala-library-2.11.1.jar:na]
+	at play.PlayReloader$$anon$1.reload(PlayReloader.scala:325) ~[na:na]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:107) ~[play_2.11-2.3.0.jar:2.3.0]
+	at play.core.ReloadableApplication$$anonfun$get$1.apply(ApplicationProvider.scala:105) ~[play_2.11-2.3.0.jar:2.3.0]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.liftedTree1$1(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.impl.Future$PromiseCompletingRunnable.run(Future.scala:24) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1361) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979) ~[scala-library-2.11.1.jar:na]
+	at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107) ~[scala-library-2.11.1.jar:na]
+
+2014-08-04 16:05:25,839 - [INFO] - from play in play-internal-execution-context-73 
+Application started (Dev)
+

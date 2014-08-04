@@ -17,17 +17,17 @@ trait CheckerExpressions { thisChecker : Checker =>
 
   sealed trait Expression {
 
-    def name : CheckerM[String]
-    def isThin : CheckerM[Boolean]
-    def ncell : CheckerM[NCell[Expression]]
+    def name : Scoped[String]
+    def isThin : Scoped[Boolean]
+    def ncell : Scoped[NCell[Expression]]
 
   }
 
   case class Variable(val ident : Identifier, val shell : Shell, val isThinVar : Boolean) extends Expression {
 
     def name = ident.expand
-    def ncell = checkerSucceed(shell.withFillingExpression(this))
-    def isThin = checkerSucceed(isThinVar)
+    def ncell = scopedSucceed(shell.withFillingExpression(this))
+    def isThin = scopedSucceed(isThinVar)
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Variable]
@@ -59,8 +59,8 @@ trait CheckerExpressions { thisChecker : Checker =>
         boundaryName <- Boundary.name
       } yield "def-" ++ boundaryName
 
-    def ncell = checkerSucceed(nook.withFiller(this))
-    def isThin = checkerSucceed(true)
+    def ncell = scopedSucceed(nook.withFiller(this))
+    def isThin = scopedSucceed(true)
 
     def bdryAddress : CellAddress =
       nook.framework.topCell.boundaryAddress
@@ -89,7 +89,7 @@ trait CheckerExpressions { thisChecker : Checker =>
       def ncell =
         for {
           interiorNCell <- interior.ncell
-          boundaryNCell <- liftError(
+          boundaryNCell <- scopedError(
             fromOption(
               interiorNCell.seek(bdryAddress), 
               "Internal Error: could not find boundary"
@@ -97,7 +97,7 @@ trait CheckerExpressions { thisChecker : Checker =>
           )
         } yield boundaryNCell
 
-      def isThin = ??? //checkerSucceed(nook.isThinBoundary)
+      def isThin = ??? //scopedSucceed(nook.isThinBoundary)
 
 
       def canEqual(other : Any) : Boolean =

@@ -129,7 +129,7 @@ trait CheckerExpressions { thisChecker : Checker =>
 
     val name = identifier // entry.name
     def ncell = ??? /// entry.referenceNCell
-    def isThin = ??? // entry.isThin
+    def isThin : CheckerM[Boolean] = ??? // entry.isThin
     def styleString : String = ??? // entry.styleString
 
     def canEqual(other : Any) : Boolean =

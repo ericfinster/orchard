@@ -9,7 +9,7 @@ package orchard.core.typechecker
 
 import orchard.core.util.ErrorM._
 
-trait CheckerModuleSystem { thisChecker : ModuleChecker =>
+trait CheckerModuleSystem { thisChecker : Checker =>
 
   //============================================================================================
   // MODULE ENTRIES
@@ -29,7 +29,7 @@ trait CheckerModuleSystem { thisChecker : ModuleChecker =>
   // NODES
   //
 
-  sealed trait Node
+  sealed trait Node { def name : String = "Unknown" }
 
   sealed trait ContainerNode extends Node
   sealed trait ExpressionNode extends Node
@@ -43,7 +43,10 @@ trait CheckerModuleSystem { thisChecker : ModuleChecker =>
   // the tree themselves, because these can under any update operations.  I think you have to
   // do it by address.  It seems like the only way ...
 
-  class ModuleDefinition(val moduleName : String, val worksheets : Vector[Worksheet]) extends ModuleNode
+  class ModuleDefinition(val moduleName : String, val worksheets : Vector[Worksheet]) extends ModuleNode {
+    override def name = moduleName
+  }
+
   class ImportDefinition(val importName : String, val module : Module) extends ImportNode
   class ParameterDefinition(val variable : Variable) extends ParameterNode
   class DefinitionDefinition(val filler : Filler) extends DefinitionNode

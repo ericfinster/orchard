@@ -1,8 +1,13 @@
-@(moduleId: String)
+@import _root_.orchard.core.typechecker.Checker
+
+@(module: Checker#Module)
 
 <div class="panel panel-default module-panel">
   <div class="panel-heading">
-    <h3 class="panel-title">@moduleId</h3>
+    <h3 class="panel-title">@module.moduleNode.name</h3>
+    <div class="panel-tools">
+      <a class="btn btn-link btn-sm panel-collapse" href="#"><i class="fa fa-chevron-down"></i></a>
+    </div>
   </div>
   <div class="panel-body">
     <ul class="module-entries">
