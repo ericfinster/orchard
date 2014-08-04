@@ -167,6 +167,21 @@ trait CheckerModuleSystem { thisChecker : Checker =>
 
       }
 
+
+    def focusAsModule : Error[Module] = 
+      focus match {
+        case m : Module => success(m)
+        case _ => fail("Focused entry is not a module")
+      }
+
+    def appendToModule(entry : ModuleEntry) : Error[ModuleZipper] = 
+      focus match {
+        case m : Module => {
+          success(ModuleZipper(entry, ModuleContext(m.moduleNode, m.entries, Vector.empty) :: context))
+        }
+        case _ => fail("Focused entry is not a module")
+      }
+
     // // Warning! The semantics of this method are a bit different from the two preceding it.
     // def insertAt(entry : ModuleEntry, i : Int) : Error[ModuleZipper] =
     //   focus match {

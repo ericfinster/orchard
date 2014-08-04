@@ -35,7 +35,11 @@ trait Editor
     with EditorEvents
     with EditorAjax
     with EditorDialogs
-    with EditorImplicits
+    with EditorImplicits {
+
+  var focus : Vector[Int] = Vector.empty
+
+}
 
 object TheEditor extends js.JSApp with Editor {
 

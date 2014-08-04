@@ -21,7 +21,8 @@ trait Checker
     with CheckerWorksheets 
     with CheckerModuleSystem 
     with CheckerScoped
-    with CheckerLocated {
+    with CheckerLocated 
+    with CheckerCommand {
 
   type ErrorEnvironment[E, A] = Kleisli[Error, E, A]
 

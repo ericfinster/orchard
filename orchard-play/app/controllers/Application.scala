@@ -16,8 +16,24 @@ object Application extends Controller {
 
   val checker = new PlayChecker
 
-  
+  def newModule = Action(BodyParsers.parse.json) { request =>
 
+    import models.OrchardToPlay._
+    import checker._
+
+    val moduleName = (request.body \ "moduleName").as[String]
+    val parentAddress = (request.body \ "parentAddress").as[Vector[Int]]
+
+    val result : Error[String] = 
+      for {
+        module <- runAtLocation(parentAddress, appendModule(moduleName))
+      } yield {
+        views.html.module(module).toString
+      }
+
+    Ok(Json.toJson(result))
+
+  }
 
   //============================================================================================
   // OLD VERSION
@@ -103,19 +119,6 @@ object Application extends Controller {
     Ok(Json.toJson(pastedWorksheet))
 
   }
-
-  def newModule = Action(BodyParsers.parse.json) { request =>
-    import models.OrchardToPlay._
-
-    val moduleId = (request.body \ "moduleId").as[String]
-    val checkerAddress = (request.body \ "address").as[CheckerAddress]
-
-    val result : Error[workspace.ModuleEntry] = 
-      workspace.newModule(moduleId, checkerAddress)
-
-    Ok(Json.toJson(result))
-  }
-
 
   def newImport = Action(BodyParsers.parse.json) { request =>
     import models.OrchardToPlay._

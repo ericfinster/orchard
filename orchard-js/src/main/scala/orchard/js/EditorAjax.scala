@@ -8,6 +8,7 @@
 package orchard.js
 
 import scala.scalajs._
+import js.Dynamic.literal
 import concurrent.JSExecutionContext.Implicits.queue
 
 import scala.concurrent.Future
@@ -30,7 +31,7 @@ trait EditorAjax { thisEditor : Editor =>
   case class GetRequest[A](val address : String)(implicit val aReader : JsonReadable[A, js.Any])
   case class PostRequest[A](val address : String, val request : js.Any)(implicit val aReader : JsonReadable[A, js.Any])
 
-  def doGetRequest[A](getReq : GetRequest[A]) : Future[A] = 
+  def getRequest[A](getReq : GetRequest[A]) : Future[A] = 
     for {
       xmlReq <- Ajax.get(getReq.address, headers = Seq(("Content-type" -> "application/json")))
     } yield {
@@ -46,7 +47,7 @@ trait EditorAjax { thisEditor : Editor =>
       }
     }
 
-  def doPostRequest[A](postReq : PostRequest[A]) : Future[A] = 
+  def postRequest[A](postReq : PostRequest[A]) : Future[A] = 
     for {
       xmlReq <- Ajax.post(postReq.address, 
         js.JSON.stringify(postReq.request), 0,
@@ -68,6 +69,19 @@ trait EditorAjax { thisEditor : Editor =>
   // AJAX REQUESTS
   //
 
+  def newModuleRequest(moduleId : String) : Future[String] = {
 
+    val request = 
+      PostRequest[String](
+        "/new-module",
+        literal(
+          "moduleName" -> moduleId,
+          "parentAddress" -> JsJsonWriter.write(focus)
+        )
+      )
+
+    postRequest(request)
+
+  }
 
 }

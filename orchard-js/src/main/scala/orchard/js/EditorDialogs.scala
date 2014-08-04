@@ -8,6 +8,8 @@
 package orchard.js
 
 import scala.scalajs._
+import concurrent.JSExecutionContext.Implicits.queue
+
 import org.scalajs.jquery._
 
 import orchard.js.plugins._
@@ -20,8 +22,19 @@ trait EditorDialogs { thisEditor : Editor =>
 
     modalJq.find("#module-form").on("submit", () => {
 
-      // Really we need to check the response status ...
-      val moduleId : String = modalJq.find("#module-name").value.asInstanceOf[js.String]
+      val moduleName : String = modalJq.find("#module-name").value.asInstanceOf[js.String]
+
+      newModuleRequest(moduleName) onSuccess {
+        case moduleHtml : String => {
+
+          println("Got the following html: " ++ moduleHtml)
+
+          // Great, that works.  Now how do we insert it?  The idea is that we use jquery to
+          // locate the appropriate insertion point based on some kind of information in 
+          // the html.
+
+        }
+      }
 
       hide
       false
