@@ -15,29 +15,27 @@ import ErrorM._
 
 trait CheckerWorksheets { thisChecker : Checker =>
 
-  sealed trait WorksheetEntry extends FrameworkEntry
+  type WorksheetEntry = Polarity[FrameworkEntry]
 
-  case class Neutral(entry : SimpleEntry) extends WorksheetEntry {
-    def isEmpty = entry.isEmpty
-    def isThin = entry.isThin
-    def expression = entry.expression
-  }
+  import ExpressionContainer._
 
-  case object Positive extends WorksheetEntry {
-    def isEmpty = true
-    def isThin = checkerFail("Thin request on positive cell")
-    def expression = throw new Exception("Positive cell has no expression")
-  }
+  implicit val worksheetEntryIsContainer : ExpressionContainer[WorksheetEntry] = 
+    new ExpressionContainer[WorksheetEntry] {
 
-  case object Negative extends WorksheetEntry {
-    def isEmpty = true
-    def isThin = checkerFail("Thin request on negative cell")
-    def expression = throw new Exception("Negative cell has no expression")
-  }
+      def empty : WorksheetEntry = Neutral(Empty)
 
-  class Worksheet(seed : NCell[WorksheetEntry]) 
-      extends AbstractComplex[WorksheetEntry](seed) 
-      with Framework[WorksheetEntry] 
+      def expression(entry : WorksheetEntry) : Error[Expression] = 
+        entry match {
+          case Positive => fail("Positive cell contains no expression")
+          case Negative => fail("Negative cell contains no expression")
+          case Neutral(frmwkEntry) => frmwkEntry.expression
+        }
+
+    }
+
+  class Worksheet(seed : NCell[WorksheetEntry])
+      extends AbstractFramework[WorksheetEntry](seed)
+      with CardinalComplex[FrameworkEntry]
       with SelectableComplex[WorksheetEntry] {
 
     type CellType = WorksheetCell
@@ -46,18 +44,7 @@ trait CheckerWorksheets { thisChecker : Checker =>
     def newCell(item : WorksheetEntry) = new WorksheetCell(item)
     def extract(cell : WorksheetCell) = new Worksheet(cell.skeleton map (_.item))
 
-    def emptyItem = Neutral(Empty)
-
-    class WorksheetCell(var item : WorksheetEntry) extends AbstractComplexCell with FrameworkCell {
-
-      def isPolarized : Boolean = 
-        item match {
-          case Positive => true
-          case Negative => true
-          case Neutral(_) => false
-        }
-
-    }
+    class WorksheetCell(var item : WorksheetEntry) extends AbstractFrameworkCell with CardinalCell
 
     def extend = glob(Negative, Positive)
 
@@ -95,7 +82,7 @@ trait CheckerWorksheets { thisChecker : Checker =>
     def emptyExtrusion : Error[Unit] =
       extrudeAtSelection(Empty, Empty)
 
-    def extrudeAtSelection(targetExpr : SimpleEntry, fillerExpr : SimpleEntry) : Error[Unit] = {
+    def extrudeAtSelection(targetExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[Unit] = {
       selectionBase match {
         case None => fail("Nothing selected.")
         case Some(base) => {
@@ -121,7 +108,7 @@ trait CheckerWorksheets { thisChecker : Checker =>
     def emptyDrop : Error[Unit] =
       dropAtSelection(Empty, Empty)
 
-    def dropAtSelection(compositeExpr : SimpleEntry, fillerExpr : SimpleEntry) : Error[Unit] =
+    def dropAtSelection(compositeExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[Unit] =
       selectionBase match {
         case None => fail("Nothing selected.") //CheckerFailure("Nothing selected")
         case Some(base) => {
@@ -167,5 +154,11 @@ trait CheckerWorksheets { thisChecker : Checker =>
 
   }
 
+  object Worksheet {
+
+    def apply(seed : NCell[FrameworkEntry]) : Worksheet =
+      new Worksheet(CardinalComplex(seed))
+
+  }
 
 }

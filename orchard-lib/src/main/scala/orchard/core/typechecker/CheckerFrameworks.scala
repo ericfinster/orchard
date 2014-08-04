@@ -20,26 +20,48 @@ import MonadUtils._
 
 trait CheckerFrameworks { thisChecker : Checker =>
 
-  trait FrameworkEntry {
+  trait ExpressionContainer[A] {
 
-    def isEmpty : Boolean
-    def isThin : CheckerM[Boolean]
+    def empty : A
 
-    def expression : Expression  // May throw an exception
+    def expression(a : A) : Error[Expression]
+
+    def isEmpty(a : A) : Boolean = a == empty
+    def isThin(a : A) : CheckerM[Boolean] = 
+      for {
+        expr <- liftError(expression(a))
+        exprIsThin <- expr.isThin
+      } yield exprIsThin
 
   }
 
-  trait Framework[A <: FrameworkEntry] extends MutableSkeletalComplex[A] { 
+  object ExpressionContainer {
 
-    type FrameworkType <: Framework[A]
-    type CellType <: FrameworkCell
+    implicit class ContainerOps[A : ExpressionContainer](container : A) {
 
-    def emptyItem : A
+      val ev = implicitly[ExpressionContainer[A]]
+
+      def isEmpty = ev.isEmpty(container)
+      def isThin = ev.isThin(container)
+      def expression = ev.expression(container)
+
+    }
+
+  }
+
+  abstract class AbstractFramework[A : ExpressionContainer](seed : NCell[A]) extends AbstractComplex[A](seed) {
+
+    type FrameworkType <: AbstractFramework[A]
+    type CellType <: AbstractFrameworkCell
+
+    import ExpressionContainer._
+
+    def emptyItem : A = implicitly[ExpressionContainer[A]].empty
 
     def extract(cell : CellType) : FrameworkType
     def duplicate : FrameworkType = extract(topCell)
 
-    trait FrameworkCell extends MutableSkeletalCell { thisCell : CellType =>
+    trait AbstractFrameworkCell extends AbstractComplexCell { thisCell : CellType =>
 
       def isThin : CheckerM[Boolean] = item.isThin
 
@@ -99,7 +121,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
             val frameworkTgt = framework.topCell.target.get
             val emptyPtr = (new RoseZipper(frameworkTgt.canopy.get, Nil)).find(_.isEmpty).get
 
-            def getDerivedOutNook(cell : framework.CellType) : Framework[A] = {
+            def getDerivedOutNook(cell : framework.CellType) : AbstractFramework[A] = {
               val derivedFramework = framework.extract(cell)
               derivedFramework.topCell.item = emptyItem
               derivedFramework.topCell.target.get.item = emptyItem
@@ -221,13 +243,13 @@ trait CheckerFrameworks { thisChecker : Checker =>
         boundaryFace.address
 
 
-      def bindingSkeleton : NCell[Either[CellAddress, Expression]] =
-        skeleton map (cell =>
-          if (cell.item.isEmpty) 
-            Left(cell.address) 
-          else 
-            Right(cell.item.expression)
-        )
+      // def bindingSkeleton : NCell[Either[CellAddress, Expression]] =
+      //   skeleton map (cell =>
+      //     if (cell.item.isEmpty) 
+      //       Left(cell.address) 
+      //     else 
+      //       Right(cell.item.expression)
+      //   )
 
     }
 
@@ -238,30 +260,37 @@ trait CheckerFrameworks { thisChecker : Checker =>
   // A SIMPLE IMPLEMENTATION
   //
 
-  sealed trait SimpleEntry extends FrameworkEntry 
+  sealed trait FrameworkEntry
 
-  case object Empty extends SimpleEntry {
-    def isEmpty = true
-    def isThin = checkerFail("Thin request for empty cell.")
-    def expression = throw new Exception("Empty cell has no expression")
+  case object Empty extends FrameworkEntry 
+  case class Full(val expression : Expression) extends FrameworkEntry 
+
+  object FrameworkEntry {
+
+    implicit val frameworkEntryIsContainer : ExpressionContainer[FrameworkEntry] =
+      new ExpressionContainer[FrameworkEntry] {
+
+        def empty : FrameworkEntry = Empty
+
+        def expression(entry : FrameworkEntry) : Error[Expression] =
+          entry match {
+            case Empty => fail("Empty container has no expression")
+            case Full(expr) => success(expr)
+          }
+
+      }
+
   }
 
-  case class Full(val expression : Expression) extends SimpleEntry {
-    def isEmpty = false
-    def isThin = expression.isThin
-  }
+  class Framework(seed : NCell[FrameworkEntry]) extends AbstractFramework[FrameworkEntry](seed) {
 
-  class SimpleFramework(seed : NCell[SimpleEntry]) extends AbstractComplex[SimpleEntry](seed) with Framework[SimpleEntry] {
+    type CellType = FrameworkCell
+    type FrameworkType = Framework
 
-    type CellType = SimpleFrameworkCell
-    type FrameworkType = SimpleFramework
+    def newCell(item : FrameworkEntry) = new FrameworkCell(item)
+    def extract(cell : FrameworkCell) = new Framework(cell.skeleton map (_.item))
 
-    def newCell(item : SimpleEntry) = new SimpleFrameworkCell(item)
-    def extract(cell : SimpleFrameworkCell) = new SimpleFramework(cell.skeleton map (_.item))
-
-    def emptyItem : SimpleEntry = Empty
-
-    class SimpleFrameworkCell(var item : SimpleEntry) extends AbstractComplexCell with FrameworkCell
+    class FrameworkCell(var item : FrameworkEntry) extends AbstractFrameworkCell
 
   }
 
@@ -270,9 +299,9 @@ trait CheckerFrameworks { thisChecker : Checker =>
   //
 
 
-  class Nook(val ncell : NCell[SimpleEntry]) {
+  class Nook(val ncell : NCell[FrameworkEntry]) {
 
-    val framework = new SimpleFramework(ncell)
+    val framework = new Framework(ncell)
 
     def isThinBoundary : CheckerM[Boolean] =
       framework.topCell.isThinBoundary
@@ -281,10 +310,11 @@ trait CheckerFrameworks { thisChecker : Checker =>
       withFillerAndBoundary(filler, filler.Boundary)
 
     def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
-      val frameworkCopy = framework.duplicate
-      frameworkCopy.topCell.item = Full(filler)
-      frameworkCopy.topCell.boundaryFace.item = Full(boundary)
-      frameworkCopy.topCell.toNCell map (_.expression)
+      // val frameworkCopy = framework.duplicate
+      // frameworkCopy.topCell.item = Full(filler)
+      // frameworkCopy.topCell.boundaryFace.item = Full(boundary)
+      // frameworkCopy.topCell.toNCell map (_.expression)
+      ???
     }
 
     def canEqual(other : Any) : Boolean =
@@ -302,9 +332,9 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
   }
 
-  class Shell(val ncell : NCell[SimpleEntry]) {
+  class Shell(val ncell : NCell[FrameworkEntry]) {
 
-    val framework = new SimpleFramework(ncell)
+    val framework = new Framework(ncell)
 
     def withFillingExpression(expr : Expression) : NCell[Expression] =
       framework.topCell.skeleton map (cell => {
