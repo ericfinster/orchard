@@ -37,6 +37,12 @@ trait Syntax { thisChecker : TypeChecker =>
         case ScopedName(_, n) => n.localName
       }
 
+    def mapLocal(f : String => String) : QualifiedName =
+      name match {
+        case LocalName(n) => LocalName(f(n))
+        case ScopedName(s, n) => ScopedName(s, n mapLocal f)
+      }
+
   }
 
   //============================================================================================
@@ -48,8 +54,14 @@ trait Syntax { thisChecker : TypeChecker =>
   case class BeginModule[A](moduleName : String, next : A) extends Statement[A]
   case class EndModule[A](next : A) extends Statement[A]
 
+  /* Expression Creation */
   case class CreateParameter[A](identifier : Identifier, shell : NCell[FrameworkEntry], isThin : Boolean, next : Parameter => A) extends Statement[A]
   case class CreateDefinition[A](identifier : Identifier, nook : NCell[FrameworkEntry], next : Definition => A) extends Statement[A]
+
+  /* State inspection */
+  case class ExamineLocalScope[A](next : Scope => A) extends Statement[A]
+  case class ExamineModuleScope[A](next : Scope => A) extends Statement[A]
+  case class ExamineState[A](next : ModuleZipper => A) extends Statement[A]
 
   implicit def statementIsFunctor : Functor[Statement] = 
     new Functor[Statement] {
@@ -60,6 +72,9 @@ trait Syntax { thisChecker : TypeChecker =>
           case EndModule(next) => EndModule(f(next))
           case CreateParameter(identifier, shell, isThin, next) => CreateParameter(identifier, shell, isThin, (v => f(next(v))))
           case CreateDefinition(identifier, nook, next) => CreateDefinition(identifier, nook, (b => f(next(b))))
+          case ExamineLocalScope(next) => ExamineLocalScope(s => f(next(s)))
+          case ExamineModuleScope(next) => ExamineModuleScope(s => f(next(s)))
+          case ExamineState(next) => ExamineState(s => f(next(s)))
         }
 
     }
@@ -83,5 +98,13 @@ trait Syntax { thisChecker : TypeChecker =>
   def definition(identifier : Identifier, nook : NCell[FrameworkEntry]) : FreeM[Definition] =
     liftFree(CreateDefinition(identifier, nook, identity))
 
+  def examineLocalScope : FreeM[Scope] = 
+    liftFree(ExamineLocalScope(identity))
+
+  def examineModuleScope : FreeM[Scope] = 
+    liftFree(ExamineModuleScope(identity))
+
+  def examineState : FreeM[ModuleZipper] = 
+    liftFree(ExamineState(identity))
 
 }

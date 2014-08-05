@@ -42,7 +42,7 @@ trait TypeChecker
     stmtBlk match {
 
       // Begin module
-      case Free(BeginModule(moduleName, next)) => 
+      case Free(BeginModule(moduleName, next)) =>
         for {
           qualifiedName <- qualifyName(moduleName)
           moduleNode = new ModuleNode(qualifiedName, Vector.empty)
@@ -67,7 +67,9 @@ trait TypeChecker
       case Free(CreateParameter(ident, shell, isThin, next)) => 
         for {
 
-          parameterName <- runScoped(ident.expand)
+          modScope <- moduleScope
+
+          parameterName <- runInScope(modScope, ident.expand)
           qualifiedName <- qualifyName(parameterName)
 
           varShell = new Shell(shell)
@@ -81,19 +83,23 @@ trait TypeChecker
 
           parameterNode = new ParameterNode(qualifiedName, Variable(ident, varShell, isThin))
           parameter = Parameter(parameterNode)
-          cursor <- insertEntry(parameter)
-          result <- scope(cursor)(check(next(parameter)))
+          entryCursor <- appendEntry(parameter)
+          nextCursor <- attempt(entryCursor.parent)
+          result <- scope(nextCursor)(check(next(parameter)))
 
         } yield result
 
+      // Create definition
       case Free(CreateDefinition(ident, nook, next)) =>
         for {
 
-          definitionName <- runScoped(ident.expand)
+          modScope <- moduleScope
+
+          definitionName <- runInScope(modScope, ident.expand)
           qualifiedName <- qualifyName(definitionName)
 
           defnNook = new Nook(nook)
-          isExposed <- runScoped(defnNook.framework.isExposedNook)
+          isExposed <- runInScope(modScope, defnNook.framework.isExposedNook)
 
           _ <- attempt(
             ensure(
@@ -104,66 +110,107 @@ trait TypeChecker
 
           definitionNode = new DefinitionNode(qualifiedName, Filler(ident, defnNook))
           definition = Definition(definitionNode)
-          cursor <- insertEntry(definition)
-          result <- scope(cursor)(check(next(definition)))
+          entryCursor <- appendEntry(definition)
+          nextCursor <- attempt(entryCursor.parent)
+          result <- scope(nextCursor)(check(next(definition)))
 
         } yield result
 
+      // State examination
+      case Free(ExamineState(next)) =>
+        for {
+          cursor <- ask
+          result <- check(next(cursor))
+        } yield result
 
+
+      case Free(ExamineModuleScope(next)) =>
+        for {
+          s <- moduleScope
+          result <- check(next(s))
+        } yield result
+
+      case Free(ExamineLocalScope(next)) =>
+        for {
+          s <- localScope
+          result <- check(next(s))
+        } yield result
+
+      // Success
       case Return(a) => succeed(a)
 
       case _ => fail("Unimplemented: " ++ stmtBlk.toString)
 
     }
 
+  //============================================================================================
+  // SCOPE MANAGEMENT
+  //
 
-  def runScoped[A](cmd : InScope[A]) : Checker[A] = 
+  def runInScope[A](scp : Scope, cmd : InScope[A]) : Checker[A] = 
     for {
-      scp <- localScope
       result <- attempt(
         cmd(scp)
       )
     } yield result
 
-  // Also, when encountering the end of a collection of siblings, we should
-  // not move to the parent, but to the entry before us in the parent.  This
-  // can be called "uncle" or something ...
+
+  def moduleScope : Checker[Scope] = 
+    for {
+      module <- activeModule
+      scp <- localScope
+    } yield (scp ++ (module.entries map entryScope).flatten)
+
+
   def localScope : Checker[Scope] = 
+    localScopeBuilder(false)
+
+  def localScopeBuilder(includeCursor : Boolean) : Checker[Scope] = 
     for {
       cursor <- ask
 
-      siblingScope <- cursor.leftSibling match {
-        case Left(_) => 
-          for {
-            // Ooops, no. This is still wrong.  If there is no uncle,
-            // we should try the grandparent, etc.  Have to think of a different way ...
-            enclosingScope <- cursor.uncle match {
-              case Left(_) => succeed(emptyScope)
-              case Right(u) => scope(u)(localScope)
-            }
-          } yield enclosingScope
-        case Right(l) => scope(l)(localScope)
-      }
+      siblingScope <- branchOn(cursor.leftSibling)(
+        success = l => scope(l)(localScopeBuilder(true)),
+        failure = for {
+          enclosingScope <- branchOn(cursor.parent)(
+            success = p => scope(p)(localScopeBuilder(false)),
+            failure = succeed(emptyScope)
+          )
+        } yield enclosingScope
+      )
 
-      // Now we need to look at the local entry and add it to the scope
-      thisEntry = cursor.focus match {
-        case m : Module => Map(
-          m.node.qualifiedName.toString -> Right(m)
-        )
-        case p : Parameter => Map(
-          p.node.qualifiedName.toString -> Left(p.parameterNode.variable)
-        )
-        case d : Definition => Map(
-          d.node.qualifiedName.toString -> Left(d.definitionNode.filler.Boundary),
-          "def-" ++ d.node.qualifiedName.toString -> Left(d.definitionNode.filler)  // Well, this is wrong.  We need a method for this
-        )
-        case _ => ???
-      }
-    } yield siblingScope ++ thisEntry
+    } yield {
+      siblingScope ++
+        (if (includeCursor) entryScope(cursor.focus) else emptyScope)
+    }
+
+  def entryScope(entry : ModuleEntry) : Scope =
+    entry match {
+      case m : Module => Map(
+        m.node.qualifiedName.toString -> Right(m)
+      )
+      case p : Parameter => Map(
+        p.node.qualifiedName.toString -> Left(p.parameterNode.variable)
+      )
+      case d : Definition => Map(
+        d.node.qualifiedName.toString -> Left(d.definitionNode.filler.Boundary),
+        d.node.fillerQualifiedName.toString -> Left(d.definitionNode.filler)  
+      )
+      case i : Import => Map.empty
+    }
 
   //============================================================================================
   // UTILITIES
   //
+
+
+  def activeModule : Checker[Module] = 
+    for {
+      cursor <- ask
+      module <- attempt(
+        cursor.focusAsModule
+      )
+    } yield module
 
   def appendEntry(entry : ModuleEntry) : Checker[ModuleZipper] =
     for {
@@ -189,10 +236,10 @@ trait TypeChecker
     for {
       cursor <- ask
       containerName = cursor.focus.node.name
-      result <- cursor.parent match {
-        case Left(_) => succeed(name)
-        case Right(p) => scope(p)(qualifyName(ScopedName(containerName, name)))
-      }
+      result <- branchOn(cursor.parent)(
+        success = p => scope(p)(qualifyName(ScopedName(containerName, name))),
+        failure = succeed(name)
+      )
     } yield result
 
   //============================================================================================
@@ -202,6 +249,12 @@ trait TypeChecker
   def attempt[A](e : Error[A]) : Checker[A] = kleisli(env => e)
   def succeed[A](a : A) : Checker[A] = point(a)
   def fail[A](msg : String) : Checker[A] = attempt(errorFail(msg))
+
+  def branchOn[A, B](e : Error[A])(success : A => Checker[B], failure : Checker[B]) = 
+    e match {
+      case Left(_) => failure
+      case Right(a) => success(a)
+    }
 
 }
 

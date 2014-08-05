@@ -48,7 +48,7 @@ trait Expressions { thisChecker : TypeChecker =>
         ) + ident.expand.hashCode
       )
 
-    // override def toString : String = "Var(" ++ name ++ ")"
+    override def toString : String = "Var(" ++ ident.toString ++ ")"
 
   }
 

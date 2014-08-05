@@ -331,6 +331,8 @@ trait Frameworks { thisChecker : TypeChecker =>
     override def hashCode : Int =
       41 * (41 + ncell.hashCode)
 
+    override def toString = ncell.toString
+
   }
 
   class Shell(val ncell : NCell[FrameworkEntry]) {

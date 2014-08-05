@@ -36,6 +36,16 @@ trait Examples { thisChecker : TypeChecker =>
       _ <- endModule
     } yield c
 
+  def prelude : FreeM[Unit] = 
+    for {
+      _ <- beginModule("Prelude")
+      _ <-   id
+      _ <-   comp
+      _ <- dumpModuleScope
+      _ <- endModule
+      _ <- dumpModuleScope
+    } yield ()
+
   def simplex[A](x : A, y : A, z : A, f : A, g : A, h : A, a : A) : NCell[A] = {
     val xPoint = Object(x)
     val fArrow = Composite(f, Seed(xPoint), y)
@@ -52,6 +62,58 @@ trait Examples { thisChecker : TypeChecker =>
       case Right(a) => println("Success: " ++ a.toString)
     }
 
+  def logState : FreeM[Unit] = {
+    for {
+      s <- examineState
+    } yield dumpState(s)
+  }
+
+  def dumpLocalScope : FreeM[Unit] = 
+    for {
+      s <- examineLocalScope
+    } yield {
+
+      println("Dumping local scope: ")
+
+      for {
+        (qualName, entry) <- s
+      } {
+        println(qualName ++ " -> " ++ entry.toString)
+      }
+
+    }
+
+  def dumpModuleScope : FreeM[Unit] = 
+    for {
+      s <- examineModuleScope
+    } yield {
+
+      println("Dumping module scope: ")
+
+      for {
+        (qualName, entry) <- s
+      } {
+        println(qualName ++ " -> " ++ entry.toString)
+      }
+
+    }
+
+  def dumpState(cursor : ModuleZipper) : Unit = {
+    println("Focus is at: " ++ cursor.focus.node.toString)
+
+    cursor.focus match {
+      case m : Module => {
+        println("Active module: " ++ m.node.toString)
+
+        for {
+          entry <- m.entries
+        } {
+          println("Entry: " ++ entry.node.toString)
+        }
+      }
+      case _ => ()
+    }
+  }
 
   implicit def stringIsLiteral(str : String) : IdentifierToken = 
     LiteralToken(str)
