@@ -116,7 +116,7 @@ object Cell {
 
     def forall(p : A => Boolean) : Boolean = {
       var allTrue = true
-      map (value => if (p(value)) () else { allTrue = false })
+      map (value => if (p(value)) () else { allTrue = false } )
       allTrue
     }
 

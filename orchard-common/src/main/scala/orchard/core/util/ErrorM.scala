@@ -48,7 +48,7 @@ object ErrorM {
     def get : A = 
       e match {
         case Right(a) => a
-        case Left(_) => throw new RuntimeException("Get failed on Error")
+        case Left(_) => throw new Exception("Get failed on Error")
       }
 
     def map[B](f : A => B) : Error[B] = 
