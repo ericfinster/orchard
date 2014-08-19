@@ -43,6 +43,20 @@ trait SelectableComplex[A] extends CellComplex[A] {
   def selectionIsUnique : Boolean = 
     selectedCells.size == 1
 
+  def selectRay(from : CellType, ray : Vector[Int]) : Error[Unit] = {
+    if (ray.length > 0) {
+      for {
+        srcs <- fromOption(from.sources, "Cell has no sources")
+        _ <- ensure(srcs.isDefinedAt(ray.head), "Invalid ray address")
+        next <- fromOption(srcs(ray.head).incoming, "No incoming cell here")
+        _ <- selectRay(next, ray.tail)
+      } yield select(from)
+
+    } else {
+      success(select(from))
+    }
+  }
+
   def trySelect(cell : CellType) : Boolean = {
     // Is this okay?
     if (isSelected(cell)) return true

@@ -10,7 +10,9 @@ package orchard.core.free
 import scalaz.{Free => _, _}
 import Kleisli._
 
+import orchard.core.cell._
 import orchard.core.util._
+import orchard.core.complex._
 import ErrorM.{success => errorSuccess, fail => errorFail, _}
 import MonadUtils._
 
@@ -116,6 +118,200 @@ trait TypeChecker
 
         } yield result
 
+      // Shape Inspection
+      case Free(ShapeOf(expr, next)) =>
+        for {
+          modScope <- moduleScope
+          ncell <- runInScope(modScope, expr.ncell)
+          result <- check(next(ncell))
+        } yield result
+
+      // Worksheet Manipulation
+      case Free(CreateWorksheet(seed, next)) =>
+        for {
+          module <- activeModule
+          worksheet = Worksheet(seed)
+          worksheetHandle = WorksheetHandle(worksheet.hashCode)
+          moduleNode = new ModuleNode(
+            module.node.qualifiedName,
+            module.node.worksheets :+ worksheet
+          )
+          newModule = Module(moduleNode, module.entries)
+          cursor <- ask
+          result <- scope(cursor.withFocus(newModule))(check(next(worksheetHandle)))
+        } yield result
+
+      case Free(CreateWorksheetWithExpression(expr, next)) =>
+        for {
+          module <- activeModule
+          modScope <- moduleScope
+          exprNCell <- runInScope(modScope, expr.ncell)
+          worksheet = Worksheet(exprNCell map (Full(_)))
+          worksheetHandle = WorksheetHandle(worksheet.hashCode)
+          moduleNode = new ModuleNode(
+            module.node.qualifiedName,
+            module.node.worksheets :+ worksheet
+          )
+          newModule = Module(moduleNode, module.entries)
+          cursor <- ask
+          result <- scope(cursor.withFocus(newModule))(check(next(worksheetHandle)))
+        } yield result
+
+      case Free(SelectCellAsBase(handle, addr, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+          cell <- attempt(
+            worksheet.seek(addr)
+          )
+          _ = worksheet.selectAsBase(cell)
+          result <- check(next)
+        } yield result
+
+      case Free(SelectTo(handle, addr, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+          cell <- attempt(
+            worksheet.seek(addr)
+          )
+          _ = worksheet.trySelect(cell)
+          result <- check(next)
+        } yield result
+
+      case Free(SelectRay(handle, ray, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+
+          base <- attempt(
+            fromOption(
+              worksheet.selectionBase,
+              "No base cell selected"
+            )
+          )
+
+          _ <- attempt(
+            worksheet.selectRay(base, ray)
+          )
+
+          result <- check(next)
+        } yield result
+
+      case Free(TargetAddress(handle, addr, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+          cell <- attempt(
+            worksheet.seek(addr)
+          )
+
+          targetCell <- attempt(
+            fromOption(
+              cell.target,
+              "Cell has no target"
+            )
+          )
+
+          result <- check(next(targetCell.address))
+        } yield result
+
+      case Free(ExtractCell(handle, addr, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+          cell <- attempt(
+            worksheet.seek(addr)
+          )
+          extractedNCell = cell.neutralNCell
+          result <- check(next(extractedNCell))
+        } yield result
+
+      case Free(Extrude(handle, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+
+          _ <- attempt(
+            ensure(
+              worksheet.selectionIsExtrudable,
+              "Selection is not extrudable"
+            )
+          )
+
+          addrPair <- attempt(
+            worksheet.emptyExtrusion
+          )
+
+          result <- check(next(addrPair))
+        } yield result
+
+
+      case Free(Drop(handle, next)) =>
+        for {
+          worksheet <- findWorksheet(handle)
+
+          _ <- attempt(
+            ensure(
+              worksheet.selectionIsDroppable,
+              "Selection is not droppable"
+            )
+          )
+
+          addrPair <- attempt(
+            worksheet.emptyDrop
+          )
+
+          result <- check(next(addrPair))
+        } yield result
+
+      case Free(Paste(handle, addr, expr, next)) => {
+
+        import scala.collection.mutable.HashMap
+        val bindings : HashMap[CellAddress, Expression] = HashMap.empty
+
+        for {
+          worksheet <- findWorksheet(handle)
+
+          cell <- attempt(
+            worksheet.seek(addr)
+          )
+
+          bindingSkeleton <-attempt(
+            cell.bindingSkeleton
+          )
+
+          modScope <- moduleScope
+
+          exprNCell <- runInScope(modScope, expr.ncell)
+
+          zippedExpr <- attempt(
+            fromOption(
+              bindingSkeleton.zip(exprNCell),
+              "Cells have incompatible shape"
+            )
+          )
+
+          requirements = zippedExpr map {
+            case (Left(addr), e) => {
+              if (bindings.isDefinedAt(addr)) {
+                ensureConvertible(bindings(addr), e)
+              } else {
+                bindings(addr) = e
+                succeedInScope(())
+              }
+            }
+            case (Right(expr), e) => ensureConvertible(expr, e)
+          }
+
+          _ <- runInScope(modScope, NCell.sequence[Unit, InScope](requirements))
+
+          // We have succeeded on the compatibility test, paste in the cells
+          _ : NCell[Unit] = cell.skeleton map (face =>
+            if (face.isEmpty) {
+              face.item = Neutral(Full(bindings(face.address)))
+            }
+          )
+
+          result <- check(next)
+        } yield result
+
+      }
+
       // State examination
       case Free(ExamineState(next)) =>
         for {
@@ -203,7 +399,6 @@ trait TypeChecker
   // UTILITIES
   //
 
-
   def activeModule : Checker[Module] = 
     for {
       cursor <- ask
@@ -211,6 +406,17 @@ trait TypeChecker
         cursor.focusAsModule
       )
     } yield module
+
+  def findWorksheet(handle : WorksheetHandle) : Checker[Worksheet] = 
+    for {
+      module <- activeModule
+      worksheet <- attempt(
+        fromOption(
+          module.node.worksheets find (_.hashCode == handle.index),
+          "Worksheet not found in this module"
+        )
+      )
+    } yield worksheet
 
   def appendEntry(entry : ModuleEntry) : Checker[ModuleZipper] =
     for {
@@ -250,7 +456,7 @@ trait TypeChecker
   def succeed[A](a : A) : Checker[A] = point(a)
   def fail[A](msg : String) : Checker[A] = attempt(errorFail(msg))
 
-  def branchOn[A, B](e : Error[A])(success : A => Checker[B], failure : Checker[B]) = 
+  def branchOn[A, B](e : Error[A])(success : A => B, failure : B) : B = 
     e match {
       case Left(_) => failure
       case Right(a) => success(a)

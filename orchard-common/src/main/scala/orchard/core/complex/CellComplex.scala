@@ -50,8 +50,6 @@ trait CellComplex[A] { thisComplex =>
           pref <- seek(prefix) 
           tgt <- pref.target 
         } yield tgt
-      // case Source(Immediate, loc) => 
-      //   Some((topCell.sources.get)(loc.head))
       case Source(prefix, loc) =>
         for { 
           pref <- seek(prefix) 

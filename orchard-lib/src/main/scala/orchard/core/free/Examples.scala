@@ -13,37 +13,126 @@ import orchard.core.cell._
 
 trait Examples { thisChecker : TypeChecker =>
 
-  def id : FreeM[Filler] = 
+  def globOn(x : ExpressionEntry, globName : String, tgtName : String) : FreeM[Parameter] = 
     for {
-      _ <- beginModule("Identity")
-      x <-   parameter(Identifier("x"), Object(Empty), false)
-      i <-   definition(Identifier("id-", x), Object(Full(x)).drop(Empty, Empty))
-      _ <- endModule
+      shape <- shapeOf(x.expression)
+      asEntry = shape map (Full(_))
+      target <- parameter(Identifier(tgtName), asEntry.glob(Empty, Empty).target, false)
+      glob <- parameter(Identifier(globName), asEntry.glob(Full(target), Empty), false)
+    } yield glob
+
+  def nGlob(top : String, faces : (String, String)*) : FreeM[Parameter] = 
+    if (faces.length == 0) {
+      obj(top)
+    } else {
+      for {
+        prev <- nGlob(faces.head._1, faces.tail : _*)
+        next <- globOn(prev, top, faces.head._2)
+      } yield next
+    }
+
+  def obj(name : String) : FreeM[Parameter] = 
+    for {
+      o <- parameter(Identifier(name), Object(Empty), false)
+    } yield o
+
+  def arrow(src : String, tgt : String, arr : String) : FreeM[Parameter] = 
+    nGlob(arr, (src, tgt))
+
+  def twoCell(
+    twoCell : String, 
+    srcArrow : String, tgtArrow : String, 
+    srcObj : String, tgtObj : String
+  ) : FreeM[Parameter] =
+    nGlob(twoCell, (srcArrow, tgtArrow), (srcObj, tgtObj))
+
+  def example = twoCell("a", "f", "g", "x", "y")
+
+  def id(x : ExpressionEntry) : FreeM[Definition] =
+    for {
+      w <- worksheetWithExpression(x.expression)
+      _ <- selectAsBase(w, initialObject)
+      d <- drop(w)
+      nook <- extract(w, d.filler)
+      i <- definition(Identifier("id-", x), nook)
     } yield i
 
-  def comp : FreeM[Filler] =
+  def compose(f : ExpressionEntry, g : ExpressionEntry) : FreeM[Definition] = 
     for {
-      _ <- beginModule("Composition")
-      x <-   parameter(Identifier("x"), Object(Empty), false)
-      y <-   parameter(Identifier("y"), Object(Empty), false)
-      z <-   parameter(Identifier("z"), Object(Empty), false)
-      f <-   parameter(Identifier("f"), Object(Full(x)).glob(Full(y), Empty), false)
-      g <-   parameter(Identifier("g"), Object(Full(y)).glob(Full(z), Empty), false)
-      c <-   definition(
-               Identifier("(", g, " o ", f, ")"),
-               simplex(Full(x), Full(y), Full(z), Full(f), Full(g), Empty, Empty)
-             )
-      _ <- endModule
-    } yield c
+      w <- worksheetWithExpression(f.expression)
+      t <- targetAddress(w, initialObject)
+      _ <- selectAsBase(w, t)
+      e <- extrude(w)
+      _ <- paste(w, e.filler, g.expression)
+      _ <- selectAsBase(w, e.filler)
+      _ <- selectRay(w, Vector(0))
+      s <- extrude(w)
+      nook <- extract(w, s.filler)
+      d <- definition(Identifier("(", g, " o ", f, ")"), nook)
+    } yield d
 
-  def prelude : FreeM[Unit] = 
+  def testCompose : FreeM[Definition] = 
     for {
-      _ <- beginModule("Prelude")
-      _ <-   id
-      _ <-   comp
-      _ <- dumpModuleScope
-      _ <- endModule
-      _ <- dumpModuleScope
+      f <- arrow("x", "y", "f")
+      g <- arrow("y", "z", "g")
+      composite <- compose(f, g)
+      _ = println(composite.definitionNode.filler.toString)
+    } yield composite
+
+  def identityTest : FreeM[Definition] =
+    for {
+      composite <- testCompose
+      idOfComp <- id(composite)
+      _ = println(idOfComp.definitionNode.filler.toString)
+    } yield idOfComp
+
+  def myTest : FreeM[Definition] = 
+    for {
+      blah <- example
+      otherBlah <- id(blah)
+    } yield otherBlah
+
+  def makeDrop : FreeM[CellAddress] = 
+    for {
+      w <- emptyWorksheet
+      _ <- selectAsBase(w, initialObject)
+      dropResult <- drop(w)
+      (fillerAddr, targetAddr) = dropResult
+    } yield fillerAddr
+
+  def makeGlob : FreeM[CellAddress] = 
+    for {
+      w <- emptyWorksheet
+      _ <- selectAsBase(w, initialObject)
+      extrudeResult <- extrude(w)
+      (fillerAddr, targetAddr) = extrudeResult
+      _ <- selectAsBase(w, fillerAddr)
+      extrudeResult2 <- extrude(w)
+    } yield extrudeResult2._1
+
+  def makeSimplex : FreeM[CellAddress] = 
+    for {
+      w <- emptyWorksheet
+      _ <- selectAsBase(w, initialObject)
+      e0 <- extrude(w)
+      _ <- selectAsBase(w, e0.target)
+      e1 <- extrude(w)
+      _ <- selectAsBase(w, e1.filler)
+      _ <- selectTo(w, e0.filler)
+      simplexExtrusion <- extrude(w)
+    } yield simplexExtrusion.filler
+
+  def horizontalCompositeExtrusion : FreeM[Unit] = 
+    for {
+      w <- emptyWorksheet
+      _ <- selectAsBase(w, initialObject)
+      f <- extrude(w)
+      _ <- selectAsBase(w, f.target)
+      g <- extrude(w)
+      _ <- selectAsBase(w, f.filler)
+      a <- extrude(w)
+      _ <- selectAsBase(w, g.filler)
+      b <- extrude(w)
     } yield ()
 
   def simplex[A](x : A, y : A, z : A, f : A, g : A, h : A, a : A) : NCell[A] = {
@@ -53,6 +142,8 @@ trait Examples { thisChecker : TypeChecker =>
     Composite(a, Graft(gArrow, Vector(fArrow.corolla)), h)
   }
   
+  def initialObject : CellAddress = 
+    Source(Immediate, 0 :: Nil)
 
   def rootModule = Module(new ModuleNode(LocalName("root"), Vector.empty), Vector.empty)
 
@@ -118,8 +209,8 @@ trait Examples { thisChecker : TypeChecker =>
   implicit def stringIsLiteral(str : String) : IdentifierToken = 
     LiteralToken(str)
 
-  implicit def parameterIsReference(p : Parameter) : IdentifierToken = 
-    ReferenceToken(p.node.qualifiedName.toString)
+  implicit def expressionEntryIsReference(e : ExpressionEntry) : IdentifierToken = 
+    ReferenceToken(e.node.qualifiedName.toString)
 
   implicit def parameterIsVariable(p : Parameter) : Variable =
     p.parameterNode.variable
@@ -127,7 +218,11 @@ trait Examples { thisChecker : TypeChecker =>
   implicit def definitionIsFiller(d : Definition) : Filler =
     d.definitionNode.filler
 
-  implicit def definitionIsReference(d : Definition) : IdentifierToken =
-    ReferenceToken(d.node.qualifiedName.toString)
+  implicit class ExtrusionResult(addr : (CellAddress, CellAddress)) {
+
+    def filler : CellAddress = addr._1
+    def target : CellAddress = addr._2
+
+  }
 
 }

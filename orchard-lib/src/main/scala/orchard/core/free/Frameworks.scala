@@ -245,17 +245,21 @@ trait Frameworks { thisChecker : TypeChecker =>
       def boundaryAddress : CellAddress =
         boundaryFace.address
 
+      def expression : Error[Expression] = item.expression
 
-      // def bindingSkeleton : NCell[Either[CellAddress, Expression]] =
-      //   skeleton map (cell =>
-      //     if (cell.item.isEmpty) 
-      //       Left(cell.address) 
-      //     else 
-      //       Right(cell.item.expression)
-      //   )
-
+      def bindingSkeleton : Error[NCell[Either[CellAddress, Expression]]] = {
+        NCell.sequence[Either[CellAddress, Expression], Error](
+          skeleton map (cell =>
+            if (cell.item.isEmpty)
+              succeedE(Left(cell.address))
+            else
+              for {
+                expr <- cell.item.expression
+              } yield Right(expr)
+          )
+        )
+      }
     }
-
   }
 
   //============================================================================================
@@ -307,15 +311,15 @@ trait Frameworks { thisChecker : TypeChecker =>
     def isThinBoundary : InScope[Boolean] =
       framework.topCell.isThinBoundary
 
-    def withFiller(filler : Filler) : NCell[Expression] =
+    def withFiller(filler : Filler) : Error[NCell[Expression]] =
       withFillerAndBoundary(filler, filler.Boundary)
 
-    def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
-      // val frameworkCopy = framework.duplicate
-      // frameworkCopy.topCell.item = Full(filler)
-      // frameworkCopy.topCell.boundaryFace.item = Full(boundary)
-      // frameworkCopy.topCell.toNCell map (_.expression)
-      ???
+    def withFillerAndBoundary(filler : Expression, boundary : Expression) : Error[NCell[Expression]] = {
+      val frameworkCopy = framework.duplicate
+      frameworkCopy.topCell.item = Full(filler)
+      frameworkCopy.topCell.boundaryFace.item = Full(boundary)
+      val exprErr : NCell[Error[Expression]] = frameworkCopy.topCell.skeleton map (_.expression)
+      NCell.sequence[Expression, Error](exprErr)
     }
 
     def canEqual(other : Any) : Boolean =

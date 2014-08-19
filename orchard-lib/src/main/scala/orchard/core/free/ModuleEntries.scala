@@ -28,12 +28,14 @@ trait ModuleEntries { thisChecker : TypeChecker =>
     def node = importNode
   }
 
-  case class Parameter(val parameterNode : ParameterNode) extends ModuleEntry { 
+  case class Parameter(val parameterNode : ParameterNode) extends ExpressionEntry { 
     def node = parameterNode 
+    def expression = parameterNode.variable
   }
 
-  case class Definition(val definitionNode : DefinitionNode) extends ModuleEntry { 
+  case class Definition(val definitionNode : DefinitionNode) extends ExpressionEntry { 
     def node = definitionNode 
+    def expression = definitionNode.filler
   }
 
   //============================================================================================
@@ -49,7 +51,7 @@ trait ModuleEntries { thisChecker : TypeChecker =>
   sealed trait ContainerNode extends Node
   sealed trait ExpressionNode extends Node
 
-  class ModuleNode(override val qualifiedName : QualifiedName, val worksheet : Vector[Worksheet]) extends ContainerNode {
+  class ModuleNode(override val qualifiedName : QualifiedName, val worksheets : Vector[Worksheet]) extends ContainerNode {
     def moduleName = name
   }
 
@@ -87,6 +89,9 @@ trait ModuleEntries { thisChecker : TypeChecker =>
         case Left(_) => focus
         case Right(p) => p.zip
       }
+
+    def withFocus(entry : ModuleEntry) : ModuleZipper =
+      ModuleZipper(entry, context)
 
     def upperSlice : Vector[ModuleEntry] = 
       context match {

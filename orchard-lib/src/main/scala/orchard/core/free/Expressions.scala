@@ -37,7 +37,7 @@ trait Expressions { thisChecker : TypeChecker =>
         case that : Variable =>
           (that canEqual this) &&
           (that.shell == this.shell) &&
-          (that.ident.expand == this.ident.expand)
+          (that.ident == this.ident)
         case _ => false
       }
 
@@ -59,7 +59,7 @@ trait Expressions { thisChecker : TypeChecker =>
         boundaryName <- Boundary.name
       } yield "def-" ++ boundaryName
 
-    def ncell = succeedInScope(nook.withFiller(this))
+    def ncell = attemptInScope(nook.withFiller(this))
     def isThin = succeedInScope(true)
 
     def bdryAddress : CellAddress =
@@ -97,8 +97,7 @@ trait Expressions { thisChecker : TypeChecker =>
           )
         } yield boundaryNCell
 
-      def isThin = ??? //succeedInScope(nook.isThinBoundary)
-
+      def isThin = nook.isThinBoundary
 
       def canEqual(other : Any) : Boolean =
         other.isInstanceOf[Filler#BoundaryExpr]

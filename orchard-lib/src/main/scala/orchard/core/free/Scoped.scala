@@ -44,6 +44,26 @@ trait Scoped { thisChecker : TypeChecker =>
       )
     } yield expr
 
+
+  // This is quite obviously wrong.  But we'll refine it later
+  def convertible(e0 : Expression, e1 : Expression) : InScope[Boolean] = 
+    succeedInScope(e0 == e1)
+
+  def ensureConvertible(e0 : Expression, e1 : Expression) : InScope[Unit] = 
+    for {
+      areConvertible <- convertible(e0, e1)
+      _ <- if (areConvertible) {
+        succeedInScope(())
+      } else {
+        for {
+          e0Name <- e0.name
+          e1Name <- e1.name
+          _ <- failInScope("Match error: expression " ++ e0Name ++ " is not convertible to " ++ e1Name)
+        } yield ()
+      }
+    } yield ()
+
+
   //============================================================================================
   // ERROR LIFTING
   //

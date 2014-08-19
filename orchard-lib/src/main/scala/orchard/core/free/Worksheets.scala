@@ -79,10 +79,10 @@ trait Worksheets { thisChecker : TypeChecker =>
       }
     }
 
-    def emptyExtrusion : Error[Unit] =
+    def emptyExtrusion : Error[(CellAddress, CellAddress)] =
       extrudeAtSelection(Empty, Empty)
 
-    def extrudeAtSelection(targetExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[Unit] = {
+    def extrudeAtSelection(targetExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[(CellAddress, CellAddress)] = {
       selectionBase match {
         case None => failE("Nothing selected.")
         case Some(base) => {
@@ -98,17 +98,15 @@ trait Worksheets { thisChecker : TypeChecker =>
           val (targetCell, fillerCell) =
             baseContainer.insertComposite(Neutral(targetExpr), Neutral(fillerExpr), basePtr, (cell => selectedCells contains cell))
 
-          clearAndSelect(targetCell)
-
-          succeedE(())
+          succeedE((fillerCell.address, targetCell.address))
         }
       }
     }
 
-    def emptyDrop : Error[Unit] =
+    def emptyDrop : Error[(CellAddress, CellAddress)] =
       dropAtSelection(Empty, Empty)
 
-    def dropAtSelection(compositeExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[Unit] =
+    def dropAtSelection(compositeExpr : FrameworkEntry, fillerExpr : FrameworkEntry) : Error[(CellAddress, CellAddress)] =
       selectionBase match {
         case None => failE("Nothing selected.") //CheckerFailure("Nothing selected")
         case Some(base) => {
@@ -146,9 +144,7 @@ trait Worksheets { thisChecker : TypeChecker =>
           val (targetCell, fillerCell) =
             positiveBase.insertComposite(Neutral(compositeExpr), Neutral(fillerExpr), basePtr, (_ => false))
 
-          clearAndSelect(targetCell)
-
-          succeedE(())
+          succeedE((fillerCell.address, targetCell.address))
         }
       }
 
