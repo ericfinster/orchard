@@ -1,5 +1,5 @@
 /**
-  * Expression.scala - Opetopic Expressions
+  * Expressions.scala - Opetopic Expressions
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -13,21 +13,21 @@ import orchard.core.util._
 import ErrorM._
 import MonadUtils._
 
-trait CheckerExpressions { thisChecker : Checker => 
+trait Expressions { thisChecker : TypeChecker => 
 
   sealed trait Expression {
 
-    def name : Scoped[String]
-    def isThin : Scoped[Boolean]
-    def ncell : Scoped[NCell[Expression]]
+    def name : Checker[String]
+    def isThin : Checker[Boolean]
+    def ncell : Checker[NCell[Expression]]
 
   }
 
   case class Variable(val ident : Identifier, val shell : Shell, val isThinVar : Boolean) extends Expression {
 
     def name = ident.expand
-    def ncell = scopedSucceed(shell.withFillingExpression(this))
-    def isThin = scopedSucceed(isThinVar)
+    def ncell = succeed(shell.withFillingExpression(this))
+    def isThin = succeed(isThinVar)
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Variable]
@@ -37,7 +37,7 @@ trait CheckerExpressions { thisChecker : Checker =>
         case that : Variable =>
           (that canEqual this) &&
           (that.shell == this.shell) &&
-          (that.ident.expand == this.ident.expand)
+          (that.ident == this.ident)
         case _ => false
       }
 
@@ -48,7 +48,7 @@ trait CheckerExpressions { thisChecker : Checker =>
         ) + ident.expand.hashCode
       )
 
-    // override def toString : String = "Var(" ++ name ++ ")"
+    override def toString : String = "Var(" ++ ident.toString ++ ")"
 
   }
 
@@ -59,8 +59,8 @@ trait CheckerExpressions { thisChecker : Checker =>
         boundaryName <- Boundary.name
       } yield "def-" ++ boundaryName
 
-    def ncell = scopedSucceed(nook.withFiller(this))
-    def isThin = scopedSucceed(true)
+    def ncell = attempt(nook.withFiller(this))
+    def isThin = succeed(true)
 
     def bdryAddress : CellAddress =
       nook.framework.topCell.boundaryAddress
@@ -89,7 +89,7 @@ trait CheckerExpressions { thisChecker : Checker =>
       def ncell =
         for {
           interiorNCell <- interior.ncell
-          boundaryNCell <- scopedError(
+          boundaryNCell <- attempt(
             fromOption(
               interiorNCell.seek(bdryAddress), 
               "Internal Error: could not find boundary"
@@ -97,8 +97,7 @@ trait CheckerExpressions { thisChecker : Checker =>
           )
         } yield boundaryNCell
 
-      def isThin = ??? //scopedSucceed(nook.isThinBoundary)
-
+      def isThin = nook.isThinBoundary
 
       def canEqual(other : Any) : Boolean =
         other.isInstanceOf[Filler#BoundaryExpr]

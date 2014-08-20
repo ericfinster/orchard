@@ -1,5 +1,5 @@
 /**
-  * CheckerFrameworks.scala - Frameworks for the type checker
+  * Frameworks.scala - Frameworks for the type checker
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -15,10 +15,10 @@ import scalaz._
 import scalaz.std.vector._
 import scalaz.syntax.traverse._
 
-import ErrorM._
+import ErrorM.{success => succeedE, fail => failE, _}
 import MonadUtils._
 
-trait CheckerFrameworks { thisChecker : Checker =>
+trait Frameworks { thisChecker : TypeChecker =>
 
   trait ExpressionContainer[A] {
 
@@ -27,9 +27,9 @@ trait CheckerFrameworks { thisChecker : Checker =>
     def expression(a : A) : Error[Expression]
 
     def isEmpty(a : A) : Boolean = a == empty
-    def isThin(a : A) : Scoped[Boolean] = 
+    def isThin(a : A) : Checker[Boolean] = 
       for {
-        expr <- scopedError(expression(a))
+        expr <- attempt(expression(a))
         exprIsThin <- expr.isThin
       } yield exprIsThin
 
@@ -63,9 +63,12 @@ trait CheckerFrameworks { thisChecker : Checker =>
     def extract(cell : CellType) : FrameworkType
     def duplicate : FrameworkType = extract(topCell)
 
+    def isShell = topCell.isShell
+    def isExposedNook = topCell.isExposedNook
+
     trait AbstractFrameworkCell extends AbstractComplexCell { thisCell : CellType =>
 
-      def isThin : Scoped[Boolean] = item.isThin
+      def isThin : Checker[Boolean] = item.isThin
 
       def isEmpty : Boolean = item.isEmpty
       def isFull : Boolean = ! isEmpty
@@ -74,7 +77,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
       def isComplete : Boolean = isFull && isCompleteShell
 
       def isCompleteShell : Boolean = 
-        skeleton forall (face => (face != thisCell) || face.isFull)
+        skeleton forall (face => (face == thisCell) || face.isFull)
 
       def isNook : Boolean = isInNook || isOutNook
 
@@ -102,17 +105,17 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
       // Okay, I'm pretty sure this is wildly inefficient and could be done much faster. Please
       // have a look at it again before deleting this comment. :)
-      def isExposedNook : Scoped[Boolean] = {
-        if (isOutNook) scopedSucceed(true) else {
+      def isExposedNook : Checker[Boolean] = {
+        if (isOutNook) succeed(true) else {
           if (isInNook) {
 
             // In order to be efficient and be able to cancel the operation, I'd like
             // to extend the checker monad here with an option.  Let's see if that works.
 
-            type Cancellable[A] = OptionT[Scoped, A]
+            type Cancellable[A] = OptionT[Checker, A]
 
-            def stopOnFalse(cm : Scoped[Boolean]) : Cancellable[Unit] = 
-              OptionT[Scoped, Unit](cm map {
+            def stopOnFalse(cm : Checker[Boolean]) : Cancellable[Unit] = 
+              OptionT[Checker, Unit](cm map {
                 case true => Some(())
                 case false => None
               })
@@ -153,7 +156,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
             val descendantCheck : Cancellable[Unit] = 
               emptyPtr.focus match {
                 case Branch(_, branches) => checkBranchList(branches)
-                case _ => stopOnFalse(scopedFail("Internal error: empty pointer is not a branch"))
+                case _ => stopOnFalse(fail("Internal error: empty pointer is not a branch"))
               }
 
             def checkFromPointer(ptr : RoseZipper[framework.CellType, Int]) : Cancellable[Unit] = {
@@ -183,7 +186,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
                   } yield ()
 
                 }
-                case Nil => stopOnFalse(scopedSucceed(true))
+                case Nil => stopOnFalse(succeed(true))
               }
             }
 
@@ -196,7 +199,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
             exposedNookTest.isDefined
 
-          } else { scopedSucceed(false) }
+          } else { succeed(false) }
         }
       }
 
@@ -221,7 +224,7 @@ trait CheckerFrameworks { thisChecker : Checker =>
       // The following couple methods should only be called on exposed nooks
       //
 
-      def isThinBoundary : Scoped[Boolean] = {
+      def isThinBoundary : Checker[Boolean] = {
         if (isOutNook) {
           for {
             sourceResults <- (sourceVector map (_.isThin)).sequence
@@ -242,17 +245,21 @@ trait CheckerFrameworks { thisChecker : Checker =>
       def boundaryAddress : CellAddress =
         boundaryFace.address
 
+      def expression : Error[Expression] = item.expression
 
-      // def bindingSkeleton : NCell[Either[CellAddress, Expression]] =
-      //   skeleton map (cell =>
-      //     if (cell.item.isEmpty) 
-      //       Left(cell.address) 
-      //     else 
-      //       Right(cell.item.expression)
-      //   )
-
+      def bindingSkeleton : Error[NCell[Either[CellAddress, Expression]]] = {
+        NCell.sequence[Either[CellAddress, Expression], Error](
+          skeleton map (cell =>
+            if (cell.item.isEmpty)
+              succeedE(Left(cell.address))
+            else
+              for {
+                expr <- cell.item.expression
+              } yield Right(expr)
+          )
+        )
+      }
     }
-
   }
 
   //============================================================================================
@@ -273,8 +280,8 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
         def expression(entry : FrameworkEntry) : Error[Expression] =
           entry match {
-            case Empty => fail("Empty container has no expression")
-            case Full(expr) => success(expr)
+            case Empty => failE("Empty container has no expression")
+            case Full(expr) => succeedE(expr)
           }
 
       }
@@ -301,18 +308,18 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
     val framework = new Framework(ncell)
 
-    def isThinBoundary : Scoped[Boolean] =
+    def isThinBoundary : Checker[Boolean] =
       framework.topCell.isThinBoundary
 
-    def withFiller(filler : Filler) : NCell[Expression] =
+    def withFiller(filler : Filler) : Error[NCell[Expression]] =
       withFillerAndBoundary(filler, filler.Boundary)
 
-    def withFillerAndBoundary(filler : Expression, boundary : Expression) : NCell[Expression] = {
-      // val frameworkCopy = framework.duplicate
-      // frameworkCopy.topCell.item = Full(filler)
-      // frameworkCopy.topCell.boundaryFace.item = Full(boundary)
-      // frameworkCopy.topCell.toNCell map (_.expression)
-      ???
+    def withFillerAndBoundary(filler : Expression, boundary : Expression) : Error[NCell[Expression]] = {
+      val frameworkCopy = framework.duplicate
+      frameworkCopy.topCell.item = Full(filler)
+      frameworkCopy.topCell.boundaryFace.item = Full(boundary)
+      val exprErr : NCell[Error[Expression]] = frameworkCopy.topCell.skeleton map (_.expression)
+      NCell.sequence[Expression, Error](exprErr)
     }
 
     def canEqual(other : Any) : Boolean =
@@ -327,6 +334,8 @@ trait CheckerFrameworks { thisChecker : Checker =>
 
     override def hashCode : Int =
       41 * (41 + ncell.hashCode)
+
+    override def toString = ncell.toString
 
   }
 
