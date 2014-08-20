@@ -11,7 +11,7 @@ import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
 
-import ErrorM.{success => succeedE, fail => failE, _}
+import ErrorM.{succeed => succeedE, fail => failE, _}
 
 trait Worksheets { thisChecker : TypeChecker =>
 

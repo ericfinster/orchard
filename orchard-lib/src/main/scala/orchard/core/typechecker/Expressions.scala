@@ -15,148 +15,150 @@ import MonadUtils._
 
 trait Expressions { thisChecker : TypeChecker => 
 
-  sealed trait Expression {
+  // import CheckerErrorSyntax._
 
-    def name : Checker[String]
-    def isThin : Checker[Boolean]
-    def ncell : Checker[NCell[Expression]]
+  // sealed trait Expression {
 
-  }
+  //   def name : Checker[String]
+  //   def isThin : Checker[Boolean]
+  //   def ncell : Checker[NCell[Expression]]
 
-  case class Variable(val ident : Identifier, val shell : Shell, val isThinVar : Boolean) extends Expression {
+  // }
 
-    def name = ident.expand
-    def ncell = succeed(shell.withFillingExpression(this))
-    def isThin = succeed(isThinVar)
+  // case class Variable(val ident : Identifier, val shell : Shell, val isThinVar : Boolean) extends Expression {
 
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Variable]
+  //   def name = ident.expand
+  //   def ncell = succeed(shell.withFillingExpression(this))
+  //   def isThin = succeed(isThinVar)
 
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Variable =>
-          (that canEqual this) &&
-          (that.shell == this.shell) &&
-          (that.ident == this.ident)
-        case _ => false
-      }
+  //   def canEqual(other : Any) : Boolean =
+  //     other.isInstanceOf[Variable]
 
-    override def hashCode : Int =
-      41 * (
-        41 * (
-          41 + shell.hashCode
-        ) + ident.expand.hashCode
-      )
+  //   override def equals(other : Any) : Boolean =
+  //     other match {
+  //       case that : Variable =>
+  //         (that canEqual this) &&
+  //         (that.shell == this.shell) &&
+  //         (that.ident == this.ident)
+  //       case _ => false
+  //     }
 
-    override def toString : String = "Var(" ++ ident.toString ++ ")"
+  //   override def hashCode : Int =
+  //     41 * (
+  //       41 * (
+  //         41 + shell.hashCode
+  //       ) + ident.expand.hashCode
+  //     )
 
-  }
+  //    override def toString : String = "Var(" ++ ident.toString ++ ")"
 
-  case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expression { thisFiller =>
+  // }
 
-    def name = 
-      for {
-        boundaryName <- Boundary.name
-      } yield "def-" ++ boundaryName
+  // case class Filler(val bdryIdent : Identifier, val nook : Nook) extends Expression { thisFiller =>
 
-    def ncell = attempt(nook.withFiller(this))
-    def isThin = succeed(true)
+  //   def name = 
+  //     for {
+  //       boundaryName <- Boundary.name
+  //     } yield "def-" ++ boundaryName
 
-    def bdryAddress : CellAddress =
-      nook.framework.topCell.boundaryAddress
+  //   def ncell = attempt(nook.withFiller(this))
+  //   def isThin = succeed(true)
 
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Filler]
+  //   def bdryAddress : CellAddress =
+  //     nook.framework.topCell.boundaryAddress
 
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Filler =>
-          (that canEqual this) && (that.nook == this.nook)
-        case _ => false
-      }
+  //   def canEqual(other : Any) : Boolean =
+  //     other.isInstanceOf[Filler]
 
-    override def hashCode : Int =
-      41 * ( 41 + nook.hashCode )
+  //   override def equals(other : Any) : Boolean =
+  //     other match {
+  //       case that : Filler =>
+  //         (that canEqual this) && (that.nook == this.nook)
+  //       case _ => false
+  //     }
 
-    // override def toString : String = "Filler(" ++ name ++ ")"
+  //   override def hashCode : Int =
+  //     41 * ( 41 + nook.hashCode )
 
-    trait BoundaryExpr extends Expression {
+  //   // override def toString : String = "Filler(" ++ name ++ ")"
 
-      def name = bdryIdent.expand
+  //   trait BoundaryExpr extends Expression {
 
-      def interior = thisFiller
+  //     def name = bdryIdent.expand
 
-      def ncell =
-        for {
-          interiorNCell <- interior.ncell
-          boundaryNCell <- attempt(
-            fromOption(
-              interiorNCell.seek(bdryAddress), 
-              "Internal Error: could not find boundary"
-            )
-          )
-        } yield boundaryNCell
+  //     def interior = thisFiller
 
-      def isThin = nook.isThinBoundary
+  //     def ncell =
+  //       for {
+  //         interiorNCell <- interior.ncell
+  //         boundaryNCell <- attempt(
+  //           fromOption(
+  //             interiorNCell.seek(bdryAddress), 
+  //             "Internal Error: could not find boundary"
+  //           )
+  //         )
+  //       } yield boundaryNCell
 
-      def canEqual(other : Any) : Boolean =
-        other.isInstanceOf[Filler#BoundaryExpr]
+  //     def isThin = nook.isThinBoundary
 
-    }
+  //     def canEqual(other : Any) : Boolean =
+  //       other.isInstanceOf[Filler#BoundaryExpr]
 
-    object Boundary extends BoundaryExpr {
+  //   }
 
-      override def equals(other : Any) : Boolean =
-        other match {
-          case that : Filler#BoundaryExpr =>
-            (that canEqual this) && (that.interior == this.interior)
-          case _ => false
-        }
+  //   object Boundary extends BoundaryExpr {
 
-      override def hashCode : Int =
-        41 * ( 41 + interior.hashCode )
+  //     override def equals(other : Any) : Boolean =
+  //       other match {
+  //         case that : Filler#BoundaryExpr =>
+  //           (that canEqual this) && (that.interior == this.interior)
+  //         case _ => false
+  //       }
 
-      // override def toString = "Boundary(" ++ name ++ ")"
-    }
-  }
+  //     override def hashCode : Int =
+  //       41 * ( 41 + interior.hashCode )
 
-  case class Reference(val key : EnvironmentKey) extends Expression {
+  //     // override def toString = "Boundary(" ++ name ++ ")"
+  //   }
+  // }
 
-    def name = 
-      for {
-        expr <- lookup(key)
-        exprName <- expr.name
-      } yield exprName
+  // case class Reference(val key : EnvironmentKey) extends Expression {
 
-    def ncell = 
-      for {
-        expr <- lookup(key)
-        exprNCell <- expr.ncell
-      } yield exprNCell
+  //   def name = 
+  //     for {
+  //       expr <- lookup(key)
+  //       exprName <- expr.name
+  //     } yield exprName
 
-    def isThin = 
-      for {
-        expr <- lookup(key)
-        exprIsThin <- expr.isThin
-      } yield exprIsThin
+  //   def ncell = 
+  //     for {
+  //       expr <- lookup(key)
+  //       exprNCell <- expr.ncell
+  //     } yield exprNCell
 
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Reference]
+  //   def isThin = 
+  //     for {
+  //       expr <- lookup(key)
+  //       exprIsThin <- expr.isThin
+  //     } yield exprIsThin
 
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Reference =>
-          (that canEqual this) &&
-          (that.key == this.key)
-        case _ => false
-      }
+  //   def canEqual(other : Any) : Boolean =
+  //     other.isInstanceOf[Reference]
 
-    override def hashCode : Int =
-      41 * ( 41 + this.key.hashCode)
+  //   override def equals(other : Any) : Boolean =
+  //     other match {
+  //       case that : Reference =>
+  //         (that canEqual this) &&
+  //         (that.key == this.key)
+  //       case _ => false
+  //     }
 
-    override def toString : String =
-      "Ref(" ++ key.toString ++ ")"
+  //   override def hashCode : Int =
+  //     41 * ( 41 + this.key.hashCode)
 
-  }
+  //   override def toString : String =
+  //     "Ref(" ++ key.toString ++ ")"
+
+  // }
 
 }

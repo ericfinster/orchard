@@ -13,12 +13,18 @@ object ErrorM {
 
   type Error[+A] = Either[String, A] 
 
-  def success[A](a : A) : Error[A] = Right(a)
+  def succeed[A](a : A) : Error[A] = Right(a)
   def fail[A](msg : String) : Error[A] = Left(msg)
+
+  def branchOn[A, B](e : Error[A])(succeed : A => B, failure : B) : B = 
+    e match {
+      case Left(_) => failure
+      case Right(a) => succeed(a)
+    }
 
   def sequence[A](errList : List[Error[A]]) : Error[List[A]] = 
     errList match {
-      case Nil => success(Nil)
+      case Nil => succeed(Nil)
       case e :: es =>
         for {
           f <- e
@@ -26,24 +32,24 @@ object ErrorM {
         } yield (f :: fs)
     }
 
-  def point[A](a : A) : Error[A] = success(a)
+  def point[A](a : A) : Error[A] = succeed(a)
 
   def ensure(prop : Boolean, msg : String) : Error[Unit] = 
-    if (prop) success(()) else fail(msg)
+    if (prop) succeed(()) else fail(msg)
 
   def ensureNot(prop : Boolean, msg : String) : Error[Unit] = 
     ensure(! prop, msg)
 
   def fromOption[A](opt : Option[A], failString : String) : Error[A] =
     opt match {
-      case Some(a) => success(a)
+      case Some(a) => succeed(a)
       case None => fail(failString)
     }
 
   implicit class ErrorOps[A](e : Error[A]) {
 
     def isSuccess : Boolean = e.isRight
-    def isFail : Boolean = e.isLeft
+    def isFailure : Boolean = e.isLeft
 
     def get : A = 
       e match {
@@ -51,9 +57,15 @@ object ErrorM {
         case Left(_) => throw new Exception("Get failed on Error")
       }
 
+    def getOrElse(default : A) =
+      e match {
+        case Right(a) => a
+        case Left(_) => default
+      }
+
     def map[B](f : A => B) : Error[B] = 
       e match {
-        case Right(a) => success(f(a))
+        case Right(a) => succeed(f(a))
         case Left(msg) => fail[B](msg)
       }
 
@@ -71,7 +83,7 @@ object ErrorM {
 
     def filter(p : A => Boolean) : Error[A] = 
       e match {
-        case Right(a) => if (p(a)) success(a) else fail("Filter failed")
+        case Right(a) => if (p(a)) succeed(a) else fail("Filter failed")
         case Left(msg) => fail(msg)
       }
 
@@ -80,14 +92,14 @@ object ErrorM {
   implicit def optToError[A](opt : Option[A]) : Error[A] = 
     opt match {
       case None => fail("Option was none.")
-      case Some(a) => success(a)
+      case Some(a) => succeed(a)
     }
 
   implicit def errorIsReadable[A, P](implicit aReader : JsonReadable[A, P]) : JsonReadable[Error[A], P] =
     new JsonReadable[Error[A], P] {
       def read(x : P, reader : JsonReader[P]) : Error[A] = {
         reader.readString(reader.readObjectField(x, "type")) match {
-          case "success" => Right(aReader.read(reader.readObjectField(x, "value"), reader))
+          case "succeed" => Right(aReader.read(reader.readObjectField(x, "value"), reader))
           case "failure" => Left(reader.readString(reader.readObjectField(x, "value")))
         }
       }
@@ -99,7 +111,7 @@ object ErrorM {
         e match {
           case Right(a) => {
             writer.writeObject(
-              "type" -> writer.writeString("success"),
+              "type" -> writer.writeString("succeed"),
               "value" -> aWriter.write(a, writer)
             )
           }

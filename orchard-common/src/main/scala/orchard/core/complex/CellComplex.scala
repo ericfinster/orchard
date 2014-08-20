@@ -44,7 +44,7 @@ trait CellComplex[A] { thisComplex =>
 
   def seek(addr : CellAddress) : Error[CellType] = 
     addr match {
-      case Immediate => success(topCell)
+      case Immediate => succeed(topCell)
       case Target(prefix) => 
         for { 
           pref <- seek(prefix) 

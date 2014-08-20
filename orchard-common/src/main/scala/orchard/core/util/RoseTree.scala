@@ -84,7 +84,7 @@ object RoseTree {
     def rootElement : Error[A] =
       tree match {
         case Rose(_) => fail("Root element called on a rose.")
-        case Branch(value, _) => success(value)
+        case Branch(value, _) => succeed(value)
       }
 
 
@@ -159,7 +159,7 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
   def zipOnce : Error[RoseZipper[A, B]] =
     context match {
       case RoseContext(value, left, right) :: cs => 
-        success(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
+        succeed(RoseZipper(Branch(value, left ++ List(focus) ++ right), cs))
       case _ => fail("Cannot unzip empty context.")
     }
 
@@ -198,14 +198,14 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
         case Branch(value, branches) => {
           if (i > branches.length - 1) None else {
             val (left, rightPlus) = branches.splitAt(i)
-            success(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
+            succeed(RoseZipper(rightPlus.head, RoseContext(value, left, rightPlus.tail) :: context))
           }
         }
       }
 
   def seek(addr : List[Int]) : Error[RoseZipper[A, B]] =
       addr match {
-        case Nil => success(this)
+        case Nil => succeed(this)
         case i :: is => 
           for {
             next <- visitBranch(i)
@@ -215,9 +215,9 @@ case class RoseZipper[A, B](val focus : RoseTree[A, B],
 
   def find(branchProp : A => Boolean, roseProp : B => Boolean) : Error[RoseZipper[A, B]] = 
     focus match {
-      case Rose(value) => if (roseProp(value)) success(this) else fail("Find failed.")
+      case Rose(value) => if (roseProp(value)) succeed(this) else fail("Find failed.")
       case Branch(value, branches) => {
-        if (branchProp(value)) success(this) else {
+        if (branchProp(value)) succeed(this) else {
           // Ummm ... got a better way?
           var i : Int = 0
 

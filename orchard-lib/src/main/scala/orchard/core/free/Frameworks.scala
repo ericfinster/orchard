@@ -15,7 +15,7 @@ import scalaz._
 import scalaz.std.vector._
 import scalaz.syntax.traverse._
 
-import ErrorM.{success => succeedE, fail => failE, _}
+import ErrorM.{succeed => succeedE, fail => failE, _}
 import MonadUtils._
 
 trait Frameworks { thisChecker : TypeChecker =>

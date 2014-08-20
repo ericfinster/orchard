@@ -70,7 +70,7 @@ trait CardinalComplex[A] { thisComplex : MutableSkeletalComplex[Polarity[A]] =>
 
 object CardinalComplex {
   def defaultCardinal[A](item : A) : NCell[Polarity[A]] = 
-    Object(Neutral(item)).glob(Positive, Negative)
+    Object(Neutral(item)).glob(Negative, Positive)
 
   def neutralize[D <: Nat, A](cell : Cell[D, A]) : Cell[D, Polarity[A]] =
     cell map (value => Neutral(value))

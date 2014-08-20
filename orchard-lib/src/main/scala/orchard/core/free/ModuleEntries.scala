@@ -7,7 +7,7 @@
 
 package orchard.core.free
 
-import orchard.core.util.ErrorM.{success => succeedE, fail => failE, _}
+import orchard.core.util.ErrorM.{succeed => succeedE, fail => failE, _}
 
 trait ModuleEntries { thisChecker : TypeChecker =>
 

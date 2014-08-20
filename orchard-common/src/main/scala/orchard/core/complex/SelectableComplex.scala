@@ -53,7 +53,7 @@ trait SelectableComplex[A] extends CellComplex[A] {
       } yield select(from)
 
     } else {
-      success(select(from))
+      succeed(select(from))
     }
   }
 
@@ -108,7 +108,7 @@ trait SelectableComplex[A] extends CellComplex[A] {
     deselectAll
 
     desc.base match {
-      case None => success(())
+      case None => succeed(())
       case Some(bAddr) => 
         for {
           newBase <- seek(bAddr)

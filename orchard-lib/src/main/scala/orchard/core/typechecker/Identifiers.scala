@@ -17,6 +17,59 @@ import scalaz.syntax.traverse._
 
 trait Identifiers { thisChecker : TypeChecker =>
 
+  import CheckerErrorSyntax._
+
+  //============================================================================================
+  // QUALIFIED NAMES AND IDENTIFIERS
+  //
+
+  sealed trait QualifiedName 
+  case class LocalName(name : String) extends QualifiedName { override def toString = name }
+  case class ScopedName(scope : String, name : QualifiedName) extends QualifiedName {
+    override def toString = scope ++ "." ++ name.toString
+  }
+
+  object QualifiedName {
+
+    def apply(pref : Vector[String], local : String) : QualifiedName = 
+      if (pref.length <= 0) {
+        LocalName(local)
+      } else {
+        ScopedName(pref.head, QualifiedName(pref.tail, local))
+      }
+
+  }
+
+  implicit class QualifiedNameOps(name : QualifiedName) {
+
+    def localName : String = 
+      name match {
+        case LocalName(n) => n
+        case ScopedName(_, n) => n.localName
+      }
+
+    def mapLocal(f : String => String) : QualifiedName =
+      name match {
+        case LocalName(n) => LocalName(f(n))
+        case ScopedName(s, n) => ScopedName(s, n mapLocal f)
+      }
+
+  }
+
+  sealed trait QualifiedIdentifier
+  case class LocalIdent(ident : Identifier) extends QualifiedIdentifier
+  case class ScopedIdent(scope : String, ident : QualifiedIdentifier) extends QualifiedIdentifier
+
+  implicit class QualifiedIdentOps(qid : QualifiedIdentifier) {
+
+    def localIdent : Identifier = 
+      qid match {
+        case LocalIdent(ident) => ident
+        case ScopedIdent(_, q) => q.localIdent
+      }
+
+  }
+
   //============================================================================================
   // IDENTIFIERS
   //
@@ -58,8 +111,7 @@ trait Identifiers { thisChecker : TypeChecker =>
     def expand : Checker[String] = 
       for {
         expr <- lookup(key)
-        exprName <- expr.name
-      } yield exprName
+      } yield expr.name
 
     override def toString : String = "Ref(" ++ key.toString ++ ")"
 
@@ -105,6 +157,7 @@ trait Identifiers { thisChecker : TypeChecker =>
     def apply(input : String) = parseAll(cleanIdentifierString, input)
 
   }
+
 
   // trait IdentifierModule {
 

@@ -18,7 +18,7 @@ trait Examples { thisChecker : TypeChecker =>
       shape <- shapeOf(x.expression)
       asEntry = shape map (Full(_))
       target <- parameter(Identifier(tgtName), asEntry.glob(Empty, Empty).target, false)
-      glob <- parameter(Identifier(globName), asEntry.glob(Full(target), Empty), false)
+      glob <- parameter(Identifier(globName), asEntry.glob(Empty, Full(target)), false)
     } yield glob
 
   def nGlob(top : String, faces : (String, String)*) : FreeM[Parameter] = 

@@ -13,7 +13,7 @@ import Kleisli._
 import orchard.core.cell._
 import orchard.core.util._
 import orchard.core.complex._
-import ErrorM.{success => errorSuccess, fail => errorFail, _}
+import ErrorM.{succeed => errorSuccess, fail => errorFail, _}
 import MonadUtils._
 
 trait TypeChecker 

@@ -74,10 +74,10 @@ object Cell {
 
   implicit class CellOps[D <: Nat, A](cell : Cell[D, A]) {
 
-    def glob[B >: A](tgtLbl : B, globLbl : B) : Cell[S[D], B] =
+    def glob[B >: A](globLbl: B, tgtLbl : B) : Cell[S[D], B] =
       CompositeCell[S[D], B](globLbl, cell.corolla, tgtLbl)
 
-    def drop[B >: A](globLbl : B, dropLbl : B) : Cell[S[S[D]], B] =
+    def drop[B >: A](dropLbl : B, globLbl : B) : Cell[S[S[D]], B] =
       CompositeCell[S[S[D]], B](dropLbl, LeafClass[S[D], B](cell), globLbl)
 
     def map[B](f : A => B) : Cell[D, B] = cell.regenerateFrom(CellRegenerator.mapRegenerator(f))

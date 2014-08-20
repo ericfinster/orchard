@@ -11,7 +11,7 @@ import scalaz._
 import Kleisli._
 
 import orchard.core.util._
-import ErrorM.{success => errorSuccess, fail => errorFail, _}
+import ErrorM.{succeed => errorSuccess, fail => errorFail, _}
 import MonadUtils._
 
 trait Scoped { thisChecker : TypeChecker =>

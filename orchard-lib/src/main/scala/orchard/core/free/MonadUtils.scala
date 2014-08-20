@@ -7,6 +7,8 @@
 
 package orchard.core.free
 
+import scala.language.higherKinds
+
 import scalaz._
 
 import orchard.core.util._
@@ -16,7 +18,7 @@ object MonadUtils {
 
   implicit val errorIsMonad : Monad[Error] =
     new Monad[Error] {
-      def point[A](a : => A) : Error[A] = success(a)
+      def point[A](a : => A) : Error[A] = succeed(a)
       def bind[A, B](fa : Error[A])(f : A => Error[B]) : Error[B] = 
         fa match {
           case Right(a) => f(a)

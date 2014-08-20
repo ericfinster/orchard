@@ -13,33 +13,32 @@ import orchard.core.complex._
 
 import scalaz._
 import scalaz.std.vector._
+import scalaz.std.option._
 import scalaz.syntax.traverse._
 
-import ErrorM.{success => succeedE, fail => failE, _}
+import ErrorM.{succeed => succeedE, fail => failE, _}
 import MonadUtils._
 
 trait Frameworks { thisChecker : TypeChecker =>
 
-  trait ExpressionContainer[A] {
+  import CheckerErrorSyntax._
+
+  trait CellExpressionContainer[A] {
 
     def empty : A
 
-    def expression(a : A) : Error[Expression]
+    def expression(a : A) : Error[CellExpression]
 
     def isEmpty(a : A) : Boolean = a == empty
-    def isThin(a : A) : Checker[Boolean] = 
-      for {
-        expr <- attempt(expression(a))
-        exprIsThin <- expr.isThin
-      } yield exprIsThin
+    def isThin(a : A) : Boolean 
 
   }
 
-  object ExpressionContainer {
+  object CellExpressionContainer {
 
-    implicit class ContainerOps[A : ExpressionContainer](container : A) {
+    implicit class ContainerOps[A : CellExpressionContainer](container : A) {
 
-      val ev = implicitly[ExpressionContainer[A]]
+      val ev = implicitly[CellExpressionContainer[A]]
 
       def isEmpty = ev.isEmpty(container)
       def isThin = ev.isThin(container)
@@ -49,14 +48,14 @@ trait Frameworks { thisChecker : TypeChecker =>
 
   }
 
-  abstract class AbstractFramework[A : ExpressionContainer](seed : NCell[A]) extends AbstractComplex[A](seed) {
+  abstract class AbstractFramework[A : CellExpressionContainer](seed : NCell[A]) extends AbstractComplex[A](seed) {
 
     type FrameworkType <: AbstractFramework[A]
     type CellType <: AbstractFrameworkCell
 
-    import ExpressionContainer._
+    import CellExpressionContainer._
 
-    def emptyItem : A = implicitly[ExpressionContainer[A]].empty
+    def emptyItem : A = implicitly[CellExpressionContainer[A]].empty
 
     // This should be better typed to allow extraction to other framework types
     // In particular, worksheets should extract to frameworks ....
@@ -68,7 +67,7 @@ trait Frameworks { thisChecker : TypeChecker =>
 
     trait AbstractFrameworkCell extends AbstractComplexCell { thisCell : CellType =>
 
-      def isThin : Checker[Boolean] = item.isThin
+      def isThin : Boolean = item.isThin
 
       def isEmpty : Boolean = item.isEmpty
       def isFull : Boolean = ! isEmpty
@@ -105,20 +104,17 @@ trait Frameworks { thisChecker : TypeChecker =>
 
       // Okay, I'm pretty sure this is wildly inefficient and could be done much faster. Please
       // have a look at it again before deleting this comment. :)
-      def isExposedNook : Checker[Boolean] = {
-        if (isOutNook) succeed(true) else {
+      def isExposedNook : Boolean = {
+        if (isOutNook) true else {
           if (isInNook) {
 
             // In order to be efficient and be able to cancel the operation, I'd like
             // to extend the checker monad here with an option.  Let's see if that works.
 
-            type Cancellable[A] = OptionT[Checker, A]
+            type Cancellable[A] = Option[A]
 
-            def stopOnFalse(cm : Checker[Boolean]) : Cancellable[Unit] = 
-              OptionT[Checker, Unit](cm map {
-                case true => Some(())
-                case false => None
-              })
+            def stopOnFalse(cond : Boolean) : Cancellable[Unit] = 
+              if (cond) Some(()) else None
 
             val framework = extract(thisCell)
             val frameworkTgt = framework.topCell.target.get
@@ -156,7 +152,7 @@ trait Frameworks { thisChecker : TypeChecker =>
             val descendantCheck : Cancellable[Unit] = 
               emptyPtr.focus match {
                 case Branch(_, branches) => checkBranchList(branches)
-                case _ => stopOnFalse(fail("Internal error: empty pointer is not a branch"))
+                case _ => stopOnFalse(false) //fail("Internal error: empty pointer is not a branch"))
               }
 
             def checkFromPointer(ptr : RoseZipper[framework.CellType, Int]) : Cancellable[Unit] = {
@@ -186,7 +182,7 @@ trait Frameworks { thisChecker : TypeChecker =>
                   } yield ()
 
                 }
-                case Nil => stopOnFalse(succeed(true))
+                case Nil => stopOnFalse(true)
               }
             }
 
@@ -199,7 +195,7 @@ trait Frameworks { thisChecker : TypeChecker =>
 
             exposedNookTest.isDefined
 
-          } else { succeed(false) }
+          } else { false }
         }
       }
 
@@ -224,13 +220,9 @@ trait Frameworks { thisChecker : TypeChecker =>
       // The following couple methods should only be called on exposed nooks
       //
 
-      def isThinBoundary : Checker[Boolean] = {
+      def isThinBoundary : Boolean = {
         if (isOutNook) {
-          for {
-            sourceResults <- (sourceVector map (_.isThin)).sequence
-          } yield {
-            sourceResults forall (b => b)
-          }
+          sourceVector forall (_.isThin)
         } else {
           target.get.isThin  
         }
@@ -245,10 +237,10 @@ trait Frameworks { thisChecker : TypeChecker =>
       def boundaryAddress : CellAddress =
         boundaryFace.address
 
-      def expression : Error[Expression] = item.expression
+      def expression : Error[CellExpression] = item.expression
 
-      def bindingSkeleton : Error[NCell[Either[CellAddress, Expression]]] = {
-        NCell.sequence[Either[CellAddress, Expression], Error](
+      def bindingSkeleton : Error[NCell[Either[CellAddress, CellExpression]]] = {
+        NCell.sequence[Either[CellAddress, CellExpression], Error](
           skeleton map (cell =>
             if (cell.item.isEmpty)
               succeedE(Left(cell.address))
@@ -269,20 +261,23 @@ trait Frameworks { thisChecker : TypeChecker =>
   sealed trait FrameworkEntry
 
   case object Empty extends FrameworkEntry 
-  case class Full(val expression : Expression) extends FrameworkEntry 
+  case class Full(val expression : CellExpression) extends FrameworkEntry 
 
   object FrameworkEntry {
 
-    implicit val frameworkEntryIsContainer : ExpressionContainer[FrameworkEntry] =
-      new ExpressionContainer[FrameworkEntry] {
+    implicit val frameworkEntryIsContainer : CellExpressionContainer[FrameworkEntry] =
+      new CellExpressionContainer[FrameworkEntry] {
 
         def empty : FrameworkEntry = Empty
 
-        def expression(entry : FrameworkEntry) : Error[Expression] =
+        def expression(entry : FrameworkEntry) : Error[CellExpression] =
           entry match {
             case Empty => failE("Empty container has no expression")
             case Full(expr) => succeedE(expr)
           }
+
+        def isThin(entry : FrameworkEntry) : Boolean = 
+          (expression(entry) map (_.isThin)) getOrElse false
 
       }
 
@@ -308,18 +303,18 @@ trait Frameworks { thisChecker : TypeChecker =>
 
     val framework = new Framework(ncell)
 
-    def isThinBoundary : Checker[Boolean] =
+    def isThinBoundary : Boolean =
       framework.topCell.isThinBoundary
 
-    def withFiller(filler : Filler) : Error[NCell[Expression]] =
-      withFillerAndBoundary(filler, filler.Boundary)
+    // def withFiller(filler : Filler) : Error[NCell[CellExpression]] =
+    //   withFillerAndBoundary(filler, filler.Boundary)
 
-    def withFillerAndBoundary(filler : Expression, boundary : Expression) : Error[NCell[Expression]] = {
+    def withFillerAndBoundary(filler : CellExpression, boundary : CellExpression) : Error[NCell[CellExpression]] = {
       val frameworkCopy = framework.duplicate
       frameworkCopy.topCell.item = Full(filler)
       frameworkCopy.topCell.boundaryFace.item = Full(boundary)
-      val exprErr : NCell[Error[Expression]] = frameworkCopy.topCell.skeleton map (_.expression)
-      NCell.sequence[Expression, Error](exprErr)
+      val exprErr : NCell[Error[CellExpression]] = frameworkCopy.topCell.skeleton map (_.expression)
+      NCell.sequence[CellExpression, Error](exprErr)
     }
 
     def canEqual(other : Any) : Boolean =
@@ -343,7 +338,7 @@ trait Frameworks { thisChecker : TypeChecker =>
 
     val framework = new Framework(ncell)
 
-    def withFillingExpression(expr : Expression) : NCell[Expression] =
+    def withFillingExpression(expr : CellExpression) : NCell[CellExpression] =
       framework.topCell.skeleton map (cell => {
         cell.item match {
           case Empty => expr

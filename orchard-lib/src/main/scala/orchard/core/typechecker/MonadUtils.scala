@@ -7,6 +7,8 @@
 
 package orchard.core.typechecker
 
+import scala.language.higherKinds
+
 import scalaz._
 
 import orchard.core.util._
@@ -16,7 +18,7 @@ object MonadUtils {
 
   implicit val errorIsMonad : Monad[Error] =
     new Monad[Error] {
-      def point[A](a : => A) : Error[A] = success(a)
+      def point[A](a : => A) : Error[A] = succeed(a)
       def bind[A, B](fa : Error[A])(f : A => Error[B]) : Error[B] = 
         fa match {
           case Right(a) => f(a)
@@ -24,6 +26,13 @@ object MonadUtils {
         }
     }
 
+  abstract class ErrorLifts[F[_[_], _]](implicit ev : MonadTrans[F]) {
+
+    def attempt[A](e : Error[A]) : F[Error, A] = ev.liftM(e)
+    def succeed[A](a : A) : F[Error, A] = ev(errorIsMonad).point(a)
+    def fail[A](msg : String) : F[Error, A] = attempt(Left(msg))
+
+  }
 
   implicit def roseTreeTraverse[N] : Traverse[({ type L[M] = RoseTree[M, N] })#L] =
     new Traverse[({ type L[M] = RoseTree[M, N] })#L] {
