@@ -28,7 +28,7 @@ trait SliceOver[I <: AnyRef] {
 
   }
 
-  trait Sigma[+E <: IndexedType, J <: I] {
+  trait Sigma[E <: IndexedType, J <: I] {
 
     type IndexType = J
 
@@ -218,8 +218,6 @@ trait SliceTest {
   type K = Sigma[M[Term], I]
 
   implicit val mIsMonad : IMonad[M]
-
-  // Where is the map M[I] -> I???
 
   object OverK extends SliceOver[K] {
 
