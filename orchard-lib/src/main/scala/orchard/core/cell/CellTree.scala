@@ -23,13 +23,13 @@ case class SeedClass[D <: Nat, +A](obj : ObjectCell[D, A])(implicit val isZero :
 case class LeafClass[D <: Nat, +A](shape : Cell[D#Pred, A])(implicit val hasPred : HasPred[D]) extends CellTree[D, A]
 case class GraftClass[D <: Nat, +A](cell : Cell[D, A], branches : Vector[CellTree[D, A]])(implicit val hasPred : HasPred[D]) extends CellTree[D, A] {
 
-  // if (cell.srcTree.cells != branches map (_.output)) {
-  //   throw new IllegalArgumentException("\nCells are not compatible:\n" ++ 
-  //     cell.srcTree.cells.toString ++ 
-  //     "\n" ++ branches.map(t => t.output).toString ++ "\n")
-  // }
+  if (cell.srcTree.cells != (branches map (_.output))) {
+    throw new IllegalArgumentException("\nCells are not compatible:\n" ++ 
+      cell.srcTree.cells.toString ++ 
+      "\n" ++ branches.map(t => t.output).toString ++ "\n")
+  }
 
-  require(cell.srcTree.cells == (branches map (_.output)))
+  // require(cell.srcTree.cells == (branches map (_.output)))
 
 }
 

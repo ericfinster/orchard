@@ -23,39 +23,19 @@ trait Frameworks { thisChecker : TypeChecker =>
 
   import CheckerErrorSyntax._
 
-  trait CellExpressionContainer[A] {
+  trait FrameworkInhabitant {
 
-    def empty : A
-
-    def expression(a : A) : Error[CellExpression]
-
-    def isEmpty(a : A) : Boolean = a == empty
-    def isThin(a : A) : Boolean 
+    def isEmpty : Boolean
+    def isThin : Boolean
 
   }
 
-  object CellExpressionContainer {
-
-    implicit class ContainerOps[A : CellExpressionContainer](container : A) {
-
-      val ev = implicitly[CellExpressionContainer[A]]
-
-      def isEmpty = ev.isEmpty(container)
-      def isThin = ev.isThin(container)
-      def expression = ev.expression(container)
-
-    }
-
-  }
-
-  abstract class AbstractFramework[A : CellExpressionContainer](seed : NCell[A]) extends AbstractComplex[A](seed) {
+  abstract class AbstractFramework[A <: FrameworkInhabitant](seed : NCell[A]) extends AbstractComplex[A](seed) {
 
     type FrameworkType <: AbstractFramework[A]
     type CellType <: AbstractFrameworkCell
 
-    import CellExpressionContainer._
-
-    def emptyItem : A = implicitly[CellExpressionContainer[A]].empty
+    def emptyItem : A 
 
     // This should be better typed to allow extraction to other framework types
     // In particular, worksheets should extract to frameworks ....
@@ -237,23 +217,6 @@ trait Frameworks { thisChecker : TypeChecker =>
       def boundaryAddress : CellAddress =
         boundaryFace.address
 
-      def expression : Error[CellExpression] = item.expression
-
-      def bindingSkeleton : Error[NCell[Either[CellAddress, CellExpression]]] = {
-        // NCell.sequence[Either[CellAddress, CellExpression], Error](
-        //   skeleton map (cell =>
-        //     if (cell.item.isEmpty)
-        //       succeedE(Left(cell.address))
-        //     else
-        //       for {
-        //         expr <- cell.item.expression
-        //       } yield Right(expr)
-        //   )
-        // )
-
-        ???
-
-      }
     }
   }
 
@@ -261,28 +224,19 @@ trait Frameworks { thisChecker : TypeChecker =>
   // A SIMPLE FRAMEWORK IMPLEMENTATION
   //
 
-  sealed trait FrameworkEntry
+  sealed trait FrameworkEntry extends FrameworkInhabitant
 
-  case object Empty extends FrameworkEntry
-  case class Full(val expression : CellExpression) extends FrameworkEntry 
+  case object Empty extends FrameworkEntry {
 
-  object FrameworkEntry {
+    def isEmpty = true
+    def isThin = false
 
-    implicit val frameworkEntryIsContainer : CellExpressionContainer[FrameworkEntry] =
-      new CellExpressionContainer[FrameworkEntry] {
+  }
 
-        def empty : FrameworkEntry = Empty
+  case class Full(val expression : CellExpression) extends FrameworkEntry {
 
-        def expression(entry : FrameworkEntry) : Error[CellExpression] =
-          entry match {
-            case Empty => failE("Empty container has no expression")
-            case Full(expr) => succeedE(expr)
-          }
-
-        def isThin(entry : FrameworkEntry) : Boolean = 
-          (expression(entry) map (_.isThin)) getOrElse false
-
-      }
+    def isEmpty = false
+    def isThin = expression.isThin
 
   }
 
@@ -291,6 +245,8 @@ trait Frameworks { thisChecker : TypeChecker =>
     type CellType = FrameworkCell
     type FrameworkType = Framework
 
+    def emptyItem = Empty
+
     def newCell(item : FrameworkEntry) = new FrameworkCell(item)
     def extract(cell : FrameworkCell) = new Framework(cell.skeleton map (_.item))
 
@@ -298,15 +254,58 @@ trait Frameworks { thisChecker : TypeChecker =>
 
   }
 
+  sealed trait ExprReference extends FrameworkInhabitant
+
+  case object EmptyReference extends ExprReference {
+
+    def isEmpty = true
+    def isThin = false
+
+  }
+
+  case class Reference(val expr : CellExpression) extends ExprReference {
+
+    def isEmpty = false
+    def isThin = expr.isThin
+
+    override def equals(other : Any) : Boolean =
+      other match {
+        case that : Reference =>
+          (that.expr.environmentIndex == this.expr.environmentIndex)
+        case _ => false
+      }
+
+    override def hashCode : Int =
+      41 * ( 41 + expr.environmentIndex )
+
+  }
+
+  class ReferenceFramework(seed : NCell[ExprReference]) extends AbstractFramework[ExprReference](seed) {
+
+    type CellType = ReferenceFrameworkCell
+    type FrameworkType = ReferenceFramework
+
+    def emptyItem = EmptyReference
+
+    def newCell(item : ExprReference) = 
+      new ReferenceFrameworkCell(item)
+
+    def extract(cell : ReferenceFrameworkCell) = 
+      new ReferenceFramework(cell.skeleton map (_.item))
+
+    class ReferenceFrameworkCell(var item : ExprReference) extends AbstractFrameworkCell
+
+  }
+
   //============================================================================================
   // SHELLS AND NOOKS
   //
 
-  class Nook(val ncell : NCell[FrameworkEntry]) {
+  class Nook(val ncell : NCell[ExprReference]) {
 
-    val framework = new Framework(ncell)
+    val framework = new ReferenceFramework(ncell)
 
-    assert(framework.isExposedNook)
+    require(framework.isExposedNook)
 
     def isThinBoundary : Boolean =
       framework.topCell.isThinBoundary
@@ -314,89 +313,60 @@ trait Frameworks { thisChecker : TypeChecker =>
     def withFiller(filler : Filler) : NCell[CellExpression] =
       withFillerAndBoundary(filler, filler.Boundary)
 
-    def withBoundary(bdry : Filler#BoundaryExpr) : NCell[CellExpression] = 
+    def withBoundary(bdry : Filler#BoundaryExpr) : NCell[CellExpression] =
       framework.topCell.boundaryFace.skeleton map (cell => 
         cell.item match {
-          case Empty => bdry
-          case Full(e) => e
+          case EmptyReference => bdry
+          case Reference(e) => e
         }
       )
 
     def withFillerAndBoundary(filler : CellExpression, boundary : CellExpression) : NCell[CellExpression] =
       (ncell match {
         case Composite(_, srcTree, tgtValue, ev) =>
-          Composite(Full(filler), srcTree, tgtValue)
+          Composite(Reference(filler), srcTree, tgtValue)
       }) map {
-        case Empty => boundary
-        case Full(e) => e
+        case EmptyReference => boundary
+        case Reference(e) => e
       }
-
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Nook]
-
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Nook =>
-          (that canEqual this) && (that.ncell == this.ncell)
-        case _ => false
-      }
-
-    override def hashCode : Int =
-      41 * (41 + ncell.hashCode)
-
-    override def toString = ncell.toString
 
   }
 
   object Nook {
 
-    def apply(ncell : NCell[FrameworkEntry]) : Error[Nook] = 
+    def apply(ncell : NCell[ExprReference]) : Error[Nook] =
       try {
         val nook = new Nook(ncell)
         succeedE(nook)
       } catch {
         // What's the right thing to catch here????
-        case e : Exception => failE("Framework is not an exposed nook")
+        case e : IllegalArgumentException => failE("Framework is not an exposed nook")
       }
 
   }
 
-  class Shell(val ncell : NCell[FrameworkEntry]) {
+  class Shell(val ncell : NCell[ExprReference]) {
 
-    val framework = new Framework(ncell)
+    val framework = new ReferenceFramework(ncell)
 
-    assert(framework.isShell)
+    require(framework.isShell)
 
-    def withFillingExpression(expr : CellExpression) : NCell[CellExpression] =
+    def withFillingExpression(expr : CellExpression) : NCell[CellExpression] = 
       ncell map {
-        case Empty => expr
-        case Full(e) => e
+        case EmptyReference => expr
+        case Reference(e) => e
       }
-
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Shell]
-
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Shell =>
-          (that canEqual this) && (that.ncell == this.ncell)
-        case _ => false
-      }
-
-    override def hashCode : Int =
-      41 * (41 + ncell.hashCode)
 
   }
 
   object Shell {
 
-    def apply(ncell : NCell[FrameworkEntry]) : Error[Shell] = 
+    def apply(ncell : NCell[ExprReference]) : Error[Shell] =
       try {
         val shell = new Shell(ncell)
         succeedE(shell)
       } catch {
-        // What's the right thing to catch here????
-        case e : Exception => failE("Framework is not a shell")
+        case e : IllegalArgumentException => failE("Framework is not a shell")
       }
 
   }

@@ -19,8 +19,10 @@ trait TypedExpressions { thisChecker : TypeChecker =>
 
   sealed trait TypedExpression {
 
-    def name : String = qualifiedName.localName
+    def environmentIndex : Int
     def qualifiedName : QualifiedName
+
+    def name : String = qualifiedName.localName
 
   }
 
@@ -62,7 +64,6 @@ trait TypedExpressions { thisChecker : TypeChecker =>
           case v : Variable => point(indent ++ v.toString)
           case f : Filler => point(indent ++ f.toString)
           case b : Filler#BoundaryExpr => point(indent ++ b.toString)
-          case r : Reference => point(indent ++ r.toString)
         }
 
       } yield result
@@ -71,53 +72,53 @@ trait TypedExpressions { thisChecker : TypeChecker =>
 
 
   case class ModuleExpression(
+    val environmentIndex : Int, 
     val qualifiedName : QualifiedName, 
-    val contents : Vector[TypedExpression],
-    val referenceCutoff : Int     //  Any reference in the module *strictly less* is external
-  ) extends TypedExpression
+    val moduleEnvironment : Environment
+  ) extends TypedExpression {
 
-  sealed trait CellExpression extends TypedExpression { def isThin : Boolean }
-  sealed trait ConcreteCellExpression extends CellExpression { def ncell : NCell[CellExpression] }
+    def contents : Vector[TypedExpression] =
+      moduleEnvironment.expressions.drop(environmentIndex)
 
-  case class Variable(
+  }
+
+  sealed trait CellExpression extends TypedExpression { 
+
+    def isThin : Boolean 
+    def ident : Identifier
+
+    def ncell : NCell[CellExpression]
+
+  }
+
+  class Variable(
+    val environmentIndex : Int,
     val qualifiedName : QualifiedName, 
     val ident : Identifier, 
     val shell : Shell, 
     val isThin : Boolean
-  ) extends ConcreteCellExpression {
+  ) extends CellExpression {
 
     def ncell = shell.withFillingExpression(this)
 
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Variable]
-
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Variable =>
-          (that canEqual this) &&
-          (that.shell == this.shell) &&
-          (that.qualifiedName.toString == this.qualifiedName.toString)
-        case _ => false
-      }
-
-    override def hashCode : Int =
-      41 * (
-        41 * (
-          41 + shell.hashCode
-        ) + qualifiedName.toString.hashCode
-      )
-
-     override def toString : String = "Var(" ++ qualifiedName.toString ++ ")"
+    override def toString : String = "Var(" ++ qualifiedName.toString ++ ")"
 
   }
 
-  case class Filler(
+  // Right, so at some point you should switch these two.  All of the important
+  // information applies to the boundary.  The filler is secondary, as a witness
+  // to the definition of the cell
+
+  class Filler(
+    val bdryEnvironmentIndex : Int,
     val bdryQualifiedName : QualifiedName,
     val bdryIdentifier : Identifier, 
     val nook : Nook
-  ) extends ConcreteCellExpression { thisFiller =>
+  ) extends CellExpression { thisFiller =>
 
+    def environmentIndex = bdryEnvironmentIndex + 1
     def qualifiedName = bdryQualifiedName mapLocal ("def-" ++ _)
+
     def ident = Identifier(LiteralToken("def-") :: bdryIdentifier.tokens)
     def isThin = true
     def ncell = nook.withFiller(this)
@@ -125,75 +126,26 @@ trait TypedExpressions { thisChecker : TypeChecker =>
     def bdryAddress : CellAddress =
       nook.framework.topCell.boundaryAddress
 
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Filler]
-
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Filler =>
-          (that canEqual this) && (that.nook == this.nook)
-        case _ => false
-      }
-
-    override def hashCode : Int =
-      41 * ( 41 + nook.hashCode )
-
     override def toString : String = "Filler(" ++ qualifiedName.toString ++ ")"
 
-    trait BoundaryExpr extends ConcreteCellExpression {
+    trait BoundaryExpr extends CellExpression {
 
+      def environmentIndex = bdryEnvironmentIndex
       def qualifiedName = bdryQualifiedName
+
       def ident = bdryIdentifier
       def isThin = nook.isThinBoundary
       def ncell = nook.withBoundary(this)
 
       def interior = thisFiller
 
-      def canEqual(other : Any) : Boolean =
-        other.isInstanceOf[Filler#BoundaryExpr]
-
     }
 
     object Boundary extends BoundaryExpr {
 
-      override def equals(other : Any) : Boolean =
-        other match {
-          case that : Filler#BoundaryExpr =>
-            (that canEqual this) && (that.interior == this.interior)
-          case _ => false
-        }
-
-      override def hashCode : Int =
-        41 * ( 41 + interior.hashCode )
-
       override def toString = "Boundary(" ++ qualifiedName.toString ++ ")"
 
     }
-
-  }
-
-  case class Reference(
-    val qualifiedName : QualifiedName, 
-    val index : Int, 
-    val isThin : Boolean
-  ) extends CellExpression {
-
-    def canEqual(other : Any) : Boolean =
-      other.isInstanceOf[Reference]
-
-    override def equals(other : Any) : Boolean =
-      other match {
-        case that : Reference =>
-          (that canEqual this) &&
-          (that.index == this.index)
-        case _ => false
-      }
-
-    override def hashCode : Int =
-      41 * ( 41 + this.index.hashCode)
-
-    override def toString : String =
-      "Ref(" ++ index.toString ++ " : " ++ qualifiedName.toString ++ ")"
 
   }
 
