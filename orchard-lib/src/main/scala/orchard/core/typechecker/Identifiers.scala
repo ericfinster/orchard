@@ -54,6 +54,14 @@ trait Identifiers { thisChecker : TypeChecker =>
         case ScopedName(s, n) => ScopedName(s, n mapLocal f)
       }
 
+    def withPrefix(pref : Vector[String]) : QualifiedName = {
+      if (pref.length <= 0) {
+        name
+      } else {
+        ScopedName(pref.last, name).withPrefix(pref.init)
+      }
+    }
+
   }
 
   sealed trait QualifiedIdentifier

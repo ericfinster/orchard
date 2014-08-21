@@ -403,10 +403,12 @@ trait CellRegenerator[-A, B] {
 }
 
 object CellRegenerator {
+
   def mapRegenerator[A, B](f : A => B) = 
     new CellRegenerator[A, B] {
       def generateObject[D <: Nat : IsZero](lbl : A) = ObjectCell(f(lbl))
       def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, B], tgtLbl : A) =
           CompositeCell(f(cellLbl), srcs, f(tgtLbl))
     }
+
 }

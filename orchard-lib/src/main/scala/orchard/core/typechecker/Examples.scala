@@ -95,4 +95,27 @@ trait Examples { thisInterpreter : Interpreter =>
 
   // It would be nice to do horizontal composition as well ....
 
+  val prelude : Module =
+    Module("Prelude", Vector(
+
+      identityModule,
+      compositionModule,
+
+      Module("Composition Test", Vector(
+
+        Parameter("a", obj(None), false),
+        Parameter("b", obj(None), false),
+        Parameter("c", obj(None), false),
+        Parameter("s", arrow(None, Some("a"), Some("b")), false),
+        Parameter("t", arrow(None, Some("b"), Some("c")), false),
+
+        Import("Composition Import", "Composition", Object(None), Map(
+          "f" -> "s",
+          "g" -> "t"
+        ))
+
+      ))
+
+    ))
+
 }

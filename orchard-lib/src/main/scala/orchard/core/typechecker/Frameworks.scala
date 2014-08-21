@@ -260,7 +260,7 @@ trait Frameworks { thisChecker : TypeChecker =>
 
   sealed trait FrameworkEntry
 
-  case object Empty extends FrameworkEntry 
+  case object Empty extends FrameworkEntry
   case class Full(val expression : CellExpression) extends FrameworkEntry 
 
   object FrameworkEntry {
@@ -303,19 +303,30 @@ trait Frameworks { thisChecker : TypeChecker =>
 
     val framework = new Framework(ncell)
 
+    assert(framework.isExposedNook)
+
     def isThinBoundary : Boolean =
       framework.topCell.isThinBoundary
 
-    // def withFiller(filler : Filler) : Error[NCell[CellExpression]] =
-    //   withFillerAndBoundary(filler, filler.Boundary)
+    def withFiller(filler : Filler) : NCell[CellExpression] =
+      withFillerAndBoundary(filler, filler.Boundary)
 
-    def withFillerAndBoundary(filler : CellExpression, boundary : CellExpression) : Error[NCell[CellExpression]] = {
-      val frameworkCopy = framework.duplicate
-      frameworkCopy.topCell.item = Full(filler)
-      frameworkCopy.topCell.boundaryFace.item = Full(boundary)
-      val exprErr : NCell[Error[CellExpression]] = frameworkCopy.topCell.skeleton map (_.expression)
-      NCell.sequence[CellExpression, Error](exprErr)
-    }
+    def withBoundary(bdry : Filler#BoundaryExpr) : NCell[CellExpression] = 
+      framework.topCell.boundaryFace.skeleton map (cell => 
+        cell.item match {
+          case Empty => bdry
+          case Full(e) => e
+        }
+      )
+
+    def withFillerAndBoundary(filler : CellExpression, boundary : CellExpression) : NCell[CellExpression] =
+      (ncell match {
+        case Composite(_, srcTree, tgtValue, ev) =>
+          Composite(Full(filler), srcTree, tgtValue)
+      }) map {
+        case Empty => boundary
+        case Full(e) => e
+      }
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Nook]
@@ -334,17 +345,30 @@ trait Frameworks { thisChecker : TypeChecker =>
 
   }
 
+  object Nook {
+
+    def apply(ncell : NCell[FrameworkEntry]) : Error[Nook] = 
+      try {
+        val nook = new Nook(ncell)
+        succeedE(nook)
+      } catch {
+        // What's the right thing to catch here????
+        case e : Exception => failE("Framework is not an exposed nook")
+      }
+
+  }
+
   class Shell(val ncell : NCell[FrameworkEntry]) {
 
     val framework = new Framework(ncell)
 
+    assert(framework.isShell)
+
     def withFillingExpression(expr : CellExpression) : NCell[CellExpression] =
-      framework.topCell.skeleton map (cell => {
-        cell.item match {
-          case Empty => expr
-          case Full(e) => e
-        }
-      })
+      ncell map {
+        case Empty => expr
+        case Full(e) => e
+      }
 
     def canEqual(other : Any) : Boolean =
       other.isInstanceOf[Shell]
@@ -358,6 +382,19 @@ trait Frameworks { thisChecker : TypeChecker =>
 
     override def hashCode : Int =
       41 * (41 + ncell.hashCode)
+
+  }
+
+  object Shell {
+
+    def apply(ncell : NCell[FrameworkEntry]) : Error[Shell] = 
+      try {
+        val shell = new Shell(ncell)
+        succeedE(shell)
+      } catch {
+        // What's the right thing to catch here????
+        case e : Exception => failE("Framework is not a shell")
+      }
 
   }
 

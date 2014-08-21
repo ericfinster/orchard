@@ -18,22 +18,11 @@ import ErrorM._
 import MonadUtils._
 
 trait TypeChecker 
-    extends TypedExpressions
+    extends Bindings
     with Frameworks
-    with Identifiers {
+    with Identifiers 
+    with TypedExpressions {
 
-  // Right, well, I'm not sure what the final environment will
-  // end up being.  But it seems that we need at least some idea
-  // of the current module structure so that we can we can use
-  // qualified naming ....
-
-  case class Environment(
-    val expressions : Vector[TypedExpression],
-    val identifierMap : Map[String, Int],
-    val qualifiedPrefix : Vector[String]
-  )
-
-  // type Environment = Vector[TypedExpression]
   type EnvironmentKey = Int
 
   type Checker[+A] = Kleisli[Error, Environment, A]
@@ -43,8 +32,8 @@ trait TypeChecker
   object CheckerErrorSyntax extends ErrorLifts[CheckerT]
   import CheckerErrorSyntax._
 
-  val CheckerReader = MonadReader[CheckerE, Environment]
-  import CheckerReader._
+  val CheckerMR = MonadReader[CheckerE, Environment]
+  import CheckerMR._
 
   def expressions : Checker[Vector[TypedExpression]] =
     for {
@@ -61,24 +50,27 @@ trait TypeChecker
       env <- ask
     } yield env.qualifiedPrefix
 
-  def lookup(key : EnvironmentKey) : Checker[CellExpression] = ???
-    // for {
-    //   exprVector <- expressionVector
-    //   envLength = exprVector.length
-    //   _ <- attempt(
-    //     ensure(
-    //       (key >= 0) && (key < envLength),
-    //       "Environment key out of range: " ++ key.toString
-    //     )
-    //   )
-    //   entry = env(envLength - key - 1) 
-    //   _ <- attempt(
-    //     ensure(
-    //       entry.isInstanceOf[CellExpression],
-    //       "Internal error: cell references a module"
-    //     )
-    //   )
-    // } yield entry.asInstanceOf[CellExpression]
+  def modulesInScope : Checker[Vector[ModuleExpression]] = 
+    for {
+      exprs <- expressions
+    } yield {
+      (exprs map {
+        case m : ModuleExpression => Some(m)
+        case _ => None
+      }).flatten
+    }
+
+  def parseQualifiedName(str : String) : Checker[QualifiedName] = {
+
+    val components = str.split('.').toVector
+
+    if (components.length <= 0) {
+      fail("Qualified name was empty")
+    } else {
+      succeed(QualifiedName(components.init, components.last))
+    }
+
+  }
 
   def parseIdentString(identString : String) : Checker[RawIdentifier] =
     IdentParser(identString) match {
@@ -87,24 +79,212 @@ trait TypeChecker
         fail("Could not parse identifier string: " ++ identString)
     }
 
-  // def resolveRawIdent(rawIdent : RawIdentifier) : Checker[Identifier] = {
 
-  // }
+  def resolveRawIdent(rawIdent : RawIdentifier) : Checker[Identifier] = {
 
-  //   def processRawIdentifier(scope : Scope, rawIdent : RawIdentifier) : CheckerResult[Identifier] = {
-  //     val idents : List[CheckerResult[IdentifierToken]] =
-  //       rawIdent.tokens map {
-  //         case RawLiteralToken(lit) => CheckerResult(LiteralToken(lit))
-  //         case RawReferenceToken(ref) =>
-  //           for {
-  //             resultRef <- lookupIdentifier(ref, scope)
-  //           } yield ReferenceToken(resultRef)
-  //       }
+    val resolutionList : List[Checker[IdentifierToken]] = 
+      rawIdent.tokens map {
+        case RawLiteralToken(lit) => succeed(LiteralToken(lit))
+        case RawReferenceToken(ref) => 
+          for {
+            env <- ask
+            cellExpr <- resolveCellExpression(ref)
+          } yield {
+            ReferenceToken(
+              env.identifierMap(cellExpr.qualifiedName.toString)
+            )
+          }
+      }
 
-  //     for {
-  //       newIdents <- sequence(idents)
-  //     } yield Identifier(newIdents)
-  //   }
+    import scalaz.std.list._
+
+    for {
+      newIdents <- sequence(resolutionList)
+    } yield Identifier(newIdents)
+
+  }
+
+  def resolveIdentString(identString : String) : Checker[Identifier] = 
+    for {
+      rawIdent <- parseIdentString(identString)
+      ident <- resolveRawIdent(rawIdent)
+    } yield ident
+
+  def resolveName(name : String) : Checker[TypedExpression] =
+    for {
+      env <- ask
+      qn <- parseQualifiedName(name)
+
+      // We start in the current scope and work up ...
+      prefixes = env.qualifiedPrefix.inits.toVector
+      testList = prefixes map (qn.withPrefix(_).toString)
+
+      matchedName <- attempt(
+        fromOption(
+          testList find (env.identifierMap.isDefinedAt(_)),
+          "Name resolution failed for: " ++ name
+        )
+      )
+
+    } yield {
+      env.expressions(env.identifierMap(matchedName))
+    }
+
+  def resolveCellExpression(name : String) : Checker[CellExpression] = 
+    for {
+      expr <- resolveName(name)
+
+      _ <- attempt(
+        ensure(
+          expr.isInstanceOf[CellExpression],
+          "Resolved name " ++ name ++ " was expected to reference a cell"
+        )
+      )
+
+    } yield expr.asInstanceOf[CellExpression]
+
+  def resolveModuleExpression(name : String) : Checker[ModuleExpression] = 
+    for {
+      expr <- resolveName(name)
+
+      _ <- attempt(
+        ensure(
+          expr.isInstanceOf[ModuleExpression],
+          "Resolved name " ++ name ++ " was expected to reference a module"
+        )
+      )
+
+    } yield expr.asInstanceOf[ModuleExpression]
+
+  def lookup(key : EnvironmentKey) : Checker[CellExpression] =
+    for {
+      env <- ask
+
+      _ <- attempt(
+        ensure(
+          env.expressions.isDefinedAt(key),
+          "Environment index out of range: " ++ key.toString
+        )
+      )
+
+      entry = env.expressions(key)
+
+      _ <- attempt(
+        ensure(
+          entry.isInstanceOf[CellExpression],
+          "Internal error: cell references a module"
+        )
+      )
+
+    } yield entry.asInstanceOf[CellExpression]
+
+
+  def resolveNCell(ncell : NCell[Option[String]]) : Checker[NCell[FrameworkEntry]] =  {
+
+    val resolutions = ncell map {
+      case None => succeed(Empty)
+      case Some(ref) =>
+        for {
+          expr <- resolveCellExpression(ref)
+        } yield Full(expr) 
+        // Here you use the expression itself.  But for many purposes, you want
+        // the not the actual cell, but a reference to it.  Just a flag on this method?
+
+    }
+
+    for {
+      // Resolve all of the references ...
+      resolvedNCell <- NCell.sequence[FrameworkEntry, Checker](resolutions)
+    } yield resolvedNCell
+
+  }
+
+  def resolve(cell : CellExpression) : Checker[ConcreteCellExpression] = 
+    cell match {
+      case c : ConcreteCellExpression => point(c)
+      case r : Reference => 
+        for {
+          next <- lookup(r.index)
+          result <- resolve(next)
+        } yield result
+    }
+
+  def convertible(e : CellExpression, f : CellExpression) : Checker[Boolean] = 
+    (e, f) match {
+      // For two references, check if they reference the same thing. If
+      // not, unfold them and recheck
+      case (u : Reference, v : Reference) =>
+        if (u == v) point(true) else
+          for {
+            g <- resolve(u)
+            h <- resolve(v)
+            converts <- convertible(g, h)
+          } yield converts
+
+      // If we have a reference and a concrete cell, resolve the reference ...
+      case (u : Reference, _) =>
+        for {
+          g <- resolve(u)
+          converts <- convertible(g, f)
+        } yield converts
+
+      // and dually.
+      case (_, v : Reference) =>
+        for {
+          h <- resolve(v)
+          converts <- convertible(e, h)
+        } yield converts
+
+      // Compare two variables
+      case (u : Variable, v : Variable) => 
+        if (
+          (u.qualifiedName.toString == v.qualifiedName.toString) &&
+            (u.isThin == v.isThin)
+        ) {
+          for {
+            shellsConvert <- ncellConvertible(
+              u.shell.ncell,
+              v.shell.ncell
+            )
+          } yield shellsConvert
+        } else point(false)
+
+      // Compare to fillers
+      case (u : Filler, v : Filler) => 
+        for {
+          nooksConvert <- ncellConvertible(
+            u.nook.ncell,
+            v.nook.ncell
+          )
+        } yield nooksConvert
+
+      // Compare two boundaries (just compare their interiors)
+      case (u : Filler#BoundaryExpr, v : Filler#BoundaryExpr) =>
+        for {
+          interiorsConvert <- convertible(u.interior, v.interior)
+        } yield interiorsConvert
+
+      case _ => point(false)
+    }
+    
+  def ncellConvertible(e : NCell[FrameworkEntry], f : NCell[FrameworkEntry]) : Checker[Boolean] =
+    e.zip(f) match {
+      case None => point(false)
+      case Some(matchedShape) => {
+
+        val constraints =
+          matchedShape map {
+            case (Full(a), Full(b)) => convertible(a, b)
+            case (Empty, Empty) => point(true)
+            case _ => point(false)
+          }
+
+        for {
+          booleanCell <- NCell.sequence(constraints)
+        } yield booleanCell forall identity
+
+      }
+    }
 
   def check(exprs : Vector[Expression]) : Checker[Vector[TypedExpression]] =
     if (exprs.length <= 0) {
@@ -113,48 +293,158 @@ trait TypeChecker
       for {
         env <- ask
         headExprs <- check(exprs.head)
-        extendedEnvironment = env.copy(expressions = env.expressions ++ headExprs)
-        tailExprs <- scope(extendedEnvironment)(check(exprs.tail))
+        tailExprs <- scope(env.extendWith(headExprs))(check(exprs.tail))
       } yield headExprs ++ tailExprs
     }
 
   def check(expr : Expression) : Checker[Vector[TypedExpression]] =
     expr match {
 
-      // Should process the names and stuff as well.
-      case Module(name, contents) => {
-
-        // The first thing to do is prepare the module environment.  This means appending to
-        // the current qualified setup as well as figuring out where you are going to store
-        // the qualified names ....
-
-        // Okay, the idea is that first you make a new map and environment
-        // with only references and with the names reset.  Then you check
-        // in that new scope ....
-
+      case Module(name, contents) => 
         for {
-          qualPref <- qualifiedPrefix
-          checkedContents <- check(contents)
+          env <- ask
+
+          mods <- modulesInScope
+          _ <- attempt(
+            ensure(  // Er... this doesn't look quite right ...
+              ! (mods exists (_.qualifiedName.localName == name)),
+              "Module name " ++ name ++ " already exists"
+            )
+          )
+
+          qualPrefix = env.qualifiedPrefix :+ name
+          moduleEnv = env.copy(qualifiedPrefix = qualPrefix)
+
+          checkedContents <- scope(moduleEnv)(check(contents))
+
         } yield {
           Vector(
             new ModuleExpression(
-              QualifiedName(qualPref, name),
-              checkedContents
+              QualifiedName(env.qualifiedPrefix, name),
+              checkedContents,
+              env.expressions.length
             )
           )
         }
-      }
 
-      case Parameter(name, shell, isThin) => 
+
+      case Parameter(identString, shell, isThin) => 
         for {
-          rawIdent <- parseIdentString(name)
-        } yield ???
+          env <- ask
 
+          ident <- resolveIdentString(identString)
+          name <- ident.expand
+          qn = QualifiedName(env.qualifiedPrefix, name)
 
-      case Definition(name, nook) => ???
-      case Import(name, moduleName, bindings) => ???
+          resolvedShell <- resolveNCell(shell)
+
+          completeShell <- attempt(
+            Shell(resolvedShell)
+          )
+
+          // Here we do absolutely nothing to verify that the resolved shell
+          // is well typed in the current environment.  This means you could
+          // easily cheat the checker to come up with malformed cells by
+          // using the syntax directly ....
+
+        } yield {
+
+          println("Added parameter: " ++ qn.toString)
+
+          Vector(
+            Variable(qn, ident, completeShell, isThin)
+          )
+        }
+
+      case Definition(identString, nook) =>
+        for {
+          env <- ask
+
+          ident <- resolveIdentString(identString)
+          name <- ident.expand
+          qn = QualifiedName(env.qualifiedPrefix, name)
+
+          resolvedNook <- resolveNCell(nook)
+
+          completeNook <- attempt(
+            Nook(resolvedNook)
+          )
+
+        } yield {
+
+          println("Added definition: " ++ qn.toString)
+
+          val filler = Filler(qn, ident, completeNook)
+          Vector(filler.Boundary, filler)
+
+        }
+
+      case Import(name, moduleName, shell, bindings) => 
+        for {
+          env <- ask
+
+          // Locate the requested module
+          module <- resolveModuleExpression(moduleName)
+
+          // Resolve the shell in which the import will be applied
+          resolvedShell <- resolveNCell(shell)
+          completeShell <- attempt(
+            Shell(resolvedShell)
+          )
+
+        } yield {
+
+          // Now what?  We have these bindings.  What we need to do is check that they
+          // are compatible and create the new shapes.  How does this work?
+
+          // Right now, of course, you have not really exploited this whole reference system,
+          // since when you resolve an n-cell, you actually pick out the typed expressions and
+          // not their references.  What this means is that if you proceed by rewriting all
+          // of the faces recursively, you are going to rewrite the same cell many times over.
+
+          // This is exactly what you want to avoid.  This is what the whole reference system
+          // is *for*.
+
+          // So, roughly, what you are going to do is the following:
+          //
+          //   1)  Pass over the bindings.  Check the compatibility of the bound cell with the
+          //       binding.  This may induce some sub-bindings which you will keep in a list
+          //       of compatibilities left to check
+          //   
+          //   2)  When this pass is complete, you will pass over the cells in the module itself,
+          //       promoting any unbound variables to new parameters and modifying the definition
+          //       cells appropriately as well.
+          // 
+
+          //  How do I check the compatibility of a binding?  Right, well, you simply grab the ncells
+          //  of the referenced entities and zip them.  This checks that they have compatible shape.
+          //  Next you check that these expressions match point wise except for where the target has
+          //  variables, and these become requirements for the bind to complete.
+
+          //  Okay, I think we are going to need a transformed monad to handle the bindings which
+          //  includes the current binding state.  This shouldn't be too bad.
+
+          Vector.empty
+
+        }
 
     }
+
+  def doCheck(expr : Expression) : Unit = 
+    check(expr)(emptyEnvironment) match {
+      case Right(exprs) => {
+        println("\nChecking succeeded!\n")
+        println(TypedExpression.prettyPrint(exprs)(""))
+      }
+      case Left(msg) => {
+        println("Error: " ++ msg)
+      }
+    }
+
+  def dumpEnv : Checker[Unit] = 
+    for {
+      env <- ask
+    } yield println(env.toString)
 
   //============================================================================================
   // RAW SYNTAX
@@ -162,9 +452,50 @@ trait TypeChecker
 
   sealed trait Expression
   case class Module(val name : String, val contents : Vector[Expression]) extends Expression
-  case class Parameter(val name : String, val shell : NCell[Option[String]], val isThin : Boolean) extends Expression
-  case class Definition(val name : String, val nook : NCell[Option[String]]) extends Expression
-  case class Import(val name : String, val moduleName : String, val bindings : Map[String, String]) extends Expression
+  case class Parameter(val identString : String, val shell : NCell[Option[String]], val isThin : Boolean) extends Expression
+  case class Definition(val identString : String, val nook : NCell[Option[String]]) extends Expression
+  case class Import(val name : String, val moduleName : String, val shell : NCell[Option[String]], val bindings : Map[String, String]) extends Expression
+
+  //============================================================================================
+  // ENVIRONMENT DEFINITION
+  //
+
+  case class Environment(
+    val expressions : Vector[TypedExpression],
+    val identifierMap : Map[String, Int],
+    val qualifiedPrefix : Vector[String]
+  ) {
+
+    def extendWith(exprs : Vector[TypedExpression]) = {
+
+      val length = expressions.length
+
+      val newExpressions = expressions ++ exprs
+      val newIdentifierMap = identifierMap ++
+        (exprs.zipWithIndex map {
+          case (e, i) => (e.qualifiedName.toString, i + length)
+        }).toMap
+
+      this.copy(
+        expressions = newExpressions,
+        identifierMap = newIdentifierMap
+      )
+
+    }
+
+    override def toString = {
+      "\n-----------------------\n" ++
+      "Environment " ++ qualifiedPrefix.mkString("(", ".", ")\n\n") ++
+      "Expressions:\n" ++ (expressions map (_.toString)).mkString("", "\n", "\n") ++
+      "\nIdent Map:\n" ++ (identifierMap.toVector map { case (s, i) => s ++ " -> " ++ i.toString }).mkString("", "\n", "\n") ++
+      "-----------------------\n"
+
+    }
+
+  }
+
+  def emptyEnvironment : Environment = 
+    Environment(Vector.empty, Map.empty, Vector.empty)
 
 }
 
