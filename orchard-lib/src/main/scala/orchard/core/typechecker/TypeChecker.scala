@@ -12,6 +12,8 @@ import scala.language.higherKinds
 import scalaz._
 import Kleisli._
 
+import scalaz.syntax.traverse._
+
 import orchard.core.util._
 import orchard.core.cell._
 import ErrorM._
@@ -181,7 +183,7 @@ trait TypeChecker
 
   def resolveNCell(ncell : NCell[Option[String]]) : Checker[NCell[FrameworkEntry]] =  {
 
-    val resolutions = ncell map {
+    val resolutions : NCell[Checker[FrameworkEntry]] = ncell map {
       case None => succeed(Empty)
       case Some(ref) =>
         for {
@@ -189,12 +191,11 @@ trait TypeChecker
         } yield Full(expr) 
         // Here you use the expression itself.  But for many purposes, you want
         // the not the actual cell, but a reference to it.  Just a flag on this method?
-
     }
 
     for {
       // Resolve all of the references ...
-      resolvedNCell <- NCell.sequence[FrameworkEntry, Checker](resolutions)
+      resolvedNCell <- resolutions.sequence 
     } yield resolvedNCell
 
   }
@@ -249,7 +250,7 @@ trait TypeChecker
           } yield shellsConvert
         } else point(false)
 
-      // Compare to fillers
+      // Compare two fillers
       case (u : Filler, v : Filler) => 
         for {
           nooksConvert <- ncellConvertible(
@@ -280,7 +281,7 @@ trait TypeChecker
           }
 
         for {
-          booleanCell <- NCell.sequence(constraints)
+          booleanCell <- constraints.sequence    
         } yield booleanCell forall identity
 
       }

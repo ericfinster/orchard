@@ -240,16 +240,19 @@ trait Frameworks { thisChecker : TypeChecker =>
       def expression : Error[CellExpression] = item.expression
 
       def bindingSkeleton : Error[NCell[Either[CellAddress, CellExpression]]] = {
-        NCell.sequence[Either[CellAddress, CellExpression], Error](
-          skeleton map (cell =>
-            if (cell.item.isEmpty)
-              succeedE(Left(cell.address))
-            else
-              for {
-                expr <- cell.item.expression
-              } yield Right(expr)
-          )
-        )
+        // NCell.sequence[Either[CellAddress, CellExpression], Error](
+        //   skeleton map (cell =>
+        //     if (cell.item.isEmpty)
+        //       succeedE(Left(cell.address))
+        //     else
+        //       for {
+        //         expr <- cell.item.expression
+        //       } yield Right(expr)
+        //   )
+        // )
+
+        ???
+
       }
     }
   }

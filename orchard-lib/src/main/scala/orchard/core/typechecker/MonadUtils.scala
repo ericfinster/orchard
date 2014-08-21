@@ -59,4 +59,6 @@ object MonadUtils {
 
     }
 
+  // I'd really like to give a full traverse implementation for ncells
+
 }

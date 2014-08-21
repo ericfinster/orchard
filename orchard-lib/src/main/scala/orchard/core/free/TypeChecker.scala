@@ -8,6 +8,7 @@
 package orchard.core.free
 
 import scalaz.{Free => _, _}
+import scalaz.syntax.traverse._
 import Kleisli._
 
 import orchard.core.cell._
@@ -298,7 +299,7 @@ trait TypeChecker
             case (Right(expr), e) => ensureConvertible(expr, e)
           }
 
-          _ <- runInScope(modScope, NCell.sequence[Unit, InScope](requirements))
+          _ <- runInScope(modScope, requirements.sequence[InScope, Unit]) 
 
           // We have succeeded on the compatibility test, paste in the cells
           _ : NCell[Unit] = cell.skeleton map (face =>

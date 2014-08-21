@@ -248,16 +248,21 @@ trait Frameworks { thisChecker : TypeChecker =>
       def expression : Error[Expression] = item.expression
 
       def bindingSkeleton : Error[NCell[Either[CellAddress, Expression]]] = {
-        NCell.sequence[Either[CellAddress, Expression], Error](
-          skeleton map (cell =>
-            if (cell.item.isEmpty)
-              succeedE(Left(cell.address))
-            else
-              for {
-                expr <- cell.item.expression
-              } yield Right(expr)
-          )
-        )
+
+        ???
+
+        // (skeleton map (cell =>
+        //   if (cell.item.isEmpty)
+        //     succeedE(Left(cell.address))
+        //   else
+        //     for {
+        //       expr <- cell.item.expression
+        //     } yield Right(expr)
+        // )).sequence[Error, Either[CellAddress, Expression]]
+
+
+        // NCell.sequence[Either[CellAddress, Expression], Error](
+        // )
       }
     }
   }
@@ -319,7 +324,8 @@ trait Frameworks { thisChecker : TypeChecker =>
       frameworkCopy.topCell.item = Full(filler)
       frameworkCopy.topCell.boundaryFace.item = Full(boundary)
       val exprErr : NCell[Error[Expression]] = frameworkCopy.topCell.skeleton map (_.expression)
-      NCell.sequence[Expression, Error](exprErr)
+      // NCell.sequence[Expression, Error](exprErr)
+      exprErr.sequence[Error, Expression]
     }
 
     def canEqual(other : Any) : Boolean =
