@@ -159,7 +159,7 @@ trait TypeChecker
         case Some(ref) => resolveNameAsReference(ref)
       }) : NCell[Checker[ExprReference]]
 
-      framework <- sequence(resolutions)
+      framework <- resolutions.sequence //NCell.sequence(resolutions)
 
     } yield framework
 
@@ -260,7 +260,7 @@ trait TypeChecker
           }
 
         for {
-          booleanCell <- constraints.sequence    
+          booleanCell <- constraints.sequence // NCell.sequence(constraints)
         } yield booleanCell forall identity
 
       }

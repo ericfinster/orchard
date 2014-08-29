@@ -26,6 +26,7 @@ case class CompositeCell[D <: Nat, +A](value : A, srcTree : CellTree[D#Pred, A],
 }
 
 object Object {
+
   def apply[A](value : A) : ObjectCell[_0, A] = ObjectCell(value)
 
   def unapply[D <: Nat, A](cell : Cell[D, A]) : Option[(A, IsZero[D])] =
@@ -35,9 +36,11 @@ object Object {
     } else {
       None
     }
+
 }
 
 object Composite {
+
   def apply[D <: Nat, A](value : A, srcTree : CellTree[D, A], tgtValue : A) : CompositeCell[S[D], A] =
     CompositeCell[S[D], A](value, srcTree, tgtValue)
 
@@ -48,6 +51,7 @@ object Composite {
     } else {
       None
     }
+
 }
 
 object Cell {
@@ -55,6 +59,10 @@ object Cell {
   //============================================================================================
   // COERCIONS
   //
+
+  // We can automate a bunch more of these conversions, for example dimension math in all *applicative*
+  // using the scheme shown below in the traverse function.  Also, instead of having just instances of
+  // successor a predecessor, you have have a type for equality between nats and abstract over that ...
 
   implicit def toSucc[D <: Nat : HasPred, A](tree : Cell[D, A]) : Cell[S[D#Pred], A] =
       tree.asInstanceOf[Cell[S[D#Pred], A]]
@@ -67,6 +75,12 @@ object Cell {
 
   implicit def fromSuccVect[D <: Nat : HasPred, A](l : Vector[Cell[S[D#Pred], A]]) : Vector[Cell[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
+
+  implicit def objectIsZeroDim[D <: Nat : IsZero, A](o : ObjectCell[_0, A]) : Cell[D, A] = 
+    o.asInstanceOf[Cell[D, A]]
+
+  implicit def zeroCellIsObject[D <: Nat : IsZero, A](c : Cell[D, A]) : ObjectCell[_0, A] =
+    c.asInstanceOf[ObjectCell[_0, A]]
 
   //============================================================================================
   // CELL OPERATIONS
@@ -87,7 +101,7 @@ object Cell {
         case Object(cv, ev) => {
           implicit val isZero = ev
           other match {
-            case Object(ov, _) => Some(Object((cv, ov)).asInstanceOf[Cell[D, (A, B)]])
+            case Object(ov, _) => Some(Object((cv, ov))) 
             case _ => None
           }
         }
@@ -220,6 +234,33 @@ object Cell {
           }
       }
 
+    def traverseCell[G[_], T >: A, B](f : T => G[B])(implicit apG : Applicative[G]) : G[Cell[D, B]] = {
+      
+      import apG._
+
+      cell match {
+        case Object(value, ev) => {
+          implicit val isZero : IsZero[D] = ev
+
+          val objCons : G[B => Cell[D, B]] = 
+            point((b : B) => Object(b))
+
+          ap(f(value))(objCons)
+        }
+
+        case Composite(value, srcTree, tgtValue, ev) => {
+          implicit val hasPred : HasPred[D] = ev
+
+          val extractHead : G[CellTree[S[D#Pred], B] => Cell[D, B]] = 
+            point((t : CellTree[S[D#Pred], B]) => t.cells.head)
+
+          ap(cell.target.traverseCellInContext(f, cell.corolla))(extractHead)
+        }
+      }
+
+    }
+
+
     def regenerateFromCtxt[T >: A, B](generator : CellRegenerator[T, B], ctxt : CellTree[S[D], T])
         : CellTree[S[D], B] = 
       cell match {
@@ -234,7 +275,45 @@ object Cell {
             ctxt.regenerateFrom(generator, lvs)
           }
       }
+
+    // Right, since we need the parametricity in the dimension, we're just going to go straight for
+    // the traverse implementation and move on afterwards.
+
+    def traverseCellInContext[G[_], T >: A, B](f : T => G[B], ctxt : CellTree[S[D], T])(
+      implicit apG : Applicative[G]
+    ): G[CellTree[S[D], B]] = {
+
+      import apG._
+
+      cell match {
+        case Object(_, ev) => {
+
+          val obj = ctxt.leaves.head
+          val toCorolla : G[Cell[D, B] => CellTree[D, B]] = 
+            point((c : Cell[D, B]) => c.corolla)
+          val canopy = ap(obj.traverseCell(f))(toCorolla)
+
+          ctxt.traverseTree(f, canopy)
+
+        }
+
+        case Composite(_, _, _, ev) => {
+          implicit val hasPred : HasPred[D] = ev
+
+          val lvs : G[CellTree[S[D#Pred], B]] = 
+            cell.target.traverseCellInContext(f, ctxt.flatten)
+
+          // Ahhh!! This is the key to auto conversion in lists and vectors!
+          val coerce : G[CellTree[S[D#Pred], B] => CellTree[S[D]#Pred, B]] = 
+            point((t : CellTree[S[D#Pred], B]) => t)
+
+          ctxt.traverseTree(f, ap(lvs)(coerce))
+        }
+      }
+    }
   }
+
+
 }
 
 //
@@ -323,6 +402,18 @@ object NCell {
   implicit def ncellHasOps[A](ncell : NCell[A]) : Cell.CellOps[ncell.dim.Self, A] = 
       ncell.cell
 
+  implicit def ncellTraverse[A] : Traverse[NCell] = 
+    new Traverse[NCell] {
+
+      def traverseImpl[G[_], A, B](ncell : NCell[A])(f : A => G[B])(
+        implicit ev : Applicative[G]
+      ) : G[NCell[B]] = {
+        import ev.applicativeSyntax._
+        ncell.traverseCell(f) map (cellIsNCell(_))
+      }
+
+    }
+
   // WARNING!!! This implementation, I believe suffers from the same difficulty as the original
   // map implementation did in that it seems some of the computations will run more than once, 
   // seeing how we pass *all* off them and you know that there are duplicates possible within
@@ -331,95 +422,66 @@ object NCell {
   // This means you must be extremely carefult that any computations are purely functional. In
   // particular, modifying state inside such a sequence may lead to unexpected results ...
 
-  implicit def ncellTraverse[A] : Traverse[NCell] = 
-    new Traverse[NCell] {
+  // def sequence[A, M[+_]](ncell : NCell[M[A]])(implicit m : Monad[M]) : M[NCell[A]] = {
+  //   import m.functorSyntax._
+  //   sequenceCell(ncell.cell) map (cellIsNCell(_))
+  // }
 
-      import scalaz.std.vector._
-      import scalaz.syntax.traverse._
+  // def sequenceCell[D <: Nat, A, M[+_]](cell : Cell[D, M[A]])(implicit m : Monad[M]) : M[Cell[D, A]] = {
+  //   import m.monadSyntax._
 
-      def traverseImpl[G[_], A, B](ncell : NCell[A])(f : A => G[B])(
-        implicit ev : Applicative[G]
-      ) : G[NCell[B]] = {
-        import ev.applicativeSyntax._
-        traverseCell(ncell.cell)(f) map (cellIsNCell(_))
-      }
+  //   cell match {
+  //     case Object(value, ev) => {
+  //       implicit val isZero = ev
 
-      def traverseCell[D <: Nat, G[_], A, B](cell : Cell[D, A])(f : A => G[B])(
-        implicit apG : Applicative[G]
-      ) : G[Cell[D, B]] = {
+  //       for {
+  //         a <- value
+  //       } yield ObjectCell(a)
+  //     }
+  //     case Composite(value, srcTree, tgtValue, ev) => {
+  //       implicit val hasPred = ev
 
-        import apG._
+  //       for {
+  //         v <- value
+  //         tv <- tgtValue
+  //         resTree <- sequenceTree(srcTree)
+  //       } yield CompositeCell(v, resTree, tv)
+  //     }
+  //   }
+  // }
 
-        cell match {
 
-          case Object(value, ev) => {
-            implicit val isZero = ev
+  // def sequenceTree[D <: Nat, A, M[+_]](tree : CellTree[D, M[A]])(implicit m : Monad[M]) : M[CellTree[D, A]] = {
+  //   import m.monadSyntax._
 
-            val objCons : G[B => Cell[D, B]] = 
-              point((b : B) => Object(b).asInstanceOf[Cell[D, B]])
+  //   tree match {
+  //     case Seed(obj, ev) => {
+  //       implicit val isZero = ev
 
-            ap(f(value))(objCons)
+  //       for {
+  //         newObj <- sequenceCell(obj)
+  //       } yield Seed(newObj) 
+  //     }
+  //     case Leaf(shape, ev) => {
+  //       implicit val hasPred = ev
 
-          }
+  //       for {
+  //         newShape <- sequenceCell(shape)
+  //       } yield Leaf(newShape) 
+  //     }
+  //     case Graft(cell, branches, ev) => {
+  //       implicit val hasPred = ev
+  //       import scalaz.std.vector._
+  //       val T = Traverse[Vector]
 
-          case Composite(value, srcTree, tgtValue, ev) => {
-            implicit val hasPred = ev
+  //       for {
+  //         newCell <- sequenceCell(cell)
+  //         newBranches <- T.sequence(branches map (sequenceTree(_)))
+  //       } yield Graft(newCell, newBranches) 
+  //     }
+  //   }
 
-            val compCons : G[(B, CellTree[D#Pred, B], B) => Cell[D, B]] = 
-              point((v : B, s : CellTree[D#Pred, B], t : B) => {
-                Composite(v, s, t)
-              })
-
-            val srcTreeRes : G[CellTree[D#Pred, B]] = 
-              traverseTree(srcTree)(f)
-
-            ap3(f(value), traverseTree(srcTree)(f), f(tgtValue))(compCons)
-          }
-
-        }
-      }
-
-      def traverseTree[D <: Nat, G[_], A, B](tree : CellTree[D, A])(f : A => G[B])(
-        implicit apG : Applicative[G]
-      ) : G[CellTree[D, B]] = {
-
-        import apG._
-
-        tree match {
-
-          case Seed(obj, ev) => {
-            implicit val isZero = ev
-
-            val seedCons : G[Cell[D, B] => CellTree[D, B]] = 
-              point((o : Cell[D, B]) => Seed(o).asInstanceOf[CellTree[D, B]])
-
-            ap(traverseCell(obj)(f))(seedCons)
-          }
-
-          case Leaf(shape, ev) => {
-            implicit val hasPred = ev
-
-            val leafCons : G[Cell[D#Pred, B] => CellTree[D, B]] =
-              point((s : Cell[D#Pred, B]) => Leaf(s))
-
-            ap(traverseCell(shape)(f))(leafCons)
-          }
-
-          case Graft(cell, branches, ev) => {
-            implicit val hasPred = ev
-
-            val graftCons : G[(Cell[D, B], Vector[CellTree[D, B]]) => CellTree[D, B]] =
-              point((c : Cell[D, B], bs : Vector[CellTree[D, B]]) => Graft(c, bs))
-
-            ap2(
-              traverseCell(cell)(f),
-              (branches map (b => traverseTree(b)(f))).sequence
-            )(graftCons)
-          }
-        }
-      }
-
-    }
+  // }
 
 }
 
@@ -442,3 +504,11 @@ object CellRegenerator {
     }
 
 }
+
+
+abstract class TraverseRegenerator[G[_], A, B](implicit apG : Applicative[G]) {
+
+  def traverseObject[D <: Nat : IsZero](lbl : A) : G[Cell[D, B]]
+
+}
+

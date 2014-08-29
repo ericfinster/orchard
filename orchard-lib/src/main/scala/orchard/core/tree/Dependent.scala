@@ -10,51 +10,124 @@ package orchard.core.tree
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
-trait TypeOver[-I <: AnyRef] {
+trait SliceAt[-I <: AnyRef] {
 
-  type TypeAt[+_ <: I] 
+  trait LocalType {
+
+    type TypeAt[+_ <: I]
+
+  }
+
+  //============================================================================================
+  // PI TYPES
+  //
+
+  trait Pi[+S <: LocalType] {
+
+    def eval[J <: I, R >: S#TypeAt[J]] : R
+
+  }
+
+  //============================================================================================
+  // SIGMA TYPES
+  //
+
+  abstract class Sigma[+S <: LocalType, +J <: I] {
+
+    type Index <: S
+    val witness : Index#TypeAt[J]
+
+  }
+
+  object Sigma {
+
+    def apply[S <: LocalType, J <: I](wit : S#TypeAt[J]) : Sigma[S, J] = 
+      new Sigma[S, J] {
+        type Index = S
+        val witness = wit
+      }
+
+  }
+
+  //============================================================================================
+  // LOCAL (FIBERWISE) HOM
+  //
+
+  trait Hom[-S <: LocalType, +T <: LocalType] extends LocalType {
+
+    type TypeAt[+J <: I] <: S#TypeAt[I] => T#TypeAt[J]
+
+    def coerce[J <: I](i : TypeAt[J]) : S#TypeAt[I] => T#TypeAt[J]
+
+  }
+
+  implicit def homCoerce[S <: LocalType, T <: LocalType, J <:I](
+    f : S#TypeAt[J] => T#TypeAt[J]
+  ) : Hom[S, T]#TypeAt[J]
+
+  trait IFunction[-S <: LocalType, +T <: LocalType] extends Pi[Hom[S, T]] {
+
+    def apply[J <: I](in : S#TypeAt[J]) : T#TypeAt[J] = eval[J, Hom[S, T]#TypeAt[J]](in)
+    def apply[J <: I](el : Sigma[S, J]) : Sigma[T, J] = Sigma[T, J](this(el.witness))
+
+  }
+
+  //============================================================================================
+  // INDEXED FUNCTORS AND MONADS
+  //
+
+  trait IFunctor[F[+_ <: LocalType] <: LocalType] {
+    def imap[S <: LocalType, T <: LocalType](f : IFunction[S, T]) : IFunction[F[S], F[T]]
+  }
+
+  abstract class IMonad[M[+_ <: LocalType] <: LocalType] extends IFunctor[M] {
+
+    def ireturn[S <: LocalType] : IFunction[S, M[S]]
+    def ijoin[S <: LocalType] : IFunction[M[M[S]], M[S]]
+
+  }
+
+  //============================================================================================
+  // THE IDENTITY MONAD
+  //
+
+  trait Id[+S <: LocalType] extends LocalType {
+
+    type TypeAt[+J <: I] <: S#TypeAt[J]
+
+  }
+
+  implicit def idCoerce[S <: LocalType, J <: I](s : S#TypeAt[J]) : Id[S]#TypeAt[J]
+
+  implicit def idIsMonad : IMonad[Id] = 
+    new IMonad[Id] {
+
+      def imap[S <: LocalType, T <: LocalType](f : IFunction[S, T]) : IFunction[Id[S], Id[T]] =
+        new IFunction[Id[S], Id[T]] {
+          def eval[J <: I, R >: Hom[Id[S], Id[T]]#TypeAt[J]] : R = {
+            implicitly[Hom[Id[S], Id[T]]#TypeAt[J] <:< (Id[S]#TypeAt[I] => Id[T]#TypeAt[J])]
+            implicitly[Hom[S, T]#TypeAt[J] <:< (S#TypeAt[I] => T#TypeAt[J])]
+            implicitly[Id[S]#TypeAt[J] <:< Id[S]#TypeAt[I]]
+            implicitly[Id[S]#TypeAt[J] <:< S#TypeAt[J]]
+            implicitly[Id[T]#TypeAt[J] <:< T#TypeAt[J]]
+
+            ((x : Id[S]#TypeAt[J]) => (f.eval[J, Hom[S, T]#TypeAt[J]])(x)) : Hom[Id[S], Id[T]]#TypeAt[J]
+
+          }
+        }
+
+
+      def ireturn[S <: LocalType] : IFunction[S, Id[S]] =
+        new IFunction[S, Id[S]] {
+          def eval[J <: I, R >: Hom[S, Id[S]]#TypeAt[J]] : R = ??? //identity
+        }
+
+
+      def ijoin[S <: LocalType] : IFunction[Id[Id[S]], Id[S]] = 
+        new IFunction[Id[Id[S]], Id[S]] {
+          def eval[J <: I, R >: Hom[Id[Id[S]], Id[S]]#TypeAt[J]] : R = ??? //identity
+        }
+
+    }
 
 }
-
-// For
-//
-//   J <: I
-//
-// we have
-//
-//   TypeOver[I] <: TypeOver[J]
-//
-// is this correct?  The idea is that it is by restriction.  If I have a family of
-// types varying over the suptypes of I, then I should be able to think of this
-// as a family varying over the subtypes of J.
-//
-
-// But now I think you need to rethink the idea of what hom here is for.  What is the
-// natural notion of hom between these guys?  The only thing I can think of is that
-// it should be some kind of natural transformation .....
-
-trait Hom[-I <: AnyRef, S <: TypeOver[I], T <: TypeOver[I]] extends TypeOver[I] {
-
-  // type Test[+J <: I, -K >: J <: I, +L <: J] = S#TypeAt[K] => T#TypeAt[L]
-
-  // Errr ....
-  // type TypeAt[+_ <: I] = S#TypeAt[_] => T#TypeAt[_]
-
-}
-
-// trait Pi[-I <: AnyRef, +S <: TypeOver[I]] {
-
-//   def eval[J <: I] : S#TypeAt[J]
-
-// }
-
-// abstract class Sigma[-I <: AnyRef, +S <: TypeOver[I]] {
-
-//   type Local <: I
-//   val l : Local
-
-//   // val witness : S#TypeAt[i.type]
-
-// }
-
-

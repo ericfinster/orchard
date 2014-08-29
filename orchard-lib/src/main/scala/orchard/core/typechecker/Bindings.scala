@@ -103,7 +103,7 @@ trait Bindings { thisChecker : TypeChecker =>
                 }
 
               // Run all the shell bindings ...
-              shellBinding.sequence[Binder, Unit]
+              shellBinding.sequence
             }
 
             // Everything was okay, go ahead and bind ...

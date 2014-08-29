@@ -123,25 +123,25 @@ trait Examples { thisInterpreter : Interpreter =>
   // TRAVERSAL EXAMPLES
   //
 
-  import scalaz._
-  import State._
+  // import scalaz._
+  // import State._
 
-  import scalaz.syntax.traverse._
+  // import scalaz.syntax.traverse._
 
-  type IntState[A] = State[Int, A]
+  // type IntState[+A] = State[Int, A]
 
-  def incState : State[Int, Unit] = 
-    for {
-      i <- get
-      _ <- put(i + 1)
-    } yield ()
+  // def incState : State[Int, Unit] = 
+  //   for {
+  //     i <- get
+  //     _ <- put(i + 1)
+  //   } yield ()
 
-  val stateTest : NCell[State[Int, Unit]] = 
-    arrow(incState, incState, incState)
+  // val stateTest : NCell[State[Int, Unit]] = 
+  //   arrow(incState, incState, incState)
 
-  val stateComp : State[Int, NCell[Unit]] = 
-    stateTest.sequence[IntState, Unit]
+  // val stateComp : State[Int, NCell[Unit]] = 
+  //   stateTest.sequence[IntState, Unit]
 
-  val result : Int = stateComp.exec(0)
+  // val result : Int = stateComp.exec(0)
 
 }

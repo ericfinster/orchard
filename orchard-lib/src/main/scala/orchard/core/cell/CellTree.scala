@@ -7,7 +7,10 @@
 
 package orchard.core.cell
 
+import scala.language.higherKinds
 import scala.language.implicitConversions
+
+import scalaz._
 
 import scala.collection.mutable.Stack
 import scala.collection.mutable.ListBuffer
@@ -34,12 +37,10 @@ case class GraftClass[D <: Nat, +A](cell : Cell[D, A], branches : Vector[CellTre
 }
 
 object Seed {
+
   def apply[A](obj : ObjectCell[_0, A]) : SeedClass[_0, A] = SeedClass(obj)
 
-  def apply[D <: Nat : IsZero, A](obj : Cell[D, A]) : SeedClass[_0, A] = Seed(obj.asInstanceOf[ObjectCell[_0, A]])
-
-  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(ObjectCell[D, A], IsZero[D])] =
-  {
+  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(ObjectCell[D, A], IsZero[D])] =  {
     if (tree.isInstanceOf[SeedClass[D, A]]) {
       val s = tree.asInstanceOf[SeedClass[D, A]]
       Some(s.obj, s.isZero)
@@ -47,13 +48,14 @@ object Seed {
       None
     }
   }
+
 }
 
 object Leaf {
+
   def apply[D <: Nat, A](shape : Cell[D, A]) : LeafClass[S[D], A] = LeafClass[S[D], A](shape)
 
-  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(Cell[D#Pred, A], HasPred[D])] =
-  {
+  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(Cell[D#Pred, A], HasPred[D])] = {
     if (tree.isInstanceOf[LeafClass[D, A]]) {
       val e = tree.asInstanceOf[LeafClass[D, A]]
       Some(e.shape, e.hasPred)
@@ -61,14 +63,15 @@ object Leaf {
       None
     }
   }
+
 }
 
 object Graft {
+
   def apply[D <: Nat, A](cell : Cell[S[D], A], branches : Vector[CellTree[S[D], A]]) : GraftClass[S[D], A] =
       GraftClass(cell, branches)
 
-  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(Cell[D, A], Vector[CellTree[D, A]], HasPred[D])] =
-  {
+  def unapply[D <: Nat, A](tree : CellTree[D, A]) : Option[(Cell[D, A], Vector[CellTree[D, A]], HasPred[D])] = {
     if (tree.isInstanceOf[GraftClass[D, A]]) {
       val i = tree.asInstanceOf[GraftClass[D, A]]
       Some(i.cell, i.branches, i.hasPred)
@@ -76,6 +79,7 @@ object Graft {
       None
     }
   }
+
 }
 
 object CellTree {
@@ -96,6 +100,12 @@ object CellTree {
   implicit def fromSuccVect[D <: Nat : HasPred, A](l : Vector[CellTree[S[D#Pred], A]]) : Vector[CellTree[D, A]] =
       l map (t => fromSucc(t)(implicitly[HasPred[D]]))
 
+  implicit def seedIsZeroDim[D <: Nat : IsZero, A](s : SeedClass[_0, A]) : CellTree[D, A] = 
+    s.asInstanceOf[CellTree[D, A]]
+
+  implicit def zeroTreeIsSeed[D <: Nat : IsZero, A](t : CellTree[D, A]) : SeedClass[_0, A] = 
+    t.asInstanceOf[SeedClass[_0, A]]
+
   /*
    * Conversions to RoseTrees
    */
@@ -113,7 +123,7 @@ object CellTree {
 
   def fromRoseTree[D <: Nat : IsZero, A](t : RoseTree[Cell[D, A], Unit]) : CellTree[D, A] =
     t match {
-      case Branch(obj, Vector(Rose(()))) => Seed(obj).asInstanceOf[CellTree[D, A]]
+      case Branch(obj, Vector(Rose(()))) => Seed(obj)
       case _ => throw new IllegalArgumentException("Malformed object tree")
     }
 
@@ -166,7 +176,7 @@ object CellTree {
         case Seed(to, ev) => {
           implicit val isZero = ev
           other match {
-            case Seed(oo, _) => for { res <- to.zip(oo) } yield SeedClass(res.asInstanceOf[ObjectCell[D, (A, B)]])
+            case Seed(oo, _) => for { res <- to.zip(oo) } yield Seed(res) 
             case _ => None
           }
         }
@@ -258,7 +268,7 @@ object CellTree {
       tree match {
         case Seed(obj, ev) => {
           implicit val isZero = ev
-          Seed(obj.comultiply).asInstanceOf[CellTree[D, NCell[A]]]
+          Seed(obj.comultiply) 
         }
         case Leaf(shape, ev) => {
           implicit val hasPred = ev
@@ -418,6 +428,121 @@ object CellTree {
         }
       }
 
+    def traverseTree[G[_], T >: A, B](f : T => G[B], canopy : G[CellTree[D#Pred, B]])(
+      implicit hasPred : HasPred[D], apG : Applicative[G]
+    ) : G[CellTree[D, B]] = {
+
+      import apG._
+
+      val verticalLeaves : G[Vector[Cell[D#Pred, B]]] = 
+        ap(canopy)(point((t : CellTree[D#Pred, B]) => t.cells))
+
+      val horizontalLeaves : G[Vector[CellTree[D#Pred, B]]] = 
+        ap(canopy)(point((t : CellTree[D#Pred, B]) =>
+          t.dimension match {
+            case IsZero(_) => Vector.empty
+            case HasPred(ev) => {
+              implicit val hasPredPred : HasPred[D#Pred] = ev
+              t.flatten.cells map (l => Leaf(l))
+            }
+          }
+        ))
+
+      def graftCons[N <: Nat](implicit hp : HasPred[N]) : G[(Cell[N, B], Vector[CellTree[N, B]]) => CellTree[N, B]] =
+        point((c : Cell[N, B], bs : Vector[CellTree[N, B]]) => Graft(c, bs))
+
+      var vCount = -1
+      val vPerm = inversePerm
+
+      def verticalTrace(t : CellTree[D, A], lvs : G[Vector[CellTree[D#Pred, B]]]) : G[CellTree[D, B]] =
+        t match {
+          case Leaf(_, ev) => {
+            vCount += 1
+
+            val retrieveLeaf : G[Vector[Cell[D#Pred, B]] => CellTree[D, B]] =
+              point((v : Vector[Cell[D#Pred, B]]) => Leaf(v(vPerm(vCount))))
+
+            ap(verticalLeaves)(retrieveLeaf)
+
+          }
+
+          case Graft(guideCell, verticalBranches, ev) => {
+
+            val verticalStack = new Stack ++ verticalBranches
+            var finishedVertical : G[Vector[CellTree[D, B]]] = 
+              point(Vector.empty)
+
+            def appendFinished(b : G[CellTree[D, B]]) : G[Vector[CellTree[D, B]]] = 
+              ap2(finishedVertical, b)(point((v : Vector[CellTree[D, B]], b : CellTree[D, B]) => v :+ b))
+
+            var hCount = -1
+            val hPerm = guideCell.srcTree.inversePerm
+
+            def horizontalTrace(tr : CellTree[D#Pred, A]) : G[CellTree[D#Pred, B]] = 
+              tr match {
+                case Seed(o, e) => {
+                  implicit val isZero : IsZero[D#Pred] = e
+                  hCount += 1
+
+                  val thisBranch = verticalTrace(verticalStack.pop, lvs)
+                  finishedVertical = appendFinished(thisBranch)
+
+                  val makeSeed : G[CellTree[D, B] => CellTree[D#Pred, B]] = 
+                    point((t : CellTree[D, B]) => Seed(t.output))
+
+                  ap(thisBranch)(makeSeed)
+
+                }
+                case Leaf(_, _) => {
+                  hCount += 1
+
+                  val getLeaf : G[Vector[CellTree[D#Pred, B]] => CellTree[D#Pred, B]] = 
+                    point((v : Vector[CellTree[D#Pred, B]]) => v(hPerm(hCount)))
+
+                  ap(lvs)(getLeaf)
+                }
+                case Graft(_, horizontalBranches, e) => {
+                  implicit val hasPredPred = e
+
+                  import scalaz.std.vector._
+                  import scalaz.syntax.traverse._
+
+                  // First pass to the horizontalBranches
+                  val newBranches : G[Vector[CellTree[D#Pred, B]]] = 
+                    (horizontalBranches map horizontalTrace).sequence
+
+                  val extractLeaves : G[Vector[CellTree[D#Pred, B]] => Vector[CellTree[D#Pred, B]]] = 
+                    point((v : Vector[CellTree[D#Pred, B]]) => v map (b => Leaf(b.output)))
+
+                  val newLeaves = ap(newBranches)(extractLeaves)
+
+                  val thisBranch = verticalTrace(verticalStack.pop, newLeaves)
+                  finishedVertical = appendFinished(thisBranch)
+
+                  val getOutput : G[CellTree[D, B] => Cell[D#Pred, B]] =
+                    point((t : CellTree[D, B]) => t.output)
+
+                  ap2(ap(thisBranch)(getOutput), newBranches)(graftCons)
+                }
+              }
+
+            val compCons : G[(B, CellTree[D#Pred, B], B) => Cell[D, B]] = 
+              point((v : B, s : CellTree[D#Pred, B], t : B) => {
+                Composite(v, s, t)
+              })
+
+            val newSrcTree = horizontalTrace(guideCell.srcTree)
+            val newCell = ap3(f(guideCell.value), newSrcTree, f(guideCell.targetValue))(compCons)
+
+            ap2(newCell, finishedVertical)(graftCons)
+
+          }
+        }
+
+      verticalTrace(tree, horizontalLeaves)
+
+    }
+
     def regenerateFrom[T >: A, B](generator : CellRegenerator[T, B], 
                                   canopy : CellTree[D#Pred, B])(implicit hasPred : HasPred[D])
         : CellTree[D, B] = {
@@ -458,7 +583,7 @@ object CellTree {
                   val thisBranch = verticalTrace(verticalStack.pop, lvs)
                   finishedVertical += thisBranch
 
-                  Seed(thisBranch.output).asInstanceOf[CellTree[D#Pred, B]]
+                  Seed(thisBranch.output) 
                 }
                 case Leaf(_, _) => {
                   hCount += 1

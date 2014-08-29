@@ -83,8 +83,6 @@ trait SkeletalComplex[A] extends CellComplex[A] {
 
       srcs.dimension match {
         case IsZero(ev) => {
-          implicit val isZero : IsZero[D#Pred] = ev
-
           val theObject = srcs.cells(0).value
           theObject.container = Some(tgtCell)
 

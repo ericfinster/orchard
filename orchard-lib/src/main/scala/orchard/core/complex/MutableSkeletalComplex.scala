@@ -22,7 +22,9 @@ trait MutableSkeletalComplex[A] extends MutableComplex[A] with SkeletalComplex[A
     val sourceCell = globCell.sources.get.head
     val targetCell = globCell.target.get
 
-    val glob = sourceCell.skeleton.glob(globCell, targetCell)
+    val sourceSkeleton = sourceCell.skeleton
+    val glob : Cell[S[sourceSkeleton.dim.Self], CellType] = 
+      sourceSkeleton.glob(globCell, targetCell)
 
     globCell.skeleton = glob
     targetCell.skeleton = glob.target
