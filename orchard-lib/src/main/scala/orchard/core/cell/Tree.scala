@@ -12,7 +12,6 @@ import scala.language.implicitConversions
 
 import scalaz._
 import scalaz.Id._
-import scalaz.Leibniz._
 
 import Slice._
 
@@ -33,12 +32,76 @@ trait TreeOps {
     }
 
 
-  def close[N <: TreeIndex, A](n : N, c : N#Context[A], t : N#Tree[A]) : N#Tree[A]
+  def close[N <: TreeIndex, A](n : N, c : N#Context[A], t : N#Tree[A]) : N#Tree[A] =
+    n match {
+      case IsZeroIndex(zcs) => { import zcs._ ; t }
+      case IsSuccIndex(scs) => { import scs._ ;
+        (c : ST[P]#Context[A]) match {
+          case Nil => t
+          case (a , d) :: cs => {
+            close[ST[P], A](ST(p), cs, Joint(a , plug[P, ST[P]#Tree[A]](p, d, t)))
+          }
+        }
+      }
+    }
 
+  def visit[N <: TreeIndex, A](n : N, d : N#Direction, z : N#Zipper[A]) : Option[N#Zipper[A]] =
+    n match {
+      case IsZeroIndex(zcs) => None
+      case IsOneIndex(ocs) => { import ocs._ ;
 
-  //   def visit[A](dir : Dir, z : Zipper[A]) : Option[Zipper[A]]
-  //   def seek[A](addr : Address, z : Zipper[A]) : Option[Zipper[A]] =
+        val ud : ST[ZT.type]#Direction = d
+        val uz : ST[ZT.type]#Zipper[A] = z
 
+        (ud , uz) match {
+          case (Nil, (focus , cntxt)) => {
+            (focus : Slice[Id, A]) match {
+              case Cap() => None
+              case Joint(head, tail) => Some((tail, ((head, ()) :: cntxt)))
+            }
+          }
+          case (_, _) => None
+        }
+      }
+      case IsDblSuccIndex(dcs) => { import dcs._ ;
+
+        val ud : ST[P]#Direction = d
+        val uz : ST[P]#Zipper[A] = z
+
+        (ud , uz) match {
+          case (addr, (focus , cntxt)) => {
+            (focus : Slice[FS, A]) match {
+              case Cap() => None
+              case Joint(a, shell) => {
+
+                def visitBranch(zp : P#Zipper[ST[P]#Tree[A]]) : Option[N#Zipper[A]] =
+                  zp match {
+                    case (Cap(), _) => None
+                    case (Joint(t, tsh), z0) => {
+                      Some((t , (a , (tsh, z0)) :: cntxt) : N#Zipper[A])
+                    }
+                  }
+
+                for {
+                  shellContext <- seek[P, ST[P]#Tree[A]](p, addr, (shell, Nil))
+                  zipAtBranch <- visitBranch(shellContext)
+                } yield zipAtBranch
+              }
+            }
+          }
+        }
+      }
+    }
+
+  def seek[N <: TreeIndex, A](n : N, a : N#Address, z : N#Zipper[A]) : Option[N#Zipper[A]] = 
+    a match {
+      case Nil => Some(z)
+      case d :: ds => 
+        for {
+          zz <- seek(n, ds, z)
+          zv <- visit(n, d, zz)
+        } yield zv
+    }
 
   def zipComplete[N <: TreeIndex, A, B](n : N, ta : N#Tree[A], tb : N#Tree[B]) : Option[N#Tree[(A, B)]]
   def zipWithCorolla[N <: TreeIndex, A](n : N, ta : N#Tree[A]) : N#Tree[(A, N#Derivative[A])]
@@ -55,7 +118,7 @@ sealed trait TreeIndex {
   type Tree[+_]
   type Context[+_]
   type Derivative[+_]
-  type Zipper[A] = (Tree[A], Context[A])
+  type Zipper[+_]
 
   type Direction
   type Address = List[Direction]
@@ -69,6 +132,7 @@ case object ZT extends TreeIndex {
   type Tree[+A] = Id[A]
   type Context[+A] = Unit
   type Derivative[+A] = Unit
+  type Zipper[+A] = (Unit, Unit)
 
   type Direction = Nothing
 
@@ -81,6 +145,7 @@ case class ST[Pred <: TreeIndex](pred : Pred) extends TreeIndex {
   type Tree[+A] = Slice[Pred#Tree, A]
   type Context[+A] = List[(A, Pred#Derivative[Tree[A]])]
   type Derivative[+A] = (Pred#Tree[Tree[A]], Context[A])
+  type Zipper[+A] = (Tree[A], Context[A])
 
   type Direction = List[Pred#Direction]
 
@@ -158,7 +223,7 @@ object TreeIndex {
     implicit def treeCoe[A](nt : N#Tree[A]) : ST[ZT.type]#Tree[A] = nt.asInstanceOf[ST[ZT.type]#Tree[A]]
     implicit def contextCoe[A](nc : N#Context[A]) : ST[ZT.type]#Context[A] = nc.asInstanceOf[ST[ZT.type]#Context[A]]
     implicit def derivCoe[A](nd : N#Derivative[A]) : ST[ZT.type]#Derivative[A] = nd.asInstanceOf[ST[ZT.type]#Derivative[A]]
-    implicit def zipCoe[A](nz : N#Derivative[A]) : ST[ZT.type]#Zipper[A] = nz.asInstanceOf[ST[ZT.type]#Zipper[A]]
+    implicit def zipCoe[A](nz : N#Zipper[A]) : ST[ZT.type]#Zipper[A] = nz.asInstanceOf[ST[ZT.type]#Zipper[A]]
     implicit def dirCoe(nd : N#Direction) : ST[ZT.type]#Direction = nd.asInstanceOf[ST[ZT.type]#Direction]
     implicit def addCoe[A](na : N#Address) : ST[ZT.type]#Address = na.asInstanceOf[ST[ZT.type]#Address]
 
@@ -189,8 +254,12 @@ object TreeIndex {
   trait GteTwoImplicits[N <: TreeIndex] {
 
     type PP <: TreeIndex
+    type P = ST[PP]
+
+    type FS[+A] = Slice[PP#Tree, A]
 
     val pp : PP
+    val p : P = ST(pp)
 
     implicit def treeCoh[A](st : ST[ST[PP]]#Tree[A]) : N#Tree[A] = st.asInstanceOf[N#Tree[A]]
     implicit def contextCoh[A](sc : ST[ST[PP]]#Context[A]) : N#Context[A] = sc.asInstanceOf[N#Context[A]]
@@ -202,7 +271,7 @@ object TreeIndex {
     implicit def treeCoe[A](nt : N#Tree[A]) : ST[ST[PP]]#Tree[A] = nt.asInstanceOf[ST[ST[PP]]#Tree[A]]
     implicit def contextCoe[A](nc : N#Context[A]) : ST[ST[PP]]#Context[A] = nc.asInstanceOf[ST[ST[PP]]#Context[A]]
     implicit def derivCoe[A](nd : N#Derivative[A]) : ST[ST[PP]]#Derivative[A] = nd.asInstanceOf[ST[ST[PP]]#Derivative[A]]
-    implicit def zipCoe[A](nz : N#Derivative[A]) : ST[ST[PP]]#Zipper[A] = nz.asInstanceOf[ST[ST[PP]]#Zipper[A]]
+    implicit def zipCoe[A](nz : N#Zipper[A]) : ST[ST[PP]]#Zipper[A] = nz.asInstanceOf[ST[ST[PP]]#Zipper[A]]
     implicit def dirCoe(nd : N#Direction) : ST[ST[PP]]#Direction = nd.asInstanceOf[ST[ST[PP]]#Direction]
     implicit def addrCoe(na : N#Address) : ST[ST[PP]]#Address = na.asInstanceOf[ST[ST[PP]]#Address]
 
