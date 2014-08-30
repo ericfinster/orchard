@@ -12,33 +12,37 @@ import scala.language.implicitConversions
 
 import scalaz._
 import scalaz.Id._
-import scalaz.syntax.monad._
+import scalaz.Leibniz._
 
-import orchard.core.util._
-import ErrorM._
-import Nats._
+import Slice._
 
-sealed trait TreeType[T[+_]] {
+sealed abstract class TreeType[T[+_]](implicit idSlice : SliceOf[Id, T]) {
 
-  type Tree[+A] = T[A]
+  type Tree[+A]
 
-  type Pred[+A]
-  val predTreeType : Option[TreeType[Pred]]
+  def treeCoh[A] : Tree[A] === T[A]
+  def treeCoe[A] : T[A] === Tree[A]
 
   type Dir
   type Address = List[Dir]
 
   type Context[+_] 
   type Derivative[+_]
+  type Zipper[+A] = (Tree[A] , Context[A])
 
-  type Zipper[+A] = (Tree[A], Context[A])
+  def map[A, B](tree : Tree[A])(f : A => B) : Tree[B]
+  def traverse[G[_], A, B](tree : Tree[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[B]]
+  def sequence[G[_], A](tree : Tree[G[A]])(implicit apG : Applicative[G]) : G[Tree[A]] =
+    traverse(tree)(identity)
 
-  def plug[B](d : Derivative[B], b : B) : T[B]
-  def close[B](c : Context[B], tb : T[B]) : T[B]
+  def const[A, B](tree : Tree[A], b : B) : Tree[B] =
+    map(tree)(_ => b)
 
-  def visit[B](dir : Dir, z : Zipper[B]) : Option[Zipper[B]]
+  def plug[A](d : Derivative[A], a : A) : Tree[A]
+  def close[A](c : Context[A], ta : Tree[A]) : Tree[A]
 
-  def seek[B](addr : Address, z : Zipper[B]) : Option[Zipper[B]] = 
+  def visit[A](dir : Dir, z : Zipper[A]) : Option[Zipper[A]]
+  def seek[A](addr : Address, z : Zipper[A]) : Option[Zipper[A]] = 
     addr match {
       case Nil => Some(z)
       case d :: ds => 
@@ -48,376 +52,305 @@ sealed trait TreeType[T[+_]] {
         } yield v
     }
 
+  def nGlob[A](a : A) : Tree[A]
+  def globDeriv : Derivative[List[Address]]
+
+  def zipComplete[A, B](ta : Tree[A], tb : Tree[B]) : Option[Tree[(A, B)]]
+  def zipWithCorolla[A](tree : Tree[A]) : Tree[(A, Derivative[A])]
+  def zipWithPrefix[A](pref : Address, tree : Tree[A]) : Tree[(A, Address)] 
+  def zipWithAddress[A](tree : Tree[A]) : Tree[(A, Address)] =
+    zipWithPrefix(Nil, tree)
+
+  def flattenWithPrefix[A](
+    pref : List[Address], 
+    deriv : Derivative[List[Address]], 
+    tree : Slice[Tree, A]) : Option[Tree[(A, List[Address])]] = ???
+
+  def flattenWithAddress[A](tree : Slice[Tree, A]) : Option[Tree[(A, List[Address])]] = 
+    flattenWithPrefix(Nil, globDeriv, tree)
+
+  def substitute[A](tta : Tree[Tree[A]]) : Option[Tree[A]]
+  def graft[A](tree : Slice[T, A], brs : T[Slice[T, A]]) : Option[Slice[T, A]] = ???
+  def graftAt[A](addr : List[Address], tree : Slice[T, A], branch : Slice[T, A]) : Option[Slice[T, A]] = {
+
+    val succTree = SuccTree[({ type L[+A] = Slice[T, A] })#L]
+
+    val test = succTree.seek(addr, ???)
+
+    // type Zipper[+A] = (Tree[A] , Context[A])
+
+    ???
+  }
+
+
 }
 
-case class ZeroTree() extends TreeType[Id] {
+case class ZeroTree[T[+_]](implicit zeroSlice : ZeroSliceOf[Id, T]) extends TreeType[T] {
 
-  type Pred[+A] = Nothing
-  val predTreeType = None
+  import zeroSlice._
+
+  type Tree[+A] = Id[A]
+
+  def treeCoh[A] : Tree[A] === T[A] = coh[A]
+  def treeCoe[A] : T[A] === Tree[A] = coe[A]
 
   type Dir = Nothing
 
   type Context[+A] = Unit
   type Derivative[+A] = Unit
 
-  def plug[B](d : Derivative[B], b : B) : Tree[B] = b
-  def close[B](c : Context[B], tb : Tree[B]) : Tree[B] = tb
+  def map[A, B](a : Tree[A])(f : A => B) : Tree[B] = f(a)
+  def traverse[G[_], A, B](tree : Tree[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[B]] = f(tree)
 
-  def visit[B](dir : Dir, z : Zipper[B]) : Option[Zipper[B]] = None
+  def plug[A](d : Derivative[A], a : A) : Tree[A] = a
+  def close[A](c : Context[A], ta : Tree[A]) : Tree[A] = ta
+  def visit[A](dir : Dir, z : Zipper[A]) : Option[Zipper[A]] = Some(z)
+
+  def nGlob[A](a : A) : Tree[A] = a
+  def globDeriv : Derivative[List[Address]] = ()
+
+  def zipComplete[A, B](ta : Tree[A], tb : Tree[B]) : Option[Tree[(A, B)]] = Some(ta, tb)
+  def zipWithCorolla[A](tree : Tree[A]) : Tree[(A, Derivative[A])] = (tree, ())
+  def zipWithPrefix[A](pref : Address, tree : Tree[A]) : Tree[(A, Address)] = (tree, Nil)
+
+  def substitute[A](a : A) : Option[A] = Some(a)
 
 }
 
-case class SuccTree[P[+_]](val pt : TreeType[P]) extends TreeType[({ type L[+A] = Slice[P, A] })#L] {
+case class SuccTree[T[+_]](implicit succSlice : SuccSliceOf[Id, T]) extends TreeType[T] {
 
-  type Pred[+A] = P[A]
-  val predTreeType = Some(pt)
+  import TreeType._
+  import succSlice._
 
-  type Dir = List[pt.Dir]
+  // This is a bit annoying.  Maybe this should be the parameter?
+  implicit val prevTree : TreeType[P] = implicitly[TreeType[P]]
 
-  type Context[+A] = List[(A, pt.Derivative[Tree[A]])]
-  type Derivative[+A] = (pt.Tree[Tree[A]], Context[A])
+  type Out[+A] = T[A]
+  type Tree[+A] = Slice[P, A]
+
+  def treeCoh[A] : Tree[A] === T[A] = coh[A]
+  def treeCoe[A] : T[A] === Tree[A] = coe[A]
+
+  implicit def prevCoh[A](s : prevTree.Tree[A]) : P[A] = 
+    subst(s)(prevTree.treeCoh[A])
+
+  implicit def prevCoe[A](p : P[A]) : prevTree.Tree[A] =
+    subst(p)(prevTree.treeCoe[A])
+
+  // Okay.  The major problem here is that these types don't compute.  I was managing it in
+  // the reverse direction, but in the forward direction, it's just a nightmare.  I think what
+  // you need to do is have a type class which witnesses that these guys are exactly one slice
+  // apart, either forward or backward.
+
+  // When these types are tied to an instance, it stops all computation at the type level.
+  // So you'll have to take another go at it tomorrow....
+
+  type Dir = List[prevTree.Dir]
+
+  type Context[+A] = List[(A, prevTree.Derivative[Tree[A]])]
+  type Derivative[+A] = (P[Tree[A]], Context[A])
+
+  trait Unfolding[STP <: SuccTree[P]] {
+
+    val st : STP
+
+    type PP[+A] = st.succSlice.P[A]
+    type PT[+A] = st.Tree[A]
+    type PC[+A] = st.Context[A]
+
+    type UnfoldedContext[+A] = List[(A, (PP[PT[Tree[A]]], PC[Tree[A]]))]
+    type UnfoldedDerivative[+A] = (P[Tree[A]], UnfoldedContext[A])
+    type UnfoldedZipper[+A] = (Tree[A], UnfoldedContext[A])
+
+    type UnfoldedDir = List[List[st.prevTree.Dir]]
+
+    def conCoh[A] : Context[A] === UnfoldedContext[A] = ???
+    def derCoh[A] : Derivative[A] === UnfoldedDerivative[A] = ???
+
+    def zipCoh[A] : Zipper[A] === UnfoldedZipper[A] = ???
+    def zipCoe[A] : UnfoldedZipper[A] === Zipper[A] = ???
+
+    def dirCoh : Dir === UnfoldedDir = ???
+
+  }
+
+  def unfoldWith(succP : SuccTree[P]) : Unfolding[succP.type] = 
+    new Unfolding[succP.type] {
+      val st : succP.type = succP
+    }
+
+
+  def map[A, B](tree : Tree[A])(f : A => B) : Tree[B] =
+    tree match {
+      case Cap() => Cap()
+      case Joint(a, shell) => {
+        Joint(f(a), prevTree.map(shell)(this.map(_)(f)))
+      }
+    }
+
+  def traverse[G[_], A, B](tree : Tree[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[B]] = ???
 
   def plug[B](d : Derivative[B], b : B) : Tree[B] =
     d match {
-      case (shell, c) => close(c, Joint(b, shell))
+      case (shell, cntxt) => close(cntxt, Joint(b, shell))
     }
 
-  def close[B](c : Context[B], tb : Tree[B]) : Tree[B] =
-    c match {
+  def close[B](cntxt : Context[B], tb : Tree[B]) : Tree[B] = 
+    cntxt match {
       case Nil => tb
-      case (b, pd) :: c => close(c, Joint(b, pt.plug(pd, tb)))
+      case (b, pd) :: cs =>
+        close(cs, Joint(b, prevTree.plug(pd, tb)))
     }
 
-  def visit[B](dir : Dir, z : Zipper[B]) : Option[Zipper[B]] = 
-    pt.predTreeType match {
-      case None => ???
-      case Some(ppt) => {
-        (dir, z) match {
-          case (_ , (Cap() , _)) => None
-          case (addr, (Joint(b, shell), _)) => {
+  def visit[B](dir : Dir, z : Zipper[B]) : Option[Zipper[B]] =
+    prevTree match {
+      case zeroP : ZeroTree[P] => ???
+      case succP : SuccTree[P] => {
 
-            val test0 : pt.Tree[Tree[B]] = shell
-            val test1 : pt.Zipper[Tree[B]] = (shell, Nil)
-            // val test = pt.seek(addr, (shell, Nil))
+        val unfolding = unfoldWith(succP)
+        import unfolding._
 
-            ???
+        val uz : UnfoldedZipper[B] = subst(z)(zipCoh[B])
+        val ud : UnfoldedDir = subst(dir)(dirCoh)
+
+        uz match {
+          case (Cap(), c) => None
+          case (Joint(b, shell), c) => {
+
+            val coeShell : st.Tree[Tree[B]] = subst(shell)(st.treeCoe[Tree[B]])
+
+            st.seek(ud, (coeShell, Nil)) match {
+              case None => None
+              case Some((Cap(), z0)) => None
+              case Some((Joint(t, tsh), z0)) => {
+                Some(subst((t , (b , (tsh , z0)) :: c))(zipCoe[B]))
+              }
+            }
           }
         }
       }
     }
 
-}
+  def nGlob[A](a : A) : Tree[A] = Joint(a, prevTree.nGlob[Tree[A]](Cap()))
+  def globDeriv : Derivative[List[Address]] = {
+    val step1 : Tree[List[Address]] = nGlob(Nil)
+    val step2 : P[Tree[List[Address]]] = prevTree.nGlob(step1)
+    (step2, Nil)
+  }
 
+  def zipComplete[A, B](ta : Tree[A], tb : Tree[B]) : Option[Tree[(A, B)]] = 
+    (ta, tb) match {
+      case (Cap(), Cap()) => Some(Cap())
+      case (Joint(a, ash), Joint(b, bsh)) => {
 
-object IsZeroTree {
+        import scalaz.syntax.monad._
+        import scalaz.std.option._
 
-  def unapply[P[+_]](tt : TreeType[P]) : Option[TreeType[Id]] =
-    if (tt.isInstanceOf[ZeroTree]) {
-      Some(tt.asInstanceOf[TreeType[Id]])
-    } else None    
+        val step : Option[prevTree.Tree[(Tree[A], Tree[B])]] = prevTree.zipComplete(ash, bsh)
+        val step2 : Option[P[(Tree[A], Tree[B])]] = prevTree.treeCoh[(Tree[A], Tree[B])].subst[Option](step)
+        val step3 : Option[P[Option[Tree[(A, B)]]]] =
+          for {
+            s <- step2
+          } yield prevTree.map(s)({ case (t0, t1) => zipComplete(t0, t1) })
 
-}
+        val step4 : Option[Option[prevTree.Tree[Tree[(A, B)]]]] = 
+          for {
+            s <- step3
+          } yield prevTree.sequence[Option, Tree[(A, B)]](s)
 
-object IsSuccTree {
+        val step5 : Option[prevTree.Tree[Tree[(A, B)]]] = step4.join
+        val step6 : Option[P[Tree[(A, B)]]] = prevTree.treeCoh[Tree[(A, B)]].subst[Option](step5)
 
-  def unapply[P[+_]](tt : TreeType[P]) : Option[TreeType[tt.Pred]] = 
-    tt.predTreeType
+        val step7 : Option[Tree[(A, B)]] = 
+          for {
+            s <- step6
+          } yield Joint((a, b), s)
+
+        step7
+      }
+      case _ => None
+    }
+
+  def zipWithCorolla[A](tree : Tree[A]) : Tree[(A, Derivative[A])] = 
+    tree match {
+      case Cap() => Cap()
+      case Joint(a, shell) => {
+
+        val step1 : P[Tree[(A, Derivative[A])]] = prevTree.map(shell)(t => zipWithCorolla(t))
+        val step2 : P[Tree[A]] = prevTree.const(shell, Cap[P, A]())
+        val step3 : Tree[(A, Derivative[A])] = Joint((a, (step2 , Nil)), step1)
+
+        step3
+      }
+    }
+
+  def zipWithPrefix[A](pref : Address, tree : Tree[A]) : Tree[(A, Address)] = 
+    tree match {
+      case Cap() => Cap()
+      case Joint(a, shell) => {
+
+        val step1 : P[(Tree[A], Dir)] = prevTree.zipWithAddress(shell)
+        val step2 : P[Tree[(A, Address)]] = prevTree.map(step1)({ case (t, d) => zipWithPrefix(d :: pref, t) })
+        val step3 : Tree[(A, Address)] = Joint((a, pref), step2)
+
+        step3
+
+      }
+    }
+
+  def substitute[A](tta : Tree[Tree[A]]) : Option[Tree[A]] = 
+    tta match {
+      case Cap() => Some(Cap())
+      case Joint(t, tsh) => {
+
+        import TreeType._
+        import scalaz.std.option._
+
+        val step1 : P[Option[Tree[A]]] = prevTree.map(tsh)(substitute)
+        val step2 : Option[prevTree.Tree[Tree[A]]] = prevTree.sequence[Option, Tree[A]](step1)
+        val step3 : Option[P[Tree[A]]] = prevTree.treeCoh[Tree[A]].subst(step2)
+        val step4 : Option[Tree[A]] =
+          for {
+            s <- step3
+            g <- prevTree.graft(t, s)
+          } yield g
+
+        step4
+      }
+    }
 
 }
 
 object TreeType {
-
 
   type Tree0[+A] = Id[A]
   type Tree1[+A] = Slice[Tree0, A]
   type Tree2[+A] = Slice[Tree1, A]
   type Tree3[+A] = Slice[Tree2, A]
 
+  implicit def sliceOfIdIsTree[T[+_]](implicit sliceOf : SliceOf[Id, T]) : TreeType[T] =
+    sliceOf match {
+      case z : ZeroSliceOf[Id, T] => ZeroTree[T]()(z)
+      case s : SuccSliceOf[Id, T] => SuccTree[T]()(s)
+    }
 
-  implicit def idIsTreeType : TreeType[Id] = ZeroTree()
+  implicit def treeIsTraverse[T[+_]](implicit tt : TreeType[T]) : Traverse[T] = 
+    new Traverse[T] {
 
-  implicit def sliceIsTreeType[P[+_]](implicit pt : TreeType[P]) 
-      : TreeType[({ type L[+A] = Slice[P, A] })#L] = SuccTree(pt)
+      def traverseImpl[G[_], A, B](tree : T[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[T[B]] = {
+        val coeTree : tt.Tree[A] = subst(tree)(tt.treeCoe[A])
+        val trTree : G[tt.Tree[B]] = tt.traverse(coeTree)(f)
+        val cohTr : G[T[B]] = tt.treeCoh[B].subst[G](trTree)
+        cohTr
+      }
+
+    }
 
   implicitly[TreeType[Tree0]]
   implicitly[TreeType[Tree1]]
   implicitly[TreeType[Tree2]]
 
-  implicit class TreeOps[T[+_], A](tr : T[A])(implicit isTree : TreeType[T]) {
-
-  }
+  implicitly[Traverse[Tree3]]
+  // implicitly[Functor[Tree2]]
 
 }
-
-// sealed trait Tree {
-
-//   type C[_]
-
-//   type Dim <: Nat
-
-//   type Addr
-
-//   type Derivative[_]
-//   type Context[_]
-
-// }
-
-// case class ZT() extends Tree {
-
-//   type C[A] = Id[A]
-
-//   type Dim = _0
-
-//   type Addr = Nothing
-
-//   type Derivative[A] = Unit
-//   type Context[A] = Unit
-
-// }
-
-// case class ST[T <: Tree]() extends Tree {
-
-//   type C[A] = Slice[T#C, A]
-
-//   type Dim = S[T#Dim]
-
-//   type Addr = List[T#Addr]
-
-//   type Derivative[A] = (T#C[C[A]], Context[A])
-//   type Context[A] = List[(A, T#Derivative[C[A]])]
-
-// }
-
-// object TreeTest {
-
-//   type Tree0[A] = ZT#C[A]
-//   type Tree1[A] = ST[ZT]#C[A]
-
-//   implicit class TreeOps[T <: Tree, A](t : T#C[A]) {
-
-//   }
-
-// }
-
-// trait SliceOf[F[_], G[_]] {
-
-//   type P[_] 
-
-//   trait PointMatch {
-//     def unapply[A](t : G[A]) : Option[F[A]]
-//   }
-
-//   trait LeafMatch {
-//     def unapply[A](t : G[A]) : Option[Unit]
-//   }
-
-//   trait BranchMatch {
-//     def unapply[A](t : G[A]) : Option[(A , P[G[A]])]
-//   }
-
-//   val IsPoint : PointMatch
-//   val IsLeaf : LeafMatch
-//   val IsBranch : BranchMatch
-
-// }
-
-// trait IdSlice[G[_]] {
-
-// }
-
-// object SliceOf {
-
-//   implicit def fSliceOfF[F[_]] : SliceOf[F, F] = ??? //new SliceOf[F, F] { }
-
-//   implicit def sliceSliceOfF[F[_], G[_]](implicit sl : SliceOf[F, G]) : SliceOf[F, ({ type L[X] = Slice[G, X] })#L] = ???
-
-//   type Tree0[+A] = Id[A]
-//   type Tree1[+A] = Slice[Tree0, A]
-//   type Tree2[+A] = Slice[Tree1, A]
-//   type Tree3[+A] = Slice[Tree2, A]
-
-//   implicitly[SliceOf[Id, Tree0]]
-//   implicitly[SliceOf[Id, Tree1]]
-//   implicitly[SliceOf[Id, Tree2]]
-
-//   implicit class TreeOps[G[_], A](t : G[A])(implicit isTree : SliceOf[Id, G]) {
-
-//     import isTree._
-
-//     def pointValue : Option[A] =
-//       t match {
-//         case IsPoint(ia) => Some(ia)
-//         case IsLeaf => None
-//         case IsBranch(a, x) => {
-//           val test : A = a
-//           val test2 : P[G[A]] = x
-
-//           None
-//         }
-//       }
-//   }
-
-// }
-
-// trait IsTree[TA] {
-
-//   type Dim <: Nat
-
-//   type A
-
-//   type T[+_]
-//   type P[+_]
-
-//   type Dir
-//   type Addr = List[Dir]
-
-//   type PrevDeriv[+_]
-//   type Context[+X] = List[(X, PrevDeriv[T[X]])]
-//   type Derivative[+X] = (P[T[X]], Context[X])
-
-//   def plug(d : Derivative[A], a : A) : T[A]
-//   def close(c : Context[A], t : T[A]) : T[A]
-
-//   trait PointMatch {
-//     def unapply(t : TA) : Option[A]
-//   }
-
-//   trait LeafMatch {
-//     def unapply(t : TA) : Option[Unit]
-//   }
-
-//   trait BranchMatch {
-//     def unapply(t : TA) : Option[(A , P[T[A]], IsTree[P[A]])]
-//   }
-
-//   val IsPoint : PointMatch
-//   val IsLeaf : LeafMatch
-//   val IsBranch : BranchMatch
-
-// }
-
-
-// sealed trait TreeAddr[D <: Nat]
-// case class Root[D <: Nat]() extends TreeAddr[S[D]]
-// case class Then[D <: Nat](dir : TreeAddr[D], addr : TreeAddr[S[D]]) extends TreeAddr[S[D]]
-
-// sealed trait TreeDeriv[D <: Nat]
-// case object PointDeriv extends TreeDeriv[_0]
-// // case class Suspend[D <: Nat](shell : TTS
-
-// object IsTree {
-
-//   type Tree0[+A] = Id[A]
-//   type Tree1[+A] = Slice[Tree0, A]
-//   type Tree2[+A] = Slice[Tree1, A]
-//   type Tree3[+A] = Slice[Tree2, A]
-
-//   val isTree0 = implicitly[IsTree[Tree0[Int]]]
-//   val isTree1 = implicitly[IsTree[Tree1[Int]]]
-//   val isTree2 = implicitly[IsTree[Tree2[Int]]]
-//   val isTree3 = implicitly[IsTree[Tree3[Int]]]
-
-//   implicit class TreeOps[FA](t : FA)(implicit val isTree : IsTree[FA]) {
-
-//     import isTree._
-
-//     def isPoint : Boolean =
-//       t match {
-//         case IsPoint(a) => true
-//         case _ => false
-//       }
-
-//     def visit(dir : TreeAddr[Dim]) : Option[Int] = ???
-
-//     def seek(addr : TreeAddr[S[Dim]]) : Option[Int] = ???
-
-//   }
-
-//   implicit def identityIsTree[X] : IsTree[Id[X]] = 
-//     new IsTree[Id[X]] {
-
-//       type Dim = _0
-
-//       type A = X
-
-//       type T[+B] = Id[B]
-//       type P[+B] = Nothing
-
-//       type Dir = Nothing
-//       type PrevDeriv[+B] = Unit
-
-//       def plug(d : Derivative[A], a : A) : T[A] = a
-//       def close(c : Context[A], t : T[A]) : T[A] = t
-
-//       object IsPoint extends PointMatch {
-//         def unapply(t : Id[A]) : Option[A] = Some(t)
-//       }
-
-//       object IsLeaf extends LeafMatch {
-//         def unapply(t : Id[A]) : Option[Unit] = None
-//       }
-
-//       object IsBranch extends BranchMatch {
-//         def unapply(t : Id[A]) : Option[(A, P[T[A]], IsTree[P[A]])] = None
-//       }
-
-//     }
-
-//   implicit def sliceIsTree[U[+_], V](implicit ut : IsTree[U[V]]) : IsTree[Slice[U, V]] =
-//     new IsTree[Slice[U, V]] {
-
-//       type Dim = S[ut.Dim]
-
-//       type A = V
-
-//       type T[+X] = Slice[U, X]
-//       type P[+X] = U[X]
-
-//       type Dir = ut.Addr
-//       type PrevDeriv[+X] = ut.Derivative[X]
-
-//       def plug(d : Derivative[A], a : A) : T[A] =
-//         d match {
-//           case (shell, c) => close(c, Joint(a, shell))
-//         }
-
-//       def close(c : Context[A], t : T[A]) : T[A] = 
-//         c match {
-//           case Nil => t
-//           case (a, pd) :: c => {
-
-//             val test : PrevDeriv[T[A]] = pd
-//             // ut.plug(pd, t)))
-
-//             val utt = implicitly[IsTree[U[T[A]]]]
-//             val whoops = pd.asInstanceOf[utt.Derivative[utt.A]]
-//             val other = t.asInstanceOf[utt.A]
-//             val almost : utt.T[utt.A] = utt.plug(whoops, other)
-//             val goal : U[T[A]] = almost.asInstanceOf[U[T[A]]]
-
-//             close(c, Joint(a, goal)) 
-//           }
-//         }
-
-//       object IsPoint extends PointMatch {
-//         def unapply(t : T[A]) : Option[A] = None
-//       }
-
-//       object IsLeaf extends LeafMatch {
-//         def unapply(t : T[A]) : Option[Unit] =
-//           t match {
-//             case Cap() => Some(())
-//             case _ => None
-//           }
-//       }
-
-//       object IsBranch extends BranchMatch {
-//         def unapply(t : T[A]) : Option[(A , U[Slice[U, A]], IsTree[P[A]])] =
-//           t match {
-//             case Cap() => None
-//             case Joint(a, shell) => Some((a, shell, ut))
-//           }
-//       }
-
-//     }
-// }
