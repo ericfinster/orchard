@@ -20,9 +20,8 @@ import Nats._
 
 sealed trait Slice[F[_], +A]
 
-case class Cap[F[+_], +A]() extends Slice[F, A]
-case class Joint[F[+_], +A](a : A, fsa : F[Slice[F, A]]) extends Slice[F, A]
-
+case class Cap[F[+_], +A]() extends Slice[F, A] 
+case class Joint[F[+_], +A](a : A, fsa : F[Slice[F, A]]) extends Slice[F, A] 
 
 trait SliceInstances {
 
@@ -102,4 +101,13 @@ object Slice extends SliceInstances {
 
     }
 
+  implicit class SliceOps[F[+_], +A](s : Slice[F, A]) {
+
+    def isCap : Boolean = 
+      s match {
+        case Cap() => true
+        case _ => false
+      }
+
+  }
 }

@@ -11,10 +11,12 @@ import scala.language.higherKinds
 import scala.language.implicitConversions
 
 import scalaz.Id._
+import scalaz.Leibniz._
 
 sealed trait TreeIndex {
 
   type Self <: TreeIndex
+  type Pred <: TreeIndex
 
   type Tree[+_]
   type Context[+_]
@@ -29,6 +31,7 @@ sealed trait TreeIndex {
 case object ZT extends TreeIndex {
 
   type Self = this.type
+  type Pred = Nothing
 
   type Tree[+A] = Id[A]
   type Context[+A] = Unit
@@ -39,9 +42,10 @@ case object ZT extends TreeIndex {
 
 }
 
-case class ST[Pred <: TreeIndex](pred : Pred) extends TreeIndex {
+case class ST[P <: TreeIndex](pred : P) extends TreeIndex {
 
   type Self = ST[Pred]
+  type Pred = P
 
   type Tree[+A] = Slice[Pred#Tree, A]
   type Context[+A] = List[(A, Pred#Derivative[Tree[A]])]
@@ -80,7 +84,7 @@ object TreeIndex {
     def unapply[N <: TreeIndex](n : N) : Option[SuccImplicits[N]] = 
       n match {
         case ST(pred) => 
-          Some(new SuccImplicits[N] { type P = pred.Self ; val p = pred.asInstanceOf[P] })
+          Some(new SuccImplicits[N] { val p = pred.asInstanceOf[P] })
         case _ => None
       }
   }
@@ -89,97 +93,71 @@ object TreeIndex {
     def unapply[N <: TreeIndex](n : N) : Option[GteTwoImplicits[N]] = 
       n match {
         case ST(ST(ppred)) =>
-          Some(new GteTwoImplicits[N] { type PP = ppred.Self ; val pp = ppred.asInstanceOf[PP] })
+          Some(new GteTwoImplicits[N] { val pp = ppred.asInstanceOf[PP] })
         case _ => None
       }
   }
 
-  trait ZeroImplicits[N <: TreeIndex] {
+  trait TreeConversions[N <: TreeIndex, M <: TreeIndex] {
 
-    implicit def treeCoh[A](zt : ZT.Tree[A]) : N#Tree[A] = zt.asInstanceOf[N#Tree[A]]
-    implicit def contextCoh[A](zc : ZT.Context[A]) : N#Context[A] = zc.asInstanceOf[N#Context[A]]
-    implicit def derivCoh[A](zd : ZT.Derivative[A]) : N#Derivative[A] = zd.asInstanceOf[N#Derivative[A]]
-    implicit def zipCoh[A](zz : ZT.Zipper[A]) : N#Zipper[A] = zz.asInstanceOf[N#Zipper[A]]
-    implicit def dirCoh(zd : ZT.Direction) : N#Direction = zd.asInstanceOf[N#Direction]
-    implicit def addrCoh(za : ZT.Address) : N#Address = za.asInstanceOf[N#Address]
+    implicit def rewrite[F[_], A, B](fa : F[A])(implicit eq : A === B) : F[B] = eq.subst[F](fa)
 
-    implicit def treeCoe[A](nt : N#Tree[A]) : ZT.Tree[A] = nt.asInstanceOf[ZT.Tree[A]]
-    implicit def contextCoe[A](nc : N#Context[A]) : ZT.Context[A] = nc.asInstanceOf[ZT.Context[A]]
-    implicit def derivCoe[A](nd : N#Derivative[A]) : ZT.Derivative[A] = nd.asInstanceOf[ZT.Derivative[A]]
-    implicit def zipCoe[A](nz : N#Derivative[A]) : ZT.Zipper[A] = nz.asInstanceOf[ZT.Zipper[A]]
-    implicit def dirCoe(nd : N#Direction) : ZT.Direction = nd.asInstanceOf[ZT.Direction]
-    implicit def addCoe[A](na : N#Address) : ZT.Address = na.asInstanceOf[ZT.Address]
+    implicit def treeCohEq[A] : N#Tree[A] === M#Tree[A] = force[Nothing, Any, N#Tree[A], M#Tree[A]]
+    implicit def contextCohEq[A] : N#Context[A] === M#Context[A] = force[Nothing, Any, N#Context[A], M#Context[A]]
+    implicit def derivativeCohEq[A] : N#Derivative[A] === M#Derivative[A] = force[Nothing, Any, N#Derivative[A], M#Derivative[A]]
+    implicit def zipperCohEq[A] : N#Zipper[A] === M#Zipper[A] = force[Nothing, Any, N#Zipper[A], M#Zipper[A]]
+    implicit def directionCohEq[A] : N#Direction === M#Direction = force[Nothing, Any, N#Direction, M#Direction]
+    implicit def addressCohEq[A] : N#Address === M#Address = force[Nothing, Any, N#Address, M#Address]
+
+    implicit def treeCoeEq[A] : M#Tree[A] === N#Tree[A] = force[Nothing, Any, M#Tree[A], N#Tree[A]]
+    implicit def contextCoeEq[A] : M#Context[A] === N#Context[A] = force[Nothing, Any, M#Context[A], N#Context[A]]
+    implicit def derivativeCoeEq[A] : M#Derivative[A] === N#Derivative[A] = force[Nothing, Any, M#Derivative[A], N#Derivative[A]]
+    implicit def zipperCoeEq[A] : M#Zipper[A] === N#Zipper[A] = force[Nothing, Any, M#Zipper[A], N#Zipper[A]]
+    implicit def directionCoeEq[A] : M#Direction === N#Direction = force[Nothing, Any, M#Direction, N#Direction]
+    implicit def addressCoeEq[A] : M#Address === N#Address = force[Nothing, Any, M#Address, N#Address]
+
+    implicit def treeCoh[A](nt : N#Tree[A]) : M#Tree[A] = rewrite[Id, N#Tree[A], M#Tree[A]](nt)
+    implicit def contextCoh[A](nt : N#Context[A]) : M#Context[A] = rewrite[Id, N#Context[A], M#Context[A]](nt)
+    implicit def derivativeCoh[A](nt : N#Derivative[A]) : M#Derivative[A] = rewrite[Id, N#Derivative[A], M#Derivative[A]](nt)
+    implicit def zipperCoh[A](nt : N#Zipper[A]) : M#Zipper[A] = rewrite[Id, N#Zipper[A], M#Zipper[A]](nt)
+    implicit def directionCoh(nd : N#Direction) : M#Direction = rewrite[Id, N#Direction, M#Direction](nd)
+    implicit def addressCoh(nd : N#Address) : M#Address = rewrite[Id, N#Address, M#Address](nd)
+
+    implicit def treeCoe[A](mt : M#Tree[A]) : N#Tree[A] = rewrite[Id, M#Tree[A], N#Tree[A]](mt)
+    implicit def contextCoe[A](mt : M#Context[A]) : N#Context[A] = rewrite[Id, M#Context[A], N#Context[A]](mt)
+    implicit def derivativeCoe[A](mt : M#Derivative[A]) : N#Derivative[A] = rewrite[Id, M#Derivative[A], N#Derivative[A]](mt)
+    implicit def zipperCoe[A](mt : M#Zipper[A]) : N#Zipper[A] = rewrite[Id, M#Zipper[A], N#Zipper[A]](mt)
+    implicit def directionCoe(md : M#Direction) : N#Direction = rewrite[Id, M#Direction, N#Direction](md)
+    implicit def addressCoe(md : M#Address) : N#Address = rewrite[Id, M#Address, N#Address](md)
+
+    // Can't do this because the names then block out the previous conversions ... how to fix it?
+    def succConversions : TreeConversions[ST[N], ST[M]] = new TreeConversions[ST[N], ST[M]] { }
 
   }
 
-  trait OneImplicits[N <: TreeIndex] {
+  trait ZeroImplicits[N <: TreeIndex] extends TreeConversions[N, _0]
+  trait OneImplicits[N <: TreeIndex] extends TreeConversions[N, _1]
 
-    implicit def treeCoh[A](zt : ST[ZT.type]#Tree[A]) : N#Tree[A] = zt.asInstanceOf[N#Tree[A]]
-    implicit def contextCoh[A](zc : ST[ZT.type]#Context[A]) : N#Context[A] = zc.asInstanceOf[N#Context[A]]
-    implicit def derivCoh[A](zd : ST[ZT.type]#Derivative[A]) : N#Derivative[A] = zd.asInstanceOf[N#Derivative[A]]
-    implicit def zipCoh[A](zz : ST[ZT.type]#Zipper[A]) : N#Zipper[A] = zz.asInstanceOf[N#Zipper[A]]
-    implicit def dirCoh(zd : ST[ZT.type]#Direction) : N#Direction = zd.asInstanceOf[N#Direction]
-    implicit def addrCoh(za : ST[ZT.type]#Address) : N#Address = za.asInstanceOf[N#Address]
+  trait SuccImplicits[N <: TreeIndex] extends TreeConversions[N, ST[N#Pred]] {
 
-    implicit def treeCoe[A](nt : N#Tree[A]) : ST[ZT.type]#Tree[A] = nt.asInstanceOf[ST[ZT.type]#Tree[A]]
-    implicit def contextCoe[A](nc : N#Context[A]) : ST[ZT.type]#Context[A] = nc.asInstanceOf[ST[ZT.type]#Context[A]]
-    implicit def derivCoe[A](nd : N#Derivative[A]) : ST[ZT.type]#Derivative[A] = nd.asInstanceOf[ST[ZT.type]#Derivative[A]]
-    implicit def zipCoe[A](nz : N#Zipper[A]) : ST[ZT.type]#Zipper[A] = nz.asInstanceOf[ST[ZT.type]#Zipper[A]]
-    implicit def dirCoe(nd : N#Direction) : ST[ZT.type]#Direction = nd.asInstanceOf[ST[ZT.type]#Direction]
-    implicit def addCoe[A](na : N#Address) : ST[ZT.type]#Address = na.asInstanceOf[ST[ZT.type]#Address]
-
-  }
-
-  trait SuccImplicits[N <: TreeIndex] {
-
-    type P <: TreeIndex
+    type P = N#Pred
 
     val p : P
 
     type PTree[+A] = P#Tree[A]
-
     type STree[+A] = ST[P]#Tree[A]
-    type SDeriv[+A] = ST[P]#Derivative[A]
-
-    implicit def treeCoh[A](st : ST[P]#Tree[A]) : N#Tree[A] = st.asInstanceOf[N#Tree[A]]
-    implicit def contextCoh[A](sc : ST[P]#Context[A]) : N#Context[A] = sc.asInstanceOf[N#Context[A]]
-    implicit def derivCoh[A](sd : ST[P]#Derivative[A]) : N#Derivative[A] = sd.asInstanceOf[N#Derivative[A]]
-    implicit def zipCoh[A](sz : ST[P]#Zipper[A]) : N#Zipper[A] = sz.asInstanceOf[N#Zipper[A]]
-    implicit def dirCoh(sd : ST[P]#Direction) : N#Direction = sd.asInstanceOf[N#Direction]
-    implicit def addrCoh(sa : ST[P]#Address) : N#Address = sa.asInstanceOf[N#Address]
-
-    implicit def treeCoe[A](nt : N#Tree[A]) : ST[P]#Tree[A] = nt.asInstanceOf[ST[P]#Tree[A]]
-    implicit def contextCoe[A](nc : N#Context[A]) : ST[P]#Context[A] = nc.asInstanceOf[ST[P]#Context[A]]
-    implicit def derivCoe[A](nd : N#Derivative[A]) : ST[P]#Derivative[A] = nd.asInstanceOf[ST[P]#Derivative[A]]
-    implicit def zipCoe[A](nz : N#Derivative[A]) : ST[P]#Zipper[A] = nz.asInstanceOf[ST[P]#Zipper[A]]
-    implicit def dirCoe(nd : N#Direction) : ST[P]#Direction = nd.asInstanceOf[ST[P]#Direction]
-    implicit def addrCoe(na : N#Address) : ST[P]#Address = na.asInstanceOf[ST[P]#Address]
 
   }
 
-  trait GteTwoImplicits[N <: TreeIndex] {
+  trait GteTwoImplicits[N <: TreeIndex] extends TreeConversions[N, ST[ST[N#Pred#Pred]]] {
 
-    type PP <: TreeIndex
+    type PP = N#Pred#Pred
     type P = ST[PP]
 
     type FS[+A] = Slice[PP#Tree, A]
 
     val pp : PP
     val p : P = ST(pp)
-
-    implicit def treeCoh[A](st : ST[ST[PP]]#Tree[A]) : N#Tree[A] = st.asInstanceOf[N#Tree[A]]
-    implicit def contextCoh[A](sc : ST[ST[PP]]#Context[A]) : N#Context[A] = sc.asInstanceOf[N#Context[A]]
-    implicit def derivCoh[A](sd : ST[ST[PP]]#Derivative[A]) : N#Derivative[A] = sd.asInstanceOf[N#Derivative[A]]
-    implicit def zipCoh[A](sz : ST[ST[PP]]#Zipper[A]) : N#Zipper[A] = sz.asInstanceOf[N#Zipper[A]]
-    implicit def dirCoh(sd : ST[ST[PP]]#Direction) : N#Direction = sd.asInstanceOf[N#Direction]
-    implicit def addrCoh(sa : ST[ST[PP]]#Address) : N#Address = sa.asInstanceOf[N#Address]
-
-    implicit def treeCoe[A](nt : N#Tree[A]) : ST[ST[PP]]#Tree[A] = nt.asInstanceOf[ST[ST[PP]]#Tree[A]]
-    implicit def contextCoe[A](nc : N#Context[A]) : ST[ST[PP]]#Context[A] = nc.asInstanceOf[ST[ST[PP]]#Context[A]]
-    implicit def derivCoe[A](nd : N#Derivative[A]) : ST[ST[PP]]#Derivative[A] = nd.asInstanceOf[ST[ST[PP]]#Derivative[A]]
-    implicit def zipCoe[A](nz : N#Zipper[A]) : ST[ST[PP]]#Zipper[A] = nz.asInstanceOf[ST[ST[PP]]#Zipper[A]]
-    implicit def dirCoe(nd : N#Direction) : ST[ST[PP]]#Direction = nd.asInstanceOf[ST[ST[PP]]#Direction]
-    implicit def addrCoe(na : N#Address) : ST[ST[PP]]#Address = na.asInstanceOf[ST[ST[PP]]#Address]
 
   }
 
