@@ -21,14 +21,35 @@ trait TreeFunctions {
 
   import TreeIndex._
 
-  def map[N <: TreeIndex, A, B](n : N, tree : N#Tree[A], f : A => B) : N#Tree[B]
-  def traverse[N <: TreeIndex, G[_], A, B](n : N, tree :  N#Tree[A], f : A => G[B])(implicit apG : Applicative[G]) : G[N#Tree[B]]
+  def isTraverse[N <: TreeIndex](n : N) : Traverse[N#Tree] = 
+    new Traverse[N#Tree] {
+      def traverseImpl[G[_], A, B](tr : N#Tree[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[N#Tree[B]] =
+        traverseT(n, tr, f)
+    }
 
-  def sequence[N <: TreeIndex, G[_], A](n : N, tree : N#Tree[G[A]])(implicit apG : Applicative[G]) : G[N#Tree[A]] =
-    traverse(n, tree, identity[G[A]])
+  def mapT[N <: TreeIndex, A, B](n : N, tree : N#Tree[A], f : A => B) : N#Tree[B] = 
+    isTraverse(n).map(tree)(f)
+
+  def traverseT[N <: TreeIndex, G[_], A, B](n : N, tree :  N#Tree[A], f : A => G[B])(implicit apG : Applicative[G]) : G[N#Tree[B]] =
+    n match {
+      case IsZeroIndex(zcs) => { import zcs._ ;
+        rewrite[G, B, N#Tree[B]](f(tree : _0#Tree[A]))
+      }
+      case IsSuccIndex(scs) => { import scs._ ; 
+        implicit val PT : Traverse[PTree] = isTraverse(p)
+        val ST = implicitly[Traverse[STree]]
+
+        rewrite[G, STree[B], N#Tree[B]](
+          ST.traverse(tree : STree[A])(f)
+        )
+      }
+    }
+
+  def sequenceT[N <: TreeIndex, G[_], A](n : N, tree : N#Tree[G[A]])(implicit apG : Applicative[G]) : G[N#Tree[A]] =
+    traverseT(n, tree, identity[G[A]])
 
   def const[N <: TreeIndex, A, B](n : N, b : B, tree : N#Tree[A]) : N#Tree[B] =
-    map[N, A, B](n, tree, (_ => b))
+    mapT[N, A, B](n, tree, (_ => b))
 
   def plug[N <: TreeIndex, A](n : N, d : N#Derivative[A], a : A) : N#Tree[A] =
     n match {
@@ -152,8 +173,8 @@ trait TreeFunctions {
 
             for {
               branchPairs <- zipComplete[P, STree[A], STree[B]](p, ash, bsh)
-              zippedShell <- sequence(p,
-                (map[P, (STree[A], STree[B]), Option[STree[(A, B)]]](p, branchPairs, {
+              zippedShell <- sequenceT(p,
+                (mapT[P, (STree[A], STree[B]), Option[STree[(A, B)]]](p, branchPairs, {
                   case (t1 : STree[A], t2 : STree[B]) => zipComplete[ST[P], A, B](ST(p), t1, t2)
                 }))
               )
@@ -177,7 +198,7 @@ trait TreeFunctions {
           case Joint(a, shell) => {
 
             val shellCorollas : PTree[STree[(A, N#Derivative[A])]] = 
-              map[P, STree[A], STree[(A, N#Derivative[A])]](p, shell, 
+              mapT[P, STree[A], STree[(A, N#Derivative[A])]](p, shell, 
                 (t : STree[A]) => {
                   rewrite[({ type L[+X] = STree[(A, X)] })#L, ST[P]#Derivative[A], N#Derivative[A]](
                     zipWithCorolla[ST[P], A](ST(p), t)
@@ -209,7 +230,7 @@ trait TreeFunctions {
               zipWithAddress(p, shell)
 
             val shellResult : PTree[STree[(A, N#Address)]] =
-              map[P, (STree[A], P#Address), STree[(A, N#Address)]](p, shellWithAddrs, {
+              mapT[P, (STree[A], P#Address), STree[(A, N#Address)]](p, shellWithAddrs, {
                 case (st, ad) => {
                   rewrite[({ type L[X] = STree[(A, X)] })#L, ST[P]#Address, N#Address](
                     zipWithPrefix[ST[P], A](ST(p), ad :: (pref : ST[P]#Address), st)
@@ -260,7 +281,7 @@ trait TreeFunctions {
           }
         }
       }
-      case IsSuccIndex(scs) => { import scs._ ; ??? 
+      case IsSuccIndex(scs) => { import scs._ ; 
         tree match {
           case Cap() => Some(plug(n, corolla, prefix))
           case Joint(a, shell) => {
@@ -275,7 +296,7 @@ trait TreeFunctions {
               }
 
               val graftShell : STree[(ST[ST[P]]#Address, ST[P]#Derivative[ST[ST[P]]#Address])] = 
-                map[ST[P], 
+                mapT[ST[P], 
                   ((ST[ST[P]]#Address, ST[P]#Derivative[ST[ST[P]]#Address]) , ST[P]#Address), 
                   (ST[ST[P]]#Address, ST[P]#Derivative[ST[ST[P]]#Address])
                 ](ST(p), 
@@ -300,8 +321,8 @@ trait TreeFunctions {
                 )
 
                 flattenedShell <- (
-                  sequence[ST[P], Option, STree[ST[ST[P]]#Address]](ST(p), 
-                    map[ST[P],
+                  sequenceT[ST[P], Option, STree[ST[ST[P]]#Address]](ST(p), 
+                    mapT[ST[P],
                       ((ST[ST[P]]#Address, ST[P]#Derivative[ST[ST[P]]#Address]), ST[ST[P]]#Tree[A]),
                       Option[STree[ST[ST[P]]#Address]]
                     ](ST(p), zippedShells,
@@ -340,8 +361,8 @@ trait TreeFunctions {
       addrTr <- flattenWithAddress[N, A](n, tree)
       grafts <- zipComplete[N, ST[N]#Address, ST[N]#Tree[A]](n, addrTr, brs)
 
-      result <- this.sequence[N, Grafter, Unit](n,
-        this.map[N,
+      result <- sequenceT[N, Grafter, Unit](n,
+        mapT[N,
           (ST[N]#Address, ST[N]#Tree[A]),
           Grafter[Unit]
         ](n, grafts, {
@@ -379,8 +400,8 @@ trait TreeFunctions {
           case Cap() => Some(Cap())
           case Joint(t, sts) => {
             for {
-              s <- sequence(p,
-                map[P, STree[N#Tree[A]], Option[STree[A]]](p, sts,
+              s <- sequenceT(p,
+                mapT[P, STree[N#Tree[A]], Option[STree[A]]](p, sts,
                   (tt : STree[N#Tree[A]]) => {
                     rewrite[Option, N#Tree[A], STree[A]](
                       substitute[N, A](n, tt)
