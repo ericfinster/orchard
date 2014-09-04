@@ -83,221 +83,214 @@ object Trees extends TreeFunctions {
 
 }
 
+trait TreeRecs {
 
+  import Nats._
 
-// trait TreeRecs {
+  trait TreeRec extends NatRec1[Any] {
+    type OnZero[+A] = Id[A]
+    type OnSucc[P <: Nat, T[+_] <: Any, +A] = Slice[T, A]
+  }
 
-//   trait TreeRec extends NatConsRec[Any] {
-//     type OnZero[+A] = Id[A]
-//     type OnSucc[P <: Nat, T[+_] <: Any, +A] = Slice[T, A]
-//   }
+  trait CardinalRec extends NatRec1[Any] {
+    type OnZero[+A] = Id[A]
+    type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[S[P]#Rec1[Any, TreeRec, A]]
+  }
 
-//   trait CardinalRec extends NatConsRec[Any] {
-//     type OnZero[+A] = Id[A]
-//     type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[S[P]#ConsRec[Any, TreeRec, A]]
-//   }
+  trait DerivativeRec extends NatRec1[Any] {
+    type OnZero[+A] = Unit
+    type OnSucc[P <: Nat, T[+_] <: Any, +A] = (Tree[P, Tree[S[P], A]], List[(A, T[Tree[S[P], A]])])
+  }
 
-//   trait DerivativeRec extends NatConsRec[Any] {
-//     type OnZero[+A] = Unit
-//     type OnSucc[P <: Nat, T[+_] <: Any, +A] = (Tree[P, Tree[S[P], A]], List[(A, T[Tree[S[P], A]])])
-//   }
+  trait ContextRec extends NatRec1[Any] {
+    type OnZero[+A] = Unit
+    type OnSucc[P <: Nat, T[+_] <: Any, +A] = List[(A, Derivative[P, Tree[S[P], A]])]
+  }
 
-//   trait ContextRec extends NatConsRec[Any] {
-//     type OnZero[+A] = Unit
-//     type OnSucc[P <: Nat, T[+_] <: Any, +A] = List[(A, Derivative[P, Tree[S[P], A]])]
-//   }
+  trait DirectionRec extends NatRec0[Any] {
+    type OnZero = Nothing
+    type OnSucc[P <: Nat, T] = List[T]
+  }
 
-//   trait DirectionRec extends NatRec[Any] {
-//     type OnZero = Nothing
-//     type OnSucc[P <: Nat, T] = List[T]
-//   }
+  type Tree[N <: Nat, +A] = N#Rec1[Any, TreeRec, A] 
+  type CardinalTree[N <: Nat, +A] = N#Rec1[Any, CardinalRec, A] 
 
-//   type Tree[N <: Nat, +A] = N#ConsRec[Any, TreeRec, A] 
-//   type CardinalTree[N <: Nat, +A] = N#ConsRec[Any, CardinalRec, A] 
+  type Derivative[N <: Nat, +A] = N#Rec1[Any, DerivativeRec, A]
+  type Context[N <: Nat, +A] = N#Rec1[Any, ContextRec, A]
+  type Zipper[N <: Nat, +A] = (Tree[N, A], Context[N, A])
 
-//   type Derivative[N <: Nat, +A] = N#ConsRec[Any, DerivativeRec, A]
-//   type Context[N <: Nat, +A] = N#ConsRec[Any, ContextRec, A]
-//   type Zipper[N <: Nat, +A] = (Tree[N, A], Context[N, A])
+  type Direction[N <: Nat] = N#Rec0[Any, DirectionRec]
+  type Address[N <: Nat] = Direction[S[N]]
 
-//   type Direction[N <: Nat] = N#Rec[Any, DirectionRec]
-//   type Address[N <: Nat] = Direction[S[N]]
+  type Tree0[+A] = Tree[__0, A] 
+  type Tree1[+A] = Tree[__1, A] 
+  type Tree2[+A] = Tree[__2, A] 
+  type Tree3[+A] = Tree[__3, A] 
 
-//   import Nats._
+  def nil[A] : Tree1[A] = Cap()
 
-//   type Tree0[+A] = Tree[__0, A] 
-//   type Tree1[+A] = Tree[__1, A] 
-//   type Tree2[+A] = Tree[__2, A] 
-//   type Tree3[+A] = Tree[__3, A] 
+  def cons[A](a : A, t : Tree1[A]) : Tree1[A] = 
+    Joint[Id, A](a, t)
 
-//   def nil[A] : Tree1[A] = Cap()
+  def leaf[A] : Tree2[A] = Cap[Tree1, A]()
 
-//   def cons[A](a : A, t : Tree1[A]) : Tree1[A] = 
-//     Joint[Id, A](a, t)
+  def node[A](a : A, brs : Tree1[Tree2[A]]) : Tree2[A] =
+    Joint[Tree1, A](a, brs)
 
-//   def leaf[A] : Tree2[A] = Cap[Tree1, A]()
+  def cap[N <: Nat, A] : Tree[S[N], A] = 
+    Cap[({ type L[+X] = Tree[N, X] })#L, A]()
 
-//   def node[A](a : A, brs : Tree1[Tree2[A]]) : Tree2[A] =
-//     Joint[Tree1, A](a, brs)
+  def joint[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = 
+    Joint[({ type L[+X] = Tree[N, X] })#L, A](a, shell)
 
-//   def cap[N <: Nat, A] : Tree[S[N], A] = 
-//     Cap[({ type L[+X] = Tree[N, X] })#L, A]()
+  val test : Tree[__2, Int] = ???
 
-//   def joint[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = 
-//     Joint[({ type L[+X] = Tree[N, X] })#L, A](a, shell)
+  type PT[+A] = Tree[__1, A] 
 
-//   // object IsCap {
+  val temp : Slice[PT, Int] = test
 
-//   //   def unapply[N <: Nat, A](t : Tree[S[N], A]) : Boolean = ???
+  temp match {
+    case Cap() => ???
+    // case Joint(a, shell) => ???
+    case _ => ???
+  }
 
-//   // }
+}
 
-//   // object IsJoint {
+trait TreeStuff extends TreeRecs {
 
-//   //   def unapply[N <: Nat, A](t : Tree[S[N], A]) : Option[(A, Tree[N, Tree[S[N], A]])] =
-//   //     t match {
-//   //       case Joint(a, shell) => None
-//   //       case _ => None
-//   //     }
+  import Nats._
 
-//   // }
+  trait IsTree[T, A] { 
 
-//   val test : Tree[__2, Int] = ???
+    type Dim <: Nat 
+    val dim : Dim 
 
-//   val temp : Slice[({ type L[+X] = Tree[__1, X] })#L, Int] = test
+    def leibniz : T === Tree[Dim, A]
 
-//   // test match {
-//   //   case Cap() => ???
-//   //   case Joint(a, shell) => ???
-//   //   case _ => ???
-//   // }
+  }
 
-// }
+  implicit def treesAreTrees[N <: Nat, A](implicit n : N) : IsTree[Tree[N, A], A] = 
+    new IsTree[Tree[N, A], A] {
 
-// trait TreeStuff extends TreeRecs {
+      type Dim = N
+      val dim = n
 
-//   import Nats._
+      def leibniz : Tree[N, A] === Tree[Dim, A] = 
+        refl[Tree[N, A]]
 
-//   trait IsTree[T, A] { 
+    }
 
-//     type Dim <: Nat 
-//     val dim : Dim 
+  implicitly[IsTree[Tree[__0, Int], Int]]
+  implicitly[IsTree[Tree[__1, Int], Int]]
+  implicitly[IsTree[Tree[__2, Int], Int]]
+  implicitly[IsTree[Tree[__3, Int], Int]]
 
-//     def leibniz : T === Tree[Dim, A]
+  object ZeroDim {
+  }
 
-//   }
+  object OneDim {
+  }
 
-//   implicit def treesAreTrees[N <: Nat, A](implicit n : N) : IsTree[Tree[N, A], A] = 
-//     new IsTree[Tree[N, A], A] {
+  object SuccDim {
+  }
 
-//       type Dim = N
-//       val dim = n
+  implicit class TreeOps[T, A](t : T)(implicit val isTree : IsTree[T, A]) {
 
-//       def leibniz : Tree[N, A] === Tree[Dim, A] = 
-//         refl[Tree[N, A]]
+    import isTree._
 
-//     }
+    val tree : Tree[Dim, A] = 
+      subst(t)(leibniz)
 
-//   implicitly[IsTree[Tree[__0, Int], Int]]
-//   implicitly[IsTree[Tree[__1, Int], Int]]
-//   implicitly[IsTree[Tree[__2, Int], Int]]
-//   implicitly[IsTree[Tree[__3, Int], Int]]
+    def hello : Unit = ()
 
-//   implicit class TreeOps[T, A](t : T)(implicit val isTree : IsTree[T, A]) {
+    def map[B](f : A => B) : Tree[Dim, B] = ???
 
-//     import isTree._
+    def zipComplete[B](other : Tree[Dim, B]) : Option[Tree[Dim, (A, B)]] = 
+      TreeLib.zipComplete[Dim, A, B](dim, tree, other)
 
-//     val tree : Tree[Dim, A] = 
-//       subst(t)(leibniz)
+  }
 
-//     def hello : Unit = ()
+  object TreeLib {
 
-//     def map[B](f : A => B) : Tree[Dim, B] = ???
+    implicit def treeCoh[N <: Nat, M <: Nat, A](t : Tree[N, A])(implicit eq : N === M) : Tree[M, A] = ???
+    implicit def treeCoe[N <: Nat, M <: Nat, A](t : Tree[M, A])(implicit eq : N === M) : Tree[N, A] = ???
 
-//     def zipComplete[B](other : Tree[Dim, B]) : Option[Tree[Dim, (A, B)]] = 
-//       TreeLib.zipComplete[Dim, A, B](dim, tree, other)
+    implicit def derivCoh[N <: Nat, M <: Nat, A](d : Derivative[N, A])(implicit eq : N === M) : Derivative[M, A] = ???
+    implicit def derivCoe[N <: Nat, M <: Nat, A](d : Derivative[M, A])(implicit eq : N === M) : Derivative[N, A] = ???
 
-//   }
+    implicit def cntxtCoh[N <: Nat, M <: Nat, A](d : Context[N, A])(implicit eq : N === M) : Context[M, A] = ???
+    implicit def cntxtCoe[N <: Nat, M <: Nat, A](d : Context[M, A])(implicit eq : N === M) : Context[N, A] = ???
 
-//   object TreeLib {
+    def plug[N <: Nat, A](n : N, d : Derivative[N, A], a : A) : Tree[N, A] = 
+      n match {
+        case IsZero(zm) => { import zm._ ; a : Tree[__0, A] }
+        case IsSucc(sm) => { import sm._ ;
+          (d : Derivative[S[P], A]) match {
+            case (shell, context) => 
+              close[S[P], A](S(p), context, joint(a, shell))
+          }
+        }
+      }
 
-//     implicit def treeCoh[N <: Nat, M <: Nat, A](t : Tree[N, A])(implicit eq : N === M) : Tree[M, A] = ???
-//     implicit def treeCoe[N <: Nat, M <: Nat, A](t : Tree[M, A])(implicit eq : N === M) : Tree[N, A] = ???
+    def close[N <: Nat, A](n : N, c : Context[N, A], t : Tree[N, A]) : Tree[N, A] =
+      n match {
+        case IsZero(zm) => { import zm._ ; t }
+        case IsSucc(sm) => { import sm._ ;
+          (c : Context[S[P], A]) match {
+            case Nil => t
+            case (a , d) :: cs => {
+              close[S[P], A](S(p), cs, joint(a , plug[P, Tree[S[P], A]](p, d, t)))
+            }
+          }
+        }
+      }
 
-//     implicit def derivCoh[N <: Nat, M <: Nat, A](d : Derivative[N, A])(implicit eq : N === M) : Derivative[M, A] = ???
-//     implicit def derivCoe[N <: Nat, M <: Nat, A](d : Derivative[M, A])(implicit eq : N === M) : Derivative[N, A] = ???
 
-//     implicit def cntxtCoh[N <: Nat, M <: Nat, A](d : Context[N, A])(implicit eq : N === M) : Context[M, A] = ???
-//     implicit def cntxtCoe[N <: Nat, M <: Nat, A](d : Context[M, A])(implicit eq : N === M) : Context[N, A] = ???
+    def zipComplete[N <: Nat, A, B](n : N, ta : Tree[N, A], tb : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
+      n match {
+        case IsZero(zm) => { import zm._ ;
 
-//     def plug[N <: Nat, A](n : N, d : Derivative[N, A], a : A) : Tree[N, A] = 
-//       n match {
-//         case IsZero(zm) => { import zm._ ; a : Tree[__0, A] }
-//         case IsSucc(sm) => { import sm._ ;
-//           (d : Derivative[S[P], A]) match {
-//             case (shell, context) => 
-//               close[S[P], A](S(p), context, joint(a, shell))
-//           }
-//         }
-//       }
+          val a : Tree[__0, A] = ta
+          val b : Tree[__0, B] = tb
+          val ab : Tree[__0, (A, B)] = (a, b)
 
-//     def close[N <: Nat, A](n : N, c : Context[N, A], t : Tree[N, A]) : Tree[N, A] =
-//       n match {
-//         case IsZero(zm) => { import zm._ ; t }
-//         case IsSucc(sm) => { import sm._ ;
-//           (c : Context[S[P], A]) match {
-//             case Nil => t
-//             case (a , d) :: cs => {
-//               close[S[P], A](S(p), cs, joint(a , plug[P, Tree[S[P], A]](p, d, t)))
-//             }
-//           }
-//         }
-//       }
+          Some(ab)
 
+        }
+        case IsSucc(sm) => { import sm._ ;
 
-//     def zipComplete[N <: Nat, A, B](n : N, ta : Tree[N, A], tb : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
-//       n match {
-//         case IsZero(zm) => { import zm._ ;
+          val tra : Tree[S[P], A] = ta
+          val trb : Tree[S[P], B] = tb
 
-//           val a : Tree[__0, A] = ta
-//           val b : Tree[__0, B] = tb
-//           val ab : Tree[__0, (A, B)] = (a, b)
+          // tra match {
+          //   case IsCap() => ()
+          //   case IsJoint(a, shell) => ()
+          // }
 
-//           Some(ab)
+          // (tra, trb) match {
+          //   case (Cap(), Cap()) => ??? //Some(Cap())
+      //       case (Joint(a, ash), Joint(b, bsh)) => {
 
-//         }
-//         case IsSucc(sm) => { import sm._ ;
+      //         for {
+      //           branchPairs <- zipComplete[P, STree[A], STree[B]](p, ash, bsh)
+      //           zippedShell <- sequenceT(p,
+      //             (mapT[P, (STree[A], STree[B]), Option[STree[(A, B)]]](p, branchPairs, {
+      //               case (t1 : STree[A], t2 : STree[B]) => zipComplete[ST[P], A, B](ST(p), t1, t2)
+      //             }))
+      //           )
+      //         } yield Joint((a, b), zippedShell)
 
-//           val tra : Tree[S[P], A] = ta
-//           val trb : Tree[S[P], B] = tb
+      //       }
+          //   case (_, _) => None
+          // }
 
-//           // tra match {
-//           //   case IsCap() => ()
-//           //   case IsJoint(a, shell) => ()
-//           // }
+          ???
 
-//           // (tra, trb) match {
-//           //   case (Cap(), Cap()) => ??? //Some(Cap())
-//       //       case (Joint(a, ash), Joint(b, bsh)) => {
+        }
+      }
 
-//       //         for {
-//       //           branchPairs <- zipComplete[P, STree[A], STree[B]](p, ash, bsh)
-//       //           zippedShell <- sequenceT(p,
-//       //             (mapT[P, (STree[A], STree[B]), Option[STree[(A, B)]]](p, branchPairs, {
-//       //               case (t1 : STree[A], t2 : STree[B]) => zipComplete[ST[P], A, B](ST(p), t1, t2)
-//       //             }))
-//       //           )
-//       //         } yield Joint((a, b), zippedShell)
 
-//       //       }
-//           //   case (_, _) => None
-//           // }
+  }
 
-//           ???
-
-//         }
-//       }
-
-
-//   }
-
-// }
+}

@@ -11,14 +11,14 @@ import scala.language.higherKinds
 
 import scalaz.Leibniz._
 
-trait NatRec[Type] {
+trait NatRec0[Type] {
 
   type OnZero <: Type
   type OnSucc[P <: Nat, T <: Type] <: Type
 
 }
 
-trait NatConsRec[Type] {
+trait NatRec1[Type] {
 
   type OnZero[+A] <: Type
   type OnSucc[P <: Nat, T[+_] <: Type, +A] <: Type
@@ -31,8 +31,8 @@ sealed trait Nat { self =>
 
   val self : Self = this.asInstanceOf[Self]
 
-  type Rec[Type, R <: NatRec[Type]] <: Type
-  type ConsRec[Type, C <: NatConsRec[Type], +A] <: Type
+  type Rec0[Type, R <: NatRec0[Type]] <: Type
+  type Rec1[Type, C <: NatRec1[Type], +A] <: Type
 
 }
 
@@ -40,8 +40,8 @@ case object Z extends Nat {
 
   type Self = Z.type
 
-  type Rec[Type, R <: NatRec[Type]] = R#OnZero
-  type ConsRec[Type, C <: NatConsRec[Type], +A] = C#OnZero[A]
+  type Rec0[Type, R <: NatRec0[Type]] = R#OnZero
+  type Rec1[Type, C <: NatRec1[Type], +A] = C#OnZero[A]
 
 }
 
@@ -50,9 +50,11 @@ case class S[P <: Nat](p : P) extends Nat {
 
   type Self = S[P]
 
-  type Rec[Type, R <: NatRec[Type]] = R#OnSucc[P, P#Rec[Type, R]]
-  type ConsRec[Type, C <: NatConsRec[Type], +A] = 
-    C#OnSucc[P, ({ type L[+X] = P#ConsRec[Type, C, X] })#L, A]
+  type Rec0[Type, R <: NatRec0[Type]] = 
+    R#OnSucc[P, P#Rec0[Type, R]]
+
+  type Rec1[Type, C <: NatRec1[Type], +A] = 
+    C#OnSucc[P, ({ type L[+X] = P#Rec1[Type, C, X] })#L, A]
 
 }
 
