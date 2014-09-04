@@ -71,107 +71,119 @@ object TreeIndex {
   type _1 = ST[_0]
   type _2 = ST[_1]
   type _3 = ST[_2]
+  type _4 = ST[_3]
+  type _5 = ST[_4]
+
+  type Tree[N <: TreeIndex, +A] = N#Tree[A]
+  type Context[N <: TreeIndex, +A] = N#Context[A]
+  type Derivative[N <: TreeIndex, +A] = N#Derivative[A]
+  type Zipper[N <: TreeIndex, +A] = N#Zipper[A]
+
+  type Direction[N <: TreeIndex] = N#Direction
 
   object IsZeroIndex {
-    def unapply[N <: TreeIndex](n : N) : Option[ZeroImplicits[N]] =
+    def unapply[N <: TreeIndex](n : N) : Option[ZeroMatch[N]] =
       n match {
-        case ZT => Some(new ZeroImplicits[N] { })
+        case ZT => ??? //Some(new ZeroMatch[N] { })
         case _ => None
       }
   }
 
   object IsOneIndex {
-    def unapply[N <: TreeIndex](n : N) : Option[OneImplicits[N]] = 
+    def unapply[N <: TreeIndex](n : N) : Option[OneMatch[N]] = 
       n match {
-        case ST(ZT) => Some(new OneImplicits[N] { })
+        case ST(ZT) => ??? //Some(new OneMatch[N] { })
         case _ => None
       }
   }
 
   object IsSuccIndex {
-    def unapply[N <: TreeIndex](n : N) : Option[SuccImplicits[N]] = 
+    def unapply[N <: TreeIndex](n : N) : Option[SuccMatch[N]] = 
       n match {
-        case ST(pred) => 
-          Some(new SuccImplicits[N] { val p = pred.asInstanceOf[P] })
+        case ST(pred) => ???
+          // Some(new SuccMatch[N] { })
         case _ => None
       }
   }
 
   object IsDblSuccIndex {
-    def unapply[N <: TreeIndex](n : N) : Option[GteTwoImplicits[N]] = 
+    def unapply[N <: TreeIndex](n : N) : Option[DblSuccMatch[N]] = 
       n match {
-        case ST(ST(ppred)) =>
-          Some(new GteTwoImplicits[N] { val pp = ppred.asInstanceOf[PP] })
+        case ST(ST(ppred)) => ???
+          // Some(new DblSuccMatch[N] { })
         case _ => None
       }
   }
 
-  trait TreeConversions[N <: TreeIndex, M <: TreeIndex] {
+  trait ZeroMatch[N <: TreeIndex]  {
 
-    implicit def rewrite[F[_], A, B](fa : F[A])(implicit eq : A === B) : F[B] = eq.subst[F](fa)
-
-    implicit def treeCohEq[A] : N#Tree[A] === M#Tree[A] = force[Nothing, Any, N#Tree[A], M#Tree[A]]
-    implicit def contextCohEq[A] : N#Context[A] === M#Context[A] = force[Nothing, Any, N#Context[A], M#Context[A]]
-    implicit def derivativeCohEq[A] : N#Derivative[A] === M#Derivative[A] = force[Nothing, Any, N#Derivative[A], M#Derivative[A]]
-    implicit def zipperCohEq[A] : N#Zipper[A] === M#Zipper[A] = force[Nothing, Any, N#Zipper[A], M#Zipper[A]]
-    implicit def directionCohEq[A] : N#Direction === M#Direction = force[Nothing, Any, N#Direction, M#Direction]
-    implicit def addressCohEq[A] : N#Address === M#Address = force[Nothing, Any, N#Address, M#Address]
-
-    implicit def treeCoeEq[A] : M#Tree[A] === N#Tree[A] = force[Nothing, Any, M#Tree[A], N#Tree[A]]
-    implicit def contextCoeEq[A] : M#Context[A] === N#Context[A] = force[Nothing, Any, M#Context[A], N#Context[A]]
-    implicit def derivativeCoeEq[A] : M#Derivative[A] === N#Derivative[A] = force[Nothing, Any, M#Derivative[A], N#Derivative[A]]
-    implicit def zipperCoeEq[A] : M#Zipper[A] === N#Zipper[A] = force[Nothing, Any, M#Zipper[A], N#Zipper[A]]
-    implicit def directionCoeEq[A] : M#Direction === N#Direction = force[Nothing, Any, M#Direction, N#Direction]
-    implicit def addressCoeEq[A] : M#Address === N#Address = force[Nothing, Any, M#Address, N#Address]
-
-    implicit def treeCoh[A](nt : N#Tree[A]) : M#Tree[A] = rewrite[Id, N#Tree[A], M#Tree[A]](nt)
-    implicit def contextCoh[A](nt : N#Context[A]) : M#Context[A] = rewrite[Id, N#Context[A], M#Context[A]](nt)
-    implicit def derivativeCoh[A](nt : N#Derivative[A]) : M#Derivative[A] = rewrite[Id, N#Derivative[A], M#Derivative[A]](nt)
-    implicit def zipperCoh[A](nt : N#Zipper[A]) : M#Zipper[A] = rewrite[Id, N#Zipper[A], M#Zipper[A]](nt)
-    implicit def directionCoh(nd : N#Direction) : M#Direction = rewrite[Id, N#Direction, M#Direction](nd)
-    implicit def addressCoh(nd : N#Address) : M#Address = rewrite[Id, N#Address, M#Address](nd)
-
-    implicit def treeCoe[A](mt : M#Tree[A]) : N#Tree[A] = rewrite[Id, M#Tree[A], N#Tree[A]](mt)
-    implicit def contextCoe[A](mt : M#Context[A]) : N#Context[A] = rewrite[Id, M#Context[A], N#Context[A]](mt)
-    implicit def derivativeCoe[A](mt : M#Derivative[A]) : N#Derivative[A] = rewrite[Id, M#Derivative[A], N#Derivative[A]](mt)
-    implicit def zipperCoe[A](mt : M#Zipper[A]) : N#Zipper[A] = rewrite[Id, M#Zipper[A], N#Zipper[A]](mt)
-    implicit def directionCoe(md : M#Direction) : N#Direction = rewrite[Id, M#Direction, N#Direction](md)
-    implicit def addressCoe(md : M#Address) : N#Address = rewrite[Id, M#Address, N#Address](md)
-
-    // Can't do this because the names then block out the previous conversions ... how to fix it?
-    def succConversions : TreeConversions[ST[N], ST[M]] = new TreeConversions[ST[N], ST[M]] { }
-
-    // The point is that you should have the leibniz apply to the index, then implicits to generate
-    // leibniz's for the derived types.  Then the successor conversions just come from lifting a given
-    // index equality into the succ type constructor, and all the old conversions apply.
+    implicit def coh : N === ZT.type
+    implicit def coe : ZT.type === N
 
   }
 
-  trait ZeroImplicits[N <: TreeIndex] extends TreeConversions[N, _0]
-  trait OneImplicits[N <: TreeIndex] extends TreeConversions[N, _1]
+  trait OneMatch[N <: TreeIndex] {
 
-  trait SuccImplicits[N <: TreeIndex] extends TreeConversions[N, ST[N#Pred]] {
+    implicit def coh : N === ST[ZT.type]
+    implicit def coe : ST[ZT.type] === N
 
-    type P = N#Pred
+  }
 
+  trait SuccMatch[N <: TreeIndex] {
+
+    type P <: TreeIndex
     val p : P
 
-    type PTree[+A] = P#Tree[A]
-    type STree[+A] = ST[P]#Tree[A]
+    implicit def coh : N === ST[P]
+    implicit def coe : ST[P] === N
 
   }
 
-  trait GteTwoImplicits[N <: TreeIndex] extends TreeConversions[N, ST[ST[N#Pred#Pred]]] {
+  trait DblSuccMatch[N <: TreeIndex] {
 
-    type PP = N#Pred#Pred
-    type P = ST[PP]
-
-    type FS[+A] = Slice[PP#Tree, A]
-
+    type PP <: TreeIndex
     val pp : PP
 
-    def p : ST[PP] = ST(pp)
+    type P = ST[PP]
+    def p : P = ST(pp)
+
+    implicit def coh : N === ST[ST[PP]]
+    implicit def coe : ST[ST[PP]] === N
 
   }
+
+  def rewrite[F[_], A, B](fa : F[A])(implicit eq : A === B) : F[B] = eq.subst[F](fa)
+
+  // Implicit Equalities
+  implicit def liftTree[M <: TreeIndex, N <: TreeIndex, A](implicit eq : M === N) : Tree[M, A] === Tree[N, A] =
+    force[Nothing, Any, Tree[M, A], Tree[N, A]]
+
+  implicit def liftDerv[M <: TreeIndex, N <: TreeIndex, A](implicit eq : M === N) : Derivative[M, A] === Derivative[N, A] = 
+    force[Nothing, Any, Derivative[M, A], Derivative[N, A]]
+
+  implicit def liftCntxt[M <: TreeIndex, N <: TreeIndex, A](implicit eq : M === N) : Context[M, A] === Context[N, A] = 
+    force[Nothing, Any, Context[M, A], Context[N, A]]
+
+  implicit def liftZipper[M <: TreeIndex, N <: TreeIndex, A](implicit eq : M === N) : Zipper[M, A] === Zipper[N, A] = 
+    force[Nothing, Any, Zipper[M, A], Zipper[N, A]]
+
+  implicit def liftDir[M <: TreeIndex, N <: TreeIndex](implicit eq : M === N) : Direction[M] === Direction[N] =
+    force[Nothing, Any, Direction[M], Direction[N]]
+
+  // Implicit Conversions
+  implicit def treeCoerce[M <: TreeIndex, N <: TreeIndex, A](t : Tree[M, A])(implicit eq : M === N) : Tree[N, A] =
+    subst(t)(implicitly[Tree[M, A] === Tree[N, A]])
+
+  implicit def derivCoerce[M <: TreeIndex, N <: TreeIndex, A](d : Derivative[M, A])(implicit eq :M === N) : Derivative[N, A] = 
+    subst(d)(implicitly[Derivative[M, A] === Derivative[N, A]])
+
+  implicit def contextCoerce[M <: TreeIndex, N <: TreeIndex, A](c : Context[M, A])(implicit eq : M === N) : Context[N, A] = 
+    subst(c)(implicitly[Context[M, A] === Context[N, A]])
+
+  implicit def zipperCoerce[M <: TreeIndex, N <: TreeIndex, A](z : Zipper[M, A])(implicit eq : M === N) : Zipper[N, A] = 
+    subst(z)(implicitly[Zipper[M, A] === Zipper[N, A]])
+
+  implicit def dirCoerce[M <: TreeIndex, N <: TreeIndex](d : Direction[M])(implicit eq : M === N) : Direction[N] =
+    subst(d)(implicitly[Direction[M] === Direction[N]])
 
 }
