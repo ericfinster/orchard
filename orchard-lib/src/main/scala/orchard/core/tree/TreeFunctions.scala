@@ -1,11 +1,11 @@
 /**
-  * Tree.scala - Higher Dimensional Trees
+  * TreeFunctions.scala - Implementation of Agda code for hdts
   * 
   * @author Eric Finster
   * @version 0.1 
   */
 
-package orchard.core.cell
+package orchard.core.tree
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -50,6 +50,9 @@ trait TreeFunctions {
 
   def const[N <: TreeIndex, A, B](n : N, b : B, tree : N#Tree[A]) : N#Tree[B] =
     mapT[N, A, B](n, tree, (_ => b))
+
+  def shapeOf[N <: TreeIndex, A](n : N, tree : N#Tree[A]) : N#Tree[Unit] =
+    const(n, (), tree)
 
   def plug[N <: TreeIndex, A](n : N, d : N#Derivative[A], a : A) : N#Tree[A] =
     n match {
@@ -148,7 +151,7 @@ trait TreeFunctions {
     n match {
       case IsZeroIndex(zcs) => { import zcs._ ; () }
       case IsSuccIndex(scs) => { import scs._ ;  
-        (nGlob(p, nGlob(ST(p), Nil)), Nil)
+        (nGlob(p, (Cap() : STree[ST[N]#Address])), Nil)
       }
     }
 
@@ -247,7 +250,6 @@ trait TreeFunctions {
   def zipWithAddress[N <: TreeIndex, A](n : N, tree : N#Tree[A]) : N#Tree[(A, N#Address)] =
     zipWithPrefix(n, Nil, tree)
 
-
   def flattenWithPrefix[N <: TreeIndex, A](
     n : N, 
     prefix : ST[N]#Address, 
@@ -344,6 +346,11 @@ trait TreeFunctions {
 
   def flattenWithAddress[N <: TreeIndex, A](n : N, tree : ST[N]#Tree[A]) : Option[N#Tree[ST[N]#Address]] =
     flattenWithPrefix[N, A](n, Nil, globDeriv(n), tree)
+
+  def flatten[N <: TreeIndex, A](n : N, tree : ST[N]#Tree[A]) : Option[N#Tree[Unit]] =
+    for {
+      addrTree <- flattenWithAddress[N, A](n, tree)
+    } yield shapeOf(n, addrTree)
 
   def graft[N <: TreeIndex, A](n : N, tree : ST[N]#Tree[A], brs : N#Tree[ST[N]#Tree[A]]) : Option[ST[N]#Tree[A]] = {
 

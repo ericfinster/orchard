@@ -5,7 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.core.cell
+package orchard.core.tree
 
 import scala.language.higherKinds
 import scala.language.implicitConversions

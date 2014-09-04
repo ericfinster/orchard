@@ -5,7 +5,7 @@
   * @version 0.1 
   */
 
-package orchard.core.cell
+package orchard.core.tree
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -26,6 +26,8 @@ sealed trait TreeIndex {
   type Direction
   type Address = List[Direction]
 
+  def toInt : Int
+
 }
 
 case object ZT extends TreeIndex {
@@ -40,6 +42,9 @@ case object ZT extends TreeIndex {
 
   type Direction = Nothing
 
+  def toInt : Int = 0
+  override def toString = toInt.toString
+
 }
 
 case class ST[P <: TreeIndex](pred : P) extends TreeIndex {
@@ -53,6 +58,9 @@ case class ST[P <: TreeIndex](pred : P) extends TreeIndex {
   type Zipper[+A] = (Tree[A], Context[A])
 
   type Direction = List[Pred#Direction]
+
+  def toInt : Int = pred.toInt + 1
+  override def toString = toInt.toString
 
 }
 
@@ -133,6 +141,10 @@ object TreeIndex {
     // Can't do this because the names then block out the previous conversions ... how to fix it?
     def succConversions : TreeConversions[ST[N], ST[M]] = new TreeConversions[ST[N], ST[M]] { }
 
+    // The point is that you should have the leibniz apply to the index, then implicits to generate
+    // leibniz's for the derived types.  Then the successor conversions just come from lifting a given
+    // index equality into the succ type constructor, and all the old conversions apply.
+
   }
 
   trait ZeroImplicits[N <: TreeIndex] extends TreeConversions[N, _0]
@@ -157,7 +169,8 @@ object TreeIndex {
     type FS[+A] = Slice[PP#Tree, A]
 
     val pp : PP
-    val p : P = ST(pp)
+
+    def p : ST[PP] = ST(pp)
 
   }
 

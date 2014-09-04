@@ -1,5 +1,5 @@
 /**
-  * Slice.scala - Trying to slice
+  * Slice.scala - The Slice Construction
   * 
   * @author Eric Finster
   * @version 0.1 
@@ -10,115 +10,100 @@ package orchard.core.tree
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
-object Unindexed {
+import scalaz._
+import Leibniz._
+import scalaz.syntax.monad._
 
-  //============================================================================================
-  // THE SLICE
-  //
+sealed trait Slice[F[+_], +A]
 
-  sealed abstract class Slice[M[_], A] 
+case class Cap[F[+_], +A]() extends Slice[F, A] 
+case class Joint[F[+_], +A](a : A, fsa : F[Slice[F, A]]) extends Slice[F, A] 
 
-  case class Cap[M[_], A]() extends Slice[M, A]
-  case class Joint[M[_], A](n : A, sma : M[Slice[M, A]]) extends Slice[M, A]
+trait SliceInstances {
 
-  //============================================================================================
-  // EXAMPLES
-  //
+  implicit def sliceIsTraverse[F[+_], A](implicit F : Traverse[F]) : Traverse[({ type L[A] = Slice[F, A] })#L] =
+    new Traverse[({ type L[A] = Slice[F, A] })#L] {
 
-  type Term[A] = Unit
+      type SliceType[+A] = Slice[F, A]
 
-  type SliceTerm[A] = Slice[Term, A]
+      override def map[A, B](fa : Slice[F, A])(f : A => B) : Slice[F, B] =
+        fa match {
+          case Cap() => Cap()
+          case Joint(a, fsa) => Joint[F, B](f(a), fsa map (map(_)(f)))
+        }
 
-  val si0 : SliceTerm[String] = Cap[Term, String]()
-  val si1 : SliceTerm[String] = Joint[Term, String]("x", ())
+      def traverseImpl[G[_], A, B](fa : SliceType[A])(f : A => G[B])(implicit apG : Applicative[G]) : G[SliceType[B]] = {
+        import apG.{traverse => _, _}
 
-  object SNull { def apply[A]() : SliceTerm[A] = Cap[Term, A]() }
-  object SId { def apply[A](n : A) : SliceTerm[A] = Joint[Term, A](n, ()) }
+        fa match {
+          case Cap() => pure(Cap())
+          case Joint(a, fsa) => {
 
-  type SliceList[A] = Slice[SliceTerm, A]
+            val jointCons : G[(B, F[Slice[F, B]]) => Slice[F, B]] = 
+              point((b : B, fsb : F[Slice[F, B]]) => Joint(b, fsb))
 
-  def nil[A]() : SliceList[A] = Cap()
-  def cons[A](n : A, l : SliceList[A]) : SliceList[A] = Joint(n, SId(l))
+            ap2(f(a), F.sequence(fsa map (t => traverse(t)(f))))(jointCons)
 
-  val f : SliceList[String] = cons("f", nil())
-  val g : SliceList[String] = cons("g", nil())
-  // ...
+          }
+        }
+      }
 
-  val as : SliceList[String] = nil()
-  val bs : SliceList[String] = cons("f", cons("i", nil()))
-  val cs : SliceList[String] = cons("g", nil())
-  val ds : SliceList[String] = cons("k", cons("j", cons("h", nil())))
+    }
 
-  val es : SliceList[String] = cons("f", cons("g", cons("h", nil())))
+}
 
-  type SliceTree[A] = Slice[SliceList, A]
+object Slice extends SliceInstances {
 
-  def leaf[A]() : SliceTree[A] = Cap()
-  def node[A](a : A, bs : SliceList[SliceTree[A]]) : SliceTree[A] = Joint(a, bs)
+  sealed trait SliceOf[F[+_], G[+_]]
 
-  val a : SliceTree[String] = node("a", nil())
-  val b : SliceTree[String] = node("b", cons(leaf(), cons(a, nil())))
-  val c : SliceTree[String] = node("c", cons(leaf(), nil()))
-  val d : SliceTree[String] = node("d", cons(b, cons(c, nil())))
+  trait ZeroSliceOf[F[+_], G[+_]] extends SliceOf[F, G] {
 
-  val e : SliceTree[String] = node("e", cons(leaf(), cons(leaf(), cons(leaf(), nil()))))
+    def coh[A] : F[A] === G[A]
+    def coe[A] : G[A] === F[A] = 
+      symm[Nothing, Any, F[A], G[A]](coh[A])
 
-  //============================================================================================
-  // SLICE FIX
-  //
+  }
 
-  // Right, how to fix these ....
+  trait SuccSliceOf[F[+_], G[+_]] extends SliceOf[F, G] {
 
-  abstract class SliceFix[S[_[_], _], M[_], A]
-  case class Cup[S[_[_], _], M[_], A](c : M[A]) extends SliceFix[S, M, A]
-  case class Fix[S[_[_], _], M[_], A](x : S[({ type L[X] = SliceFix[S, M, X]})#L, A]) extends SliceFix[S, M, A]
+    type P[+_]
 
-  type SliceTermFix[A] = SliceFix[Slice, Term, A]
+    implicit val prevSlice : SliceOf[F, P]
 
-  type Slice0[A] = Term[A]
-  type Slice1[A] = Slice[Slice0, A]
-  type Slice2[A] = Slice[Slice1, A]
-  type Slice3[A] = Slice[Slice2, A]
-  // ...
+    def coh[A] : Slice[P, A] === G[A]
+    def coe[A] : G[A] === Slice[P, A] = 
+      symm[Nothing, Any, Slice[P, A], G[A]](coh[A])
 
-  val sf0 : SliceTermFix[String] = Cup[Slice, Term, String](())
-
-  type FixType[A] = Slice[SliceTermFix, A]
+  }
 
 
-  val ft0 : FixType[String] = Cap[SliceTermFix, String]()
+  implicit def sliceZero[F[+_]] : SliceOf[F, F] = 
+    new ZeroSliceOf[F, F] { 
 
-  type GoalType = SliceTermFix[Slice[SliceTermFix, String]]
-  val goal : GoalType = ???
+      def coh[A] : F[A] === F[A] = refl[F[A]]
 
-  val ft1 : FixType[String] = Joint[SliceTermFix, String]("x", goal)
+    }
 
-  val sf1 : SliceTermFix[String] = Fix[Slice, Term, String](ft1)
+  implicit def sliceSucc[F[+_], G[+_]](implicit sl : SliceOf[F, G]) : SuccSliceOf[F, ({ type L[+X] = Slice[G, X] })#L] =
+    new SuccSliceOf[F, ({ type L[+X] = Slice[G, X] })#L] {
 
-  // case class Cap[M[_], A]() extends Slice[M, A]
-  // case class Joint[M[_], A](n : A, sma : M[Slice[M, A]]) extends Slice[M, A]
+      type P[+A] = G[A]
 
-  //============================================================================================
-  // IDEA
-  //
+      implicit val prevSlice = sl
 
-  // Right, here is the last idea before you move on and just give up.  The idea is that you
-  // "factor" the joint construction into a couple different types of cells: either a cell is
-  // negative (external), neutral (internal), or positive (a target).  The only place where
-  // these kind of coincide is the top cell.
+      def coh[A] : Slice[P, A] === Slice[P, A] = refl[Slice[P, A]]
 
-  // So the hope is that by distinguishing among them, you will have places to put the labels.
+    }
 
-  // The second half of this idea (and in fact, the one I think you should try first) is to
-  // actually fix the slice construction itself, in order to have a single type with all
-  // of these guys included.  The constructors of that guys might give a hint ....
+  implicit class SliceOps[F[+_], +A](s : Slice[F, A]) {
 
-  // Yes, I simply don't see a way to get what you want by simply working with the pasting diagrams.
-  // There is some kind of interlocking interaction between changing the dimension by closing a cell
-  // and where to label the data.
+    def isCap : Boolean = 
+      s match {
+        case Cap() => true
+        case _ => false
+      }
 
-  // Right.  We are not distinguishing between closed cells and pasting diagrams with only a single
-  // "depth" level.  And this is super fishy.  We need to use this second fixedpoint guy to do
-  // that.  Although I don't quite see how yet ....
+    def sliceHello : Unit = ()
 
+  }
 }
