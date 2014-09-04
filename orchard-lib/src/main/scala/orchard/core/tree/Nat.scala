@@ -102,8 +102,10 @@ trait Nats {
   trait DblSuccMatch[N <: Nat] {
 
     type PP <: Nat
+    type P = S[PP]
 
     implicit val pp : PP
+    implicit val p = S(pp)
 
     implicit def dblSuccCoh : N === S[S[PP]]
     implicit def dblSuccCoe : S[S[PP]] === N
