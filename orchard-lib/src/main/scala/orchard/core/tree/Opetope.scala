@@ -14,7 +14,7 @@ import scalaz.{Tree => _, _}
 import scalaz.Id._
 
 import Nats._
-import Trees._
+// import Trees._
 
 // sealed trait Complex[N <: Nat, +A]
 // case object Base extends Complex[__0, Nothing]

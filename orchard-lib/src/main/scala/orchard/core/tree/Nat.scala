@@ -60,16 +60,16 @@ case class S[P <: Nat](p : P) extends Nat {
 
 trait Nats {
 
-  type __0 = Z.type
-  type __1 = S[__0]
-  type __2 = S[__1]
-  type __3 = S[__2]
-  type __4 = S[__3]
-  type __5 = S[__4]
-  type __6 = S[__5]
-  type __7 = S[__6]
-  type __8 = S[__7]
-  type __9 = S[__8]
+  type _0 = Z.type
+  type _1 = S[_0]
+  type _2 = S[_1]
+  type _3 = S[_2]
+  type _4 = S[_3]
+  type _5 = S[_4]
+  type _6 = S[_5]
+  type _7 = S[_6]
+  type _8 = S[_7]
+  type _9 = S[_8]
 
   implicit def zeroNat : Z.type = Z
   implicit def succNat[P <: Nat](implicit p : P) : S[P] = S(p)

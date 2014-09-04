@@ -15,77 +15,16 @@ import scalaz.Id._
 import scalaz.Leibniz._
 import scalaz.std.option._
 
+import Nats._
 import Slice._
 
-object Trees extends TreeFunctions {
-
-  // type TreeE[+A] = Unit
-  // type Tree0[+A] = Id[A]
-  // type Tree1[+A] = Slice[Tree0, A]
-  // type Tree2[+A] = Slice[Tree1, A]
-  // type Tree3[+A] = Slice[Tree2, A]
-
-  // type Card0[+A] = Tree0[A]
-  // type Card1[+A] = Tree0[Tree1[A]]
-  // type Card2[+A] = Tree0[Tree1[Tree2[A]]]
-  // type Card3[+A] = Tree0[Tree1[Tree2[Tree3[A]]]]
-
-  // type D0[+A] = Unit
-  // type C0[+A] = Unit
-
-  // type D1[+A] = (Tree0[Tree1[A]], List[(A, D0[Tree1[A]])])
-  // type C1[+A] = List[(A, D0[Tree1[A]])]
-
-  // type D2[+A] = (Tree1[Tree2[A]], List[(A, D1[Tree2[A]])])
-  // type C2[+A] = List[(A, D1[Tree2[A]])]
-
-  // import Nats._
-
-  // implicitly[Tree[__0, Int] =:= Tree0[Int]]
-  // implicitly[Tree[__1, Int] =:= Tree1[Int]]
-  // implicitly[Tree[__2, Int] =:= Tree2[Int]]
-  // implicitly[Tree[__3, Int] =:= Tree3[Int]]
-
-  // implicitly[CardinalTree[__0, Int] =:= Tree0[Int]]
-  // implicitly[CardinalTree[__1, Int] =:= Tree0[Tree1[Int]]]
-  // implicitly[CardinalTree[__2, Int] =:= Tree0[Tree1[Tree2[Int]]]]
-  // implicitly[CardinalTree[__3, Int] =:= Tree0[Tree1[Tree2[Tree3[Int]]]]]
-
-  // implicitly[Derivative[__0, Int] =:= D0[Int]]
-  // implicitly[Derivative[__1, Int] =:= D1[Int]]
-
-  // implicitly[Direction[__0] =:= Nothing]
-  // implicitly[Direction[__1] =:= List[Nothing]]
-  // implicitly[Direction[__2] =:= List[List[Nothing]]]
-
-  sealed abstract class TreeType[T[+_]] { val idx : TreeIndex }
-  sealed trait ZeroType[T[+_]] extends TreeType[T]
-  sealed trait SuccType[T[+_], P[+_]] extends TreeType[T] { val p : TreeIndex }
-
-  implicit def idIsTree : ZeroType[Id] = new ZeroType[Id] { val idx = ZT }
-
-  implicit def sliceIsTree[P[+_]](implicit isTree : TreeType[P]) : SuccType[({ type L[+X] = Slice[P, X] })#L, P] = 
-    new SuccType[({ type L[+X] = Slice[P, X] })#L, P] { val p = isTree.idx ; val idx = ST(isTree.idx) }
-
-  // implicit class SuccTreeOps[T[+_], P[+_], A](tree : T[A])(implicit val succTree : SuccType[T, P]) {
-
-  //   import succTree._
-
-  //   def flatten : Option[P[Unit]] = {
-  //     Trees.flatten[p.Self, A](
-  //       p.asInstanceOf[p.Self],
-  //       tree.asInstanceOf[Slice[p.Self#Tree, A]]
-  //     ).asInstanceOf[Option[P[Unit]]]
-  //   }
-
-  // }
-
-
-}
-
-trait TreeRecs {
+trait Trees {
 
   import Nats._
+
+  //============================================================================================
+  // RECURSORS
+  //
 
   trait TreeRec extends NatRec1[Any] {
     type OnZero[+A] = Id[A]
@@ -112,6 +51,10 @@ trait TreeRecs {
     type OnSucc[P <: Nat, T] = List[T]
   }
 
+  //============================================================================================
+  // TYPE DEFINITIONS
+  //
+
   type Tree[N <: Nat, +A] = N#Rec1[Any, TreeRec, A] 
   type CardinalTree[N <: Nat, +A] = N#Rec1[Any, CardinalRec, A] 
 
@@ -122,10 +65,26 @@ trait TreeRecs {
   type Direction[N <: Nat] = N#Rec0[Any, DirectionRec]
   type Address[N <: Nat] = Direction[S[N]]
 
-  type Tree0[+A] = Tree[__0, A] 
-  type Tree1[+A] = Tree[__1, A] 
-  type Tree2[+A] = Tree[__2, A] 
-  type Tree3[+A] = Tree[__3, A] 
+  def cap[N <: Nat, A] : Tree[S[N], A] = 
+    Cap[({ type L[+X] = Tree[N, X] })#L, A]()
+
+  def joint[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = 
+    Joint[({ type L[+X] = Tree[N, X] })#L, A](a, shell)
+
+  //============================================================================================
+  // LOW DIMENSIONAL IMPLEMENTATIONS
+  //
+
+  type Tree0[+A] = Tree[_0, A] 
+  type Tree1[+A] = Tree[_1, A] 
+  type Tree2[+A] = Tree[_2, A] 
+  type Tree3[+A] = Tree[_3, A] 
+  type Tree4[+A] = Tree[_4, A]
+
+  // type Card0[+A] = CardinalTree[_0, A]
+  // type Card1[+A] = CardinalTree[_1, A]
+  // type Card2[+A] = CardinalTree[_2, A]
+  // type Card3[+A] = CardinalTree[_3, A]
 
   def nil[A] : Tree1[A] = Cap()
 
@@ -137,29 +96,9 @@ trait TreeRecs {
   def node[A](a : A, brs : Tree1[Tree2[A]]) : Tree2[A] =
     Joint[Tree1, A](a, brs)
 
-  def cap[N <: Nat, A] : Tree[S[N], A] = 
-    Cap[({ type L[+X] = Tree[N, X] })#L, A]()
-
-  def joint[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = 
-    Joint[({ type L[+X] = Tree[N, X] })#L, A](a, shell)
-
-  val test : Tree[__2, Int] = ???
-
-  type PT[+A] = Tree[__1, A] 
-
-  val temp : Slice[PT, Int] = test
-
-  temp match {
-    case Cap() => ???
-    // case Joint(a, shell) => ???
-    case _ => ???
-  }
-
-}
-
-trait TreeStuff extends TreeRecs {
-
-  import Nats._
+  //============================================================================================
+  // WITNESS TYPE CLASSES
+  //
 
   trait IsTree[T, A] { 
 
@@ -181,19 +120,14 @@ trait TreeStuff extends TreeRecs {
 
     }
 
-  implicitly[IsTree[Tree[__0, Int], Int]]
-  implicitly[IsTree[Tree[__1, Int], Int]]
-  implicitly[IsTree[Tree[__2, Int], Int]]
-  implicitly[IsTree[Tree[__3, Int], Int]]
+  implicitly[IsTree[Tree[_0, Int], Int]]
+  implicitly[IsTree[Tree[_1, Int], Int]]
+  implicitly[IsTree[Tree[_2, Int], Int]]
+  implicitly[IsTree[Tree[_3, Int], Int]]
 
-  object ZeroDim {
-  }
-
-  object OneDim {
-  }
-
-  object SuccDim {
-  }
+  //============================================================================================
+  // OPERATIONS CLASSES
+  //
 
   implicit class TreeOps[T, A](t : T)(implicit val isTree : IsTree[T, A]) {
 
@@ -211,6 +145,23 @@ trait TreeStuff extends TreeRecs {
 
   }
 
+  //============================================================================================
+  // DIMENSION MATCHING
+  //
+
+  object ZeroDim {
+  }
+
+  object OneDim {
+  }
+
+  object SuccDim {
+  }
+
+  //============================================================================================
+  // TREE FUNCTIONS
+  //
+
   object TreeLib {
 
     implicit def treeCoh[N <: Nat, M <: Nat, A](t : Tree[N, A])(implicit eq : N === M) : Tree[M, A] = ???
@@ -224,7 +175,7 @@ trait TreeStuff extends TreeRecs {
 
     def plug[N <: Nat, A](n : N, d : Derivative[N, A], a : A) : Tree[N, A] = 
       n match {
-        case IsZero(zm) => { import zm._ ; a : Tree[__0, A] }
+        case IsZero(zm) => { import zm._ ; a : Tree[_0, A] }
         case IsSucc(sm) => { import sm._ ;
           (d : Derivative[S[P], A]) match {
             case (shell, context) => 
@@ -251,9 +202,9 @@ trait TreeStuff extends TreeRecs {
       n match {
         case IsZero(zm) => { import zm._ ;
 
-          val a : Tree[__0, A] = ta
-          val b : Tree[__0, B] = tb
-          val ab : Tree[__0, (A, B)] = (a, b)
+          val a : Tree[_0, A] = ta
+          val b : Tree[_0, B] = tb
+          val ab : Tree[_0, (A, B)] = (a, b)
 
           Some(ab)
 
@@ -292,5 +243,51 @@ trait TreeStuff extends TreeRecs {
 
 
   }
+
+  //============================================================================================
+  // TESTS AND EXPERIMENTS
+  //
+
+  // val test : Tree[_2, Int] = ???
+
+  // type PT[+A] = Tree[_1, A] 
+
+  // val temp : Slice[PT, Int] = test
+
+  // temp match {
+  //   case Cap() => ???
+  //   // case Joint(a, shell) => ???
+  //   case _ => ???
+  // }
+
+}
+
+trait TreeTests extends Trees {
+
+  // type Card0[+A] = Tree0[A]
+  // type Card1[+A] = Tree0[Tree1[A]]
+  // type Card2[+A] = Tree0[Tree1[Tree2[A]]]
+  // type Card3[+A] = Tree0[Tree1[Tree2[Tree3[A]]]]
+
+  // type D0[+A] = Unit
+  // type C0[+A] = Unit
+
+  // type D1[+A] = (Tree0[Tree1[A]], List[(A, D0[Tree1[A]])])
+  // type C1[+A] = List[(A, D0[Tree1[A]])]
+
+  // type D2[+A] = (Tree1[Tree2[A]], List[(A, D1[Tree2[A]])])
+  // type C2[+A] = List[(A, D1[Tree2[A]])]
+
+  implicitly[CardinalTree[_0, Int] =:= Tree0[Int]]
+  implicitly[CardinalTree[_1, Int] =:= Tree0[Tree1[Int]]]
+  implicitly[CardinalTree[_2, Int] =:= Tree0[Tree1[Tree2[Int]]]]
+  implicitly[CardinalTree[_3, Int] =:= Tree0[Tree1[Tree2[Tree3[Int]]]]]
+
+  // implicitly[Derivative[_0, Int] =:= D0[Int]]
+  // implicitly[Derivative[_1, Int] =:= D1[Int]]
+
+  // implicitly[Direction[_0] =:= Nothing]
+  // implicitly[Direction[_1] =:= List[Nothing]]
+  // implicitly[Direction[_2] =:= List[List[Nothing]]]
 
 }
