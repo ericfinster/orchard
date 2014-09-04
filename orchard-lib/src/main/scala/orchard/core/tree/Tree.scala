@@ -31,10 +31,10 @@ trait Trees {
     type OnSucc[P <: Nat, T[+_] <: Any, +A] = Slice[T, A]
   }
 
-  trait CardinalRec extends NatRec1[Any] {
-    type OnZero[+A] = Id[A]
-    type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[S[P]#Rec1[Any, TreeRec, A]]
-  }
+  // trait CardinalRec extends NatRec1[Any] {
+  //   type OnZero[+A] = Id[A]
+  //   type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[Tree[S[P], A]]
+  // }
 
   trait DerivativeRec extends NatRec1[Any] {
     type OnZero[+A] = Unit
@@ -56,7 +56,7 @@ trait Trees {
   //
 
   type Tree[N <: Nat, +A] = N#Rec1[Any, TreeRec, A] 
-  type CardinalTree[N <: Nat, +A] = N#Rec1[Any, CardinalRec, A] 
+  // type CardinalTree[N <: Nat, +A] = N#Rec1[Any, CardinalRec, A] 
 
   type Derivative[N <: Nat, +A] = N#Rec1[Any, DerivativeRec, A]
   type Context[N <: Nat, +A] = N#Rec1[Any, ContextRec, A]
@@ -100,48 +100,44 @@ trait Trees {
   // WITNESS TYPE CLASSES
   //
 
-  trait IsTree[T, A] { 
+  trait IsTree[T, N <: Nat, A] { 
 
-    type Dim <: Nat 
-    val dim : Dim 
+    val dim : N
 
-    def leibniz : T === Tree[Dim, A]
+    def leibniz : T === Tree[N, A]
 
   }
 
-  implicit def treesAreTrees[N <: Nat, A](implicit n : N) : IsTree[Tree[N, A], A] = 
-    new IsTree[Tree[N, A], A] {
+  implicit def treesAreTrees[N <: Nat, A](implicit n : N) : IsTree[Tree[N, A], N, A] = 
+    new IsTree[Tree[N, A], N, A] {
 
-      type Dim = N
       val dim = n
 
-      def leibniz : Tree[N, A] === Tree[Dim, A] = 
+      def leibniz : Tree[N, A] === Tree[N, A] = 
         refl[Tree[N, A]]
 
     }
 
-  implicitly[IsTree[Tree[_0, Int], Int]]
-  implicitly[IsTree[Tree[_1, Int], Int]]
-  implicitly[IsTree[Tree[_2, Int], Int]]
-  implicitly[IsTree[Tree[_3, Int], Int]]
+  implicitly[IsTree[Tree[_0, Int], _0, Int]]
+  implicitly[IsTree[Tree[_1, Int], _1, Int]]
+  implicitly[IsTree[Tree[_2, Int], _2, Int]]
+  implicitly[IsTree[Tree[_3, Int], _3, Int]]
 
   //============================================================================================
   // OPERATIONS CLASSES
   //
 
-  implicit class TreeOps[T, A](t : T)(implicit val isTree : IsTree[T, A]) {
+  implicit class TreeOps[T, N <: Nat, A](t : T)(implicit val isTree : IsTree[T, N, A]) {
 
     import isTree._
 
-    val tree : Tree[Dim, A] = 
+    val tree : Tree[N, A] = 
       subst(t)(leibniz)
 
-    def hello : Unit = ()
+    def map[B](f : A => B) : Tree[N, B] = ???
 
-    def map[B](f : A => B) : Tree[Dim, B] = ???
-
-    def zipComplete[B](other : Tree[Dim, B]) : Option[Tree[Dim, (A, B)]] = 
-      TreeLib.zipComplete[Dim, A, B](dim, tree, other)
+    def zipComplete[B](other : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
+      TreeLib.zipComplete[N, A, B](dim, tree, other)
 
   }
 
@@ -149,14 +145,128 @@ trait Trees {
   // DIMENSION MATCHING
   //
 
-  object ZeroDim {
+  trait ZeroDimMatch[N <: Nat] extends ZeroMatch[N]
+  trait OneDimMatch[N <: Nat] extends OneMatch[N]
+
+  trait SuccDimMatch[N <: Nat] extends SuccMatch[N] {
+
+    type PF[+A] = Tree[P, A]
+
+  // type PT[+A] = Tree[_1, A] 
+
   }
 
-  object OneDim {
+  trait DblSuccDimMatch[N <: Nat] extends DblSuccMatch[N]
+
+  object IsZeroDim {
+
+    def unapply[N <: Nat](n : N) : Option[ZeroDimMatch[N]] = 
+      n match {
+        case IsZero(zm) => Some(
+          new ZeroDimMatch[N] {
+            implicit def zeroCoh : N === _0 = zm.zeroCoh
+            implicit def zeroCoe : _0 === N = zm.zeroCoe
+          }
+        )
+        case _ => None
+      }
+
   }
 
-  object SuccDim {
+  object IsOneDim {
+
+    def unapply[N <: Nat](n : N) : Option[OneDimMatch[N]] =
+      n match {
+        case IsOne(om) => Some(
+          new OneDimMatch[N] {
+            implicit def oneCoh : N === _1 = om.oneCoh
+            implicit def oneCoe : _1 === N = om.oneCoe
+          }
+        )
+        case _ => None
+      }
+
   }
+
+  object IsSuccDim {
+
+    def unapply[N <: Nat](n : N) : Option[SuccDimMatch[N]] = 
+      n match {
+        case IsSucc(sm) => Some(
+          new SuccDimMatch[N] {
+
+            type P = sm.P
+
+            implicit val p : P = sm.p
+
+            implicit def succCoh : N === S[P] = sm.succCoh
+            implicit def succCoe : S[P] === N = sm.succCoe
+
+          }
+        )
+        case _ => None
+      }
+
+  }
+
+  object IsDblSuccDim {
+
+    def unapply[N <: Nat](n : N) : Option[DblSuccDimMatch[N]] = 
+      n match {
+        case IsDblSucc(dm) => Some(
+          new DblSuccDimMatch[N] {
+
+            type PP = dm.PP
+            
+            implicit val pp : PP = dm.pp
+
+            implicit def dblSuccCoh : N === S[S[PP]] = dm.dblSuccCoh
+            implicit def dblSuccCoe : S[S[PP]] === N = dm.dblSuccCoe
+
+          }
+        )
+        case _ => None
+      }
+
+  }
+
+  //============================================================================================
+  // DIMENSION CONVERSIONS
+  //
+
+  def rewrite[F[_], A, B](fa : F[A])(implicit eq : A === B) : F[B] = eq.subst[F](fa)
+
+  // Implicit Equalities
+  implicit def liftTree[M <: Nat, N <: Nat, A](implicit eq : M === N) : Tree[M, A] === Tree[N, A] =
+    force[Nothing, Any, Tree[M, A], Tree[N, A]]
+
+  implicit def liftDerv[M <: Nat, N <: Nat, A](implicit eq : M === N) : Derivative[M, A] === Derivative[N, A] = 
+    force[Nothing, Any, Derivative[M, A], Derivative[N, A]]
+
+  implicit def liftCntxt[M <: Nat, N <: Nat, A](implicit eq : M === N) : Context[M, A] === Context[N, A] = 
+    force[Nothing, Any, Context[M, A], Context[N, A]]
+
+  implicit def liftZipper[M <: Nat, N <: Nat, A](implicit eq : M === N) : Zipper[M, A] === Zipper[N, A] = 
+    force[Nothing, Any, Zipper[M, A], Zipper[N, A]]
+
+  implicit def liftDir[M <: Nat, N <: Nat](implicit eq : M === N) : Direction[M] === Direction[N] =
+    force[Nothing, Any, Direction[M], Direction[N]]
+
+  // Implicit Conversions
+  implicit def treeCoerce[M <: Nat, N <: Nat, A](t : Tree[M, A])(implicit eq : M === N) : Tree[N, A] =
+    subst(t)(implicitly[Tree[M, A] === Tree[N, A]])
+
+  implicit def derivCoerce[M <: Nat, N <: Nat, A](d : Derivative[M, A])(implicit eq :M === N) : Derivative[N, A] = 
+    subst(d)(implicitly[Derivative[M, A] === Derivative[N, A]])
+
+  implicit def contextCoerce[M <: Nat, N <: Nat, A](c : Context[M, A])(implicit eq : M === N) : Context[N, A] = 
+    subst(c)(implicitly[Context[M, A] === Context[N, A]])
+
+  implicit def zipperCoerce[M <: Nat, N <: Nat, A](z : Zipper[M, A])(implicit eq : M === N) : Zipper[N, A] = 
+    subst(z)(implicitly[Zipper[M, A] === Zipper[N, A]])
+
+  implicit def dirCoerce[M <: Nat, N <: Nat](d : Direction[M])(implicit eq : M === N) : Direction[N] =
+    subst(d)(implicitly[Direction[M] === Direction[N]])
 
   //============================================================================================
   // TREE FUNCTIONS
@@ -164,19 +274,10 @@ trait Trees {
 
   object TreeLib {
 
-    implicit def treeCoh[N <: Nat, M <: Nat, A](t : Tree[N, A])(implicit eq : N === M) : Tree[M, A] = ???
-    implicit def treeCoe[N <: Nat, M <: Nat, A](t : Tree[M, A])(implicit eq : N === M) : Tree[N, A] = ???
-
-    implicit def derivCoh[N <: Nat, M <: Nat, A](d : Derivative[N, A])(implicit eq : N === M) : Derivative[M, A] = ???
-    implicit def derivCoe[N <: Nat, M <: Nat, A](d : Derivative[M, A])(implicit eq : N === M) : Derivative[N, A] = ???
-
-    implicit def cntxtCoh[N <: Nat, M <: Nat, A](d : Context[N, A])(implicit eq : N === M) : Context[M, A] = ???
-    implicit def cntxtCoe[N <: Nat, M <: Nat, A](d : Context[M, A])(implicit eq : N === M) : Context[N, A] = ???
-
     def plug[N <: Nat, A](n : N, d : Derivative[N, A], a : A) : Tree[N, A] = 
       n match {
-        case IsZero(zm) => { import zm._ ; a : Tree[_0, A] }
-        case IsSucc(sm) => { import sm._ ;
+        case IsZeroDim(zm) => { import zm._ ; a : Tree[_0, A] }
+        case IsSuccDim(sm) => { import sm._ ;
           (d : Derivative[S[P], A]) match {
             case (shell, context) => 
               close[S[P], A](S(p), context, joint(a, shell))
@@ -186,8 +287,8 @@ trait Trees {
 
     def close[N <: Nat, A](n : N, c : Context[N, A], t : Tree[N, A]) : Tree[N, A] =
       n match {
-        case IsZero(zm) => { import zm._ ; t }
-        case IsSucc(sm) => { import sm._ ;
+        case IsZeroDim(zm) => { import zm._ ; t }
+        case IsSuccDim(sm) => { import sm._ ;
           (c : Context[S[P], A]) match {
             case Nil => t
             case (a , d) :: cs => {
@@ -200,7 +301,7 @@ trait Trees {
 
     def zipComplete[N <: Nat, A, B](n : N, ta : Tree[N, A], tb : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
       n match {
-        case IsZero(zm) => { import zm._ ;
+        case IsZeroDim(zm) => { import zm._ ;
 
           val a : Tree[_0, A] = ta
           val b : Tree[_0, B] = tb
@@ -209,35 +310,29 @@ trait Trees {
           Some(ab)
 
         }
-        case IsSucc(sm) => { import sm._ ;
+        case IsSuccDim(sm) => { import sm._ ;
 
           val tra : Tree[S[P], A] = ta
           val trb : Tree[S[P], B] = tb
 
-          // tra match {
-          //   case IsCap() => ()
-          //   case IsJoint(a, shell) => ()
-          // }
+          (tra : Slice[PF, A], trb : Slice[PF, B]) match {
+            case (Cap(), Cap()) => {
+              val capAB : Tree[S[P], (A, B)] = Cap[PF, (A, B)]() 
+              Some(capAB)
+            }
+            case (Joint(a, ash), Joint(b, bsh)) => {
 
-          // (tra, trb) match {
-          //   case (Cap(), Cap()) => ??? //Some(Cap())
-      //       case (Joint(a, ash), Joint(b, bsh)) => {
-
-      //         for {
-      //           branchPairs <- zipComplete[P, STree[A], STree[B]](p, ash, bsh)
-      //           zippedShell <- sequenceT(p,
-      //             (mapT[P, (STree[A], STree[B]), Option[STree[(A, B)]]](p, branchPairs, {
-      //               case (t1 : STree[A], t2 : STree[B]) => zipComplete[ST[P], A, B](ST(p), t1, t2)
-      //             }))
-      //           )
-      //         } yield Joint((a, b), zippedShell)
-
-      //       }
-          //   case (_, _) => None
-          // }
-
-          ???
-
+              for {
+                branchPairs <- ash.zipComplete(bsh)
+              //   zippedShell <- sequenceT(p,
+              //     (mapT[P, (Tree[S[P], A], Tree[S[P], B]), Option[Tree[S[P], (A, B)]]](p, branchPairs, {
+              //       case (t1 : Tree[S[P], A], t2 : STree[S[P], B]) => zipComplete[S[P], A, B](S(p), t1, t2)
+              //     }))
+              //   )
+              } yield ??? //Joint((a, b), zippedShell)
+            }
+            case (_, _) => None
+          }
         }
       }
 
@@ -278,10 +373,11 @@ trait TreeTests extends Trees {
   // type D2[+A] = (Tree1[Tree2[A]], List[(A, D1[Tree2[A]])])
   // type C2[+A] = List[(A, D1[Tree2[A]])]
 
-  implicitly[CardinalTree[_0, Int] =:= Tree0[Int]]
-  implicitly[CardinalTree[_1, Int] =:= Tree0[Tree1[Int]]]
-  implicitly[CardinalTree[_2, Int] =:= Tree0[Tree1[Tree2[Int]]]]
-  implicitly[CardinalTree[_3, Int] =:= Tree0[Tree1[Tree2[Tree3[Int]]]]]
+  // implicitly[CardinalTree[_0, Int] =:= Tree0[Int]]
+  // implicitly[CardinalTree[_1, Int] =:= Tree0[Int]]
+  // implicitly[CardinalTree[_2, Int] =:= Tree0[Tree1[Int]]]
+  // implicitly[CardinalTree[_3, Int] =:= Tree0[Tree1[Tree2[Int]]]]
+  // implicitly[CardinalTree[_4, Int] =:= Tree0[Tree1[Tree2[Tree3[Int]]]]]
 
   // implicitly[Derivative[_0, Int] =:= D0[Int]]
   // implicitly[Derivative[_1, Int] =:= D1[Int]]

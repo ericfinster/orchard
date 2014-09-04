@@ -76,7 +76,15 @@ trait Nats {
 
   trait ZeroMatch[N <: Nat] {
 
-    implicit def isZero : N === Z.type
+    implicit def zeroCoh : N === _0
+    implicit def zeroCoe : _0 === N
+
+  }
+
+  trait OneMatch[N <: Nat] {
+
+    implicit def oneCoh : N === _1
+    implicit def oneCoe : _1 === N
 
   }
 
@@ -84,9 +92,21 @@ trait Nats {
 
     type P <: Nat
 
-    val p : P
+    implicit val p : P
 
-    implicit def isSucc : N === S[P]
+    implicit def succCoh : N === S[P]
+    implicit def succCoe : S[P] === N
+
+  }
+
+  trait DblSuccMatch[N <: Nat] {
+
+    type PP <: Nat
+
+    implicit val pp : PP
+
+    implicit def dblSuccCoh : N === S[S[PP]]
+    implicit def dblSuccCoe : S[S[PP]] === N
 
   }
 
@@ -96,7 +116,23 @@ trait Nats {
       n match {
         case Z => Some(
           new ZeroMatch[N] { 
-            def isZero : N === Z.type = force[Nothing, Any, N, Z.type] 
+            implicit def zeroCoh : N === _0 = force[Nothing, Any, N, _0]
+            implicit def zeroCoe : _0 === N = force[Nothing, Any, _0, N]
+          }
+        )
+        case _ => None
+      }
+
+  }
+
+  object IsOne {
+
+    def unapply[N <: Nat](n : N) : Option[OneMatch[N]] = 
+      n match {
+        case S(S(Z)) => Some(
+          new OneMatch[N] {
+            implicit def oneCoh : N === _1 = force[Nothing, Any, N, _1]
+            implicit def oneCoe : _1 === N = force[Nothing, Any, _1, N]
           }
         )
         case _ => None
@@ -114,12 +150,34 @@ trait Nats {
             type P = pr.Self
             val p = pr.self
 
-            def isSucc : N === S[P] = force[Nothing, Any, N, S[P]]
+            def succCoh : N === S[P] = force[Nothing, Any, N, S[P]]
+            def succCoe : S[P] === N = force[Nothing, Any, S[P], N]
+            
+          }
+        )
+        case _ => None
+      }
+
+  }
+
+  object IsDblSucc {
+
+    def unapply[N <: Nat](n : N) : Option[DblSuccMatch[N]] = 
+      n match {
+        case S(S(ppr)) => Some(
+          new DblSuccMatch[N] {
+
+            type PP = ppr.Self
+            val pp = ppr.self
+
+            implicit def dblSuccCoh : N === S[S[PP]] = force[Nothing, Any, N, S[S[PP]]]
+            implicit def dblSuccCoe : S[S[PP]] === N = force[Nothing, Any, S[S[PP]], N]
 
           }
         )
         case _ => None
       }
+
   }
 
 }
