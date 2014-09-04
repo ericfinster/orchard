@@ -106,7 +106,7 @@ trait TreeFunctions {
 
         (ud , uz) match {
           case (addr, (focus , cntxt)) => {
-            focus match {
+            (focus : Slice[FS, A]) match {
               case Cap() => None
               case Joint(a, shell) => {
 

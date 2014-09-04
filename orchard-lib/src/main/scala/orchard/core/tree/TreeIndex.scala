@@ -144,6 +144,9 @@ object TreeIndex {
     type PP <: TreeIndex
     val pp : PP
 
+    // This could probably be reworked better
+    type FS[+A] = Slice[PP#Tree, A]
+
     type P = ST[PP]
     def p : P = ST(pp)
 
