@@ -101,7 +101,13 @@ object Trees {
   //
 
   implicit def haveZeroFunctions : TreeFunctions[_0] = TreeZeroFunctions
-  implicit def haveSuccFunctions[N <: Nat](implicit prev : TreeFunctions[N]) : TreeFunctions[S[N]] = ???
+
+  implicit def haveSuccFunctions[N <: Nat](implicit prev : TreeFunctions[N]) : TreeFunctions[S[N]] =
+    prev match {
+      case TreeZeroFunctions => TreeOneFunctions.asInstanceOf[TreeFunctions[S[N]]]
+      case TreeOneFunctions => TreeDblSuccFunctions(TreeZeroFunctions).asInstanceOf[TreeFunctions[S[N]]]
+      case TreeDblSuccFunctions(pp) => TreeDblSuccFunctions(haveSuccFunctions(pp)).asInstanceOf[TreeFunctions[S[N]]]
+    }
 
   //============================================================================================
   // WITNESS TYPE CLASSES

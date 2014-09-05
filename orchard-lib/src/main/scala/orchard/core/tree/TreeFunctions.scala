@@ -241,8 +241,6 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
       case (a, d) :: cs => close(cs, Branch(a, prev.plug(d, t)))
     }
 
-  def visit[A](d : Direction[S[N]], z : Zipper[S[N], A]) : Option[Zipper[S[N], A]] 
-
   def emptyContext[A] : Context[S[N], A] = Nil
 
   def nGlob[A](a : A) : Tree[S[N], A] = Branch(a, prev.nGlob(Leaf()))
@@ -331,4 +329,39 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
         } yield g
     }
+}
+
+object TreeOneFunctions extends TreeSuccFunctions[_0] {
+
+  val prev : TreeFunctions[_0] = TreeZeroFunctions
+
+  def visit[A](d : Direction[_1], z : Zipper[_1, A]) : Option[Zipper[_1, A]]  =
+    (d, z) match {
+      case (Nil, (Branch(h, Point(t)), c)) => Some(t, ((h, ()) :: c))
+      case (_, _) => None
+    }
+
+}
+
+case class TreeDblSuccFunctions[N <: Nat](val pp : TreeFunctions[N]) extends TreeSuccFunctions[S[N]] {
+
+  val prev : TreeFunctions[S[N]] =
+    haveSuccFunctions(pp)
+
+  def visit[A](d : Direction[S[S[N]]], z : Zipper[S[S[N]], A]) : Option[Zipper[S[S[N]], A]] = 
+    z match {
+      case (Branch(a, shell), c) => 
+        for {
+          z <- prev.seek(d, (shell, Nil))
+          br <- (
+            z match {
+              case (Leaf(), zz) => None
+              case (Branch(t, tsh), zz) => Some((t , (a, (tsh, zz)) :: c ))
+            }
+          )
+        } yield br
+
+      case (_, _) => None
+    }
+
 }
