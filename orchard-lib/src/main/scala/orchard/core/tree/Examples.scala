@@ -5,20 +5,26 @@
   * @version 0.1 
   */
 
-package orchard.core.trees
+package orchard.core.tree
+
+import Nats._
+import Trees._
 
 object TreeExamples {
 
+  // implicitly[IsTree[Tree[_1, Int], _1, Int]]
 
-  // val ex0 : Tree1[Int] = cons(0, cons(1, cons(2, nil)))
-  // val ex0F : Option[Tree0[Unit]] = ex0.flatten
+  // val ex0 : Tree[_1, Int] = cons(0, cons(1, cons(2, nil)))
+  // val ex0F : Option[Tree0[Unit]] = TreeLib.flatten(Z, ex0)
 
-  // val fred : Tree3[Int] = Joint(25, node(Joint(24, node(Cap(), cons(leaf, cons(node(Cap(), cons(leaf, cons(node(Cap(), nil), nil))), cons(leaf, nil))))), cons(node(Joint(23, node(Cap(), cons(leaf, nil))), cons(node(Cap(), cons(leaf, nil)), nil)), cons(leaf, cons(node(Cap(), cons(leaf, nil)), nil)))))
+  // val myTree : Tree[_2, Int] = 
+  //   node(3, cons(leaf, nil))
+
+  // val fred : Tree[_3, Int] = joint(25, node(joint(24, node(cap, cons(leaf, cons(node(cap, cons(leaf, cons(node(cap, nil), nil))), cons(leaf, nil))))), cons(node(joint(23, node(cap, cons(leaf, nil))), cons(node(cap, cons(leaf, nil)), nil)), cons(leaf, cons(node(cap, cons(leaf, nil)), nil)))))
 
   // val flattenFred : Option[Tree2[Unit]] = fred.flatten
 
-
-  // val pd15 : Tree3[Int] = Joint(15, node(Joint(14, leaf), cons(node(Cap(), cons(leaf, cons(leaf, nil))), nil)))
+  // val pd15 : Tree3[Int] = joint(15, node(joint(14, leaf), cons(node(cap, cons(leaf, cons(leaf, nil))), nil)))
 
 
 }

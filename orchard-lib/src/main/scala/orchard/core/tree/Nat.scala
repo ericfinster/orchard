@@ -46,7 +46,7 @@ case object Z extends Nat {
 }
 
 
-case class S[P <: Nat](p : P) extends Nat {
+case class S[P <: Nat](val pred : P) extends Nat {
 
   type Self = S[P]
 
