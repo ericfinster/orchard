@@ -250,7 +250,7 @@ object Trees {
 
   object Branch {
 
-    def apply[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) = {
+    def apply[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = {
       type P[+X] = Tree[N, X]
       Joint[P, A](a, shell)
     }
