@@ -14,15 +14,15 @@ import scalaz.{Tree => _, _}
 import scalaz.Id._
 
 import Nats._
-// import Trees._
+import Trees._
 
-// sealed trait Complex[N <: Nat, +A]
-// case object Base extends Complex[__0, Nothing]
-// case class Extend[N <: Nat, +A](prefix : Complex[N, A], tr : Tree[N, A]) extends Complex[S[N], A]
+sealed trait TargetComplex[N <: Nat, +A]
+case class Base[+A](a : A) extends TargetComplex[_0, A]
+case class Extend[N <: Nat, +A](prefix : TargetComplex[N, A], tree : Tree[S[N], (A, A)]) extends TargetComplex[S[N], A]
 
-
-// // Wrong, because the complex should take pairs in higher dimensions ...
-// case class Opetope[N <: Nat, A](cmplx : Complex[N, A], filler : A, target : A)
+sealed trait OpetopicComplex[N <: Nat, +A]
+case class Objct[+A](a : A) extends OpetopicComplex[_0, A]
+case class Comp[N <: Nat, +A](cmplx : TargetComplex[N, A], filler : A, target : A) extends OpetopicComplex[S[N], A]
 
 // object Opetopes {
 

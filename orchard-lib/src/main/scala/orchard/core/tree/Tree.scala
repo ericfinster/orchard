@@ -30,9 +30,19 @@ object Trees {
     type OnSucc[P <: Nat, T[+_] <: Any, +A] = Slice[T, A]
   }
 
-  trait CardinalRec extends NatRec1[Any] {
-    type OnZero[+A] = Point[A]
-    type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[Tree[S[P], A]]
+  // trait CardinalRec extends NatRec1[Any] {
+  //   type OnZero[+A] = Point[A]
+  //   type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[Tree[S[P], A]]
+  // }
+
+  trait CardinalRec extends NatRecPair1[Any] {
+
+    type OnZeroFst[+A] = A
+    type OnZeroSnd[+A] = A
+
+    type OnSuccFst[P <: Nat, F[+_] <: Any, G[+_] <: Any, +A] = F[G[A]]
+    type OnSuccSnd[P <: Nat, F[+_] <: Any, G[+_] <: Any, +A] = Slice[G, A]
+
   }
 
   trait DerivativeRec extends NatRec1[Any] {
@@ -55,7 +65,7 @@ object Trees {
   //
 
   type Tree[N <: Nat, +A] = N#Rec1[Any, TreeRec, A] 
-  type CardinalTree[N <: Nat, +A] = N#Rec1[Any, CardinalRec, A] 
+  type CardinalTree[N <: Nat, +A] = N#RecPairFst[Any, CardinalRec, A] 
 
   type Derivative[N <: Nat, +A] = N#Rec1[Any, DerivativeRec, A]
   type Context[N <: Nat, +A] = N#Rec1[Any, ContextRec, A]
@@ -78,7 +88,6 @@ object Trees {
   // type Card1[+A] = CardinalTree[_1, A]
   // type Card2[+A] = CardinalTree[_2, A]
   // type Card3[+A] = CardinalTree[_3, A]
-
 
   //============================================================================================
   // FUNCTION IMPLICITS

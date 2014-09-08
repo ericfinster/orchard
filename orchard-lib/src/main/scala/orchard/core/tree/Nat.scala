@@ -26,6 +26,16 @@ trait NatRec1[Type] {
 
 }
 
+trait NatRecPair1[Type] {
+
+  type OnZeroFst[+A] <: Type
+  type OnZeroSnd[+A] <: Type
+
+  type OnSuccFst[P <: Nat, F[+_] <: Type, G[+_] <: Type, +A] <: Type
+  type OnSuccSnd[P <: Nat, F[+_] <: Type, G[+_] <: Type, +A] <: Type
+
+}
+
 sealed trait Nat { self => 
 
   type Self <: Nat
@@ -35,6 +45,9 @@ sealed trait Nat { self =>
   type Rec0[Type, R <: NatRec0[Type]] <: Type
   type Rec1[Type, C <: NatRec1[Type], +A] <: Type
 
+  type RecPairFst[Type, R <: NatRecPair1[Type], +A] <: Type
+  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] <: Type
+
 }
 
 case object Z extends Nat {
@@ -43,6 +56,9 @@ case object Z extends Nat {
 
   type Rec0[Type, R <: NatRec0[Type]] = R#OnZero
   type Rec1[Type, C <: NatRec1[Type], +A] = C#OnZero[A]
+
+  type RecPairFst[Type, R <: NatRecPair1[Type], +A] = R#OnZeroFst[A]
+  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] = R#OnZeroSnd[A]
 
 }
 
@@ -56,6 +72,18 @@ case class S[P <: Nat](val pred : P) extends Nat {
 
   type Rec1[Type, C <: NatRec1[Type], +A] = 
     C#OnSucc[P, ({ type L[+X] = P#Rec1[Type, C, X] })#L, A]
+
+  type RecPairFst[Type, R <: NatRecPair1[Type], +A] = 
+    R#OnSuccFst[P, 
+      ({ type L[+X] = P#RecPairFst[Type, R, X] })#L,
+      ({ type L[+X] = P#RecPairSnd[Type, R, X] })#L,
+      A]
+
+  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] =
+    R#OnSuccSnd[P, 
+      ({ type L[+X] = P#RecPairFst[Type, R, X] })#L,
+      ({ type L[+X] = P#RecPairSnd[Type, R, X] })#L,
+      A]
 
 }
 
