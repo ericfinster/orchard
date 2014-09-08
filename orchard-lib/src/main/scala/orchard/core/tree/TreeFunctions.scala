@@ -28,7 +28,7 @@ trait TreeFunctions[N <: Nat] {
     traverse(tree, identity[G[A]])
 
   def isLeaf[A](tree : Tree[N, A]) : Boolean
-  def isBranch[A](tree : Tree[N, A]) : Boolean
+  def isNode[A](tree : Tree[N, A]) : Boolean
 
   def const[A, B](b : B, tree : Tree[N, A]) : Tree[N, B] = map(tree, ((a : A) => b))    
   def shapeOf[A](tree : Tree[N, A]) : Tree[N, Unit] = const((), tree)
@@ -110,7 +110,7 @@ object TreeZeroFunctions extends TreeFunctions[_0] {
     }
 
   def isLeaf[A](tree : Tree[_0, A]) : Boolean = false
-  def isBranch[A](tree : Tree[_0, A]) : Boolean = true
+  def isNode[A](tree : Tree[_0, A]) : Boolean = true
 
   def plug[A](d : Derivative[_0, A], a : A) : Tree[_0, A] = Point(a)
   def close[A](c : Context[_0, A], t : Tree[_0, A]) : Tree[_0, A] = t
@@ -143,7 +143,7 @@ object TreeZeroFunctions extends TreeFunctions[_0] {
   ) : Option[Tree[_0, Address[_1]]] =
     tree match {
       case Leaf() => Some(plug(corolla, prefix))
-      case Branch(head, Point(tail)) => flattenWithPrefix(Nil :: prefix, (), tail)
+      case Node(head, Point(tail)) => flattenWithPrefix(Nil :: prefix, (), tail)
     }
 
   def substitute[A](ttree : Tree[_0, Tree[_0, A]]) : Option[Tree[_0, A]] =
@@ -154,10 +154,10 @@ object TreeZeroFunctions extends TreeFunctions[_0] {
   def graft[A](tree : Tree[_1, A], brs : Tree[_0, Tree[_1, A]]) : Option[Tree[_1, A]] = 
     (tree, brs) match {
       case (Leaf(), Point(l)) => Some(l)
-      case (Branch(head, Point(tail)), l) => 
+      case (Node(head, Point(tail)), l) => 
         for {
           ll <- graft(tail, brs)
-        } yield Branch[_0, A](head, Point(ll))
+        } yield Node(head, Pt(ll))
     }
 
 }
@@ -170,9 +170,9 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
   def map[A, B](tree : Tree[S[N], A], f : A => B) : Tree[S[N], B] = {
     tree match {
-      case Leaf() => Leaf()
-      case Branch(a, shell) => 
-        Branch(f(a), prev.map(shell, (t : Tree[S[N], A]) => map(t, f)))
+      case Leaf() => Leaf[S[N]]
+      case Node(a, shell) => 
+        Node(f(a), prev.map(shell, (t : Tree[S[N], A]) => map(t, f)))
     }
   }
 
@@ -181,11 +181,11 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
     import apG._
 
     tree match {
-      case Leaf() => pure(Leaf())
-      case Branch(a, shell) => {
+      case Leaf() => pure(Leaf[S[N]])
+      case Node(a, shell) => {
 
         val branchCons : G[(B, Tree[N, Tree[S[N], B]]) => Tree[S[N], B]] =
-          pure((b : B, t : Tree[N, Tree[S[N], B]]) => Branch(b, t))
+          pure((b : B, t : Tree[N, Tree[S[N], B]]) => Node(b, t))
 
         val traversedShell : G[Tree[N, Tree[S[N], B]]] = 
           prev.sequence(
@@ -205,32 +205,32 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
       case _ => false
     }
 
-  def isBranch[A](tree : Tree[S[N], A]) : Boolean =
+  def isNode[A](tree : Tree[S[N], A]) : Boolean =
     tree match {
-      case Branch(a, shell) => true
+      case Node(a, shell) => true
       case _ => false
     }
 
   def plug[A](d : Derivative[S[N], A], a : A) : Tree[S[N], A] =
     d match {
-      case (shell, context) => close(context, Branch(a, shell))
+      case (shell, context) => close(context, Node(a, shell))
     }
 
   def close[A](c : Context[S[N], A], t : Tree[S[N], A]) : Tree[S[N], A] =
     c match {
       case Nil => t
-      case (a, d) :: cs => close(cs, Branch(a, prev.plug(d, t)))
+      case (a, d) :: cs => close(cs, Node(a, prev.plug(d, t)))
     }
 
   def emptyContext[A] : Context[S[N], A] = Nil
 
-  def nGlob[A](a : A) : Tree[S[N], A] = Branch(a, prev.nGlob(Leaf()))
-  def globDeriv : Derivative[S[N], Address[S[S[N]]]] = (prev.nGlob(Leaf()), Nil)
+  def nGlob[A](a : A) : Tree[S[N], A] = Node(a, prev.nGlob(Leaf[S[N]]))
+  def globDeriv : Derivative[S[N], Address[S[S[N]]]] = (prev.nGlob(Leaf[S[N]]), Nil)
 
   def zipComplete[A, B](ta : Tree[S[N], A], tb : Tree[S[N], B]) : Option[Tree[S[N], (A, B)]] = 
     (ta, tb) match {
-      case (Leaf(), Leaf()) => Some(Leaf())
-      case (Branch(a, ash), Branch(b, bsh)) => {
+      case (Leaf(), Leaf()) => Some(Leaf[S[N]])
+      case (Node(a, ash), Node(b, bsh)) => {
 
         for {
           zippedShells <- prev.zipComplete(ash, bsh)
@@ -241,14 +241,14 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
             })
           )
 
-        } yield Branch((a, b), resultShell)
+        } yield Node((a, b), resultShell)
 
       }
-      case (atr @ Branch(a, ash), Leaf()) => {
+      case (atr @ Node(a, ash), Leaf()) => {
         println("Matching failed in dimension " ++ toInt(dim).toString ++ " with first tree leaving: " ++ atr.toString)
         None
       }
-      case (Leaf(), btr @ Branch(b, bsh)) => {
+      case (Leaf(), btr @ Node(b, bsh)) => {
         println("Matching failed in dimension " ++ toInt(dim).toString ++ " with second tree leaving: " ++ btr.toString)
         None
       }
@@ -256,17 +256,17 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
   def zipWithCorolla[A](tree : Tree[S[N], A]) : Tree[S[N], (A, Derivative[S[N], A])] = 
     tree match {
-      case Leaf() => Leaf()
-      case Branch(a, shell) => 
-        Branch((a, (prev.const(Leaf(), shell), Nil)), 
+      case Leaf() => Leaf[S[N]]
+      case Node(a, shell) => 
+        Node((a, (prev.const(Leaf[S[N]], shell), Nil)), 
           prev.map(shell, (t : Tree[S[N], A]) => { zipWithCorolla(t) }))
     }
 
   def zipWithPrefix[A](pref : Address[S[N]], tree : Tree[S[N], A]) : Tree[S[N], (A, Address[S[N]])] =
     tree match {
-      case Leaf() => Leaf()
-      case Branch(a, shell) => 
-        Branch((a, pref), prev.map(prev.zipWithAddress(shell), 
+      case Leaf() => Leaf[S[N]]
+      case Node(a, shell) => 
+        Node((a, pref), prev.map(prev.zipWithAddress(shell), 
           (apr : (Tree[S[N], A], Address[N])) => {
             zipWithPrefix(apr._2 :: pref, apr._1)
           }))
@@ -279,8 +279,8 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
   ) : Option[Tree[S[N], Address[S[S[N]]]]] = 
     tree match {
       case Leaf() => Some(plug(corolla, prefix))
-      case Branch(a, shell) => 
-        if (isLeaf(shell)) Some(Leaf()) else {
+      case Node(a, shell) => 
+        if (isLeaf(shell)) Some(Leaf[S[N]]) else {
 
           val graftShell : Tree[S[N], (Address[S[S[N]]], Derivative[S[N], Address[S[S[N]]]])] = 
             zipWithAddress(zipWithCorolla(const(prefix, shell))) map {
@@ -305,8 +305,8 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
   def substitute[A](ttree : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] =
     ttree match {
-      case Leaf() => Some(Leaf())
-      case Branch(t, sts) => 
+      case Leaf() => Some(Leaf[S[N]])
+      case Node(t, sts) => 
         for {
           s <- prev.sequence(
             prev.map(sts, (tt : Tree[S[N], Tree[S[N], A]]) => {
@@ -322,7 +322,7 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
   def graft[A](tree : Tree[S[S[N]], A], brs : Tree[S[N], Tree[S[S[N]], A]]) : Option[Tree[S[S[N]], A]] = 
     (tree, brs) match {
       case (Leaf(), Leaf()) => None
-      case (Leaf(), Branch(t, shell)) => Some(t)   /// BUG!!! - Should check that the shell is degenerate (contains no more outgoing trees)
+      case (Leaf(), Node(t, shell)) => Some(t)   /// BUG!!! - Should check that the shell is degenerate (contains no more outgoing trees)
       case (_, _) => {
 
         type Grafter[X] = StateT[Option, Tree[S[S[N]], A], X]
@@ -366,7 +366,7 @@ object TreeOneFunctions extends TreeSuccFunctions[_0] {
 
   def visit[A](d : Direction[_1], z : Zipper[_1, A]) : Option[Zipper[_1, A]]  =
     (d, z) match {
-      case (Nil, (Branch(h, Point(t)), c)) => Some(t, ((h, ()) :: c))
+      case (Nil, (Node(h, Point(t)), c)) => Some(t, ((h, ()) :: c))
       case (_, _) => None
     }
 
@@ -379,13 +379,13 @@ case class TreeDblSuccFunctions[N <: Nat](val pp : TreeFunctions[N]) extends Tre
 
   def visit[A](d : Direction[S[S[N]]], z : Zipper[S[S[N]], A]) : Option[Zipper[S[S[N]], A]] = 
     z match {
-      case (Branch(a, shell), c) => 
+      case (Node(a, shell), c) => 
         for {
           z <- prev.seek(d, (shell, Nil))
           br <- (
             z match {
               case (Leaf(), zz) => None
-              case (Branch(t, tsh), zz) => Some((t , (a, (tsh, zz)) :: c ))
+              case (Node(t, tsh), zz) => Some((t , (a, (tsh, zz)) :: c ))
             }
           )
         } yield br

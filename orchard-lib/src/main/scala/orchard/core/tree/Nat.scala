@@ -26,16 +26,6 @@ trait NatRec1[Type] {
 
 }
 
-trait NatRecPair1[Type] {
-
-  type OnZeroFst[+A] <: Type
-  type OnZeroSnd[+A] <: Type
-
-  type OnSuccFst[P <: Nat, F[+_] <: Type, G[+_] <: Type, +A] <: Type
-  type OnSuccSnd[P <: Nat, F[+_] <: Type, G[+_] <: Type, +A] <: Type
-
-}
-
 sealed trait Nat { self => 
 
   type Self <: Nat
@@ -45,8 +35,13 @@ sealed trait Nat { self =>
   type Rec0[Type, R <: NatRec0[Type]] <: Type
   type Rec1[Type, C <: NatRec1[Type], +A] <: Type
 
-  type RecPairFst[Type, R <: NatRecPair1[Type], +A] <: Type
-  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] <: Type
+  // Tree types
+
+  type Tree[+_]
+  type Cardinal[+_]
+  type Context[+_]
+  type Derivative[+_]
+  type Direction
 
 }
 
@@ -57,8 +52,13 @@ case object Z extends Nat {
   type Rec0[Type, R <: NatRec0[Type]] = R#OnZero
   type Rec1[Type, C <: NatRec1[Type], +A] = C#OnZero[A]
 
-  type RecPairFst[Type, R <: NatRecPair1[Type], +A] = R#OnZeroFst[A]
-  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] = R#OnZeroSnd[A]
+  // Zero dimensional tree types
+
+  type Tree[+A] = Point[A]
+  type Cardinal[+A] = Point[A]
+  type Context[+A] = Unit
+  type Derivative[+A] = Unit
+  type Direction = Nothing
 
 }
 
@@ -73,17 +73,13 @@ case class S[P <: Nat](val pred : P) extends Nat {
   type Rec1[Type, C <: NatRec1[Type], +A] = 
     C#OnSucc[P, ({ type L[+X] = P#Rec1[Type, C, X] })#L, A]
 
-  type RecPairFst[Type, R <: NatRecPair1[Type], +A] = 
-    R#OnSuccFst[P, 
-      ({ type L[+X] = P#RecPairFst[Type, R, X] })#L,
-      ({ type L[+X] = P#RecPairSnd[Type, R, X] })#L,
-      A]
+  // Successor tree types
 
-  type RecPairSnd[Type, R <: NatRecPair1[Type], +A] =
-    R#OnSuccSnd[P, 
-      ({ type L[+X] = P#RecPairFst[Type, R, X] })#L,
-      ({ type L[+X] = P#RecPairSnd[Type, R, X] })#L,
-      A]
+  type Tree[+A] = Slice[P#Tree, A]
+  type Cardinal[+A] = P#Cardinal[Tree[A]]
+  type Context[+A] = List[(A, P#Derivative[Tree[A]])]
+  type Derivative[+A] = (P#Tree[Tree[A]], Context[A])
+  type Direction = List[P#Direction]
 
 }
 
@@ -103,6 +99,17 @@ trait Nats {
   implicit def zeroNat : Z.type = Z
   implicit def succNat[P <: Nat](implicit p : P) : S[P] = S(p)
 
+  trait IsSucc[N <: Nat] {
+    type P <: Nat
+    def leibniz : Leibniz[Nothing, Nat, S[P], N]
+  }
+
+  implicit def succIsSucc[N <: Nat] : IsSucc[S[N]] = 
+    new IsSucc[S[N]] {
+      type P = N
+      def leibniz : Leibniz[Nothing, Nat, S[P], S[P]] = refl[S[P]]
+    }
+
   def fromInt(i : Int) : Nat = 
     if (i <= 0) Z else S(fromInt(i - 1))
 
@@ -110,17 +117,6 @@ trait Nats {
     n match {
       case Z => 0
       case S(p) => toInt(p) + 1
-    }
-
-  trait HasPred[N <: Nat] {
-    type P <: Nat
-    def leibniz : Leibniz[Nothing, Nat, S[P], N]
-  }
-
-  implicit def succHasPred[N <: Nat] : HasPred[S[N]] = 
-    new HasPred[S[N]] {
-      type P = N
-      def leibniz : Leibniz[Nothing, Nat, S[P], S[P]] = refl[S[P]]
     }
 
   trait ZeroMatch[N <: Nat] {

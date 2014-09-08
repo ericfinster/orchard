@@ -17,77 +17,23 @@ import scalaz.std.option._
 import Nats._
 import Slice._
 
+case class Point[+A](a : A)
+
 object Trees {
-
-  case class Point[+A](a : A)
-
-  //============================================================================================
-  // RECURSORS
-  //
-
-  trait TreeRec extends NatRec1[Any] {
-    type OnZero[+A] = Point[A]
-    type OnSucc[P <: Nat, T[+_] <: Any, +A] = Slice[T, A]
-  }
-
-  // trait CardinalRec extends NatRec1[Any] {
-  //   type OnZero[+A] = Point[A]
-  //   type OnSucc[P <: Nat, T[+_] <: Any, +A] = T[Tree[S[P], A]]
-  // }
-
-  trait CardinalRec extends NatRecPair1[Any] {
-
-    type OnZeroFst[+A] = A
-    type OnZeroSnd[+A] = A
-
-    type OnSuccFst[P <: Nat, F[+_] <: Any, G[+_] <: Any, +A] = F[G[A]]
-    type OnSuccSnd[P <: Nat, F[+_] <: Any, G[+_] <: Any, +A] = Slice[G, A]
-
-  }
-
-  trait DerivativeRec extends NatRec1[Any] {
-    type OnZero[+A] = Unit
-    type OnSucc[P <: Nat, T[+_] <: Any, +A] = (Tree[P, Tree[S[P], A]], List[(A, T[Tree[S[P], A]])])
-  }
-
-  trait ContextRec extends NatRec1[Any] {
-    type OnZero[+A] = Unit
-    type OnSucc[P <: Nat, T[+_] <: Any, +A] = List[(A, Derivative[P, Tree[S[P], A]])]
-  }
-
-  trait DirectionRec extends NatRec0[Any] {
-    type OnZero = Nothing
-    type OnSucc[P <: Nat, T] = List[T]
-  }
 
   //============================================================================================
   // TYPE DEFINITIONS
   //
 
-  type Tree[N <: Nat, +A] = N#Rec1[Any, TreeRec, A] 
-  type CardinalTree[N <: Nat, +A] = N#RecPairFst[Any, CardinalRec, A] 
+  type Tree[N <: Nat, +A] = N#Tree[A]
+  type Cardinal[N <: Nat, +A] = N#Cardinal[A]
 
-  type Derivative[N <: Nat, +A] = N#Rec1[Any, DerivativeRec, A]
-  type Context[N <: Nat, +A] = N#Rec1[Any, ContextRec, A]
+  type Context[N <: Nat, +A] = N#Context[A]
+  type Derivative[N <: Nat, +A] = N#Derivative[A]
   type Zipper[N <: Nat, +A] = (Tree[N, A], Context[N, A])
 
-  type Direction[N <: Nat] = N#Rec0[Any, DirectionRec]
-  type Address[N <: Nat] = Direction[S[N]]
-
-  //============================================================================================
-  // LOW DIMENSIONAL IMPLEMENTATIONS
-  //
-
-  type Tree0[+A] = Tree[_0, A] 
-  type Tree1[+A] = Tree[_1, A] 
-  type Tree2[+A] = Tree[_2, A] 
-  type Tree3[+A] = Tree[_3, A] 
-  type Tree4[+A] = Tree[_4, A]
-
-  // type Card0[+A] = CardinalTree[_0, A]
-  // type Card1[+A] = CardinalTree[_1, A]
-  // type Card2[+A] = CardinalTree[_2, A]
-  // type Card3[+A] = CardinalTree[_3, A]
+  type Direction[N <: Nat] = N#Direction
+  type Address[N <: Nat] = List[N#Direction]
 
   //============================================================================================
   // FUNCTION IMPLICITS
@@ -113,57 +59,12 @@ object Trees {
     def leibniz : T === Tree[N, A]
   }
 
-  // trait IsConsTree[T, N <: Nat, G[_], A] {
-  //   val dim : N
-  //   def leibniz : T === Tree[N, G[A]]
-  // }
-
-  // trait IsDerivative[T, N <: Nat, A] {
-  //   val dim : N
-  //   def leibniz : T === Derivative[N, A]
-  // }
-
-  // trait IsContext[T, N <: Nat, A] {
-  //   val dim : N
-  //   def leibniz : T === Context[N, A]
-  // }
-
   implicit def treesAreTrees[N <: Nat, A](implicit tfs : TreeFunctions[N]) : IsTree[Tree[N, A], N, A] = 
     new IsTree[Tree[N, A], N, A] {
       val tfns = tfs
       def leibniz : Tree[N, A] === Tree[N, A] = 
         refl[Tree[N, A]]
     }
-
-  // implicit def consTreesAreConsTrees[N <: Nat, G[_], A](implicit n : N) : IsConsTree[Tree[N, G[A]], N, G, A] =
-  //   new IsConsTree[Tree[N, G[A]], N, G, A] {
-  //     val dim = n
-  //     def leibniz : Tree[N, G[A]] === Tree[N, G[A]] =
-  //       refl[Tree[N, G[A]]]
-  //   }
-
-  // implicit def contextsAreContexts[N <: Nat, A](implicit n : N) : IsContext[Context[N, A], N, A] =
-  //   new IsContext[Context[N, A], N, A] {
-  //     val dim = n
-  //     def leibniz : Context[N, A] === Context[N, A] =
-  //       refl[Context[N, A]]
-  //   }
-
-  // implicit def derivsAreDerivs[N <: Nat, A](implicit n : N) : IsDerivative[Derivative[N, A], N, A] =
-  //   new IsDerivative[Derivative[N, A], N, A] {
-  //     val dim = n
-  //     def leibniz : Derivative[N, A] === Derivative[N, A] =
-  //       refl[Derivative[N, A]]
-  //   }
-
-  // implicitly[IsTree[Tree[_0, Int], _0, Int]]
-  // implicitly[IsTree[Tree[_1, Int], _1, Int]]
-  // implicitly[IsTree[Tree[_2, Int], _2, Int]]
-  // implicitly[IsTree[Tree[_3, Int], _3, Int]]
-
-  // implicitly[IsConsTree[Tree[_3, List[Int]], _3, List, Int]]
-
-  // implicitly[IsDerivative[Derivative[_3, Int], _3, Int]]
 
   //============================================================================================
   // OPERATIONS CLASSES
@@ -199,7 +100,7 @@ object Trees {
 
     // I think sequence and traverse could be handled with an unapply
 
-    def flatten(implicit hasPred : HasPred[N]) : Option[Tree[hasPred.P, Unit]] = {
+    def flatten(implicit hasPred : IsSucc[N]) : Option[Tree[hasPred.P, Unit]] = {
       val sfns = tfns.asInstanceOf[TreeSuccFunctions[hasPred.P]]
       val pfns = sfns.prev
       val test = tree.asInstanceOf[Tree[S[hasPred.P], A]]
@@ -209,41 +110,22 @@ object Trees {
 
   }
 
-  // implicit class SuccOps[T, N <: Nat, A](t : T)(implicit val isTree : IsTree[T, S[N], A]) {
-
-  //   import isTree._
-
-  //   val tree : Tree[S[N], A] =
-  //     subst(t)(leibniz)
-
-  //   def flatten : Option[Tree[N, Unit]] =
-  //     TreeLib.flatten[N, A](dim.pred, tree)
-
-  // }
-
-  // implicit class DerivativeOps[D, N <: Nat, A](d : D)(implicit val isDerivative : IsDerivative[D, N, A]) {
-
-  //   import isDerivative._
-
-  //   val deriv : Derivative[N, A] =
-  //     subst(d)(leibniz)
-
-  //   def plugWith(a : A) : Tree[N, A] = 
-  //     TreeLib.plug(dim, deriv, a)
-
-  // }
-
   //============================================================================================
   // CONSTRUCTORS AND EXTRACTORS
   //
 
+  object Pt {
+
+    def apply[A](a : A) : Tree[_0, A] = Point(a)
+
+  }
+
   object Leaf {
 
-    def apply[N <: Nat]() : Tree[S[N], Nothing] = {
-      type P[+X] = Tree[N, X]
-      Cap[P]()
+    def apply[N <: Nat](implicit isSucc : IsSucc[N]) : Tree[N, Nothing] = {
+      type P[+X] = Tree[isSucc.P, X]
+      isSucc.leibniz.subst[({ type L[N <: Nat] = Tree[N, Nothing] })#L](Cap[P]())
     }
-
 
     def unapply[N <: Nat, A](s : Tree[S[N], A]) : Boolean = {
       type P[+X] = Tree[N, X]
@@ -255,11 +137,11 @@ object Trees {
 
   }
 
-  object Branch {
+  object Node {
 
-    def apply[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = {
+    def apply[N <: Nat, A, B <: A](b : B, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = {
       type P[+X] = Tree[N, X]
-      Joint[P, A](a, shell)
+      Joint[P, A](b, shell)
     }
 
     def unapply[N <: Nat, A](s : Tree[S[N], A]) : Option[(A, Tree[N, Tree[S[N], A]])] = {
@@ -271,5 +153,47 @@ object Trees {
     }
 
   }
+
+}
+
+trait TypeTests {
+
+  import Trees._
+
+  type Tree0[+A] = Point[A]
+  type Tree1[+A] = Slice[Tree0, A]
+  type Tree2[+A] = Slice[Tree1, A]
+  type Tree3[+A] = Slice[Tree2, A]
+  type Tree4[+A] = Slice[Tree3, A]
+
+  type Card0[+A] = Point[A]
+  type Card1[+A] = Card0[Tree1[A]]
+  type Card2[+A] = Card1[Tree2[A]]
+  type Card3[+A] = Card2[Tree3[A]]
+  type Card4[+A] = Card3[Tree4[A]]
+
+  implicitly[Tree0[Int] =:= Tree[_0, Int]]
+  implicitly[Tree1[Int] =:= Tree[_1, Int]]
+  implicitly[Tree2[Int] =:= Tree[_2, Int]]
+  implicitly[Tree3[Int] =:= Tree[_3, Int]]
+  implicitly[Tree4[Int] =:= Tree[_4, Int]]
+
+  implicitly[Card0[Int] =:= Cardinal[_0, Int]]
+  implicitly[Card1[Int] =:= Cardinal[_1, Int]]
+  implicitly[Card2[Int] =:= Cardinal[_2, Int]]
+  implicitly[Card3[Int] =:= Cardinal[_3, Int]]
+  implicitly[Card4[Int] =:= Cardinal[_4, Int]]
+
+  type CC0[+A] = Cardinal[_0, A]
+  type CC1[+A] = Cardinal[_1, A]
+  type CC2[+A] = Cardinal[_2, A]
+  type CC3[+A] = Cardinal[_3, A]
+  type CC4[+A] = Cardinal[_4, A]
+
+  implicitly[CC0[Int] =:= Tree0[Int]]
+  implicitly[CC1[Int] =:= Tree0[Tree1[Int]]]
+  implicitly[CC2[Int] =:= Tree0[Tree1[Tree2[Int]]]]
+  implicitly[CC3[Int] =:= Tree0[Tree1[Tree2[Tree3[Int]]]]]
+  implicitly[CC4[Int] =:= Tree0[Tree1[Tree2[Tree3[Tree4[Int]]]]]]
 
 }
