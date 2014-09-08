@@ -16,7 +16,7 @@ import scalaz.syntax.monad._
 
 sealed trait Slice[F[+_], +A]
 
-case class Cap[F[+_], +A]() extends Slice[F, A] 
+case class Cap[F[+_]]() extends Slice[F, Nothing] 
 case class Joint[F[+_], +A](a : A, fsa : F[Slice[F, A]]) extends Slice[F, A] 
 
 trait SliceInstances {

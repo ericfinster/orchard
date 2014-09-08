@@ -20,26 +20,26 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
     new EventHandler[KeyEvent] {
       def handle(ev : KeyEvent) {
         ev.getCode match {
-          case KeyCode.LEFT => {
-            for { 
-              gallery <- activeGallery
-            } gallery.prev
+          // case KeyCode.LEFT => {
+          //   for { 
+          //     gallery <- activeGallery
+          //   } gallery.prev
 
-            ev.consume
-          }
-          case KeyCode.RIGHT => {
-            for { 
-              gallery <- activeGallery 
-            } gallery.next
+          //   ev.consume
+          // }
+          // case KeyCode.RIGHT => {
+          //   for { 
+          //     gallery <- activeGallery 
+          //   } gallery.next
 
-            ev.consume
-          }
-          case KeyCode.E => if (ev.isControlDown) onExtrude
-          case KeyCode.D => if (ev.isControlDown) onDrop
+          //   ev.consume
+          // }
+          // case KeyCode.E => if (ev.isControlDown) onExtrude
+          // case KeyCode.D => if (ev.isControlDown) onDrop
           // case KeyCode.A => if (ev.isControlDown) onAssume(ev.isShiftDown)
           // case KeyCode.F => if (ev.isControlDown) onFill  
           // case KeyCode.P => if (ev.isControlDown) onPaste
-          case KeyCode.T => if (ev.isControlDown) onNewWorksheet
+          // case KeyCode.T => if (ev.isControlDown) onNewWorksheet
           // case KeyCode.O => if (ev.isControlDown) onOpenModule
           // case KeyCode.S => if (ev.isControlDown) onSaveModule
           // case KeyCode.B => if (ev.isControlDown) onBind
@@ -70,22 +70,22 @@ trait JavaFXEvents { thisEditor : JavaFXEditor =>
   def onExit : Unit = 
     scalafx.application.Platform.exit
 
-  def onNewWorksheet : Unit = createWorksheet
+  // def onNewWorksheet : Unit = createWorksheet
 
-  def onExtrude : Unit = 
-    for {
-      gallery <- activeGallery
-    } {
-      gallery.handle.extrudeSelection
-      gallery.update
-    }
+  // def onExtrude : Unit = 
+  //   for {
+  //     gallery <- activeGallery
+  //   } {
+  //     gallery.handle.extrudeSelection
+  //     gallery.update
+  //   }
 
-  def onDrop : Unit =
-    for {
-      gallery <- activeGallery
-    } {
-      gallery.handle.dropSelection
-      gallery.update
-    }
+  // def onDrop : Unit =
+  //   for {
+  //     gallery <- activeGallery
+  //   } {
+  //     gallery.handle.dropSelection
+  //     gallery.update
+  //   }
 
 }

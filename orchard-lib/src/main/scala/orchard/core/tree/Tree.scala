@@ -64,12 +64,6 @@ object Trees {
   type Direction[N <: Nat] = N#Rec0[Any, DirectionRec]
   type Address[N <: Nat] = Direction[S[N]]
 
-  def cap[N <: Nat, A](n : S[N]) : Tree[S[N], A] = 
-    Cap[({ type L[+X] = Tree[N, X] })#L, A]()
-
-  def joint[N <: Nat, A](a : A, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = 
-    Joint[({ type L[+X] = Tree[N, X] })#L, A](a, shell)
-
   //============================================================================================
   // LOW DIMENSIONAL IMPLEMENTATIONS
   //
@@ -85,16 +79,6 @@ object Trees {
   // type Card2[+A] = CardinalTree[_2, A]
   // type Card3[+A] = CardinalTree[_3, A]
 
-  // def nil[A] : Tree1[A] = cap(S(Z))
-
-  // def cons[A](a : A, t : Tree1[A]) : Tree1[A] = joint[_0, A](a, t)
-  //   // Joint[Id, A](a, t)
-
-  // def leaf[A] : Tree2[A] = cap(S(S(Z)))
-  //   //Cap[Tree1, A]()
-
-  // def node[A](a : A, brs : Tree1[Tree2[A]]) : Tree2[A] =
-  //   Joint[Tree1, A](a, brs)
 
   //============================================================================================
   // FUNCTION IMPLICITS
@@ -206,6 +190,14 @@ object Trees {
 
     // I think sequence and traverse could be handled with an unapply
 
+    def flatten(implicit hasPred : HasPred[N]) : Option[Tree[hasPred.P, Unit]] = {
+      val sfns = tfns.asInstanceOf[TreeSuccFunctions[hasPred.P]]
+      val pfns = sfns.prev
+      val test = tree.asInstanceOf[Tree[S[hasPred.P], A]]
+      val last = pfns.flatten(test)
+      last
+    }
+
   }
 
   // implicit class SuccOps[T, N <: Nat, A](t : T)(implicit val isTree : IsTree[T, S[N], A]) {
@@ -238,9 +230,9 @@ object Trees {
 
   object Leaf {
 
-    def apply[N <: Nat, A]() : Tree[S[N], A] = {
+    def apply[N <: Nat]() : Tree[S[N], Nothing] = {
       type P[+X] = Tree[N, X]
-      Cap[P, A]()
+      Cap[P]()
     }
 
 

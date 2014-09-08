@@ -25,6 +25,11 @@ object ApplicationBuild extends Build with UniversalKeys {
     base = file("orchard-play")
   ) enablePlugins (play.PlayScala) settings (orchardPlaySettings: _*) aggregate (orchardJs) dependsOn (orchardLib)
 
+  lazy val orchardJavaFX = Project(
+    id = "orchard-javafx",
+    base = file("orchard-javafx")
+  ) settings (orchardJavaFXSettings: _*) dependsOn (orchardLib)
+
   lazy val orchardJs = Project(
     id   = "orchard-js",
     base = file("orchard-js")
@@ -55,6 +60,16 @@ object ApplicationBuild extends Build with UniversalKeys {
       Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, packageLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
         crossTarget in (orchardJs, Compile, packageJSKey) := orchardJsOutputDir.value
       }
+    )
+
+  lazy val orchardJavaFXSettings = 
+    Seq(
+      name := "orchard-javafx",
+      version := Versions.app,
+      scalaVersion := Versions.scala,
+      unmanagedJars in Compile += Attributed.blank(
+        file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar"),
+      Keys.fork := true
     )
 
   lazy val orchardJsSettings =

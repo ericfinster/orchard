@@ -20,6 +20,8 @@ trait TreeFunctions[N <: Nat] {
 
   implicit val theseFunctions : TreeFunctions[N] = this
 
+  def dim : N
+
   def map[A, B](tree : Tree[N, A], f : A => B) : Tree[N, B]
   def traverse[G[_], A, B](tree :  Tree[N, A], f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[N, B]]
   def sequence[G[_], A](tree : Tree[N, G[A]])(implicit apG : Applicative[G]) : G[Tree[N, A]] =
@@ -74,41 +76,7 @@ trait TreeFunctions[N <: Nat] {
     } yield shapeOf(addrTree)
 
   def substitute[A](ttree : Tree[N, Tree[N, A]]) : Option[Tree[N, A]]
-
-  def graft[A](tree : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] = {
-
-    type Grafter[X] = StateT[Option, Tree[S[N], A], X]
-    type GrafterS[S, X] = StateT[Option, S, X]
-    type GrafterT[M[+_], X] = StateT[M, Tree[S[N], A], X]
-
-    val GS = MonadState[GrafterS, Tree[S[N], A]]
-    val GT = MonadTrans[GrafterT]
-
-    import GS.{map => _, sequence => _, _}
-    import GT._
-
-    for {
-      addrTr <- flattenWithAddress(tree)
-      grafts <- zipComplete(addrTr, brs)
-
-      result <- sequence[Grafter, Unit](
-        grafts map {
-          case (addr, br) => {
-            for {
-              curTr <- get
-              graftResult <- liftM[Option, Tree[S[N], A]](
-                graftAt(addr, curTr, br)
-              )
-              _ <- put(graftResult)
-            } yield ()
-          }
-        }
-      ).exec(tree)
-
-    } yield result
-
-
-  }
+  def graft[A](tree : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] 
 
   def graftAt[A](addr : Address[S[N]], tree : Tree[S[N], A], br : Tree[S[N], A]) : Option[Tree[S[N], A]] =
     for {
@@ -128,6 +96,8 @@ trait TreeFunctions[N <: Nat] {
 }
 
 object TreeZeroFunctions extends TreeFunctions[_0] {
+
+  val dim = Z
 
   def map[A, B](tree : Tree[_0, A], f : A => B) : Tree[_0, B] = 
     tree match {
@@ -181,11 +151,22 @@ object TreeZeroFunctions extends TreeFunctions[_0] {
       case Point(Point(a)) => Some(Point(a))
     }
 
+  def graft[A](tree : Tree[_1, A], brs : Tree[_0, Tree[_1, A]]) : Option[Tree[_1, A]] = 
+    (tree, brs) match {
+      case (Leaf(), Point(l)) => Some(l)
+      case (Branch(head, Point(tail)), l) => 
+        for {
+          ll <- graft(tail, brs)
+        } yield Branch[_0, A](head, Point(ll))
+    }
+
 }
 
 abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
   val prev : TreeFunctions[N]
+
+  def dim : S[N] = S(prev.dim)
 
   def map[A, B](tree : Tree[S[N], A], f : A => B) : Tree[S[N], B] = {
     tree match {
@@ -263,6 +244,14 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
         } yield Branch((a, b), resultShell)
 
       }
+      case (atr @ Branch(a, ash), Leaf()) => {
+        println("Matching failed in dimension " ++ toInt(dim).toString ++ " with first tree leaving: " ++ atr.toString)
+        None
+      }
+      case (Leaf(), btr @ Branch(b, bsh)) => {
+        println("Matching failed in dimension " ++ toInt(dim).toString ++ " with second tree leaving: " ++ btr.toString)
+        None
+      }
     }
 
   def zipWithCorolla[A](tree : Tree[S[N], A]) : Tree[S[N], (A, Derivative[S[N], A])] = 
@@ -314,7 +303,7 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
         }
     }
 
-  def substitute[A](ttree : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] = 
+  def substitute[A](ttree : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] =
     ttree match {
       case Leaf() => Some(Leaf())
       case Branch(t, sts) => 
@@ -329,6 +318,46 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
         } yield g
     }
+ 
+  def graft[A](tree : Tree[S[S[N]], A], brs : Tree[S[N], Tree[S[S[N]], A]]) : Option[Tree[S[S[N]], A]] = 
+    (tree, brs) match {
+      case (Leaf(), Leaf()) => None
+      case (Leaf(), Branch(t, shell)) => Some(t)   /// BUG!!! - Should check that the shell is degenerate (contains no more outgoing trees)
+      case (_, _) => {
+
+        type Grafter[X] = StateT[Option, Tree[S[S[N]], A], X]
+        type GrafterS[S, X] = StateT[Option, S, X]
+        type GrafterT[M[+_], X] = StateT[M, Tree[S[S[N]], A], X]
+
+        val GS = MonadState[GrafterS, Tree[S[S[N]], A]]
+        val GT = MonadTrans[GrafterT]
+
+        import GS.{map => _, sequence => _, _}
+        import GT._
+
+        for {
+          addrTr <- flattenWithAddress(tree)
+          grafts <- zipComplete(addrTr, brs)
+
+          result <- sequence[Grafter, Unit](
+            grafts map {
+              case (addr, br) => {
+                for {
+                  curTr <- get
+                  graftResult <- liftM[Option, Tree[S[S[N]], A]](
+                    graftAt(addr, curTr, br)
+                  )
+                  _ <- put(graftResult)
+                } yield ()
+              }
+            }
+          ).exec(tree)
+
+        } yield result
+
+      }
+    }
+
 }
 
 object TreeOneFunctions extends TreeSuccFunctions[_0] {

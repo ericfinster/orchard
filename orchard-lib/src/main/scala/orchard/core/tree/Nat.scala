@@ -9,6 +9,7 @@ package orchard.core.tree
 
 import scala.language.higherKinds
 
+import scalaz.Leibniz
 import scalaz.Leibniz._
 
 trait NatRec0[Type] {
@@ -73,6 +74,26 @@ trait Nats {
 
   implicit def zeroNat : Z.type = Z
   implicit def succNat[P <: Nat](implicit p : P) : S[P] = S(p)
+
+  def fromInt(i : Int) : Nat = 
+    if (i <= 0) Z else S(fromInt(i - 1))
+
+  def toInt[N <: Nat](n : N) : Int = 
+    n match {
+      case Z => 0
+      case S(p) => toInt(p) + 1
+    }
+
+  trait HasPred[N <: Nat] {
+    type P <: Nat
+    def leibniz : Leibniz[Nothing, Nat, S[P], N]
+  }
+
+  implicit def succHasPred[N <: Nat] : HasPred[S[N]] = 
+    new HasPred[S[N]] {
+      type P = N
+      def leibniz : Leibniz[Nothing, Nat, S[P], S[P]] = refl[S[P]]
+    }
 
   trait ZeroMatch[N <: Nat] {
 

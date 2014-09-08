@@ -43,37 +43,6 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   def consoleDebug(str: String): Unit =
     console.appendText("DEBUG: " ++ str ++ "\n")
 
-  //============================================================================================
-  // A WORKSPACE
-  //
-
-  var activeGallery : Option[WorksheetGallery] = None
-
-  val workspace = new Workspace
-
-  def createWorksheet =
-    for {
-      worksheet <- workspace.newWorksheet("New Sheet")
-    } {
-      val gallery = new WorksheetGallery(worksheet)
-
-      val tab = new Tab {
-        text = "Worksheet"
-        content = gallery
-
-        onSelectionChanged = () => {
-          if (selected()) 
-            activeGallery = Some(gallery)
-        }
-      }
-
-      gallery.refreshAll
-      worksheetTabPane += tab
-
-      consoleMessage("Created worksheet")
-    }
-
-
 }
 
 
