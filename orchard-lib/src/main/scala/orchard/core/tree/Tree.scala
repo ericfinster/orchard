@@ -100,10 +100,10 @@ object Trees {
 
     // I think sequence and traverse could be handled with an unapply
 
-    def flatten(implicit hasPred : IsSucc[N]) : Option[Tree[hasPred.P, Unit]] = {
-      val sfns = tfns.asInstanceOf[TreeSuccFunctions[hasPred.P]]
+    def flatten(implicit isSucc : IsSucc[N]) : Option[Tree[isSucc.P, Unit]] = {
+      val sfns = tfns.asInstanceOf[TreeSuccFunctions[isSucc.P]]
       val pfns = sfns.prev
-      val test = tree.asInstanceOf[Tree[S[hasPred.P], A]]
+      val test = tree.asInstanceOf[Tree[S[isSucc.P], A]]
       val last = pfns.flatten(test)
       last
     }

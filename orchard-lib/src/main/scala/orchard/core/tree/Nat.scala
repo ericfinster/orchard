@@ -35,13 +35,19 @@ sealed trait Nat { self =>
   type Rec0[Type, R <: NatRec0[Type]] <: Type
   type Rec1[Type, C <: NatRec1[Type], +A] <: Type
 
-  // Tree types
+  // Tree Types
 
   type Tree[+_]
   type Cardinal[+_]
   type Context[+_]
   type Derivative[+_]
   type Direction
+
+  // Complex Types
+
+  type TargetComplex[+_]
+  type OpetopicComplex[+_]
+  type CardinalComplex[+_]
 
 }
 
@@ -59,6 +65,12 @@ case object Z extends Nat {
   type Context[+A] = Unit
   type Derivative[+A] = Unit
   type Direction = Nothing
+
+  // Zero dimensional complex types
+
+  type TargetComplex[+A] = Point[A]
+  type OpetopicComplex[+A] = Point[A]
+  type CardinalComplex[+A] = Point[A]
 
 }
 
@@ -81,6 +93,12 @@ case class S[P <: Nat](val pred : P) extends Nat {
   type Derivative[+A] = (P#Tree[Tree[A]], Context[A])
   type Direction = List[P#Direction]
 
+  // Successor complex types
+
+  type TargetComplex[+A] = (P#TargetComplex[A], Tree[(A, A)])
+  type OpetopicComplex[+A] = (P#TargetComplex[A], (A, A))
+  type CardinalComplex[+A] = (P#CardinalComplex[A], Cardinal[(A, A)])
+
 }
 
 trait Nats {
@@ -99,10 +117,19 @@ trait Nats {
   implicit def zeroNat : Z.type = Z
   implicit def succNat[P <: Nat](implicit p : P) : S[P] = S(p)
 
+  trait IsZero[N <: Nat] {
+    def leibniz : Leibniz[Nothing, Nat, _0, N]
+  }
+
   trait IsSucc[N <: Nat] {
     type P <: Nat
     def leibniz : Leibniz[Nothing, Nat, S[P], N]
   }
+
+  implicit def zeroIsZero : IsZero[_0] =
+    new IsZero[_0] {
+      def leibniz : Leibniz[Nothing, Nat, _0, _0] = refl[_0]
+    }
 
   implicit def succIsSucc[N <: Nat] : IsSucc[S[N]] = 
     new IsSucc[S[N]] {
