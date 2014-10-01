@@ -43,12 +43,6 @@ sealed trait Nat { self =>
   type Derivative[+_]
   type Direction
 
-  // Complex Types
-
-  type TargetComplex[+_]
-  type OpetopicComplex[+_]
-  type CardinalComplex[+_]
-
 }
 
 case object Z extends Nat {
@@ -66,12 +60,6 @@ case object Z extends Nat {
   type Derivative[+A] = Unit
   type Direction = Nothing
 
-  // Zero dimensional complex types
-
-  type TargetComplex[+A] = Point[A]
-  type OpetopicComplex[+A] = Point[A]
-  type CardinalComplex[+A] = Point[A]
-
 }
 
 
@@ -87,17 +75,11 @@ case class S[P <: Nat](val pred : P) extends Nat {
 
   // Successor tree types
 
-  type Tree[+A] = Slice[P#Tree, A]
+  type Tree[+A] = Slice[P#Tree, List[P#Direction], A]
   type Cardinal[+A] = P#Cardinal[Tree[A]]
   type Context[+A] = List[(A, P#Derivative[Tree[A]])]
   type Derivative[+A] = (P#Tree[Tree[A]], Context[A])
   type Direction = List[P#Direction]
-
-  // Successor complex types
-
-  type TargetComplex[+A] = (P#TargetComplex[A], Tree[(A, A)])
-  type OpetopicComplex[+A] = (P#TargetComplex[A], (A, A))
-  type CardinalComplex[+A] = (P#CardinalComplex[A], Cardinal[(A, A)])
 
 }
 
@@ -166,8 +148,8 @@ trait Nats {
 
     implicit val p : P
 
-    implicit def succCoh : N === S[P]
-    implicit def succCoe : S[P] === N
+    implicit def succCoh : Leibniz[Nothing, Nat, N, S[P]]
+    implicit def succCoe : Leibniz[Nothing, Nat, S[P], N]
 
   }
 
@@ -224,8 +206,8 @@ trait Nats {
             type P = pr.Self
             val p = pr.self
 
-            def succCoh : N === S[P] = force[Nothing, Any, N, S[P]]
-            def succCoe : S[P] === N = force[Nothing, Any, S[P], N]
+            def succCoh : Leibniz[Nothing, Nat, N, S[P]] = force[Nothing, Nat, N, S[P]]
+            def succCoe : Leibniz[Nothing, Nat, S[P], N] = force[Nothing, Nat, S[P], N]
             
           }
         )

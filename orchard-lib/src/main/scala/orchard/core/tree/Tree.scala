@@ -52,8 +52,6 @@ object Trees {
   // WITNESS TYPE CLASSES
   //
 
-  // Actually, these all look like unapplies .... can you use that?
-
   trait IsTree[T, N <: Nat, A] { 
     val tfns : TreeFunctions[N]
     def leibniz : T === Tree[N, A]
@@ -64,6 +62,18 @@ object Trees {
       val tfns = tfs
       def leibniz : Tree[N, A] === Tree[N, A] = 
         refl[Tree[N, A]]
+    }
+
+  trait IsDerivative[D, N <: Nat, A] {
+    val tfns : TreeFunctions[N]
+    def leibniz : D === Derivative[N, A]
+  }
+
+  implicit def derivsAreDerivs[N <: Nat, A](implicit tfs : TreeFunctions[N]) : IsDerivative[Derivative[N, A], N, A] =
+    new IsDerivative[Derivative[N, A], N, A] {
+      val tfns = tfs
+      def leibniz : Derivative[N, A] === Derivative[N, A] = 
+        refl[Derivative[N, A]]
     }
 
   //============================================================================================
@@ -86,71 +96,23 @@ object Trees {
     def seek(addr : Address[N]) : Option[Zipper[N, A]] = 
       tfns.seek(addr, (tree, tfns.emptyContext))
 
-    def constantWith[B](b : B) : Tree[N, B] = 
-      tfns.const(b, tree)
-
     def zipComplete[B](other : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
       tfns.zipComplete(tree, other)
-
-    def zipWithCorolla : Tree[N, (A, Derivative[N, A])] = 
-      tfns.zipWithCorolla(tree)
 
     def zipWithAddress : Tree[N, (A, Address[N])] =
       tfns.zipWithAddress(tree)
 
-    // I think sequence and traverse could be handled with an unapply
-
-    def flatten(implicit isSucc : IsSucc[N]) : Option[Tree[isSucc.P, Unit]] = {
-      val sfns = tfns.asInstanceOf[TreeSuccFunctions[isSucc.P]]
-      val pfns = sfns.prev
-      val test = tree.asInstanceOf[Tree[S[isSucc.P], A]]
-      val last = pfns.flatten(test)
-      last
-    }
-
   }
 
-  //============================================================================================
-  // CONSTRUCTORS AND EXTRACTORS
-  //
+  implicit class DerivativeOps[D, N <: Nat, A](d : D)(implicit val isDeriv : IsDerivative[D, N, A]) {
 
-  object Pt {
+    import isDeriv._
 
-    def apply[A](a : A) : Tree[_0, A] = Point(a)
+    val deriv : Derivative[N, A] =
+      subst(d)(leibniz)
 
-  }
-
-  object Leaf {
-
-    def apply[N <: Nat](implicit isSucc : IsSucc[N]) : Tree[N, Nothing] = {
-      type P[+X] = Tree[isSucc.P, X]
-      isSucc.leibniz.subst[({ type L[N <: Nat] = Tree[N, Nothing] })#L](Cap[P]())
-    }
-
-    def unapply[N <: Nat, A](s : Tree[S[N], A]) : Boolean = {
-      type P[+X] = Tree[N, X]
-      (s : Slice[P, A]) match {
-        case Cap() => true
-        case _ => false
-      }
-    }
-
-  }
-
-  object Node {
-
-    def apply[N <: Nat, A, B <: A](b : B, shell : Tree[N, Tree[S[N], A]]) : Tree[S[N], A] = {
-      type P[+X] = Tree[N, X]
-      Joint[P, A](b, shell)
-    }
-
-    def unapply[N <: Nat, A](s : Tree[S[N], A]) : Option[(A, Tree[N, Tree[S[N], A]])] = {
-      type P[+X] = Tree[N, X]
-      (s : Slice[P, A]) match {
-        case Joint(a, shell) => Some((a, shell))
-        case _ => None
-      }
-    }
+    def plugWith(a : A) : Tree[N, A] = 
+      tfns.plug(deriv, a)
 
   }
 
@@ -161,10 +123,10 @@ trait TypeTests {
   import Trees._
 
   type Tree0[+A] = Point[A]
-  type Tree1[+A] = Slice[Tree0, A]
-  type Tree2[+A] = Slice[Tree1, A]
-  type Tree3[+A] = Slice[Tree2, A]
-  type Tree4[+A] = Slice[Tree3, A]
+  type Tree1[+A] = Slice[Tree0, Address[_0], A]
+  type Tree2[+A] = Slice[Tree1, Address[_1], A]
+  type Tree3[+A] = Slice[Tree2, Address[_2], A]
+  type Tree4[+A] = Slice[Tree3, Address[_3], A]
 
   type Card0[+A] = Point[A]
   type Card1[+A] = Card0[Tree1[A]]
