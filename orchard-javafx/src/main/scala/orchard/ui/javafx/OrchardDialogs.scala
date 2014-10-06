@@ -16,10 +16,10 @@ import scalafx.scene.control._
 
 import javafx.embed.swing.SwingFXUtils
 import javax.imageio.ImageIO
-
 import javafx.event.Event
 import javafx.event.EventHandler
-
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.SnapshotParameters
 
 import orchard.ui.javafx.controls.Dialog

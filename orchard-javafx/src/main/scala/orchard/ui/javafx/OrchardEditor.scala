@@ -347,7 +347,7 @@ object OrchardEditor extends PopupManager(new VBox)
   //         // case KeyCode.P => if (ev.isControlDown) onPrintScreen
   //         // case KeyCode.W => if (ev.isControlDown) onWebView
   //         // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
-  //         // case KeyCode.Z => if (ev.isControlDown) { debug = ! debug ; println("Debug is now: " ++ (if (debug) "on" else "off")) }
+          case KeyCode.Z => if (ev.isControlDown) onView
           case _ => ()
         }
       }
@@ -427,15 +427,24 @@ object OrchardEditor extends PopupManager(new VBox)
   // }
 
 
-  // def onView = {
-  //   activeBuilder.selectionBase foreach (cell => {
-  //     val selectedExpr = cell.owner.getSimpleFramework.toCell
-  //     val gallery = new StaticFrameworkGallery(selectedExpr)
-  //     ViewerDialog.viewerArea.content = gallery
-  //     gallery.renderAll
-  //     ViewerDialog.run
-  //   })
-  // }
+  def onView = 
+    for {
+      wksp <- activeWorkspace
+      sheet <- wksp.activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+
+      val test : NCell[Option[Expression]] = selectedCell.neutralNCell
+
+      // activeBuilder.selectionBase foreach (cell => {
+      //   val selectedExpr = cell.owner.getSimpleFramework.toCell
+      //   val gallery = new StaticFrameworkGallery(selectedExpr)
+      //   ViewerDialog.viewerArea.content = gallery
+      //   gallery.renderAll
+      //   ViewerDialog.run
+      // })
+
+    }
 
 
   def onExit : Unit = javafx.application.Platform.exit
