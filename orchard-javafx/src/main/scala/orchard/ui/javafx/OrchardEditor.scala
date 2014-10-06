@@ -52,6 +52,8 @@ trait JavaFXEditor extends Editor {
   def activeWorkspace : Option[JavaFXWorkspace]
   def newModule(name : String)
 
+  def fileChooser : FileChooser
+
 }
 
 object OrchardEditor extends PopupManager(new VBox) 
@@ -350,6 +352,91 @@ object OrchardEditor extends PopupManager(new VBox)
         }
       }
     })
+
+
+  // object WebViewDialog extends Dialog {
+
+  //   heading.text = "Web Viewer"
+
+  //   val webView = new WebView
+  //   borderPane.center = webView
+
+  //   var labelEngine : WebEngine = null
+  //   var gallery : FrameworkSVGGallery = null
+
+  //   def renderAsSVG[A](seed : NCell[Option[Expression]]) = {
+  //     labelEngine = new WebEngine
+  //     gallery = new FrameworkSVGGallery(labelEngine, seed)
+  //     gallery.onRenderFinished = (_ => {
+  //       webView.engine.loadContent(gallery.toSVG.toString)
+  //     })
+  //     gallery.renderAll
+  //   }
+
+  //   def onHide = ()
+  //   def onShow = ()
+
+  //   addEventFilter(KeyEvent.KEY_PRESSED,
+  //     new EventHandler[KeyEvent] {
+  //       def handle(ev : KeyEvent) {
+  //         ev.getCode match {
+  //           case KeyCode.X => if (ev.isControlDown) onWrite
+  //           case _ => ()
+  //         }
+  //       }
+  //     })
+
+  //   def onWrite = {
+  //     fileChooser.setTitle("Export SVG")
+
+  //     val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+  //     if (file != null) {
+  //       xml.XML.save(file.getAbsolutePath, gallery.toSVG)
+  //     }
+  //   }
+  // }
+
+
+  // def onWebView = {
+  //   activeBuilder.selectionBase foreach (cell => {
+  //     val selectedExpr = cell.owner.getSimpleFramework.toCell
+  //     WebViewDialog.renderAsSVG(selectedExpr)
+  //     WebViewDialog.run
+  //   })
+  // }
+
+
+  // def onPrintScreen = {
+  //   fileChooser.setTitle("Export Snapshot")
+
+  //   val file = fileChooser.showSaveDialog(getScene.getWindow)
+
+  //   if (file != null) {
+
+  //     val image = activeBuilder.snapshot(null, null)
+
+  //     try {
+  //       ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+  //     } catch {
+  //       case e : java.io.IOException => {
+  //         println("There was an error writing to the file!.")
+  //       }
+  //     }
+  //   }
+  // }
+
+
+  // def onView = {
+  //   activeBuilder.selectionBase foreach (cell => {
+  //     val selectedExpr = cell.owner.getSimpleFramework.toCell
+  //     val gallery = new StaticFrameworkGallery(selectedExpr)
+  //     ViewerDialog.viewerArea.content = gallery
+  //     gallery.renderAll
+  //     ViewerDialog.run
+  //   })
+  // }
+
 
   def onExit : Unit = javafx.application.Platform.exit
 
