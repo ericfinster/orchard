@@ -16,11 +16,11 @@ import Nats._
 import Trees._
 import Slice._
 
-trait TreeFunctions[N <: Nat] {
+sealed trait TreeFunctions[N <: Nat] {
 
-  implicit val theseFunctions : TreeFunctions[N] = this
+  val dim : N
 
-  def dim : N
+  def succ : TreeFunctions[S[N]]
 
   def map[A, B](tree : Tree[N, A], f : A => B) : Tree[N, B]
   def traverse[G[_], A, B](tree :  Tree[N, A], f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[N, B]]
@@ -59,9 +59,11 @@ trait TreeFunctions[N <: Nat] {
 
 }
 
-object TreeZeroFunctions extends TreeFunctions[_0] {
+case object TreeZeroFunctions extends TreeFunctions[_0] {
 
-  val dim = Z
+  val dim : _0 = Z
+
+  def succ : TreeFunctions[_1] = TreeOneFunctions
 
   def map[A, B](tree : Tree[_0, A], f : A => B) : Tree[_0, B] = 
     tree match {
@@ -123,11 +125,9 @@ object TreeZeroFunctions extends TreeFunctions[_0] {
 
 }
 
-abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
+trait TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
-  val prev : TreeFunctions[N]
-
-  def dim : S[N] = S(prev.dim)
+  def prev : TreeFunctions[N]
 
   // Err.  These should be done as instances I think ...
   def map[A, B](tree : Tree[S[N], A], f : A => B) : Tree[S[N], B] =
@@ -213,11 +213,11 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
       }
       case (atr @ Node(a, ash), Leaf(a1)) => {
-        println("Matching failed in dimension " ++ toInt(dim).toString ++ " with first tree leaving: " ++ atr.toString)
+        // println("Matching failed in dimension " ++ toInt(dim).toString ++ " with first tree leaving: " ++ atr.toString)
         None
       }
       case (Leaf(a0), btr @ Node(b, bsh)) => {
-        println("Matching failed in dimension " ++ toInt(dim).toString ++ " with second tree leaving: " ++ btr.toString)
+        // println("Matching failed in dimension " ++ toInt(dim).toString ++ " with second tree leaving: " ++ btr.toString)
         None
       }
     }
@@ -260,13 +260,14 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
     nd match {
       case <leaf>{addressContent}</leaf> => {
         import XmlReadable.addressReadable
-        Leaf(addressReadable(prev.dim).read(addressContent))
+        //Leaf(addressReadable(prev.dim).read(addressContent))
+        ???
       }
       case <node><value>{aContent}</value><shell>{shellContent}</shell></node> => {
 
         import XmlReadable.treeReadable
 
-        val thisReader = treeReadable(xmlRd, theseFunctions)
+        val thisReader = treeReadable(xmlRd, this)
         val prevReader = treeReadable(thisReader, prev)
 
         val a : A = xmlRd.read(aContent)
@@ -281,9 +282,17 @@ abstract class TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
 }
 
-object TreeOneFunctions extends TreeSuccFunctions[_0] {
+case object TreeOneFunctions extends TreeSuccFunctions[_0] {
 
-  val prev : TreeFunctions[_0] = TreeZeroFunctions
+  val dim = S(Z)
+
+  def prev : TreeFunctions[_0] = TreeZeroFunctions
+
+  def succ : TreeFunctions[_2] = 
+    new TreeDblSuccFunctions[_0] {
+      val dim = S(S(Z))
+      val prev = TreeOneFunctions
+    }
 
   def visit[A](d : Direction[_1], z : Zipper[_1, A]) : Option[Zipper[_1, A]]  =
     (d, z) match {
@@ -293,10 +302,13 @@ object TreeOneFunctions extends TreeSuccFunctions[_0] {
 
 }
 
-case class TreeDblSuccFunctions[N <: Nat](val pp : TreeFunctions[N]) extends TreeSuccFunctions[S[N]] {
+trait TreeDblSuccFunctions[N <: Nat] extends TreeSuccFunctions[S[N]] { self =>
 
-  val prev : TreeFunctions[S[N]] = 
-    haveSuccFunctions(pp)
+  def succ : TreeFunctions[S[S[S[N]]]] = 
+    new TreeDblSuccFunctions[S[N]] {
+      val dim = S(self.dim)
+      val prev = self
+    }
 
   def visit[A](d : Direction[S[S[N]]], z : Zipper[S[S[N]], A]) : Option[Zipper[S[S[N]], A]] = 
     z match {

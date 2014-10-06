@@ -17,6 +17,8 @@ trait PdFunctions[N <: Nat] {
 
   implicit val tfns : TreeFunctions[N]
 
+  def succ : PdFunctions[S[N]]
+
   def plug[A](d : DerivativePd[N, A], a : A) : Pd[N, A] = 
     close(d._2, Box(a, d._1))
 
@@ -44,9 +46,15 @@ trait PdFunctions[N <: Nat] {
 
 }
 
-object PdZeroFunctions extends PdFunctions[_0] {
+object PdZeroFunctions extends PdFunctions[_0] { self =>
 
   implicit val tfns : TreeFunctions[_0] = TreeZeroFunctions
+
+  def succ : PdFunctions[_1] = 
+    new PdSuccFunctions[_0] {
+      implicit val tfns = self.tfns.succ
+      val prev = self
+    }
 
   def visit[A](addr : Address[_0], z : ZipperPd[_0, A]) : Option[ZipperPd[_0, A]] =
     z match {
@@ -80,9 +88,22 @@ object PdZeroFunctions extends PdFunctions[_0] {
 
 }
 
-trait PdSuccFunctions[N <: Nat] extends PdFunctions[S[N]] {
+trait PdSuccFunctions[N <: Nat] extends PdFunctions[S[N]] { self => 
 
-  val prevTfns : TreeFunctions[N]
+  val prev : PdFunctions[N]
+
+  def succ : PdFunctions[S[S[N]]] = 
+    new PdSuccFunctions[S[N]] {
+      implicit val tfns = self.tfns.succ
+      val prev = self
+    }
+
+  // Err.  This could be better ...
+  val prevTfns : TreeFunctions[N] = prev.tfns
+
+  // def test[A](tr : Tree[N, A]) : TreeOps[N, A] = tr
+  // def blorp[A](tr : Tree[N, A]) : Option[A] = test(tr).rootValue
+  // def bleep[A](tr : Tree[N, A]) : Option[A] = tr.rootValue
 
   def visit[A](addr : Address[S[N]], z : ZipperPd[S[N], A]) : Option[ZipperPd[S[N], A]] =
     z match {

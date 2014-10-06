@@ -39,53 +39,17 @@ object Trees {
   // FUNCTION IMPLICITS
   //
 
-  implicit def haveZeroFunctions : TreeFunctions[_0] = TreeZeroFunctions
-
-  implicit def haveSuccFunctions[N <: Nat](implicit prev : TreeFunctions[N]) : TreeFunctions[S[N]] =
-    prev match {
-      case TreeZeroFunctions => TreeOneFunctions.asInstanceOf[TreeFunctions[S[N]]]
-      case TreeOneFunctions => TreeDblSuccFunctions(TreeZeroFunctions).asInstanceOf[TreeFunctions[S[N]]]
-      case TreeDblSuccFunctions(pp) => TreeDblSuccFunctions(haveSuccFunctions(pp)).asInstanceOf[TreeFunctions[S[N]]]
-    }
-
-  //============================================================================================
-  // WITNESS TYPE CLASSES
-  //
-
-  trait IsTree[T, N <: Nat, A] { 
-    val tfns : TreeFunctions[N]
-    def leibniz : T === Tree[N, A]
-  }
-
-  implicit def treesAreTrees[N <: Nat, A](implicit tfs : TreeFunctions[N]) : IsTree[Tree[N, A], N, A] = 
-    new IsTree[Tree[N, A], N, A] {
-      val tfns = tfs
-      def leibniz : Tree[N, A] === Tree[N, A] = 
-        refl[Tree[N, A]]
-    }
-
-  trait IsDerivative[D, N <: Nat, A] {
-    val tfns : TreeFunctions[N]
-    def leibniz : D === Derivative[N, A]
-  }
-
-  implicit def derivsAreDerivs[N <: Nat, A](implicit tfs : TreeFunctions[N]) : IsDerivative[Derivative[N, A], N, A] =
-    new IsDerivative[Derivative[N, A], N, A] {
-      val tfns = tfs
-      def leibniz : Derivative[N, A] === Derivative[N, A] = 
-        refl[Derivative[N, A]]
+  implicit def treeFnsFromNat[N <: Nat](implicit n : N) : TreeFunctions[N] = 
+    n match {
+      case IsZero(zm) => zm.zeroCoe.subst[TreeFunctions](TreeZeroFunctions)
+      case IsSucc(sm) => sm.succCoe.subst[TreeFunctions](treeFnsFromNat[sm.P](sm.p).succ)
     }
 
   //============================================================================================
   // OPERATIONS CLASSES
   //
 
-  implicit class TreeOps[T, N <: Nat, A](t : T)(implicit val isTree : IsTree[T, N, A]) {
-
-    import isTree._
-
-    val tree : Tree[N, A] = 
-      subst(t)(leibniz)
+  implicit class TreeOps[N <: Nat, +A](tree : Tree[N, A])(implicit tfns : TreeFunctions[N]) {
 
     def map[B](f : A => B) : Tree[N, B] = 
       tfns.map(tree, f)
@@ -102,17 +66,15 @@ object Trees {
     def zipWithAddress : Tree[N, (A, Address[N])] =
       tfns.zipWithAddress(tree)
 
+    def rootValue : Option[A] = 
+      tfns.value(tree)
+
   }
 
-  implicit class DerivativeOps[D, N <: Nat, A](d : D)(implicit val isDeriv : IsDerivative[D, N, A]) {
+  implicit class DerivativeOps[N <: Nat, +A](deriv : Derivative[N, A])(implicit tfns : TreeFunctions[N]) {
 
-    import isDeriv._
-
-    val deriv : Derivative[N, A] =
-      subst(d)(leibniz)
-
-    def plugWith(a : A) : Tree[N, A] = 
-      tfns.plug(deriv, a)
+    def plugWith[B >: A](b : B) : Tree[N, B] = 
+      tfns.plug(deriv, b)
 
   }
 

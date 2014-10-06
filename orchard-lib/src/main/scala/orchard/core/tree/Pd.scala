@@ -24,14 +24,10 @@ object PastingDiagrams {
   type ContextPd[N <: Nat, +A] = List[(A, Derivative[N, Pd[N, A]])]
   type ZipperPd[N <: Nat, +A] = (Pd[N, A], ContextPd[N, A])
 
-  implicit def haveZeroPdFunctions : PdFunctions[_0] = PdZeroFunctions
-
-  implicit def haveSuccPdFunctions[N <: Nat](implicit prev : PdFunctions[N]) : PdFunctions[S[N]] = 
-    new PdSuccFunctions[N] {
-
-      val prevTfns : TreeFunctions[N] = prev.tfns
-      implicit val tfns : TreeFunctions[S[N]] = haveSuccFunctions(prev.tfns)
-
+  implicit def pdFnsFromNat[N <: Nat](implicit n : N) : PdFunctions[N] = 
+    n match {
+      case IsZero(zm) => zm.zeroCoe.subst[PdFunctions](PdZeroFunctions)
+      case IsSucc(sm) => sm.succCoe.subst[PdFunctions](pdFnsFromNat[sm.P](sm.p).succ)
     }
 
 }

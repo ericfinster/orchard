@@ -63,7 +63,7 @@ case object Z extends Nat {
 }
 
 
-case class S[P <: Nat](val pred : P) extends Nat {
+case class S[P <: Nat](val pred : P) extends Nat { self =>
 
   type Self = S[P]
 
@@ -130,15 +130,15 @@ trait Nats {
 
   trait ZeroMatch[N <: Nat] {
 
-    implicit def zeroCoh : N === _0
-    implicit def zeroCoe : _0 === N
+    implicit def zeroCoh : Leibniz[Nothing, Nat, N, _0]
+    implicit def zeroCoe : Leibniz[Nothing, Nat, _0, N]
 
   }
 
   trait OneMatch[N <: Nat] {
 
-    implicit def oneCoh : N === _1
-    implicit def oneCoe : _1 === N
+    implicit def oneCoh : Leibniz[Nothing, Nat, N, _1]
+    implicit def oneCoe : Leibniz[Nothing, Nat, _1, N]
 
   }
 
@@ -161,8 +161,8 @@ trait Nats {
     implicit val pp : PP
     implicit val p = S(pp)
 
-    implicit def dblSuccCoh : N === S[S[PP]]
-    implicit def dblSuccCoe : S[S[PP]] === N
+    implicit def dblSuccCoh : Leibniz[Nothing, Nat, N, S[S[PP]]]
+    implicit def dblSuccCoe : Leibniz[Nothing, Nat, S[S[PP]], N]
 
   }
 
@@ -172,8 +172,8 @@ trait Nats {
       n match {
         case Z => Some(
           new ZeroMatch[N] { 
-            implicit def zeroCoh : N === _0 = force[Nothing, Any, N, _0]
-            implicit def zeroCoe : _0 === N = force[Nothing, Any, _0, N]
+            implicit def zeroCoh : Leibniz[Nothing, Nat, N, _0] = force[Nothing, Nat, N, _0]
+            implicit def zeroCoe : Leibniz[Nothing, Nat, _0, N] = force[Nothing, Nat, _0, N]
           }
         )
         case _ => None
@@ -187,8 +187,8 @@ trait Nats {
       n match {
         case S(S(Z)) => Some(
           new OneMatch[N] {
-            implicit def oneCoh : N === _1 = force[Nothing, Any, N, _1]
-            implicit def oneCoe : _1 === N = force[Nothing, Any, _1, N]
+            implicit def oneCoh : Leibniz[Nothing, Nat, N, _1] = force[Nothing, Nat, N, _1]
+            implicit def oneCoe : Leibniz[Nothing, Nat, _1, N] = force[Nothing, Nat, _1, N]
           }
         )
         case _ => None
@@ -226,8 +226,8 @@ trait Nats {
             type PP = ppr.Self
             val pp = ppr.self
 
-            implicit def dblSuccCoh : N === S[S[PP]] = force[Nothing, Any, N, S[S[PP]]]
-            implicit def dblSuccCoe : S[S[PP]] === N = force[Nothing, Any, S[S[PP]], N]
+            implicit def dblSuccCoh : Leibniz[Nothing, Nat, N, S[S[PP]]] = force[Nothing, Nat, N, S[S[PP]]]
+            implicit def dblSuccCoe : Leibniz[Nothing, Nat, S[S[PP]], N] = force[Nothing, Nat, S[S[PP]], N]
 
           }
         )
