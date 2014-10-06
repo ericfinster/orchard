@@ -14,6 +14,14 @@ import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+import javafx.embed.swing.SwingFXUtils
+import javax.imageio.ImageIO
+
+import javafx.event.Event
+import javafx.event.EventHandler
+
+import javafx.scene.SnapshotParameters
+
 import orchard.ui.javafx.controls.Dialog
 import orchard.ui.javafx.controls.PopupManager
 import orchard.ui.javafx.controls.CancellableDialog
