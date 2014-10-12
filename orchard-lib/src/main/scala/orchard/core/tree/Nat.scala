@@ -35,14 +35,6 @@ sealed trait Nat { self =>
   type Rec0[Type, R <: NatRec0[Type]] <: Type
   type Rec1[Type, C <: NatRec1[Type], +A] <: Type
 
-  // Tree Types
-
-  type Tree[+_]
-  type Cardinal[+_]
-  type Context[+_]
-  type Derivative[+_]
-  type Direction
-
 }
 
 case object Z extends Nat {
@@ -51,14 +43,6 @@ case object Z extends Nat {
 
   type Rec0[Type, R <: NatRec0[Type]] = R#OnZero
   type Rec1[Type, C <: NatRec1[Type], +A] = C#OnZero[A]
-
-  // Zero dimensional tree types
-
-  type Tree[+A] = Point[A]
-  type Cardinal[+A] = Point[A]
-  type Context[+A] = Unit
-  type Derivative[+A] = Unit
-  type Direction = Nothing
 
 }
 
@@ -72,14 +56,6 @@ case class S[P <: Nat](val pred : P) extends Nat { self =>
 
   type Rec1[Type, C <: NatRec1[Type], +A] = 
     C#OnSucc[P, ({ type L[+X] = P#Rec1[Type, C, X] })#L, A]
-
-  // Successor tree types
-
-  type Tree[+A] = Slice[P#Tree, List[P#Direction], A]
-  type Cardinal[+A] = P#Cardinal[Tree[A]]
-  type Context[+A] = List[(A, P#Derivative[Tree[A]])]
-  type Derivative[+A] = (P#Tree[Tree[A]], Context[A])
-  type Direction = List[P#Direction]
 
 }
 
