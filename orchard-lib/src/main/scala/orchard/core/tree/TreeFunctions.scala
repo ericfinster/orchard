@@ -14,7 +14,6 @@ import scalaz.std.option._
 
 import Nats._
 import Trees._
-import Slice._
 
 sealed trait TreeFunctions[N <: Nat] {
 
@@ -129,34 +128,11 @@ trait TreeSuccFunctions[N <: Nat] extends TreeFunctions[S[N]] {
 
   def prev : TreeFunctions[N]
 
-  // Err.  These should be done as instances I think ...
-  def map[A, B](tree : Tree[S[N], A], f : A => B) : Tree[S[N], B] =
-    tree match {
-      case Leaf(addr) => Leaf(addr)
-      case Node(a , shell) => 
-        Node(f(a), prev.map(shell, (t : Tree[S[N], A]) => map(t, f)))
-    }
+  def map[A, B](tree : Tree[S[N], A], f : A => B) : Tree[S[N], B] = ???
+    // tree.map(f)(treeIsTraverse[N](prev))
 
-  def traverse[G[_], A, B](tree :  Tree[S[N], A], f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[S[N], B]] = {
-
-    import apG._
-
-    tree match {
-      case Leaf(addr) => pure(Leaf(addr))
-      case Node(a, shell) => {
-
-        val nodeCons : G[(B, Tree[N, Tree[S[N], B]]) => Tree[S[N], B]] = 
-          pure((b : B, t : Tree[N, Tree[S[N], B]]) => Node(b, t))
-
-        val traversedShell = 
-          prev.traverse(shell, (t : Tree[S[N], A]) => this.traverse(t, f))
-
-        ap2(f(a), traversedShell)(nodeCons)
-
-      }
-
-    }
-  }
+  def traverse[G[_], A, B](tree :  Tree[S[N], A], f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[S[N], B]] = ???
+    // tree.traverse(f)(apG, treeIsTraverse[N](prev))
 
   def isLeaf[A](tree : Tree[S[N], A]) : Boolean = 
     tree match {

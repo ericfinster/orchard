@@ -15,7 +15,6 @@ import scalaz.Leibniz._
 import scalaz.std.option._
 
 import Nats._
-import Slice._
 
 case class Point[+A](a : A)
 
@@ -39,6 +38,17 @@ object Trees {
   // FUNCTION IMPLICITS
   //
 
+  implicit def treeIsTraverse[N <: Nat](implicit n : N) : Traverse[N#Tree] = 
+    new Traverse[N#Tree] {
+
+      override def map[A, B](tr : Tree[N, A])(f : A => B) : Tree[N, B] = ???
+        // tfns.map(tr, f)
+
+      def traverseImpl[G[_], A, B](tr : Tree[N, A])(f : A => G[B])(implicit isA : Applicative[G]) : G[Tree[N, B]] = ???
+        // tfns.traverse(tr, f)
+
+    }
+
   implicit def treeFnsFromNat[N <: Nat](implicit n : N) : TreeFunctions[N] = 
     n match {
       case IsZero(zm) => zm.zeroCoe.subst[TreeFunctions](TreeZeroFunctions)
@@ -49,13 +59,37 @@ object Trees {
   // OPERATIONS CLASSES
   //
 
-  implicit class TreeOps[N <: Nat, +A](tree : Tree[N, A])(implicit tfns : TreeFunctions[N]) {
+  trait TreeType[T] {
 
-    def map[B](f : A => B) : Tree[N, B] = 
-      tfns.map(tree, f)
+    type A
+    type N <: Nat
 
-    def traverse[G[_], B](f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[N, B]] =
-      tfns.traverse(tree, f)
+    implicit val dim : N
+
+    def leibniz : T === Tree[N, A]
+
+  }
+
+  implicit def treeIsTreeType[N0 <: Nat, A0](implicit n0 : N0) : TreeType[Tree[N0, A0]] = 
+    new TreeType[Tree[N0, A0]] {
+
+      type A = A0
+      type N = N0
+
+      implicit val dim : N = n0
+
+      def leibniz : Tree[N, A] === Tree[N, A] = refl[Tree[N, A]]
+
+    }
+
+  implicit class TreeOps[T](t : T)(implicit val tt : TreeType[T]) {
+
+    import tt._
+
+    val tree : Tree[N, A] = subst(t)(leibniz)
+    val tfns : TreeFunctions[N] = implicitly[TreeFunctions[N]]
+
+    def opsTest : Unit = ()
 
     def seek(addr : Address[N]) : Option[Zipper[N, A]] = 
       tfns.seek(addr, (tree, tfns.emptyContext))
@@ -69,14 +103,40 @@ object Trees {
     def rootValue : Option[A] = 
       tfns.value(tree)
 
-  }
-
-  implicit class DerivativeOps[N <: Nat, +A](deriv : Derivative[N, A])(implicit tfns : TreeFunctions[N]) {
-
-    def plugWith[B >: A](b : B) : Tree[N, B] = 
-      tfns.plug(deriv, b)
+    // def nodes : List[A] = 
+    //   treeIsTraverse[N].toList(tree)
 
   }
+
+  // The reason this does not work is that implicit classes can only have a single type parameter
+  // according to the spec!
+  // implicit class TreeOps[N <: Nat, +A](tree : Tree[N, A])(implicit tfns : TreeFunctions[N]) {
+
+  //   def opsTest : Unit = ()
+
+  //   def seek(addr : Address[N]) : Option[Zipper[N, A]] = 
+  //     tfns.seek(addr, (tree, tfns.emptyContext))
+
+  //   def zipComplete[B](other : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
+  //     tfns.zipComplete(tree, other)
+
+  //   def zipWithAddress : Tree[N, (A, Address[N])] =
+  //     tfns.zipWithAddress(tree)
+
+  //   def rootValue : Option[A] = 
+  //     tfns.value(tree)
+
+  //   def nodes : List[A] = 
+  //     treeIsTraverse[N].toList(tree)
+
+  // }
+
+  // implicit class DerivativeOps[N <: Nat, +A](deriv : Derivative[N, A])(implicit tfns : TreeFunctions[N]) {
+
+  //   def plugWith[B >: A](b : B) : Tree[N, B] = 
+  //     tfns.plug(deriv, b)
+
+  // }
 
 }
 

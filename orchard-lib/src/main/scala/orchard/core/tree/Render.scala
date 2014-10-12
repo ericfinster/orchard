@@ -10,7 +10,6 @@ package orchard.core.tree
 import scalaz.{Tree => _, Zipper => _, _}
 
 import Nats._
-import Slice._
 import Trees._
 import PastingDiagrams._
 
@@ -28,7 +27,15 @@ trait Sizeable[A] {
 
 }
 
-abstract class LayoutMarker
+abstract class LayoutMarker {
+
+  var rootX : Double
+  var rootY : Double
+
+  var hdeps : List[LayoutMarker]
+  var vdeps : List[LayoutMarker]
+
+}
 
 abstract class RenderData[A : Sizeable] {
 
@@ -51,7 +58,7 @@ abstract class Renderer {
       case Box(a, canopy) => ???
     }
 
-  def renderNesting[N <: Nat, A : Sizeable](pd : Pd[S[N], A], lvs : Tree[N, LayoutMarker])(implicit n : N) : Pd[S[N], RenderData[A]] = {
+  def renderNesting[N <: Nat, A : Sizeable](pd : Pd[S[N], A], lvs : Tree[N, RenderData[A]])(implicit n : N) : Pd[S[N], RenderData[A]] = {
 
     pd match {
       case Dot(a, corolla) => {
@@ -68,5 +75,22 @@ abstract class Renderer {
     }
 
   }
+
+  def renderVertical[N <: Nat, A : Sizeable](tr : Tree[S[N], Pd[S[N], A]], lvs : Tree[N, RenderData[A]])(implicit n : N) : Pd[S[N], RenderData[A]] =
+    tr match {
+      case Leaf(addr) => ???
+      case Node(pd, verts) => {
+
+        //implicit def getTraverse : Traverse[N#Tree] = treeIsTraverse[N]
+
+        // val T : Traverse[N#Tree] = implicitly[Traverse[N#Tree]] // treeIsTraverse[N]
+
+        // implicitly[Traverse[N#Tree]]
+
+        // val test = verts map (_ => 3)
+
+        ???
+      }
+    }
 
 }

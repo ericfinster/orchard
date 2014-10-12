@@ -101,10 +101,6 @@ trait PdSuccFunctions[N <: Nat] extends PdFunctions[S[N]] { self =>
   // Err.  This could be better ...
   val prevTfns : TreeFunctions[N] = prev.tfns
 
-  // def test[A](tr : Tree[N, A]) : TreeOps[N, A] = tr
-  // def blorp[A](tr : Tree[N, A]) : Option[A] = test(tr).rootValue
-  // def bleep[A](tr : Tree[N, A]) : Option[A] = tr.rootValue
-
   def visit[A](addr : Address[S[N]], z : ZipperPd[S[N], A]) : Option[ZipperPd[S[N], A]] =
     z match {
       case (Dot(_, _), cntxt) => None
@@ -125,15 +121,17 @@ trait PdSuccFunctions[N <: Nat] extends PdFunctions[S[N]] { self =>
       case (fcs, (a , (verts, hcn)) :: cn) => ???
         for {
           zz <- tfns.seek(addr, (verts, Nil))
-        } yield ???  // Arrrgghh!! Can't seem to do deep matching ....
 
-        // pdSibling {suc n} dir (fcs , (a , verts , hcn) ∷ cn) =
-        //   seek dir (verts , [])
-        //   >>= (λ { (leaf l , vcn) → nothing ;
-        //            (node (leaf l) shell , vcn) → nothing ;
-        //            (node (node nfcs vrem) hmask , vcn) →
-        //              just (nfcs , (a , (vrem , (fcs , (hmask , vcn)) ∷ hcn)) ∷ cn) })
+          result <- (
+            (zz : Zipper[S[N], Tree[S[S[N]], Pd[S[S[N]], A]]]) match {
+              case (Leaf(_), vcn) => None
+              case (Node(Leaf(_), _), vcn) => None
+              case (Node(Node(nfcs, vrem), hmask), vcn) => 
+                Some((nfcs, (a , (vrem, (fcs, (hmask, vcn)) :: hcn)) :: cn))
+            }
+          )
 
+        } yield result
     }
 
   def fromXml[A](node : xml.Node)(implicit xmlRead : XmlReadable[A]) : Pd[S[N], A] =
