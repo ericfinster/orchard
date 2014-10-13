@@ -8,6 +8,7 @@
 package orchard.core.cell
 
 import scala.language.implicitConversions
+import scala.collection.mutable.Stack
 
 import orchard.core.util._
 import Nats._

@@ -460,37 +460,40 @@ object CellTree {
 
       verticalTrace(tree, hLvs)
     }
+
+
+    def map[B](f : A => B) : CellTree[D, B] = ???
+
+
+    def addrTree : CellTree[D, HDN[D]] = ???
+
+    def hdn : RoseTree[HDN[D], Unit] =
+      dimension match {
+        case Zero(_) => Branch(HZero.asInstanceOf[HDN[D]], Vector(Rose()))
+        case Succ(p, _) => hdn(None, HDN(dimension.asInstanceOf[D]))
+      }
+
+    def hdn(root : Option[HDN[D#Pred]], path : HDN[D]) : RoseTree[HDN[D], Unit] = 
+      tree match {
+        case Seed(_, _) => Branch(HZero.asInstanceOf[HDN[D]], Vector(Rose()))
+        case Leaf(_, _) => Rose(())
+        case Graft(cell, branches, ev) => {
+          implicit val hasPred = ev
+
+          // Horrible.
+          val hdVal : HDN[D] =
+            root match {
+              case None => path
+              case Some(r) => (r +: path.asInstanceOf[HDN[S[D#Pred]]]).asInstanceOf[HDN[D]]
+            }
+
+          val valBranches = (cell.srcTree.hdn.nodeVector zip branches) map {
+            case (hr, br) => br.hdn(Some(hr), hdVal)
+          }
+
+          Branch(hdVal, valBranches)
+        }
+      }
+
   }
-
-  // Some higher dimensional number stuff which may be useful some time ...
-
-  // def hdn : RoseTree[HDN[D], Unit] =
-  //   dimension match {
-  //     case Z => Branch(HZero.asInstanceOf[HDN[D]], List(Rose()))
-  //     case S(p) => hdn(None, HDN(dimension.asInstanceOf[D]))
-  //   }
-
-  // def hdn(root : Option[HDN[D#Pred]], path : HDN[D]) : RoseTree[HDN[D], Unit] =
-  //   tree match {
-  //     case Seed(_, _) => Branch(HZero.asInstanceOf[HDN[D]], List(Rose()))
-  //     case Leaf(_, _) => Rose(())
-  //     case Graft(cell, branches, ev) => {
-  //       implicit val hasPred = ev
-
-  //       // Horrible.
-  //       val hdVal : HDN[D] =
-  //         root match {
-  //           case None => path
-  //           case Some(r) => (r +: path.asInstanceOf[HDN[S[D#Pred]]]).asInstanceOf[HDN[D]]
-  //         }
-
-  //       val valBranches = (cell.srcTree.hdn.toList zip branches) map (pr => {
-  //         val (hr, br) = pr
-  //         br.hdn(Some(hr), hdVal)
-  //       })
-
-  //       Branch(hdVal, valBranches)
-  //     }
-  //   }
-
 }
