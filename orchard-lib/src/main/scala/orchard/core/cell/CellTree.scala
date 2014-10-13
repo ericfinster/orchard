@@ -391,6 +391,22 @@ object CellTree {
         }
       }
 
+    def doRegeneration[T >: A, B](generator : CellRegenerator[T, B]) : CellTree[D, B] = 
+      tree.dimension match {
+        case Zero(ev) => {
+          implicit val isZero : IsZero[D] = ev
+
+          tree match {
+            case Seed(obj, _) => 
+              Seed(generator.generateObject(obj.value)).asInstanceOf[CellTree[D, B]]
+          }
+        }
+        case Succ(p, ev) => {
+          implicit val hasPred : HasPred[D] = ev
+          regenerateFrom(generator, tree.flatten.doRegeneration(generator))
+        }
+      }
+
     def regenerateFrom[T >: A, B](generator : CellRegenerator[T, B], 
                                   canopy : CellTree[D#Pred, B])(implicit hasPred : HasPred[D])
         : CellTree[D, B] = {
@@ -462,8 +478,8 @@ object CellTree {
     }
 
 
-    def map[B](f : A => B) : CellTree[D, B] = ???
-
+    def map[B](f : A => B) : CellTree[D, B] = 
+      tree.doRegeneration(CellRegenerator.mapRegenerator(f))
 
     def addrTree : CellTree[D, HDN[D]] = ???
 
