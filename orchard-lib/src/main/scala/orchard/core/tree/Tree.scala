@@ -38,6 +38,11 @@ sealed abstract class Tree[N <: Nat, +A] {
   def isLeaf : Boolean
   def isNode : Boolean
 
+  def nodes : List[A] = {
+    val T = treeIsTraverse[N]
+    T.toList(this)
+  }
+
   def matchWith[B](tr : Tree[N, B]) : Option[Tree[N, (A, B)]]
 
 }
@@ -124,6 +129,14 @@ object Tree {
 
   implicit def asRootZipper[N <: Nat, A](tr : Tree[N, A]) : Zipper[N, A] = ???
 
+  implicit def treeIsTraverse[N <: Nat] : Traverse[({ type L[+A] = Tree[N, A] })#L] = 
+    new Traverse[({ type L[+A] = Tree[N, A] })#L] {
+
+      def traverseImpl[G[_], A, B](ta : Tree[N, A])(f : A => G[B])(implicit isA : Applicative[G]) : G[Tree[N, B]] = 
+        ta.traverse(f)
+
+    }
+
   def graft[N <: Nat, A](tr : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] = 
     tr match {
       case Leaf(addr) => brs valueAt addr
@@ -134,17 +147,17 @@ object Tree {
     }
 
 
-  def substitute[N <: Nat, A](tr : Tree[N, Tree[N, A]]) : Option[Tree[N, A]] =  {
+  def join[N <: Nat, A](tr : Tree[N, Tree[N, A]]) : Option[Tree[N, A]] =  {
 
-    def zeroSubst[A](tr : Tree[_0, Tree[_0, A]]) : Option[Tree[_0, A]] =
+    def zeroJoin[A](tr : Tree[_0, Tree[_0, A]]) : Option[Tree[_0, A]] =
       tr.rootValue
 
-    def succSubst[N <: Nat, A](tr : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] =
+    def succJoin[N <: Nat, A](tr : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] =
       tr match {
         case l @ Leaf(addr) => Some(Leaf(addr)(l.p))
         case Node(t, tsh) =>
           for {
-            gsh <- tsh.traverse(succSubst(_))
+            gsh <- tsh.traverse(succJoin(_))
             str <- graft(t, gsh)
           } yield str
       }
@@ -154,16 +167,19 @@ object Tree {
         import zm._
         val zt : Tree[_0, Tree[_0, A]] = 
           zeroCoh.subst[({ type L[M <: Nat] = Tree[M, Tree[M, A]] })#L](tr)
-        zeroCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](zeroSubst(zt))
+        zeroCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](zeroJoin(zt))
       }
       case IsSucc(sm) => {
         import sm._
         val st : Tree[S[P], Tree[S[P], A]] = 
           succCoh.subst[({ type L[M <: Nat] = Tree[M, Tree[M, A]] })#L](tr)
-        succCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](succSubst(st))
+        succCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](succJoin(st))
       }
     }
 
   }
+
+
+  def unzip[N <: Nat, A, B](tr : Tree[N, (A, B)]) : (Tree[N, A], Tree[N, B]) = ???
 
 }

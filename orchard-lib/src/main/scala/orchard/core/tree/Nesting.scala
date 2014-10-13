@@ -36,7 +36,7 @@ case class Box[N <: Nat, +A](a : A, c : Tree[N, Nesting[N, A]]) extends Nesting[
   def spine : Option[Tree[N, A]] = 
     for {
       st <- c traverse (_.spine)
-      sp <- substitute(st)
+      sp <- join(st)
     } yield sp
 
 }
