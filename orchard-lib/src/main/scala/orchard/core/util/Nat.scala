@@ -100,8 +100,9 @@ trait Nats {
 
 object Nats extends Nats
 
-sealed trait HDN[D <: Nat] { def isZero : Boolean }
-case object HZero extends HDN[Nats._0] { override def toString = "0" ; def isZero = true }
+
+sealed trait HDN[D <: Nat] { def isZero : Boolean ; def toAgda : String ; def toScala : String ; def toXml : String }
+case object HZero extends HDN[Nats._0] { override def toString = "0" ; def isZero = true ; def toAgda = "[]" ; def toScala = "NilA()" ; def toXml = "<unit/>" }
 case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
   def isZero = l.length == 0
 
@@ -115,6 +116,31 @@ case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
 
     (("[" /: temp) (_ ++ _)) ++ "]"
   }
+
+  def toAgda : String = 
+    if (l.length > 0) {
+      "(" ++ asAgdaList(l) ++ ")"
+    } else {
+      asAgdaList(l)
+    }
+
+  def asAgdaList(hl : List[HDN[D]]) : String = 
+    hl match {
+      case Nil => "[]"
+      case h :: hs => h.toAgda ++ " :: " ++ asAgdaList(hs)
+    }
+
+  def toScala : String = 
+    (l map (_.toScala)).mkString("Addr(", ", ", ")")
+
+  def toXml : String = asXmlList(l)
+
+  def asXmlList(hl : List[HDN[D]]) : String = 
+    hl match {
+      case Nil => "<nil/>"
+      case h :: hs => "<cons><hd>" ++ h.toXml ++ "</hd><tl>" ++ asXmlList(hs) ++ "</tl></cons>"
+    }
+
 }
 
 object HDN {
@@ -131,3 +157,4 @@ object HDN {
       }
   }
 }
+

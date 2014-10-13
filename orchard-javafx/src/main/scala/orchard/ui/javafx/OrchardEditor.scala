@@ -334,7 +334,7 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.M => if (ev.isControlDown) onNewModule
           case KeyCode.I => if (ev.isControlDown) onImportSubstitution
           case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
-          case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
+          // case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
           case KeyCode.L => if (ev.isControlDown) onAbstract
           case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
           case KeyCode.R => if (ev.isControlDown) onRename
@@ -434,15 +434,10 @@ object OrchardEditor extends PopupManager(new VBox)
       selectedCell <- sheet.selectionBase
     } {
 
-      val test : NCell[Option[Expression]] = selectedCell.neutralNCell
-
-      // activeBuilder.selectionBase foreach (cell => {
-      //   val selectedExpr = cell.owner.getSimpleFramework.toCell
-      //   val gallery = new StaticFrameworkGallery(selectedExpr)
-      //   ViewerDialog.viewerArea.content = gallery
-      //   gallery.renderAll
-      //   ViewerDialog.run
-      // })
+      val gallery = new StaticFrameworkGallery(selectedCell.neutralNCell)
+      ViewerDialog.viewerArea.content = gallery
+      gallery.renderAll
+      ViewerDialog.run
 
     }
 

@@ -253,6 +253,7 @@ abstract class NCell[A] {
 }
 
 object NCell {
+
   implicit def cellIsNCell[D <: Nat, A](c : Cell[D, A]) : NCell[A] = 
       new NCell[A] {
         type Dim = D
@@ -266,6 +267,277 @@ object NCell {
 
   implicit def ncellHasOps[A](ncell : NCell[A]) : Cell.CellOps[ncell.dim.Self, A] = 
       ncell.cell
+
+  def cellValueUpdate[D <: Nat](cell : Cell[D, String], newVal : String) : Cell[D, String] = 
+    cell match {
+      case Object(_, ev) => {
+        implicit val isZero = ev
+        Object(newVal).asInstanceOf[Cell[D, String]]
+      }
+      case Composite(_, srcTree, tgtVal, ev) => {
+        implicit val hasPred = ev
+        Composite(newVal, srcTree, tgtVal)
+      }
+    }
+
+  def cellAgdaSyntax[D <: Nat](cell : Cell[D, String]) : String = 
+    cell match {
+      case Object(value, ev) => "id (" ++ value.toString ++ ")"
+      case Composite(value, srcTree, tgtValue, ev) => cellTreeAgdaSyntax(srcTree)
+    }
+
+  def cellTreeAgdaSyntax[D <: Nat](tree : CellTree[D, String]) : String = {
+
+    val perm : Vector[Int] = tree.inversePerm
+    var index : Int = -1
+
+    val addresses : Vector[HDN[D#Pred]] = 
+      tree.dimension match {
+        case Zero(ev) => Vector()
+        case Succ(p, ev) => {
+          implicit val hasPred = ev
+          tree.flatten.hdn.nodeVector
+        }
+      }
+
+    def verticalTraverse(t : CellTree[D, String]) : String =
+      t match {
+        case Seed(obj, _) => "id (" ++ obj.toString ++ ")"
+        case Leaf(shape, _) => { index += 1 ; "leaf " ++ addresses(perm(index)).toAgda }
+        case Graft(cell, branches, _) => {
+          // Recurse on the branches, getting their string. then "plug these into" the result
+          // by traversing the cells source tree.
+
+          val verticalExprs = new Stack ++ (branches map (verticalTraverse(_)))
+
+          cell match {
+            case Object(value, _) => "node (" ++ value.toString ++ ") (" ++ verticalExprs.pop ++ ")"
+            case Composite(value, srcTree, tgtValue, _) => {
+
+              def horizontalTraverse(tr : CellTree[D#Pred, String]) : CellTree[D#Pred, String] =
+                tr match {
+                  case Seed(o, ev) => {
+                    implicit val isZero : IsZero[D#Pred] = ev
+                    Seed(o map (_ => verticalExprs.pop)).asInstanceOf[CellTree[D#Pred, String]]
+                  }
+                  case Leaf(s, ev) => {
+                    implicit val hasPred = ev
+                    Leaf(s)
+                  }
+                  case Graft(c, brs, ev) => {
+                    implicit val hasPred = ev
+                    val newBranches = brs map (horizontalTraverse(_))
+                    val localString = verticalExprs.pop
+                    Graft(cellValueUpdate[D#Pred](c, localString), newBranches)
+                  }
+                }
+
+              "node (" ++ value.toString ++ ") (" ++ cellTreeAgdaSyntax(horizontalTraverse(srcTree)) ++ ")"
+            }
+          }
+        }
+      }
+
+    verticalTraverse(tree)
+
+  }
+
+  def cellScalaSyntax[D <: Nat](cell : Cell[D, String]) : String = 
+    cell match {
+      case Object(value, ev) => "Pointt(" ++ value.toString ++ ")"
+      case Composite(value, srcTree, tgtValue, ev) => cellTreeScalaSyntax(srcTree)
+    }
+
+  def cellTreeScalaSyntax[D <: Nat](tree : CellTree[D, String]) : String = {
+
+    val perm : Vector[Int] = tree.inversePerm
+    var index : Int = -1
+
+    val addresses : Vector[HDN[D#Pred]] = 
+      tree.dimension match {
+        case Zero(ev) => Vector()
+        case Succ(p, ev) => {
+          implicit val hasPred = ev
+          tree.flatten.hdn.nodeVector
+        }
+      }
+
+    def verticalTraverse(t : CellTree[D, String]) : String =
+      t match {
+        case Seed(obj, _) => "Pt(" ++ obj.toString ++ ")"
+        case Leaf(shape, _) => { index += 1 ; "LeafT(" ++ addresses(perm(index)).toScala ++ ")" }
+        case Graft(cell, branches, _) => {
+          // Recurse on the branches, getting their string. then "plug these into" the result
+          // by traversing the cells source tree.
+
+          val verticalExprs = new Stack ++ (branches map (verticalTraverse(_)))
+
+          cell match {
+            case Object(value, _) => "NodeT(" ++ value.toString ++ ", " ++ verticalExprs.pop ++ ")"
+            case Composite(value, srcTree, tgtValue, _) => {
+
+              def horizontalTraverse(tr : CellTree[D#Pred, String]) : CellTree[D#Pred, String] =
+                tr match {
+                  case Seed(o, ev) => {
+                    implicit val isZero : IsZero[D#Pred] = ev
+                    Seed(o map (_ => verticalExprs.pop)).asInstanceOf[CellTree[D#Pred, String]]
+                  }
+                  case Leaf(s, ev) => {
+                    implicit val hasPred = ev
+                    Leaf(s)
+                  }
+                  case Graft(c, brs, ev) => {
+                    implicit val hasPred = ev
+                    val newBranches = brs map (horizontalTraverse(_))
+                    val localString = verticalExprs.pop
+                    Graft(cellValueUpdate[D#Pred](c, localString), newBranches)
+                  }
+                }
+
+              "NodeT(" ++ value.toString ++ "," ++ cellTreeScalaSyntax(horizontalTraverse(srcTree)) ++ ")"
+            }
+          }
+        }
+      }
+
+    verticalTraverse(tree)
+
+  }
+
+  def cellTreeXmlSyntax[D <: Nat](tree : CellTree[D, String]) : String = {
+
+    val perm : Vector[Int] = tree.inversePerm
+    var index : Int = -1
+
+    val addresses : Vector[HDN[D#Pred]] = 
+      tree.dimension match {
+        case Zero(ev) => Vector()
+        case Succ(p, ev) => {
+          implicit val hasPred = ev
+          tree.flatten.hdn.nodeVector
+        }
+      }
+
+    def verticalTraverse(t : CellTree[D, String]) : String =
+      t match {
+        case Seed(obj, _) => "<point>" ++ obj.toString ++ "</point>"
+        case Leaf(shape, _) => { index += 1 ; "<leaf>" ++ addresses(perm(index)).toXml ++ "</leaf>" }
+        case Graft(cell, branches, _) => {
+          // Recurse on the branches, getting their string. then "plug these into" the result
+          // by traversing the cells source tree.
+
+          val verticalExprs = new Stack ++ (branches map (verticalTraverse(_)))
+
+          cell match {
+            case Object(value, _) => "<node><value>" ++ value.toString ++ "</value><shell>" ++ verticalExprs.pop ++ "</shell></node>"
+            case Composite(value, srcTree, tgtValue, _) => {
+
+              def horizontalTraverse(tr : CellTree[D#Pred, String]) : CellTree[D#Pred, String] =
+                tr match {
+                  case Seed(o, ev) => {
+                    implicit val isZero : IsZero[D#Pred] = ev
+                    Seed(o map (_ => verticalExprs.pop)).asInstanceOf[CellTree[D#Pred, String]]
+                  }
+                  case Leaf(s, ev) => {
+                    implicit val hasPred = ev
+                    Leaf(s)
+                  }
+                  case Graft(c, brs, ev) => {
+                    implicit val hasPred = ev
+                    val newBranches = brs map (horizontalTraverse(_))
+                    val localString = verticalExprs.pop
+                    Graft(cellValueUpdate[D#Pred](c, localString), newBranches)
+                  }
+                }
+
+              "<node><value>" ++ value.toString ++ "</value><shell>" ++ cellTreeXmlSyntax(horizontalTraverse(srcTree)) ++ "</shell></node>"
+            }
+          }
+        }
+      }
+
+    verticalTraverse(tree)
+
+  }
+
+  def agdaSyntax[A](ncell : NCell[A]) : String = 
+    ncell.cell.regenerateFrom(new PdGenerator[A]).targetValues.mkString("\n", "\n\n", "\n")
+
+  def scalaSyntax[A](ncell : NCell[A]) : String = 
+    ncell.cell.regenerateFrom(new PdScalaGenerator[A]).targetValues.mkString("\n", "\n\n", "\n")
+
+  def xmlSyntax[A](ncell : NCell[A]) : String = {
+    var curDim : Int = -1
+
+    val tgts = ncell.cell.regenerateFrom(new PdXmlGenerator[A]).targetValues
+
+    val results = tgts.reverse map (s => {
+      curDim += 1
+      "<pd dimension=\"" ++ curDim.toString ++ "\">" ++ s ++ "</pd>"
+    })
+
+    results.mkString("<complex>", "", "</complex>")
+
+  }
+
+  object TargetInserter extends CellRegenerator[String, String] {
+    def generateObject[D <: Nat : IsZero](lbl : String) : Cell[D, String] = {
+      Object(lbl).asInstanceOf[Cell[D, String]]
+    }
+
+    def generateCell[D <: Nat : HasPred](cellLbl : String, srcs : CellTree[D#Pred, String], tgtLbl : String) = {
+      Composite("(" ++ cellLbl ++ " , " ++ tgtLbl ++ ")", srcs, tgtLbl)
+    }
+  }
+
+  class PdGenerator[-A] extends CellRegenerator[A, String] {
+
+    def generateObject[D <: Nat : IsZero](lbl : A) : Cell[D, String] = {
+      ObjectCell("obj " ++ lbl.toString)
+    }
+
+    def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, String], tgtLbl : A) = {
+
+      val lblString = "ext " ++ cellLbl.toString ++ " (" ++ cellTreeAgdaSyntax(srcs.addrTree map (_.toAgda)) ++ ")"
+      val tgtString = "int " ++ tgtLbl.toString ++ " (" ++ cellTreeAgdaSyntax(srcs) ++ ")"
+
+      CompositeCell(lblString, srcs, tgtString)
+    }
+
+  }
+
+  class PdScalaGenerator[-A] extends CellRegenerator[A, String] {
+
+    def generateObject[D <: Nat : IsZero](lbl : A) : Cell[D, String] = {
+      ObjectCell("Obj(" ++ lbl.toString ++")")
+    }
+
+    def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, String], tgtLbl : A) = {
+
+      val lblString = "Dot(" ++ cellLbl.toString ++ ", " ++ cellTreeScalaSyntax(srcs.addrTree map (_.toScala)) ++ ")"
+      val tgtString = "Box(" ++ tgtLbl.toString ++ ", " ++ cellTreeScalaSyntax(srcs) ++ ")"
+
+      CompositeCell(lblString, srcs, tgtString)
+    }
+
+  }
+
+  class PdXmlGenerator[-A] extends CellRegenerator[A, String] {
+
+    def generateObject[D <: Nat : IsZero](lbl : A) : Cell[D, String] = {
+      ObjectCell("<obj>" ++ lbl.toString ++ "</obj>")
+    }
+
+    def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, String], tgtLbl : A) = {
+
+      val lblString = "<dot><label>" ++ cellLbl.toString ++ "</label><corolla>" ++ cellTreeXmlSyntax(srcs.addrTree map (_.toXml)) ++ "</corolla></dot>"
+      val tgtString = "<box><label>" ++ tgtLbl.toString ++ "</label><shell>" ++ cellTreeXmlSyntax(srcs) ++ "</shell></box>"
+
+      CompositeCell(lblString, srcs, tgtString)
+    }
+
+  }
+
 }
 
 //
