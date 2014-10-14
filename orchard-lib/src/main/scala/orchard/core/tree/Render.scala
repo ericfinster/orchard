@@ -195,26 +195,33 @@ abstract class Renderer { thisRenderer =>
 
           val midChild = leafMarkers(leafCount / 2)
 
-
-
           ???
         }
       }
       case Box(a, c) => {
+
+        val (leafCount, leavesWithIndices) = lvs.zipWithIndex
 
         def verticalPass(tr : Tree[S[N], Nesting[S[N], A]]) : Option[(LayoutMarker, Tree[S[N], Nesting[S[N], RenderData]])] =
           tr match {
 
             case l @ Leaf(addr) => 
               for {
-                leafLayout <- lvs valueAt addr
+                leafMarkerWithIndex <- leavesWithIndices valueAt addr
               } yield {
-                // Here I think you truncate the vertical or something
 
-                // Um, so the problem is that here you don't have the order, so you can't tell whether or not
-                // to use the left or right truncation on this guy.  Don't quite see how I'm going to fix that ....
+                val (leafMarker, leafIndex) = leafMarkerWithIndex
 
-                (leafLayout, Leaf(addr)(l.p))  
+                if (leafIndex == 0 && leafCount == 1) {
+                  (leafMarker.truncateUnique, Leaf(addr)(l.p))
+                } else if (leafIndex == 0) {
+                  (leafMarker.truncateLeft, Leaf(addr)(l.p))
+                } else if (leafIndex == leafCount - 1) {
+                  (leafMarker.truncateRight, Leaf(addr)(l.p))
+                } else {
+                  (leafMarker.truncateMiddle, Leaf(addr)(l.p))
+                }
+
               }
 
             case Node(sn, vns) => 

@@ -161,7 +161,7 @@ trait Nats {
 
     def unapply[N <: Nat](n : N) : Option[OneMatch[N]] = 
       n match {
-        case S(S(Z)) => Some(
+        case S(Z) => Some(
           new OneMatch[N] {
             implicit def oneCoh : Leibniz[Nothing, Nat, N, _1] = force[Nothing, Nat, N, _1]
             implicit def oneCoe : Leibniz[Nothing, Nat, _1, N] = force[Nothing, Nat, _1, N]

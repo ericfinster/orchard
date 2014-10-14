@@ -23,6 +23,8 @@ sealed abstract class Tree[N <: Nat, +A] {
 
   import Tree._
 
+  val T = treeIsTraverse[N]
+
   def dim : N
 
   def map[B](f : A => B) : Tree[N, B]
@@ -38,10 +40,10 @@ sealed abstract class Tree[N <: Nat, +A] {
   def isLeaf : Boolean
   def isNode : Boolean
 
-  def nodes : List[A] = {
-    val T = treeIsTraverse[N]
-    T.toList(this)
-  }
+  def nodes : List[A] = T.toList(this)
+  def nodeCount : Int = T.count(this)
+  def zipWithIndex : (Int, Tree[N, (A, Int)]) = 
+    T.mapAccumL(this, 0)((i : Int, a : A) => (i + 1, (a, i)))
 
   def matchWith[B](tr : Tree[N, B]) : Option[Tree[N, (A, B)]]
 
@@ -127,7 +129,24 @@ object Tree {
 
   type Addr[N <: Nat] = Dir[S[N]]
 
-  implicit def asRootZipper[N <: Nat, A](tr : Tree[N, A]) : Zipper[N, A] = ???
+  implicit def asRootZipper[N <: Nat, A](tr : Tree[N, A]) : Zipper[N, A] = 
+    tr.dim match {
+      case IsZero(zm) => {
+        import zm._
+        val zp = FocusPoint(zeroCoh.subst[({ type L[M <: Nat] = Tree[M, A] })#L](tr))
+        zeroCoe.subst[({ type L[M <: Nat] = Zipper[M, A] })#L](zp)
+      }
+      case IsOne(om) => {
+        import om._
+        val zp = FocusList(oneCoh.subst[({ type L[M <: Nat] = Tree[M, A] })#L](tr), Empty())
+        oneCoe.subst[({ type L[M <: Nat] = Zipper[M, A] })#L](zp)
+      }
+      case IsDblSucc(dm) => {
+        import dm._
+        val zp = FocusBranch(dblSuccCoh.subst[({ type L[M <: Nat] = Tree[M, A] })#L](tr), Empty[S[S[PP]]]())
+        dblSuccCoe.subst[({ type L[M <: Nat] = Zipper[M, A] })#L](zp)
+      }
+    }
 
   implicit def treeIsTraverse[N <: Nat] : Traverse[({ type L[+A] = Tree[N, A] })#L] = 
     new Traverse[({ type L[+A] = Tree[N, A] })#L] {

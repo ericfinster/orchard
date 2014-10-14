@@ -78,6 +78,15 @@ sealed abstract class Zipper[N <: Nat, +A] {
 
 }
 
+case class FocusPoint[+A](pt : Tree[_0, A]) extends Zipper[_0, A] {
+
+  def focus : Tree[_0, A] = pt
+  def context : Context[_0, A] = Empty()
+
+  def visit(dir : Dir[_0]) : Option[Zipper[_0, A]] = Some(this)
+
+}
+
 case class FocusList[+A](lst : Tree[_1, A], ctxt : Context[_1, A]) extends Zipper[_1, A] {
 
   def focus : Tree[_1, A] = lst
