@@ -366,7 +366,7 @@ object NCell {
     def verticalTraverse(t : CellTree[D, String]) : String =
       t match {
         case Seed(obj, _) => "Pt(" ++ obj.toString ++ ")"
-        case Leaf(shape, _) => { index += 1 ; "LeafT(" ++ addresses(perm(index)).toScala ++ ")" }
+        case Leaf(shape, _) => { index += 1 ; "Leaf(" ++ addresses(perm(index)).toScala ++ ")" }
         case Graft(cell, branches, _) => {
           // Recurse on the branches, getting their string. then "plug these into" the result
           // by traversing the cells source tree.
@@ -374,7 +374,7 @@ object NCell {
           val verticalExprs = new Stack ++ (branches map (verticalTraverse(_)))
 
           cell match {
-            case Object(value, _) => "NodeT(" ++ value.toString ++ ", " ++ verticalExprs.pop ++ ")"
+            case Object(value, _) => "Node(" ++ value.toString ++ ", " ++ verticalExprs.pop ++ ")"
             case Composite(value, srcTree, tgtValue, _) => {
 
               def horizontalTraverse(tr : CellTree[D#Pred, String]) : CellTree[D#Pred, String] =
@@ -395,7 +395,7 @@ object NCell {
                   }
                 }
 
-              "NodeT(" ++ value.toString ++ "," ++ cellTreeScalaSyntax(horizontalTraverse(srcTree)) ++ ")"
+              "Node(" ++ value.toString ++ "," ++ cellTreeScalaSyntax(horizontalTraverse(srcTree)) ++ ")"
             }
           }
         }

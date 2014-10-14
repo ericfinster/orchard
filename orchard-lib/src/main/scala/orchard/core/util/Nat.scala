@@ -102,7 +102,7 @@ object Nats extends Nats
 
 
 sealed trait HDN[D <: Nat] { def isZero : Boolean ; def toAgda : String ; def toScala : String ; def toXml : String }
-case object HZero extends HDN[Nats._0] { override def toString = "0" ; def isZero = true ; def toAgda = "[]" ; def toScala = "NilA()" ; def toXml = "<unit/>" }
+case object HZero extends HDN[Nats._0] { override def toString = "0" ; def isZero = true ; def toAgda = "[]" ; def toScala = "Root()" ; def toXml = "<unit/>" }
 case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
   def isZero = l.length == 0
 
@@ -131,7 +131,13 @@ case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
     }
 
   def toScala : String = 
-    (l map (_.toScala)).mkString("Addr(", ", ", ")")
+    asScalaList(l)
+
+  def asScalaList(hl : List[HDN[D]]) : String =
+    hl match {
+      case Nil => "Root()"
+      case h :: hs => "Step(" ++ h.toScala ++ ", " ++ asScalaList(hs) ++ ")"
+    }
 
   def toXml : String = asXmlList(l)
 

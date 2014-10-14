@@ -347,85 +347,26 @@ object OrchardEditor extends PopupManager(new VBox)
   //         // case KeyCode.P => if (ev.isControlDown) onPrintScreen
   //         // case KeyCode.W => if (ev.isControlDown) onWebView
   //         // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
-          case KeyCode.Z => if (ev.isControlDown) onView
+          case KeyCode.Z => if (ev.isControlDown) onDebug
           case _ => ()
         }
       }
     })
 
 
-  // object WebViewDialog extends Dialog {
+  def onDebug = 
+    for {
+      wksp <- activeWorkspace
+      sheet <- wksp.activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+      val dumpCell : NCell[String] = selectedCell.neutralNCell map {
+        case None => "None"
+        case Some(expr) => expr.id
+      }
 
-  //   heading.text = "Web Viewer"
-
-  //   val webView = new WebView
-  //   borderPane.center = webView
-
-  //   var labelEngine : WebEngine = null
-  //   var gallery : FrameworkSVGGallery = null
-
-  //   def renderAsSVG[A](seed : NCell[Option[Expression]]) = {
-  //     labelEngine = new WebEngine
-  //     gallery = new FrameworkSVGGallery(labelEngine, seed)
-  //     gallery.onRenderFinished = (_ => {
-  //       webView.engine.loadContent(gallery.toSVG.toString)
-  //     })
-  //     gallery.renderAll
-  //   }
-
-  //   def onHide = ()
-  //   def onShow = ()
-
-  //   addEventFilter(KeyEvent.KEY_PRESSED,
-  //     new EventHandler[KeyEvent] {
-  //       def handle(ev : KeyEvent) {
-  //         ev.getCode match {
-  //           case KeyCode.X => if (ev.isControlDown) onWrite
-  //           case _ => ()
-  //         }
-  //       }
-  //     })
-
-  //   def onWrite = {
-  //     fileChooser.setTitle("Export SVG")
-
-  //     val file = fileChooser.showSaveDialog(getScene.getWindow)
-
-  //     if (file != null) {
-  //       xml.XML.save(file.getAbsolutePath, gallery.toSVG)
-  //     }
-  //   }
-  // }
-
-
-  // def onWebView = {
-  //   activeBuilder.selectionBase foreach (cell => {
-  //     val selectedExpr = cell.owner.getSimpleFramework.toCell
-  //     WebViewDialog.renderAsSVG(selectedExpr)
-  //     WebViewDialog.run
-  //   })
-  // }
-
-
-  // def onPrintScreen = {
-  //   fileChooser.setTitle("Export Snapshot")
-
-  //   val file = fileChooser.showSaveDialog(getScene.getWindow)
-
-  //   if (file != null) {
-
-  //     val image = activeBuilder.snapshot(null, null)
-
-  //     try {
-  //       ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
-  //     } catch {
-  //       case e : java.io.IOException => {
-  //         println("There was an error writing to the file!.")
-  //       }
-  //     }
-  //   }
-  // }
-
+      println(NCell.scalaSyntax(dumpCell))
+    }
 
   def onView = 
     for {

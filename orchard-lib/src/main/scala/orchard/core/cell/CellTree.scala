@@ -481,7 +481,44 @@ object CellTree {
     def map[B](f : A => B) : CellTree[D, B] = 
       tree.doRegeneration(CellRegenerator.mapRegenerator(f))
 
-    def addrTree : CellTree[D, HDN[D]] = ???
+    def addrTree : CellTree[D, HDN[D]] =
+      addrTreeLocal(HDN(dimension))
+
+    def addrTreeLocal(pref : HDN[D]) : CellTree[D, HDN[D]] = 
+      tree match {
+        case Seed(obj, ev) => {
+          implicit val isZero = ev
+          SeedClass(ObjectCell(pref))
+        }
+        case Leaf(shape, ev) => {
+          implicit val hasPred = ev
+          LeafClass(shape map (_ => HDN(dimension)))  // Right, maybe we should use zero here ...
+        }
+        case Graft(cell, branches, ev) => {
+          implicit val hasPred : HasPred[D] = ev
+
+          cell match {
+            case Composite(value, shell, tgtValue, _) => {
+
+              val shellAddrs : CellTree[D#Pred, HDN[D#Pred]] = shell.addrTree
+
+              val prefTree : CellTree[D#Pred, HDN[D]] = 
+                shellAddrs map ((n : HDN[D#Pred]) => 
+                  (n +: (pref.asInstanceOf[HDN[S[D#Pred]]])).asInstanceOf[HDN[D]])
+
+              val blankShell : CellTree[D#Pred, HDN[D]] = 
+                shell map (_ => HDN(dimension))
+
+              val newBranches = (prefTree.cells zip branches) map {
+                case (pCell, br) => br.addrTreeLocal(pCell.value)
+              }
+
+              Graft(Composite(pref, blankShell, HDN(dimension)), newBranches)
+
+            }
+          }
+        }
+      }
 
     def hdn : RoseTree[HDN[D], Unit] =
       dimension match {
