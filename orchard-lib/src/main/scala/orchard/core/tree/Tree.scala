@@ -156,6 +156,10 @@ object Tree {
 
     }
 
+  // It would somehow be more reasonable to have these use unapply methods to detect that the label
+  // type is of the appropriate shape.  Then they could be put into operations classes instead of 
+  // living here, kind of floating in the companion object.
+
   def graft[N <: Nat, A](tr : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] = 
     tr match {
       case Leaf(addr) => brs valueAt addr
@@ -197,7 +201,6 @@ object Tree {
     }
 
   }
-
 
   def unzip[N <: Nat, A, B](tr : Tree[N, (A, B)]) : (Tree[N, A], Tree[N, B]) = ???
 

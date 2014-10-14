@@ -13,33 +13,22 @@ import scalaz.std.option._
 import Nats._
 import Tree._
 
-trait Sizeable[A] {
+trait RenderOptions {
 
-  def widthOf(a : A) : Double
-  def heightOf(a : A) : Double
+  def arcRadius : Double 
 
-}
+  def internalPadding : Double 
+  def externalPadding : Double 
 
-object Sizeable {
+  def halfLeafWidth : Double 
+  def halfStrokeWidth : Double
 
-  implicit class SizeableOps[A : Sizeable](a : A) {
-
-    def width : Double = implicitly[Sizeable[A]].widthOf(a)
-    def height : Double = implicitly[Sizeable[A]].heightOf(a)
-
-  }
+  def strokeWidth = halfStrokeWidth + halfStrokeWidth
+  def leafWidth = halfLeafWidth + strokeWidth + halfLeafWidth
 
 }
 
-trait RenderData {
-
-  //=================================
-  // RENDER OPTIONS
-  //
-
-  def strokeWidth : Double
-  def internalPadding : Double
-  def externalPadding : Double
+trait RenderData extends RenderOptions {
 
   //=================================
   // POSITIONING
@@ -76,127 +65,185 @@ trait RenderData {
   // LABEL DATA
   //
 
-  def labelX : Double
-  def labelY : Double
-
   def labelWidth : Double
   def labelHeight : Double
 
   def labelPadding : Double
 
+  def labelX : Double = rootX + halfStrokeWidth + halfLeafWidth
+  def labelY : Double = rootY + strokeWidth + internalPadding
+
 }
 
-abstract class Renderer { thisRenderer =>
-
-  import Sizeable._
+abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
   //============================================================================================
-  // VISUAL OPTIONS
+  // LABEL SIZING
   //
 
-  def arcRadius : Double 
+  def widthOf(a : A) : Double
+  def heightOf(a : A) : Double
 
-  def internalPadding : Double 
-  def externalPadding : Double 
+  //============================================================================================
+  // COMPLEX RENDERING
+  //
 
-  def halfLeafWidth : Double 
-  def halfStrokeWidth : Double
+  type RenderIn[M <: Nat] = Complex[M, A]
+  type RenderOut[M <: Nat] = Option[Complex[M, RenderData]]
 
-  def strokeWidth = halfStrokeWidth + halfStrokeWidth
-  def leafWidth = halfLeafWidth + strokeWidth + halfLeafWidth
+  object RenderRecursor extends NatRecursor[RenderIn, RenderOut] {
+
+    def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, RenderData]] =
+      for {
+        objResult <- renderObjectNesting(zc.head)
+      } yield Base(objResult._2)
+
+    def caseSucc[P <: Nat](sc : Complex[S[P], A]) : Option[Complex[S[P], RenderData]] =
+      sc match {
+        case Append(tl, hd) =>
+          for {
+            tailResult <- renderComplex(tl)
+            leaves = tailResult.head.spine
+            headResult <- renderNesting(hd, ???)
+          } yield {
+            Append(tailResult, headResult._2)
+          }
+      }
+
+  }
+
+  def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, RenderData]] =
+    natRec(cmplx.dim)(RenderRecursor)(cmplx)
 
   //============================================================================================
   // OBJECT NESTING RENDERING
   //
 
-  def renderObjectNesting[A : Sizeable](nst : Nesting[_0, A]) : Nesting[_0, RenderData] =
+  def renderObjectNesting(nst : Nesting[_0, A]) : Option[(LayoutMarker, Nesting[_0, RenderData])] = 
     nst match {
-      case Obj(a) => ???
-      case Box(a, c) => ???
+      case Obj(a) => {
+
+        val objData = new RenderMarker
+
+        objData.labelWidth = widthOf(a)
+        objData.labelHeight = heightOf(a)
+
+        ???
+      }
+
+      case Box(a, Pt(c)) => 
+        for {
+          interior <- renderObjectNesting(c)
+        } yield {
+          val (interiorLayout, interiorNesting) = interior
+
+
+          ???
+        }
     }
 
   //============================================================================================
   // POSITIVE DIMENSIONAL NESTING RENDERING
   //
 
-  def renderProperNesting[N <: Nat, A : Sizeable](
-    nst : Nesting[S[N], A], 
-    lvs : Tree[N, LayoutMarker]
-  ) : Option[(LayoutMarker, Nesting[S[N], RenderData])] =
+  def renderNesting[N <: Nat](nst : Nesting[S[N], A], lvs : Tree[N, LayoutMarker]) 
+      : Option[(LayoutMarker, Nesting[S[N], RenderData])] =
     nst match {
       case Dot(a, c) => {
 
         val dotData = new RenderMarker
 
-        dotData.labelWidth = a.width
-        dotData.labelHeight = a.height
+        dotData.labelWidth = widthOf(a)
+        dotData.labelHeight = heightOf(a)
 
-        dotData.rootLeftMargin =
-          strokeWidth +
-            internalPadding +
-            (dotData.labelWidth / 2)
-
-        dotData.rootRightMargin =
-          (dotData.labelWidth / 2) +
-            internalPadding +
-            strokeWidth
+        dotData.rootLeftMargin = strokeWidth + internalPadding + (dotData.labelWidth / 2)
+        dotData.rootRightMargin = (dotData.labelWidth / 2) + internalPadding + strokeWidth
 
         val leafMarkers = lvs.nodes
         val leafCount = leafMarkers.length
 
-        if (leafCount == 0) {
-          // This is a drop
+        val marker = 
+          if (leafCount == 0) {  // This is a drop. Simply return an appropriate marker ...
 
-          ???
-        } else {
+            new LayoutMarker {
 
-          def layoutLeft(markers : List[LayoutMarker]) : Unit = {
-            for (i <- Range(markers.length - 2, -1, -1)) {
-              val lastMarker = markers(i + 1)
-              val thisMarker = markers(i)
+              val owner = dotData
+              val wasExternal = false
 
-              thisMarker.owner
-                .horizontalShift(lastMarker.owner.rootX -
-                  lastMarker.leftMargin -
-                  externalPadding -
-                  thisMarker.rightMargin -
-                  thisMarker.owner.rootX)
+              override def height = dotData.height
+              override def leftInternalMargin = dotData.rootLeftMargin - halfLeafWidth - halfStrokeWidth
+              override def rightInternalMargin = dotData.rootRightMargin - halfLeafWidth - halfStrokeWidth
 
-              dotData.horizontalDependents :+= thisMarker.owner
             }
+
+          } else { // We have children.  Arrange them and calculate the marker.
+
+            val isOdd = (leafCount & 1) != 0
+
+            val leftChildren = leafMarkers.slice(0, leafCount / 2)
+            val rightChildren = leafMarkers.slice(leafCount / 2 + (leafCount & 1), leafCount)
+
+            val midChild = leafMarkers(leafCount / 2)
+            val firstMarker = leafMarkers.head
+            val lastMarker = leafMarkers.last
+            val leftChild = leftChildren.last
+            val rightChild = rightChildren.head
+
+            if (isOdd) dotData.horizontalDependants :+= midChild.owner
+
+            val midLeftOffset = if (isOdd) midChild.leftMargin + externalPadding + leftChild.rightMargin else 0.0
+            val midRightOffset = if (isOdd) midChild.rightMargin + externalPadding + rightChild.leftMargin else 0.0
+
+            val leftChildShift : Double =
+              Math.max(Math.max(midLeftOffset, leftChild.rightMargin + (externalPadding / 2)),
+                dotData.rootLeftMargin + halfLeafWidth + halfStrokeWidth + arcRadius) // Arc Radius here is a bit suspicious ...
+
+            val rightChildShift : Double =
+              Math.max(Math.max(midRightOffset, rightChild.leftMargin + (externalPadding / 2)),
+                dotData.rootRightMargin + halfLeafWidth + halfStrokeWidth + arcRadius)
+
+            val leftEdge : Double =
+              (leftChildren foldRight leftChildShift)({
+                case (currentMarker, leftShift) => {
+                  val thisShift = leftShift + externalPadding + currentMarker.rightMargin
+                  currentMarker.owner.shiftLeft(thisShift)
+                  dotData.horizontalDependants :+= currentMarker.owner
+                  thisShift + currentMarker.leftMargin
+                }
+              })
+
+            val rightEdge : Double =
+              (rightChildren foldLeft rightChildShift)({
+                case (rightShift, currentMarker) => {
+                  val thisShift = rightShift + externalPadding + currentMarker.leftMargin
+                  currentMarker.owner.shiftRight(thisShift)
+                  dotData.horizontalDependants :+= currentMarker.owner
+                  thisShift + currentMarker.rightMargin
+                }
+              })
+
+            val (maxLeafHeight, allExternal) : (Double, Boolean) =
+              (leafMarkers map (m => (m.height, m.wasExternal)) foldLeft (0.0, true))({
+                case ((x , b),(y, c)) => (Math.max(x, y), b && c)
+              })
+
+            new LayoutMarker {
+
+              val owner = dotData
+              val wasExternal = false
+
+              override def height = maxLeafHeight + dotData.height + (if (allExternal) 0.0 else externalPadding)
+              override def leftSubtreeMargin = firstMarker.leftMargin - halfLeafWidth - halfStrokeWidth
+              override def rightSubtreeMargin = lastMarker.rightMargin - halfLeafWidth - halfStrokeWidth
+              override def leftInternalMargin = - firstMarker.owner.rootX
+              override def rightInternalMargin = lastMarker.owner.rootX
+
+            }
+
           }
 
-          def layoutRight(markers : List[LayoutMarker]) : Unit = {
-            for (i <- Range(1, markers.length)) {
-              val lastMarker = markers(i-1)
-              val thisMarker = markers(i)
+        Some(marker, Dot(dotData, c))
 
-              thisMarker.owner
-                .horizontalShift(lastMarker.owner.rootX +
-                  lastMarker.rightMargin +
-                  externalPadding +
-                  thisMarker.leftMargin -
-                  thisMarker.owner.rootX)
-
-              dotData.horizontalDependents :+= thisMarker.owner
-            }
-          }
-
-          val isOdd = (leafCount & 1) != 0
-
-          val leftChildren = 
-            leafMarkers.slice(0, leafCount / 2)
-
-          val rightChildren =
-            if (isOdd)
-              leafMarkers.slice(leafCount / 2 + 1, leafCount)
-            else
-              leafMarkers.slice(leafCount / 2, leafCount)
-
-          val midChild = leafMarkers(leafCount / 2)
-
-          ???
-        }
       }
       case Box(a, c) => {
 
@@ -228,23 +275,91 @@ abstract class Renderer { thisRenderer =>
               for {
                 vresult <- vns traverse (verticalPass(_))
                 (layoutTree, resultTree) = unzip(vresult)
-                lresult <- renderProperNesting(sn, layoutTree)
+                lresult <- renderNesting(sn, layoutTree)
                 (localLayout, resultNesting) = lresult
-              } yield (localLayout, Node(resultNesting, resultTree)) // And here you need to do more arrangement/layout
+              } yield {
 
+                // Indeed.  Here what we are going to do is fold over the children.  We do three things:
+                //
+                //  1) Set their vertical positions
+                //  2) Find the leftmost and rightmost marker so that we can correctly setup the return maker
+                //  3) Find the highest branch
+                //
+
+                val descendantMarkers : List[LayoutMarker] = layoutTree.nodes
+
+                val (leftEdge, rightEdge, maxHeight) = 
+                  (descendantMarkers foldLeft (localLayout.leftEdge, localLayout.rightEdge, 0.0))({
+                    case ((le, re, h), thisMarker) => {
+
+                      if (! thisMarker.wasExternal) {
+                        thisMarker.owner.shiftUp(localLayout.height)
+                        localLayout.owner.verticalDependants :+= thisMarker.owner
+                      }
+
+                      (Math.min(le, thisMarker.leftEdge), Math.max(re, thisMarker.rightEdge), Math.max(h, thisMarker.height))
+
+                    }
+                  })
+
+                val marker = new LayoutMarker {
+
+                  val owner = localLayout.owner
+                  val wasExternal = false
+
+                  override def height = maxHeight + localLayout.height
+
+                  override def leftInternalMargin = ???
+                  override def rightInternalMargin = ???
+
+                  override def leftSubtreeMargin = ???
+                  override def rightSubtreeMargin = ???
+
+                }
+
+                (marker, Node(resultNesting, resultTree)) 
+
+              }
           }
-
-        val boxData = new RenderMarker
-
-        boxData.labelWidth = a.width
-        boxData.labelHeight = a.height
 
         for {
           internalResult <- verticalPass(c)
-        } yield ()
+        } yield {
 
-        ???
+          val (rootMarker, canopy) = internalResult
 
+          val boxData = new RenderMarker
+
+          boxData.labelWidth = widthOf(a)
+          boxData.labelHeight = heightOf(a)
+
+          boxData.internalWidth = rootMarker.width
+          boxData.internalHeight = rootMarker.height
+
+          // Shift the lable so that it is flush with the right edge
+          boxData.labelPadding = Math.max(0.0, boxData.labelWidth - rootMarker.rightMargin) + internalPadding
+
+          boxData.rootLeftMargin = strokeWidth + internalPadding + rootMarker.leftMargin
+          boxData.rootRightMargin = rootMarker.rightMargin + boxData.labelPadding + internalPadding + strokeWidth
+
+          // Set the dependencies
+          boxData.horizontalDependants :+= rootMarker.owner
+
+          // Setup and return an appropriate marker
+          val marker = new LayoutMarker {
+
+            val owner = boxData
+            val wasExternal = false
+
+            override def height = boxData.height
+            override def leftInternalMargin = boxData.rootLeftMargin - halfLeafWidth - halfStrokeWidth
+            override def rightInternalMargin = boxData.rootRightMargin - halfLeafWidth - halfStrokeWidth
+
+          }
+
+          (marker , Box(boxData, canopy))
+
+        }
       }
     }
 
@@ -254,7 +369,9 @@ abstract class Renderer { thisRenderer =>
 
   protected class RenderMarker extends RenderData {
 
-    val strokeWidth : Double = thisRenderer.strokeWidth
+    val arcRadius : Double = thisRenderer.arcRadius
+    val halfLeafWidth : Double = thisRenderer.halfLeafWidth
+    val halfStrokeWidth : Double = thisRenderer.halfStrokeWidth
     val internalPadding : Double = thisRenderer.internalPadding
     val externalPadding : Double = thisRenderer.externalPadding
 
@@ -267,30 +384,28 @@ abstract class Renderer { thisRenderer =>
     var rootLeftMargin : Double = 0.0
     var rootRightMargin : Double = 0.0
 
-    var labelX : Double = 0.0
-    var labelY : Double = 0.0
-
     var labelWidth : Double = 0.0
     var labelHeight : Double = 0.0
 
     var labelPadding : Double = 0.0
 
-    var horizontalDependents : List[RenderMarker] = Nil
-    var verticalDependents : List[RenderMarker] = Nil
+    var horizontalDependants : List[RenderMarker] = Nil
+    var verticalDependants : List[RenderMarker] = Nil
 
-    def horizontalShift(amount : Double) : Unit = {
+    def shiftRight(amount : Double) : Unit = 
       if (amount != 0) {
         rootX += amount
-        horizontalDependents foreach (_.horizontalShift(amount))
+        horizontalDependants foreach (_.shiftRight(amount))
       }
-    }
 
-    def verticalShift(amount : Double) : Unit = {
+    def shiftDown(amount : Double) : Unit = 
       if (amount != 0) {
         rootY += amount
-        verticalDependents foreach (_.verticalShift(amount))
+        verticalDependants foreach (_.shiftDown(amount))
       }
-    }
+
+    def shiftLeft(amount : Double) : Unit = shiftRight(-amount)
+    def shiftUp(amount : Double) : Unit = shiftDown(-amount)
 
   }
 
@@ -315,6 +430,9 @@ abstract class Renderer { thisRenderer =>
 
     def width : Double =
       leftMargin + rightMargin
+
+    def leftEdge : Double = owner.rootX - leftMargin
+    def rightEdge : Double = owner.rootX + rightMargin
 
     // Truncations
 

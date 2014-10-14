@@ -104,6 +104,29 @@ trait Nats {
       case S(p) => toInt(p) + 1
     }
 
+  trait NatRecursor[F[_ <: Nat], G[_ <: Nat]] {
+
+    def caseZero(fz : F[_0]) : G[_0]
+    def caseSucc[P <: Nat](fs : F[S[P]]) : G[S[P]]
+
+  }
+
+  def natRec[F[_ <: Nat], G[_ <: Nat], N <: Nat](n : N)(r : NatRecursor[F, G])(fn : F[N]) : G[N] = 
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0] = zeroCoh.subst[F](fn)
+        val gz : G[_0] = r.caseZero(fz)
+        zeroCoe.subst[G](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P]] = succCoh.subst[F](fn)
+        val gs : G[S[P]] = r.caseSucc[P](fs)
+        succCoe.subst[G](gs)
+      }
+    }
+
   trait ZeroMatch[N <: Nat] {
 
     implicit def zeroCoh : Leibniz[Nothing, Nat, N, _0]
