@@ -65,4 +65,6 @@ object NestingExamples {
 
   val fred4 : Nesting[_4, Int] = Dot(27, Node(Root(),Node(Node(Step(Root(), Root()),Node(Leaf(Root()),Node(Leaf(Root()),Pt(Node(Node(Leaf(Step(Step(Root(), Root()), Root())),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Root()), Root()))),Leaf(Root())),Pt(Node(Leaf(Step(Root(), Root())),Pt(Leaf(Root())))))),Pt(Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root()))))))))),Node(Node(Leaf(Step(Root(), Root())),Node(Leaf(Root()),Pt(Leaf(Root())))),Pt(Node(Leaf(Step(Root(), Root())),Pt(Node(Node(Node(Step(Step(Step(Root(), Step(Root(), Root())), Root()), Root()),Node(Leaf(Step(Step(Root(), Step(Root(), Root())), Root())),Node(Leaf(Root()),Pt(Leaf(Root()))))),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Step(Root(), Root())), Root()))),Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root()))))))))))
 
+  val fred : Complex[_4, Int] = Append(Append(Append(Append(Base(fred0), fred1), fred2), fred3), fred4)
+
 }

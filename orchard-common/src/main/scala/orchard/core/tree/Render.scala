@@ -13,6 +13,13 @@ import scalaz.std.option._
 import Nats._
 import Tree._
 
+trait BBox {
+
+  def width : Double
+  def height : Double
+
+}
+
 trait RenderOptions {
 
   def arcRadius : Double 
@@ -81,8 +88,7 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
   // LABEL SIZING
   //
 
-  def widthOf(a : A) : Double
-  def heightOf(a : A) : Double
+  def getLabelBBox(a : A) : BBox
 
   //============================================================================================
   // COMPLEX RENDERING
@@ -125,9 +131,10 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
       case Obj(a) => {
 
         val objData = new RenderMarker
+        val labelBBox = getLabelBBox(a)
 
-        objData.labelWidth = widthOf(a)
-        objData.labelHeight = heightOf(a)
+        objData.labelWidth = labelBBox.width
+        objData.labelHeight = labelBBox.height
 
         objData.rootLeftMargin = strokeWidth + internalPadding + (objData.labelWidth / 2)
         objData.rootRightMargin = (objData.labelWidth / 2) + internalPadding + strokeWidth
@@ -156,17 +163,18 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
           val (interiorLayout, interiorNesting) = interior
 
           val boxData = new RenderMarker
+          val labelBBox = getLabelBBox(a)
 
-          boxData.labelWidth = widthOf(a)
-          boxData.labelHeight = heightOf(a)
+          boxData.labelWidth = labelBBox.width
+          boxData.labelHeight = labelBBox.height
 
           boxData.internalWidth = interiorLayout.width
           boxData.internalHeight = interiorLayout.height
 
-          // var rootLeftMargin : Double = 0.0
-          // var rootRightMargin : Double = 0.0
+          boxData.rootLeftMargin = interiorLayout.leftMargin + internalPadding + strokeWidth
+          boxData.rootRightMargin = interiorLayout.rightMargin + internalPadding + strokeWidth
 
-          // var labelPadding : Double = 0.0
+          boxData.labelPadding = 0.0
 
           val marker = new LayoutMarker {
 
@@ -175,8 +183,8 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
             override def height = boxData.height
 
-            override def leftInternalMargin = ???
-            override def rightInternalMargin = ???
+            override def leftInternalMargin = boxData.rootLeftMargin - halfLeafWidth - halfStrokeWidth
+            override def rightInternalMargin = boxData.rootRightMargin - halfLeafWidth - halfStrokeWidth
 
           }
 
@@ -195,9 +203,10 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
       case Dot(a, c) => {
 
         val dotData = new RenderMarker
+        val labelBBox = getLabelBBox(a)
 
-        dotData.labelWidth = widthOf(a)
-        dotData.labelHeight = heightOf(a)
+        dotData.labelWidth = labelBBox.width
+        dotData.labelHeight = labelBBox.height
 
         dotData.rootLeftMargin = strokeWidth + internalPadding + (dotData.labelWidth / 2)
         dotData.rootRightMargin = (dotData.labelWidth / 2) + internalPadding + strokeWidth
@@ -229,6 +238,8 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
             val midChild = leafMarkers(leafCount / 2)
             val firstMarker = leafMarkers.head
             val lastMarker = leafMarkers.last
+
+            // This will not work if there are no children ...
             val leftChild = leftChildren.last
             val rightChild = rightChildren.head
 
@@ -331,16 +342,19 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
                 val descendantMarkers : List[LayoutMarker] = layoutTree.nodes
 
-                val (leftEdge, rightEdge, maxHeight) = 
-                  (descendantMarkers foldLeft (localLayout.leftEdge, localLayout.rightEdge, 0.0))({
-                    case ((le, re, h), thisMarker) => {
+                val (leftMostChild, rightMostChild, heightOfChildren) = 
+                  (descendantMarkers foldLeft (localLayout, localLayout, 0.0))({
+                    case ((lcMarker, rcMarker, ht), thisMarker) => {
 
                       if (! thisMarker.wasExternal) {
                         thisMarker.owner.shiftUp(localLayout.height)
                         localLayout.owner.verticalDependants :+= thisMarker.owner
                       }
 
-                      (Math.min(le, thisMarker.leftEdge), Math.max(re, thisMarker.rightEdge), Math.max(h, thisMarker.height))
+                      val newLeftChild = if (thisMarker.leftEdge < lcMarker.leftEdge) thisMarker else lcMarker
+                      val newRightChild = if (thisMarker.rightEdge < lcMarker.rightEdge) thisMarker else rcMarker
+
+                      (newLeftChild, newRightChild, Math.max(ht, thisMarker.height))
 
                     }
                   })
@@ -350,13 +364,13 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
                   val owner = localLayout.owner
                   val wasExternal = false
 
-                  override def height = maxHeight + localLayout.height
+                  override def height = localLayout.height + heightOfChildren
 
-                  override def leftInternalMargin = ???
-                  override def rightInternalMargin = ???
+                  override def leftInternalMargin = - (leftMostChild.owner.rootX - leftMostChild.leftInternalMargin)
+                  override def rightInternalMargin = rightMostChild.owner.rootX + rightMostChild.rightInternalMargin
 
-                  override def leftSubtreeMargin = ???
-                  override def rightSubtreeMargin = ???
+                  override def leftSubtreeMargin = leftMostChild.leftSubtreeMargin
+                  override def rightSubtreeMargin = rightMostChild.rightSubtreeMargin
 
                 }
 
@@ -372,9 +386,10 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
           val (rootMarker, canopy) = internalResult
 
           val boxData = new RenderMarker
+          val labelBBox = getLabelBBox(a)
 
-          boxData.labelWidth = widthOf(a)
-          boxData.labelHeight = heightOf(a)
+          boxData.labelWidth = labelBBox.width
+          boxData.labelHeight = labelBBox.height
 
           boxData.internalWidth = rootMarker.width
           boxData.internalHeight = rootMarker.height
@@ -445,19 +460,6 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
     }
 
   }
-
-  // I don't yet see how set the end positions of the edges.  They are not
-  // available at render time because they are attached to the boxes of the
-  // previous dimension.
-
-  // It seems that the alternative is as follows: generate separate edge markers
-  // during the rendering pass, and effectively calculate the spine simultaneously
-  // as you go.  Finally, in the complex rendering algorithm, match the resulting
-  // spine with the nesting of the previous head (or not, you could also just return
-  // the edge tree itself ....)
-
-  // But anyway, yeah, I don't quite see how to match the two things.  They will 
-  // probably just have to be done separately.....
 
   class EdgeData extends Translatable {
 

@@ -13,8 +13,6 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.stage.FileChooser
 
-import orchard.core.typechecker._
-
 import controls._
 
 abstract class JavaFXEditor extends PopupManager(new VBox) 
@@ -26,6 +24,27 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
   implicit def pm : PopupManager = this
 
   val fileChooser = new FileChooser
+
+  //============================================================================================
+  // INITIALIZATION
+  //
+
+  def initialize : Unit = {
+    
+    consoleWrite("Welcome to Orchard!")
+
+  }
+
+  def renderExample : Unit = {
+
+    import orchard.core.tree.NestingExamples._
+
+    val renderer = new JavaFXRenderer(this)
+    renderer.renderComplex(fred)
+
+    consoleWrite("Finished rendering.")
+
+  }
 
   //============================================================================================
   // CONSOLE ROUTINES

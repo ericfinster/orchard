@@ -12,35 +12,19 @@ import scalafx.Includes._
 import scalafx.geometry._
 import scalafx.scene.layout._
 import scalafx.scene.control._
+import scalafx.scene.text._
 
 trait JavaFXUI { thisEditor : JavaFXEditor =>
 
-  val noWorkspaceLabel = new Label("No Workspace")
-
-  val modulePane = new StackPane {
-    padding = Insets(10, 10, 10, 10)
-    styleClass += "orch-pane"
+  val renderingSurface = new HBox {
+    style = "-fx-background-color: white"
   }
-
-  val worksheetTabPane = new TabPane
 
   val workspacePane = new StackPane {
     padding = Insets(10, 10, 10, 10)
-    content = worksheetTabPane
+    content = renderingSurface
     styleClass += "orch-pane"
   }
-
-  val environmentPane = new StackPane {
-    padding = Insets(10, 10, 10, 10)
-    styleClass += "orch-pane"
-  }
-
-  val horizontalSplit = new SplitPane {
-    orientation = Orientation.HORIZONTAL
-    items ++= List(modulePane, workspacePane, environmentPane)
-  }
-
-  horizontalSplit.setDividerPositions(0.2f, 0.8f)
 
   val console = new TextArea {
     editable = false
@@ -48,7 +32,7 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val verticalSplit = new SplitPane {
     orientation = Orientation.VERTICAL
-    items ++= List(horizontalSplit, console)
+    items ++= List(workspacePane, console)
     dividerPositions = 0.8f
   }
 

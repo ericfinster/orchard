@@ -143,5 +143,5 @@ object Versions {
   val app = "0.1.0-SNAPSHOT"
   val scala = "2.11.1"
   val scalajsJQuery = "0.6"
-  val scalaTags = "0.3.8"
+  val scalaTags = "0.4.2"
 }

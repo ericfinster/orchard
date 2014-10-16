@@ -26,7 +26,7 @@ object OrchardEditor extends JavaFXEditor {
   VBox.setVgrow(ui, Priority.Always)
   mainVBox.content.addAll(menuBar, ui)
 
-  consoleWrite("Welcome to Orchard!")
+  initialize
 
 }
 

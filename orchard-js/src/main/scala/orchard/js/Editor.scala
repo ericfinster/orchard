@@ -8,21 +8,23 @@
 package orchard.js
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
-import scala.scalajs._
-import org.scalajs.dom
-import dom.document
-import dom.extensions._
-import js.Dynamic.{literal => lit}
-
-import org.scalajs.jquery._
-
-import js.annotation.JSExport
-
 import scala.concurrent.Future
 
-import orchard.js.plugins._
+import scala.scalajs._
+import js.Dynamic.{literal => lit}
+import js.annotation.JSExport
 
+import org.scalajs.dom
+import org.scalajs.jquery._
+
+import dom.document
+import dom.extensions._
+
+import scalatags.JsDom.implicits._
+import scalatags.JsDom.svgTags._
+import scalatags.JsDom.svgAttrs._
+
+import orchard.js.plugins._
 import orchard.core.util._
 import ErrorM._
 
@@ -44,10 +46,21 @@ object TheEditor extends js.JSApp with Editor {
   //
 
   def main(): Unit = {
+
     println("Starting Orchard Editor ...")
 
     // Do a first layout
     doLayout
+
+    val renderer : JsRenderer = new JsRenderer(dom.document.getElementById("test-body"))
+
+    import orchard.core.tree.NestingExamples._
+
+    for {
+      result <- renderer.renderComplex(fred)
+    } {
+      println("Rendering complete!")
+    }
 
   }
 

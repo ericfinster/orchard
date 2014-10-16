@@ -178,85 +178,92 @@
 	  <!-- Content Area -->
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 
-	    <!-- <div class="workspace-view"> -->
 	      <div class="row module-view">
 		<div class="col-sm-12 col-md-12 module-wrapper">
+
+    		    <div class="panel panel-default">
+		      <div class="panel-heading">
+			Test Panel
+		      </div>
+		      <div id="test-body" class="panel-body">
+		      </div>
+		    </div>
+
 		</div>
 	      </div>
 
-	      <div class="row worksheet-view">
+	      <!-- <div class="row worksheet-view"> -->
 
-		<div class="col-sm-4 col-md-3 environment-panel">
-    		  <div class="panel panel-default">
-		    <div class="panel-heading">
-		      <div class="btn-group">
-			<button class="btn btn-default" type="button" id="paste-btn">Paste</button>
-		      </div>
-		    </div>
-		    <div class="panel-body">
-		      <div id="env-tree">
-		      </div>
-		    </div>
-		  </div>
-		</div>
+	      <!-- 	<div class="col-sm-4 col-md-3 environment-panel"> -->
+    	      <!-- 	  <div class="panel panel-default"> -->
+	      <!-- 	    <div class="panel-heading"> -->
+	      <!-- 	      <div class="btn-group"> -->
+	      <!-- 		<button class="btn btn-default" type="button" id="paste-btn">Paste</button> -->
+	      <!-- 	      </div> -->
+	      <!-- 	    </div> -->
+	      <!-- 	    <div class="panel-body"> -->
+	      <!-- 	      <div id="env-tree"> -->
+	      <!-- 	      </div> -->
+	      <!-- 	    </div> -->
+	      <!-- 	  </div> -->
+	      <!-- 	</div> -->
 
-    		<div class="col-sm-8 col-md-9 control-panel">
-    		  <div class="panel panel-default">
+    	      <!-- 	<div class="col-sm-8 col-md-9 control-panel"> -->
+    	      <!-- 	  <div class="panel panel-default"> -->
 		    
-		    <div class="panel-heading">
-		      <div class="btn-group">
+	      <!-- 	    <div class="panel-heading"> -->
+	      <!-- 	      <div class="btn-group"> -->
 			
-			<div class="btn-group">
-			  <button class="btn btn-default dropdown-toggle" type="button" id="insert-menu" data-toggle="dropdown">
-			    Insert
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
-			    <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li>
-			    <li role="presentation"><a id="new-parameter-btn" role="menuitem" tabindex="-1" href="#">Parameter</a></li>
-			    <li role="presentation"><a id="new-defn-btn" role="menuitem" tabindex="-1" href="#">Definition</a></li>
-			    <li role="presentation"><a id="new-import-btn" role="menuitem" tabindex="-1" href="#">Import</a></li>
-			  </ul>
-			</div>
+	      <!-- 		<div class="btn-group"> -->
+	      <!-- 		  <button class="btn btn-default dropdown-toggle" type="button" id="insert-menu" data-toggle="dropdown"> -->
+	      <!-- 		    Insert -->
+	      <!-- 		    <span class="caret"></span> -->
+	      <!-- 		  </button> -->
+	      <!-- 		  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu"> -->
+	      <!-- 		    <li role="presentation"><a id="new-module-btn" role="menuitem" tabindex="-1" href="#">Module</a></li> -->
+	      <!-- 		    <li role="presentation"><a id="new-parameter-btn" role="menuitem" tabindex="-1" href="#">Parameter</a></li> -->
+	      <!-- 		    <li role="presentation"><a id="new-defn-btn" role="menuitem" tabindex="-1" href="#">Definition</a></li> -->
+	      <!-- 		    <li role="presentation"><a id="new-import-btn" role="menuitem" tabindex="-1" href="#">Import</a></li> -->
+	      <!-- 		  </ul> -->
+	      <!-- 		</div> -->
 
-			<div class="btn-group">
-			  <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown">
-			    Worksheet
-			    <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu">
-			    <li role="presentation"><a id="new-worksheet-btn" role="menuitem" tabindex="-1" href="#">New Worksheet</a></li>
-			    <li role="presentation" class="divider"></li>
-			    <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li>
-			    <li role="presentation"><a id="drop-btn" role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li>
-			  </ul>
-			</div>
+	      <!-- 		<div class="btn-group"> -->
+	      <!-- 		  <button class="btn btn-default dropdown-toggle" type="button" id="shape-menu" data-toggle="dropdown"> -->
+	      <!-- 		    Worksheet -->
+	      <!-- 		    <span class="caret"></span> -->
+	      <!-- 		  </button> -->
+	      <!-- 		  <ul class="dropdown-menu" role="menu" aria-labelledby="insert-menu"> -->
+	      <!-- 		    <li role="presentation"><a id="new-worksheet-btn" role="menuitem" tabindex="-1" href="#">New Worksheet</a></li> -->
+	      <!-- 		    <li role="presentation" class="divider"></li> -->
+	      <!-- 		    <li role="presentation"><a id="extrude-btn" role="menuitem" tabindex="-1" href="#">Extrude Selection</a></li> -->
+	      <!-- 		    <li role="presentation"><a id="drop-btn" role="menuitem" tabindex="-1" href="#">Drop At Selection</a></li> -->
+	      <!-- 		  </ul> -->
+	      <!-- 		</div> -->
 
-		      </div>
-		    </div>
+	      <!-- 	      </div> -->
+	      <!-- 	    </div> -->
 
-    		    <div class="panel-body">
-		      <div class="worksheet-carousel-wrapper">
+    	      <!-- 	    <div class="panel-body"> -->
+	      <!-- 	      <div class="worksheet-carousel-wrapper"> -->
 
-		      	<div class="worksheet-carousel">
-		      	  <ul>
-		      	  </ul>
-		      	</div>
+	      <!-- 	      	<div class="worksheet-carousel"> -->
+	      <!-- 	      	  <ul> -->
+	      <!-- 	      	  </ul> -->
+	      <!-- 	      	</div> -->
 
-			<div class="worksheet-carousel-controls">
-			  <a href="#" class="worksheet-carousel-prev"><i class="fa fa-chevron-circle-left"></i></a>
-			  <div class="worksheet-carousel-pagination"></div>
-			  <a href="#" class="worksheet-carousel-next"><i class="fa fa-chevron-circle-right"></i></a>
-			</div>
+	      <!-- 		<div class="worksheet-carousel-controls"> -->
+	      <!-- 		  <a href="#" class="worksheet-carousel-prev"><i class="fa fa-chevron-circle-left"></i></a> -->
+	      <!-- 		  <div class="worksheet-carousel-pagination"></div> -->
+	      <!-- 		  <a href="#" class="worksheet-carousel-next"><i class="fa fa-chevron-circle-right"></i></a> -->
+	      <!-- 		</div> -->
 
-		      </div>
-    		    </div>
+	      <!-- 	      </div> -->
+    	      <!-- 	    </div> -->
 		    
-    		  </div>
-    		</div>
+    	      <!-- 	  </div> -->
+    	      <!-- 	</div> -->
 
-	      </div>
-	    <!-- </div> -->
+	      <!-- </div> -->
 	  </div>
 
 	</div>
