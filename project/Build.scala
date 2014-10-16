@@ -67,6 +67,8 @@ object ApplicationBuild extends Build with UniversalKeys {
       name := "orchard-javafx",
       version := Versions.app,
       scalaVersion := Versions.scala,
+      scalacOptions ++= Seq("-feature", "-deprecation"),
+      libraryDependencies ++= Dependencies.orchardJavafx,
       unmanagedJars in Compile += Attributed.blank(
         file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar"),
       Keys.fork := true
@@ -79,7 +81,11 @@ object ApplicationBuild extends Build with UniversalKeys {
       scalaVersion := Versions.scala,
       persistLauncher := true,
       persistLauncher in Test := false,
-      libraryDependencies ++= Dependencies.orchardJs
+      libraryDependencies ++= Seq(
+        "org.scala-lang.modules.scalajs" %%% "scalajs-jquery" % Versions.scalajsJQuery,
+        "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0",
+        "com.scalatags" %%% "scalatags" % Versions.scalaTags
+      )
     ) ++ sharedDirectorySettings
 
   lazy val orchardLibSettings = 
@@ -120,18 +126,15 @@ object ApplicationBuild extends Build with UniversalKeys {
 
 object Dependencies {
 
-  val shared = Seq()
+  val shared = Seq(
+    "org.scalaz" %% "scalaz-core" % "7.1.0"
+  )
 
   val orchardPlay = Seq() ++ shared
+  val orchardLib = Seq() ++ shared
 
-  val orchardJs = Seq(
-    "org.scala-lang.modules.scalajs" %%% "scalajs-jquery" % Versions.scalajsJQuery,
-     "com.scalatags" %%% "scalatags" % Versions.scalaTags
-  ) ++ shared
-
-  val orchardLib = Seq(
-    "org.scalaz" %% "scalaz-core" % "7.0.6",
-    "org.scalaz" %% "scalaz-concurrent" % "7.0.6"
+  val orchardJavafx = Seq(
+    "org.scalafx" %% "scalafx" % "2.2.67-R10"
   ) ++ shared
 
 }

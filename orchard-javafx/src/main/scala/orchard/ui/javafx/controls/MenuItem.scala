@@ -46,7 +46,7 @@ class MenuItem extends jfxsl.Region {
   setOnMouseClicked(new EventHandler[MouseEvent] {
     def handle(ev : MouseEvent) = { 
       owner foreach (o => o.close)
-      action () 
+      action(())
     }
   })
 

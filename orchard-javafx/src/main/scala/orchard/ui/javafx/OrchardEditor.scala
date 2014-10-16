@@ -23,7 +23,7 @@ object OrchardEditor extends JavaFXEditor {
 
   val mainVBox = new VBox(root.delegate.asInstanceOf[jfxsl.VBox])
 
-  VBox.setVgrow(ui, Priority.ALWAYS)
+  VBox.setVgrow(ui, Priority.Always)
   mainVBox.content.addAll(menuBar, ui)
 
   consoleWrite("Welcome to Orchard!")

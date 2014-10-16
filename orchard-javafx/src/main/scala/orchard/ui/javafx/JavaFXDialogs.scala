@@ -73,7 +73,7 @@ trait JavaFXDialogs { thisEditor : JavaFXEditor =>
     val nameField = new TextField { promptText = "Module name" }
     val nameHBox = new HBox {
       content = List(nameLabel, nameField)
-      alignment = Pos.CENTER
+      alignment = Pos.Center
       spacing = 5
       padding = Insets(0, 10, 10, 10)
     }

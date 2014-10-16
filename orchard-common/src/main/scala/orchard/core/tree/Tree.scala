@@ -15,9 +15,9 @@ import scalaz.Leibniz._
 
 import Nats._
 
-sealed abstract class Dir[N <: Nat]
-case class Root[N <: Nat]() extends Dir[S[N]]
-case class Step[N <: Nat](d : Dir[N], ds : Dir[S[N]]) extends Dir[S[N]]
+sealed abstract class Dir[N <: Nat] { def dim : N }
+case class Root[N <: Nat](implicit val p : N) extends Dir[S[N]] { def dim = S(p) }
+case class Step[N <: Nat](d : Dir[N], ds : Dir[S[N]]) extends Dir[S[N]] { def dim = ds.dim }
 
 sealed abstract class Tree[N <: Nat, +A] {
 
@@ -71,9 +71,9 @@ case class Pt[+A](a : A) extends Tree[_0, A] {
 
 }
 
-case class Leaf[N <: Nat](addr : Dir[S[N]])(implicit val p : N) extends Tree[S[N], Nothing] {
+case class Leaf[N <: Nat](addr : Dir[S[N]]) extends Tree[S[N], Nothing] {
 
-  def dim = S(p)
+  def dim = addr.dim
 
   def map[B](f : Nothing => B) : Tree[S[N], Nothing] = this
   def traverse[G[_], B](f : Nothing => G[B])(implicit apG : Applicative[G]) : G[Tree[S[N], B]] = {
@@ -125,8 +125,82 @@ case class Node[N <: Nat, +A](a : A, shell : Tree[N, Tree[S[N], A]]) extends Tre
 
 }
 
-object Tree {
+trait TreeFunctions {
 
+  //============================================================================================
+  // GRAFT
+  //
+
+  def graft[N <: Nat, A](tr : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] = 
+    tr match {
+      case Leaf(addr) => brs valueAt addr
+      case Node(a, sh) =>
+        for {
+          nsh <- sh.traverse(graft(_, brs))
+        } yield Node(a, nsh)
+    }
+
+
+  //============================================================================================
+  // JOIN
+  //
+
+  def join[N <: Nat, A](tr : Tree[N, Tree[N, A]]) : Option[Tree[N, A]] =  
+    natParamRec(tr.dim)(JoinRecursor)(tr)
+
+  type JoinIn[M <: Nat, A] = Tree[M, Tree[M, A]]
+  type JoinOut[M <: Nat, A] = Option[Tree[M, A]]
+
+  object JoinRecursor extends NatParamRecursor[JoinIn, JoinOut] {
+
+    def caseZero[A](tr : Tree[_0, Tree[_0, A]]) : Option[Tree[_0, A]] = 
+      tr.rootValue
+
+    def caseSucc[P <: Nat, A](tr : Tree[S[P], Tree[S[P], A]]) : Option[Tree[S[P], A]] =
+      tr match {
+        case Leaf(addr) => Some(Leaf(addr))
+        case Node(t, tsh) =>
+          for {
+            gsh <- tsh.traverse(caseSucc(_))
+            str <- graft(t, gsh)
+          } yield str
+      }
+
+  }
+
+  //============================================================================================
+  // UNZIP
+  //
+
+  def unzip[N <: Nat, A, B](tr : Tree[N, (A, B)]) : (Tree[N, A], Tree[N, B]) = 
+    natTwoParamRec(tr.dim)(UnzipRecursor)(tr)
+
+  type UnzipIn[M <: Nat, A, B] = Tree[M, (A, B)]
+  type UnzipOut[M <: Nat, A, B] = (Tree[M, A], Tree[M, B])
+
+  object UnzipRecursor extends NatTwoParamRecursor[UnzipIn, UnzipOut] {
+
+    def caseZero[A, B](tr : Tree[_0, (A, B)]) : (Tree[_0, A], Tree[_0, B]) = 
+      tr match {
+        case Pt((a, b)) => (Pt(a), Pt(b))
+      }
+
+    def caseSucc[P <: Nat, A, B](tr : Tree[S[P], (A, B)]) : (Tree[S[P], A], Tree[S[P], B]) = 
+      tr match {
+        case Leaf(addr) => (Leaf(addr), Leaf(addr))
+        case Node((a, b), shell) => {
+          val (ash, bsh) = unzip(shell map (unzip(_)))
+          (Node(a, ash), Node(b, bsh))
+        }
+      }
+
+  }
+
+}
+
+object Tree extends TreeFunctions {
+
+  // Probably can find a better place for this ...
   type Addr[N <: Nat] = Dir[S[N]]
 
   implicit def asRootZipper[N <: Nat, A](tr : Tree[N, A]) : Zipper[N, A] = 
@@ -155,53 +229,5 @@ object Tree {
         ta.traverse(f)
 
     }
-
-  // It would somehow be more reasonable to have these use unapply methods to detect that the label
-  // type is of the appropriate shape.  Then they could be put into operations classes instead of 
-  // living here, kind of floating in the companion object.
-
-  def graft[N <: Nat, A](tr : Tree[S[N], A], brs : Tree[N, Tree[S[N], A]]) : Option[Tree[S[N], A]] = 
-    tr match {
-      case Leaf(addr) => brs valueAt addr
-      case Node(a, sh) =>
-        for {
-          nsh <- sh.traverse(graft(_, brs))
-        } yield Node(a, nsh)
-    }
-
-
-  def join[N <: Nat, A](tr : Tree[N, Tree[N, A]]) : Option[Tree[N, A]] =  {
-
-    def zeroJoin[A](tr : Tree[_0, Tree[_0, A]]) : Option[Tree[_0, A]] =
-      tr.rootValue
-
-    def succJoin[N <: Nat, A](tr : Tree[S[N], Tree[S[N], A]]) : Option[Tree[S[N], A]] =
-      tr match {
-        case l @ Leaf(addr) => Some(Leaf(addr)(l.p))
-        case Node(t, tsh) =>
-          for {
-            gsh <- tsh.traverse(succJoin(_))
-            str <- graft(t, gsh)
-          } yield str
-      }
-
-    tr.dim match {
-      case IsZero(zm) => {
-        import zm._
-        val zt : Tree[_0, Tree[_0, A]] = 
-          zeroCoh.subst[({ type L[M <: Nat] = Tree[M, Tree[M, A]] })#L](tr)
-        zeroCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](zeroJoin(zt))
-      }
-      case IsSucc(sm) => {
-        import sm._
-        val st : Tree[S[P], Tree[S[P], A]] = 
-          succCoh.subst[({ type L[M <: Nat] = Tree[M, Tree[M, A]] })#L](tr)
-        succCoe.subst[({ type L[M <: Nat] = Option[Tree[M, A]] })#L](succJoin(st))
-      }
-    }
-
-  }
-
-  def unzip[N <: Nat, A, B](tr : Tree[N, (A, B)]) : (Tree[N, A], Tree[N, B]) = ???
 
 }

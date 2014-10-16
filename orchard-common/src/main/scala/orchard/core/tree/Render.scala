@@ -103,8 +103,8 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
         case Append(tl, hd) =>
           for {
             tailResult <- renderComplex(tl)
-            leaves = tailResult.head.spine
-            headResult <- renderNesting(hd, ???)
+            leaves <- tailResult.head.spine 
+            headResult <- renderNesting(hd, leaves map (_.asInstanceOf[RenderMarker].edgeMarker))  // The cast here is annoying ...
           } yield {
             Append(tailResult, headResult._2)
           }
@@ -121,6 +121,7 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
   def renderObjectNesting(nst : Nesting[_0, A]) : Option[(LayoutMarker, Nesting[_0, RenderData])] = 
     nst match {
+
       case Obj(a) => {
 
         val objData = new RenderMarker
@@ -128,17 +129,59 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
         objData.labelWidth = widthOf(a)
         objData.labelHeight = heightOf(a)
 
-        ???
+        objData.rootLeftMargin = strokeWidth + internalPadding + (objData.labelWidth / 2)
+        objData.rootRightMargin = (objData.labelWidth / 2) + internalPadding + strokeWidth
+
+        val marker = new LayoutMarker {
+
+          val owner = objData
+          val wasExternal = false
+
+          override def height = objData.height
+
+          override def leftInternalMargin = objData.rootLeftMargin - halfLeafWidth - halfStrokeWidth
+          override def rightInternalMargin = objData.rootRightMargin - halfLeafWidth - halfStrokeWidth
+
+        }
+
+        Some(marker, Obj(objData))
+
       }
 
       case Box(a, Pt(c)) => 
         for {
           interior <- renderObjectNesting(c)
         } yield {
+
           val (interiorLayout, interiorNesting) = interior
 
+          val boxData = new RenderMarker
 
-          ???
+          boxData.labelWidth = widthOf(a)
+          boxData.labelHeight = heightOf(a)
+
+          boxData.internalWidth = interiorLayout.width
+          boxData.internalHeight = interiorLayout.height
+
+          // var rootLeftMargin : Double = 0.0
+          // var rootRightMargin : Double = 0.0
+
+          // var labelPadding : Double = 0.0
+
+          val marker = new LayoutMarker {
+
+            val owner = boxData
+            val wasExternal = false
+
+            override def height = boxData.height
+
+            override def leftInternalMargin = ???
+            override def rightInternalMargin = ???
+
+          }
+
+          (marker, Box(boxData, Pt(interiorNesting)))
+
         }
     }
 
@@ -260,13 +303,13 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
                 val (leafMarker, leafIndex) = leafMarkerWithIndex
 
                 if (leafIndex == 0 && leafCount == 1) {
-                  (leafMarker.truncateUnique, Leaf(addr)(l.p))
+                  (leafMarker.truncateUnique, Leaf(addr))
                 } else if (leafIndex == 0) {
-                  (leafMarker.truncateLeft, Leaf(addr)(l.p))
+                  (leafMarker.truncateLeft, Leaf(addr))
                 } else if (leafIndex == leafCount - 1) {
-                  (leafMarker.truncateRight, Leaf(addr)(l.p))
+                  (leafMarker.truncateRight, Leaf(addr))
                 } else {
-                  (leafMarker.truncateMiddle, Leaf(addr)(l.p))
+                  (leafMarker.truncateMiddle, Leaf(addr))
                 }
 
               }
@@ -367,7 +410,7 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
   // MARKER HELPER CLASSES
   //
 
-  protected class RenderMarker extends RenderData {
+  protected class RenderMarker extends RenderData with Translatable {
 
     val arcRadius : Double = thisRenderer.arcRadius
     val halfLeafWidth : Double = thisRenderer.halfLeafWidth
@@ -389,8 +432,59 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
     var labelPadding : Double = 0.0
 
-    var horizontalDependants : List[RenderMarker] = Nil
-    var verticalDependants : List[RenderMarker] = Nil
+    var horizontalDependants : List[Translatable] = Nil
+    var verticalDependants : List[Translatable] = Nil
+
+    val edgeData : EdgeData = new EdgeData
+
+    def edgeMarker : LayoutMarker = new LayoutMarker {
+
+      val owner = edgeData
+      val wasExternal = true
+
+    }
+
+  }
+
+  // I don't yet see how set the end positions of the edges.  They are not
+  // available at render time because they are attached to the boxes of the
+  // previous dimension.
+
+  // It seems that the alternative is as follows: generate separate edge markers
+  // during the rendering pass, and effectively calculate the spine simultaneously
+  // as you go.  Finally, in the complex rendering algorithm, match the resulting
+  // spine with the nesting of the previous head (or not, you could also just return
+  // the edge tree itself ....)
+
+  // But anyway, yeah, I don't quite see how to match the two things.  They will 
+  // probably just have to be done separately.....
+
+  class EdgeData extends Translatable {
+
+    var startX : Double = 0.0
+    var startY : Double = 0.0
+
+    var endX : Double = 0.0
+    var endY : Double = 0.0
+
+    def rootX : Double = startX
+    def rootX_=(d : Double) = startX = d
+
+    def rootY : Double = startY
+    def rootY_=(d : Double) = startY = d
+
+    var horizontalDependants : List[Translatable] = Nil
+    var verticalDependants : List[Translatable] = Nil
+
+  }
+
+  trait Translatable {
+
+    var rootX : Double
+    var rootY : Double
+
+    var horizontalDependants : List[Translatable]
+    var verticalDependants : List[Translatable]
 
     def shiftRight(amount : Double) : Unit = 
       if (amount != 0) {
@@ -409,10 +503,9 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
   }
 
-
   abstract class LayoutMarker { thisMarker =>
 
-    val owner : RenderMarker
+    val owner : Translatable
     val wasExternal : Boolean
 
     def height : Double = 0.0

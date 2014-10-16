@@ -21,13 +21,9 @@ import js.annotation.JSExport
 
 import scala.concurrent.Future
 
-import orchard.core.cell._
-import orchard.core.util._
-import orchard.core.complex._
-import orchard.core.checker._
-
 import orchard.js.plugins._
 
+import orchard.core.util._
 import ErrorM._
 
 trait Editor

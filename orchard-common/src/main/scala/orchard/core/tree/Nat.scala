@@ -111,6 +111,20 @@ trait Nats {
 
   }
 
+  trait NatParamRecursor[F[_ <: Nat, _], G[_ <: Nat, _]] {
+
+    def caseZero[A](fz : F[_0, A]) : G[_0, A]
+    def caseSucc[P <: Nat, A](fs : F[S[P], A]) : G[S[P], A]
+
+  }
+
+  trait NatTwoParamRecursor[F[_ <: Nat, _, _], G[_ <: Nat, _, _]] {
+
+    def caseZero[A, B](fz : F[_0, A, B]) : G[_0, A, B]
+    def caseSucc[P <: Nat, A, B](fs : F[S[P], A, B]) : G[S[P], A, B]
+
+  }
+
   def natRec[F[_ <: Nat], G[_ <: Nat], N <: Nat](n : N)(r : NatRecursor[F, G])(fn : F[N]) : G[N] = 
     n match {
       case IsZero(zm) => {
@@ -124,6 +138,38 @@ trait Nats {
         val fs : F[S[P]] = succCoh.subst[F](fn)
         val gs : G[S[P]] = r.caseSucc[P](fs)
         succCoe.subst[G](gs)
+      }
+    }
+
+  def natParamRec[F[_ <: Nat, _], G[_ <: Nat, _], N <: Nat, A](n : N)(r : NatParamRecursor[F, G])(fn : F[N, A]) : G[N, A] = 
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gz : G[_0, A] = r.caseZero(fz)
+        zeroCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A] = succCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gs : G[S[P], A] = r.caseSucc[P, A](fs)
+        succCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gs)
+      }
+    }
+
+  def natTwoParamRec[F[_ <: Nat, _, _], G[_ <: Nat, _, _], N <: Nat, A, B](n : N)(r : NatTwoParamRecursor[F, G])(fn : F[N, A, B]) : G[N, A, B] =
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A, B] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gz : G[_0, A, B] = r.caseZero(fz)
+        zeroCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A, B] = succCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gs : G[S[P], A, B] = r.caseSucc[P, A, B](fs)
+        succCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gs)
       }
     }
 

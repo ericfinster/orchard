@@ -5,31 +5,5 @@
 # Home page
 GET     /                           controllers.Application.index
 
-GET     /template                   controllers.Application.template
-
-GET     /new-worksheet              controllers.Application.newWorksheet
-
-POST    /request-worksheet          controllers.Application.requestWorksheet
-
-POST    /request-module             controllers.Application.requestModule
-
-POST    /environment                controllers.Application.requestEnvironment
-
-POST    /new-module                 controllers.Application.newModule
-
-POST    /new-import                 controllers.Application.newImport
-
-POST    /new-parameter              controllers.Application.newParameter
-
-POST    /new-definition             controllers.Application.newDefinition
-
-POST    /extrude-worksheet          controllers.Application.extrudeWorksheet
-
-POST    /drop-worksheet             controllers.Application.dropWorksheet
-
-POST    /paste                      controllers.Application.paste
-
-POST    /debug                      controllers.Application.debug
-
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

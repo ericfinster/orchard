@@ -16,6 +16,8 @@ import Tree._
 sealed abstract class Nesting[N <: Nat, +A] {
 
   def dim : N
+
+  def label : A
   def spine : Option[Tree[N, A]]
 
 }
@@ -24,6 +26,7 @@ case class Obj[+A](a : A) extends Nesting[_0, A] {
 
   def dim = Z
 
+  def label : A = a
   def spine : Option[Tree[_0, A]] = Some(Pt(a))
 
 }
@@ -32,7 +35,8 @@ case class Dot[N <: Nat, +A](a : A, c : Tree[N, Addr[N]]) extends Nesting[S[N], 
 
   def dim = S(c.dim)
 
-  def spine : Option[Tree[S[N], A]] = Some(Node(a, c map (Leaf(_)(c.dim))))
+  def label : A = a
+  def spine : Option[Tree[S[N], A]] = Some(Node(a, c map (Leaf(_))))
 
 }
 
@@ -40,6 +44,7 @@ case class Box[N <: Nat, +A](a : A, c : Tree[N, Nesting[N, A]]) extends Nesting[
 
   def dim = c.dim
 
+  def label : A = a
   def spine : Option[Tree[N, A]] = 
     for {
       st <- c traverse (_.spine)
