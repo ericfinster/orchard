@@ -2,3 +2,4 @@ target/
 .history
 *.jar
 _site
+orchard-play/logs/*
