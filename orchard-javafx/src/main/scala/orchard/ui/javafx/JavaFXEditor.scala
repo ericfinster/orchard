@@ -39,10 +39,10 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
 
     import orchard.core.tree.NestingExamples._
 
-    val renderer = new JavaFXRenderer(this)
-    renderer.renderComplex(fred)
+    // val renderer = new JavaFXRenderer(this)
+    // renderer.renderComplex(fred)
 
-    consoleWrite("Finished rendering.")
+    // consoleWrite("Finished rendering.")
 
   }
 

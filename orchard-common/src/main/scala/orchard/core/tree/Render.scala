@@ -84,11 +84,34 @@ trait RenderData extends RenderOptions {
 
 abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
+  trait VisualElement {
+
+    def x : Double
+    def y : Double
+
+    def width : Double
+    def height : Double
+
+  }
+
   //============================================================================================
-  // LABEL SIZING
+  // TYPE DEFINITIONS
+  //
+
+  // type BoxElement <: VisualElement
+  // type DotElement <: BoxElement with EdgeInfo
+  // type EdgeElement
+
+  //============================================================================================
+  // ABSTRACT MEMBERS
   //
 
   def getLabelBBox(a : A) : BBox
+
+  // def renderDot(a : A) : DotElement
+  // def renderBox(a : A, internalLayout : LayoutMarker) : BoxElement
+
+  // def createEdge : EdgeElement
 
   //============================================================================================
   // COMPLEX RENDERING
@@ -232,49 +255,52 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
             val isOdd = (leafCount & 1) != 0
 
-            val leftChildren = leafMarkers.slice(0, leafCount / 2)
-            val rightChildren = leafMarkers.slice(leafCount / 2 + (leafCount & 1), leafCount)
-
-            val midChild = leafMarkers(leafCount / 2)
             val firstMarker = leafMarkers.head
             val lastMarker = leafMarkers.last
 
-            // This will not work if there are no children ...
-            val leftChild = leftChildren.last
-            val rightChild = rightChildren.head
-
+            val midChild = leafMarkers(leafCount / 2)
             if (isOdd) dotData.horizontalDependants :+= midChild.owner
 
-            val midLeftOffset = if (isOdd) midChild.leftMargin + externalPadding + leftChild.rightMargin else 0.0
-            val midRightOffset = if (isOdd) midChild.rightMargin + externalPadding + rightChild.leftMargin else 0.0
+            if (leafCount > 1) {
 
-            val leftChildShift : Double =
-              Math.max(Math.max(midLeftOffset, leftChild.rightMargin + (externalPadding / 2)),
-                dotData.rootLeftMargin + halfLeafWidth + halfStrokeWidth + arcRadius) // Arc Radius here is a bit suspicious ...
+              val leftChildren = leafMarkers.slice(0, leafCount / 2)
+              val rightChildren = leafMarkers.slice(leafCount / 2 + (leafCount & 1), leafCount)
 
-            val rightChildShift : Double =
-              Math.max(Math.max(midRightOffset, rightChild.leftMargin + (externalPadding / 2)),
-                dotData.rootRightMargin + halfLeafWidth + halfStrokeWidth + arcRadius)
+              val leftChild = leftChildren.last
+              val rightChild = rightChildren.head
 
-            val leftEdge : Double =
-              (leftChildren foldRight leftChildShift)({
-                case (currentMarker, leftShift) => {
-                  val thisShift = leftShift + externalPadding + currentMarker.rightMargin
-                  currentMarker.owner.shiftLeft(thisShift)
-                  dotData.horizontalDependants :+= currentMarker.owner
-                  thisShift + currentMarker.leftMargin
-                }
-              })
+              val midLeftOffset = if (isOdd) midChild.leftMargin + externalPadding + leftChild.rightMargin else 0.0
+              val midRightOffset = if (isOdd) midChild.rightMargin + externalPadding + rightChild.leftMargin else 0.0
 
-            val rightEdge : Double =
-              (rightChildren foldLeft rightChildShift)({
-                case (rightShift, currentMarker) => {
-                  val thisShift = rightShift + externalPadding + currentMarker.leftMargin
-                  currentMarker.owner.shiftRight(thisShift)
-                  dotData.horizontalDependants :+= currentMarker.owner
-                  thisShift + currentMarker.rightMargin
-                }
-              })
+              val leftChildShift : Double =
+                Math.max(Math.max(midLeftOffset, leftChild.rightMargin + (externalPadding / 2)),
+                  dotData.rootLeftMargin + halfLeafWidth + halfStrokeWidth + arcRadius) // Arc Radius here is a bit suspicious ...
+
+              val rightChildShift : Double =
+                Math.max(Math.max(midRightOffset, rightChild.leftMargin + (externalPadding / 2)),
+                  dotData.rootRightMargin + halfLeafWidth + halfStrokeWidth + arcRadius)
+
+              val leftEdge : Double =
+                (leftChildren foldRight leftChildShift)({
+                  case (currentMarker, leftShift) => {
+                    val thisShift = leftShift + externalPadding + currentMarker.rightMargin
+                    currentMarker.owner.shiftLeft(thisShift)
+                    dotData.horizontalDependants :+= currentMarker.owner
+                    thisShift + currentMarker.leftMargin
+                  }
+                })
+
+              val rightEdge : Double =
+                (rightChildren foldLeft rightChildShift)({
+                  case (rightShift, currentMarker) => {
+                    val thisShift = rightShift + externalPadding + currentMarker.leftMargin
+                    currentMarker.owner.shiftRight(thisShift)
+                    dotData.horizontalDependants :+= currentMarker.owner
+                    thisShift + currentMarker.rightMargin
+                  }
+                })
+
+            }
 
             val (maxLeafHeight, allExternal) : (Double, Boolean) =
               (leafMarkers map (m => (m.height, m.wasExternal)) foldLeft (0.0, true))({
@@ -425,7 +451,7 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
   // MARKER HELPER CLASSES
   //
 
-  protected class RenderMarker extends RenderData with Translatable {
+  protected class RenderMarker extends RenderData with Positioned {
 
     val arcRadius : Double = thisRenderer.arcRadius
     val halfLeafWidth : Double = thisRenderer.halfLeafWidth
@@ -447,8 +473,8 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
     var labelPadding : Double = 0.0
 
-    var horizontalDependants : List[Translatable] = Nil
-    var verticalDependants : List[Translatable] = Nil
+    var horizontalDependants : List[Positioned] = Nil
+    var verticalDependants : List[Positioned] = Nil
 
     val edgeData : EdgeData = new EdgeData
 
@@ -461,7 +487,7 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
   }
 
-  class EdgeData extends Translatable {
+  class EdgeData extends Positioned {
 
     var startX : Double = 0.0
     var startY : Double = 0.0
@@ -469,34 +495,34 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
     var endX : Double = 0.0
     var endY : Double = 0.0
 
-    def rootX : Double = startX
-    def rootX_=(d : Double) = startX = d
+    def x : Double = startX
+    def x_=(d : Double) = startX = d
 
-    def rootY : Double = startY
-    def rootY_=(d : Double) = startY = d
+    def y : Double = startY
+    def y_=(d : Double) = startY = d
 
-    var horizontalDependants : List[Translatable] = Nil
-    var verticalDependants : List[Translatable] = Nil
+    var horizontalDependants : List[Positioned] = Nil
+    var verticalDependants : List[Positioned] = Nil
 
   }
 
-  trait Translatable {
+  trait Positioned {
 
-    var rootX : Double
-    var rootY : Double
+    var x : Double
+    var y : Double
 
-    var horizontalDependants : List[Translatable]
-    var verticalDependants : List[Translatable]
+    var horizontalDependants : List[Positioned]
+    var verticalDependants : List[Positioned]
 
     def shiftRight(amount : Double) : Unit = 
       if (amount != 0) {
-        rootX += amount
+        x += amount
         horizontalDependants foreach (_.shiftRight(amount))
       }
 
     def shiftDown(amount : Double) : Unit = 
       if (amount != 0) {
-        rootY += amount
+        y += amount
         verticalDependants foreach (_.shiftDown(amount))
       }
 
@@ -507,8 +533,10 @@ abstract class Renderer[A] extends RenderOptions { thisRenderer =>
 
   abstract class LayoutMarker { thisMarker =>
 
-    val owner : Translatable
+    val owner : Positioned
     val wasExternal : Boolean
+
+    val rootEdge : EdgeElement
 
     def height : Double = 0.0
 
