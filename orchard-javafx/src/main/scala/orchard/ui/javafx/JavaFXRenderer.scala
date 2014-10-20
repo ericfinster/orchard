@@ -16,36 +16,40 @@ import scalafx.scene.text._
 
 import orchard.core.tree._
 
-class JavaFXRenderer(editor : JavaFXEditor) {
+class JavaFXRenderer(editor : JavaFXEditor) extends Renderer[Double, Int] {
 
-  // def arcRadius : Double = 4.0
-  // def externalPadding : Double = 5.0
-  // def internalPadding : Double = 5.0
-  // def halfLeafWidth : Double = 10.0
-  // def halfStrokeWidth : Double = 1.0
+  def arcRadius : Double = 4.0
+  def externalPadding : Double = 5.0
+  def internalPadding : Double = 5.0
+  def halfLeafWidth : Double = 10.0
+  def halfStrokeWidth : Double = 1.0
 
-  // def getLabelBBox(a : Int) : BBox = {
+  def createExternalBox(a : Int) : ExternalBox = {
 
-  //   val labelText = new Text(a.toString)
+    val labelText = new Text(a.toString)
 
-  //   val bbox = new BBox {
+    new ExternalBox {
 
-  //     val width : Double = labelText.layoutBounds().width
-  //     val height : Double = labelText.layoutBounds().height
+      def halfLabelWidth : Double = labelText.layoutBounds().width / 2
+      def halfLabelHeight : Double = labelText.layoutBounds().height / 2
 
-  //   }
+    }
 
-  //   // editor.consoleWrite("Rendered text for: " ++ a.toString)
-  //   // editor.consoleWrite("Width : " ++ bbox.width.toString)
-  //   // editor.consoleWrite("Height : " ++ bbox.height.toString)
+  }
 
-  //   bbox
+  def createInternalBox(a : Int, layout : BoxLayout) = {
 
-  // }
+    val labelText = new Text(a.toString)
 
-  // def renderDot(a : Int) : DotElement = ???
-  // def renderBox(a : Int, internalLayout : LayoutMarker) : BoxElement = ???
+    new InternalBox {
 
-  // def createEdge : EdgeElement = ???
+      def interior : BoxLayout = layout
+
+      def halfLabelWidth : Double = labelText.layoutBounds().width / 2
+      def halfLabelHeight : Double = labelText.layoutBounds().height / 2
+
+    }
+
+  }
 
 }
