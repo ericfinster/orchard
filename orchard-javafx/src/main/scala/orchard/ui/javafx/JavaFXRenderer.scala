@@ -30,6 +30,9 @@ class JavaFXRenderer(editor : JavaFXEditor) extends Renderer[Double, Int] {
 
     new ExternalBox {
 
+      var rootX : Double = 0.0
+      var rootY : Double = 0.0
+
       def halfLabelWidth : Double = labelText.layoutBounds().width / 2
       def halfLabelHeight : Double = labelText.layoutBounds().height / 2
 
@@ -45,11 +48,16 @@ class JavaFXRenderer(editor : JavaFXEditor) extends Renderer[Double, Int] {
 
       def interior : BoxLayout = layout
 
+      var rootX : Double = 0.0
+      var rootY : Double = 0.0
+
       def halfLabelWidth : Double = labelText.layoutBounds().width / 2
       def halfLabelHeight : Double = labelText.layoutBounds().height / 2
 
     }
 
   }
+
+  def createEdge : Edge = new Edge { }
 
 }

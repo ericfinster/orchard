@@ -7,7 +7,6 @@
 
 package orchard.core.tree
 
-import scalaz.{Tree => _, Zipper => _, _}
 import scalaz.std.option._
 
 import Nats._
@@ -44,14 +43,22 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   def createExternalBox(lbl : A) : ExternalBox
   def createInternalBox(lbl : A, layout : BoxLayout) : InternalBox
 
+  def createEdge : Edge
+
+  def createEdgeLayout : LayoutMarker = 
+    new LayoutMarker {
+      val element = createEdge
+      val external = true
+    }
+
   //============================================================================================
   // ELEMENT CLASSES
   //
 
   trait Rooted {
 
-    var rootX : T = zero
-    var rootY : T = zero
+    var rootX : T
+    var rootY : T 
 
     var horizontalDependants : List[Rooted] = Nil
     var verticalDependants : List[Rooted] = Nil
@@ -74,13 +81,19 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
   }
 
-  trait Edge {
+  trait Edge extends Rooted {
 
-    var startX : T
-    var startY : T
+    var startX : T = zero
+    var startY : T = zero
 
-    var endX : T
-    var endY : T
+    var endX : T = zero
+    var endY : T = zero
+
+    override def rootX : T = startX
+    override def rootX_=(t : T) = startX = t
+
+    override def rootY : T = startY
+    override def rootY_=(t : T) = startY = t
 
   }
 
@@ -144,6 +157,35 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     override def rightMargin : T = halfLabelWidth + internalPadding + strokeWidth
 
   }
+
+  //============================================================================================
+  // COMPLEX RENDERING
+  //
+
+  type RenderIn[M <: Nat] = Complex[M, A]
+  type RenderOut[M <: Nat] = Option[Complex[M, LabeledBox]]
+
+  object RenderRecursor extends NatRecursor[RenderIn, RenderOut] {
+
+    def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, LabeledBox]] =
+      Some(Base(renderObjectNesting(zc.head)))
+
+    def caseSucc[P <: Nat](sc : Complex[S[P], A]) : Option[Complex[S[P], LabeledBox]] = 
+      sc match {
+        case Append(tl, hd) =>
+          for {
+            tailResult <- renderComplex(tl)
+            leaves <- tailResult.head.spine 
+            headResult <- renderNesting(hd, leaves map (_ => createEdgeLayout)) 
+          } yield {
+            Append(tailResult, headResult._2)
+          }
+      }
+
+  }
+
+  def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, LabeledBox]] =
+    natRec(cmplx.dim)(RenderRecursor)(cmplx)
 
   //============================================================================================
   // OBJECT NESTING RENDERING
