@@ -341,6 +341,11 @@
 }
 
 
+.orch-canvas {
+    -fx-background-color: white;
+    -fx-border-color: red;
+}
+
 .orch-cell {
     -fx-background-color: white;
     -fx-background-radius: 4pt;

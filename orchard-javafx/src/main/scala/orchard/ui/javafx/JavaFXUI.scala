@@ -18,6 +18,12 @@ trait JavaFXUI { thisEditor : JavaFXEditor =>
 
   val renderingSurface = new HBox {
     style = "-fx-background-color: white"
+    fillHeight = false
+    spacing = 25.0
+    maxHeight = Region.USE_PREF_SIZE
+    maxWidth = Region.USE_PREF_SIZE
+    alignment = Pos.Center
+    padding = Insets(10, 10, 10, 10)
   }
 
   val workspacePane = new StackPane {

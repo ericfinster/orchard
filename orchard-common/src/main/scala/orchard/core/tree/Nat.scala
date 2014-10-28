@@ -95,13 +95,13 @@ trait Nats {
       def leibniz : Leibniz[Nothing, Nat, S[P], S[P]] = refl[S[P]]
     }
 
-  def fromInt(i : Int) : Nat = 
-    if (i <= 0) Z else S(fromInt(i - 1))
+  def natFromInt(i : Int) : Nat = 
+    if (i <= 0) Z else S(natFromInt(i - 1))
 
-  def toInt[N <: Nat](n : N) : Int = 
+  def natToInt[N <: Nat](n : N) : Int = 
     n match {
       case Z => 0
-      case S(p) => toInt(p) + 1
+      case S(p) => natToInt(p) + 1
     }
 
   trait NatRecursor[F[_ <: Nat], G[_ <: Nat]] {
