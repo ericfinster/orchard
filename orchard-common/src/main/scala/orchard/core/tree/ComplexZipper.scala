@@ -22,7 +22,25 @@ object ComplexZipper {
   // HEAD OF
   //
 
-  def headOf[N <: Nat, A](cz : ComplexZipper[N, A]) : NestingZipper[N, A] = ???
+  def headOf[N <: Nat, A](cz : ComplexZipper[N, A]) : NestingZipper[N, A] = 
+    HeadRecursor.execute(cz.dim)(cz)
+
+  type HeadIn[N <: Nat, A] = ComplexZipper[N, A]
+  type HeadOut[N <: Nat, A] = NestingZipper[N, A]
+
+  object HeadRecursor extends NatRecursorT1P1[HeadIn, HeadOut] {
+
+    def caseZero[A](cz : ComplexZipper[_0, A]) : NestingZipper[_0, A] = 
+      cz match {
+        case ObjZipper(hd) => hd
+      }
+
+    def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : NestingZipper[S[P], A] =
+      cz match {
+        case DiagramZipper(_, hd) => hd
+      }
+
+  }
 
   //============================================================================================
   // TAIL OF
@@ -70,7 +88,12 @@ object ComplexZipper {
             res <- (
               prefixSpine match {
                 case Leaf(_) => Some(DiagramZipper(tailOf(prefixZipper), nestingSibling))
-                case Node(_, _) => ???
+                case Node(_, shell) => 
+                  for {
+                    extents <- Tree.shellExtents(shell)
+                    recAddr <- Tree.valueAt(extents, d)
+                    fixupLower <- seek(recAddr, tailOf(prefixZipper))
+                  } yield DiagramZipper(fixupLower, nestingSibling)
               }
             )
 
