@@ -59,7 +59,191 @@ case class S[P <: Nat](val pred : P) extends Nat { self =>
 
 }
 
-trait Nats {
+trait NatRecursors { self : Nats => 
+
+  trait NatRecursorT0P1[F[_ <: Nat], G[_ <: Nat]] {
+
+    def caseZero(fz : F[_0]) : G[_0]
+    def caseSucc[P <: Nat](fs : F[S[P]]) : G[S[P]]
+
+  }
+
+  def natRecT0P1[F[_ <: Nat], G[_ <: Nat], N <: Nat](n : N)(r : NatRecursorT0P1[F, G])(fn : F[N]) : G[N] = 
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0] = zeroCoh.subst[F](fn)
+        val gz : G[_0] = r.caseZero(fz)
+        zeroCoe.subst[G](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P]] = succCoh.subst[F](fn)
+        val gs : G[S[P]] = r.caseSucc[P](fs)
+        succCoe.subst[G](gs)
+      }
+    }
+
+  trait NatRecursorT1P1[F[_ <: Nat, _], G[_ <: Nat, _]] {
+
+    def caseZero[A](fz : F[_0, A]) : G[_0, A]
+    def caseSucc[P <: Nat, A](fs : F[S[P], A]) : G[S[P], A]
+
+  }
+
+  def natRecT1P1[F[_ <: Nat, _], G[_ <: Nat, _], N <: Nat, A](n : N)(r : NatRecursorT1P1[F, G])(fn : F[N, A]) : G[N, A] = 
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gz : G[_0, A] = r.caseZero(fz)
+        zeroCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A] = succCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gs : G[S[P], A] = r.caseSucc[P, A](fs)
+        succCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gs)
+      }
+    }
+
+  trait NatRecursorT1P2[F[_ <: Nat, _], G[_ <: Nat, _], H[_ <: Nat, _]] {
+
+    def caseZero[A](fz : F[_0, A], gz : G[_0, A]) : H[_0, A]
+    def caseSucc[P <: Nat, A](fs : F[S[P], A], gs : G[S[P], A]) : H[S[P], A]
+
+  }
+
+  def natRecT1P2[F[_ <: Nat, _], G[_ <: Nat, _], H[_ <: Nat, _], N <: Nat, A]
+    (n : N)(r : NatRecursorT1P2[F, G, H])(fn : F[N, A], gn : G[N, A]) : H[N, A] =
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gz : G[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = G[M, A] })#L](gn)
+        val hz : H[_0, A] = r.caseZero(fz, gz)
+        zeroCoe.subst[({ type L[M <: Nat] = H[M, A] })#L](hz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A] = succCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gs : G[S[P], A] = succCoh.subst[({ type L[M <: Nat] = G[M, A] })#L](gn)
+        val hs : H[S[P], A] = r.caseSucc[P, A](fs, gs)
+        succCoe.subst[({ type L[M <: Nat] = H[M, A] })#L](hs)
+      }
+    }
+
+
+  trait NatRecursorT2P1[F[_ <: Nat, _, _], G[_ <: Nat, _, _]] {
+
+    def caseZero[A, B](fz : F[_0, A, B]) : G[_0, A, B]
+    def caseSucc[P <: Nat, A, B](fs : F[S[P], A, B]) : G[S[P], A, B]
+
+  }
+
+  def natRecT2P1[F[_ <: Nat, _, _], G[_ <: Nat, _, _], N <: Nat, A, B](n : N)(r : NatRecursorT2P1[F, G])(fn : F[N, A, B]) : G[N, A, B] =
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A, B] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gz : G[_0, A, B] = r.caseZero(fz)
+        zeroCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A, B] = succCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gs : G[S[P], A, B] = r.caseSucc[P, A, B](fs)
+        succCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gs)
+      }
+    }
+
+  trait NatRecursorT2P2[F[_ <: Nat, _, _], G[_ <: Nat, _, _], H[_ <: Nat, _, _]] {
+
+    def caseZero[A, B](fz : F[_0, A, B], gz : G[_0, A, B]) : H[_0, A, B]
+    def caseSucc[P <: Nat, A, B](fs : F[S[P], A, B], gs : G[S[P], A, B]) : H[S[P], A, B]
+
+  }
+
+  def natRecT2P2[F[_ <: Nat, _, _], G[_ <: Nat, _, _], H[_ <: Nat, _, _], N <: Nat, A, B]
+    (n : N)(r : NatRecursorT2P2[F, G, H])(fn : F[N, A, B], gn : G[N, A, B]) : H[N, A, B] =
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A, B] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gz : G[_0, A, B] = zeroCoh.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gn)
+        val hz : H[_0, A, B] = r.caseZero(fz, gz)
+        zeroCoe.subst[({ type L[M <: Nat] = H[M, A, B] })#L](hz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], A, B] = succCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
+        val gs : G[S[P], A, B] = succCoh.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gn)
+        val hs : H[S[P], A, B] = r.caseSucc[P, A, B](fs, gs)
+        succCoe.subst[({ type L[M <: Nat] = H[M, A, B] })#L](hs)
+      }
+    }
+
+
+  trait NatRecursorC1T2P1[F[_ <: Nat, _[_], _, _], G[_ <: Nat, _[_], _, _]] {
+
+    def caseZero[T[_], A, B](fz : F[_0, T, A, B]) : G[_0, T, A, B]
+    def caseSucc[P <: Nat, T[_], A, B](fs : F[S[P], T, A, B]) : G[S[P], T, A, B]
+
+  }
+
+  def natRecC1T2P1[F[_ <: Nat, _[_], _, _], G[_ <: Nat, _[_], _, _], N <: Nat, T[_], A, B]
+    (n : N)(r : NatRecursorC1T2P1[F, G])(fn : F[N, T, A, B]) : G[N, T, A, B] =
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, T, A, B] = zeroCoh.subst[({ type L[M <: Nat] = F[M, T, A, B] })#L](fn)
+        val gz : G[_0, T, A, B] = r.caseZero(fz)
+        zeroCoe.subst[({ type L[M <: Nat] = G[M, T, A, B] })#L](gz)
+      }
+      case IsSucc(sm) => {
+        import sm._
+        val fs : F[S[P], T, A, B] = succCoh.subst[({ type L[M <: Nat] = F[M, T, A, B] })#L](fn)
+        val gs : G[S[P], T, A, B] = r.caseSucc[P, T, A, B](fs)
+        succCoe.subst[({ type L[M <: Nat] = G[M, T, A, B] })#L](gs)
+      }
+    }
+
+  trait NatOneRecursorT1P2[F[_ <: Nat, _], G[_ <: Nat, _], H[_ <: Nat, _]] {
+
+    def caseZero[A](fz : F[_0, A], gz : G[_0, A]) : H[_0, A]
+    def caseOne[A](fo : F[_1, A], go : G[_1, A]) : H[_1, A]
+    def caseDblSucc[P <: Nat, A](fs : F[S[S[P]], A], gs : G[S[S[P]], A]) : H[S[S[P]], A]
+
+  }
+
+  def natOneRecT1P2[F[_ <: Nat, _], G[_ <: Nat, _], H[_ <: Nat, _], N <: Nat, A]
+    (n : N)(r : NatOneRecursorT1P2[F, G, H])(fn : F[N, A], gn : G[N, A]) : H[N, A] = 
+    n match {
+      case IsZero(zm) => {
+        import zm._
+        val fz : F[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gz : G[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = G[M, A] })#L](gn)
+        val hz : H[_0, A] = r.caseZero(fz, gz)
+        zeroCoe.subst[({ type L[M <: Nat] = H[M, A] })#L](hz)
+      }
+      case IsOne(om) => {
+        import om._
+        val fo : F[_1, A] = oneCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val go : G[_1, A] = oneCoh.subst[({ type L[M <: Nat] = G[M, A] })#L](gn)
+        val ho : H[_1, A] = r.caseOne(fo, go)
+        oneCoe.subst[({ type L[M <: Nat] = H[M, A] })#L](ho)
+      }
+      case IsDblSucc(dm) => {
+        import dm._
+        val fds : F[S[S[PP]], A] = dblSuccCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
+        val gds : G[S[S[PP]], A] = dblSuccCoh.subst[({ type L[M <: Nat] = G[M, A] })#L](gn)
+        val hds : H[S[S[PP]], A] = r.caseDblSucc[PP, A](fds, gds)
+        dblSuccCoe.subst[({ type L[M <: Nat] = H[M, A] })#L](hds)
+      }
+    }
+}
+
+trait Nats extends NatRecursors {
 
   type _0 = Z.type
   type _1 = S[_0]
@@ -104,74 +288,6 @@ trait Nats {
       case S(p) => natToInt(p) + 1
     }
 
-  trait NatRecursor[F[_ <: Nat], G[_ <: Nat]] {
-
-    def caseZero(fz : F[_0]) : G[_0]
-    def caseSucc[P <: Nat](fs : F[S[P]]) : G[S[P]]
-
-  }
-
-  trait NatParamRecursor[F[_ <: Nat, _], G[_ <: Nat, _]] {
-
-    def caseZero[A](fz : F[_0, A]) : G[_0, A]
-    def caseSucc[P <: Nat, A](fs : F[S[P], A]) : G[S[P], A]
-
-  }
-
-  trait NatTwoParamRecursor[F[_ <: Nat, _, _], G[_ <: Nat, _, _]] {
-
-    def caseZero[A, B](fz : F[_0, A, B]) : G[_0, A, B]
-    def caseSucc[P <: Nat, A, B](fs : F[S[P], A, B]) : G[S[P], A, B]
-
-  }
-
-  def natRec[F[_ <: Nat], G[_ <: Nat], N <: Nat](n : N)(r : NatRecursor[F, G])(fn : F[N]) : G[N] = 
-    n match {
-      case IsZero(zm) => {
-        import zm._
-        val fz : F[_0] = zeroCoh.subst[F](fn)
-        val gz : G[_0] = r.caseZero(fz)
-        zeroCoe.subst[G](gz)
-      }
-      case IsSucc(sm) => {
-        import sm._
-        val fs : F[S[P]] = succCoh.subst[F](fn)
-        val gs : G[S[P]] = r.caseSucc[P](fs)
-        succCoe.subst[G](gs)
-      }
-    }
-
-  def natParamRec[F[_ <: Nat, _], G[_ <: Nat, _], N <: Nat, A](n : N)(r : NatParamRecursor[F, G])(fn : F[N, A]) : G[N, A] = 
-    n match {
-      case IsZero(zm) => {
-        import zm._
-        val fz : F[_0, A] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
-        val gz : G[_0, A] = r.caseZero(fz)
-        zeroCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gz)
-      }
-      case IsSucc(sm) => {
-        import sm._
-        val fs : F[S[P], A] = succCoh.subst[({ type L[M <: Nat] = F[M, A] })#L](fn)
-        val gs : G[S[P], A] = r.caseSucc[P, A](fs)
-        succCoe.subst[({ type L[M <: Nat] = G[M, A] })#L](gs)
-      }
-    }
-
-  def natTwoParamRec[F[_ <: Nat, _, _], G[_ <: Nat, _, _], N <: Nat, A, B](n : N)(r : NatTwoParamRecursor[F, G])(fn : F[N, A, B]) : G[N, A, B] =
-    n match {
-      case IsZero(zm) => {
-        import zm._
-        val fz : F[_0, A, B] = zeroCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
-        val gz : G[_0, A, B] = r.caseZero(fz)
-        zeroCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gz)
-      }
-      case IsSucc(sm) => {
-        import sm._
-        val fs : F[S[P], A, B] = succCoh.subst[({ type L[M <: Nat] = F[M, A, B] })#L](fn)
-        val gs : G[S[P], A, B] = r.caseSucc[P, A, B](fs)
-        succCoe.subst[({ type L[M <: Nat] = G[M, A, B] })#L](gs)
-      }
-    }
 
   trait ZeroMatch[N <: Nat] {
 

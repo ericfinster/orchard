@@ -10,6 +10,7 @@ package orchard.core.tree
 import scalaz.{Tree => _, Zipper => _, _}
 import scalaz.std.option._
 
+import Dir._
 import Nats._
 import Tree._
 
@@ -36,7 +37,7 @@ case class Dot[N <: Nat, +A](a : A, c : Tree[N, Addr[N]]) extends Nesting[S[N], 
   def dim = S(c.dim)
 
   def label : A = a
-  def spine : Option[Tree[S[N], A]] = Some(Node(a, c map (Leaf(_))))
+  def spine : Option[Tree[S[N], A]] = Some(Node(a, map(c)(Leaf(_))))
 
 }
 
@@ -47,7 +48,7 @@ case class Box[N <: Nat, +A](a : A, c : Tree[N, Nesting[N, A]]) extends Nesting[
   def label : A = a
   def spine : Option[Tree[N, A]] = 
     for {
-      st <- c traverse (_.spine)
+      st <- traverse(c)(_.spine)
       sp <- join(st)
     } yield sp
 

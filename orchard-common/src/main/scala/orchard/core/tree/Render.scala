@@ -130,20 +130,20 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     def rootY : T = edge.startY
     def rootY_=(t : T) = edge.startY = t
 
-    override def shiftLeft(amount : T) = {
-      println("Shifting start of edge " ++ edge.owner.toString ++ " left by " ++ amount.toString)
-      super.shiftLeft(amount)
-    }
+    // override def shiftLeft(amount : T) = {
+    //   println("Shifting start of edge " ++ edge.owner.toString ++ " left by " ++ amount.toString)
+    //   super.shiftLeft(amount)
+    // }
 
-    override def shiftRight(amount : T) = {
-      println("Shifting start of edge " ++ edge.owner.toString ++ " right by " ++ amount.toString)
-      super.shiftRight(amount)
-    }
+    // override def shiftRight(amount : T) = {
+    //   println("Shifting start of edge " ++ edge.owner.toString ++ " right by " ++ amount.toString)
+    //   super.shiftRight(amount)
+    // }
 
-    override def shiftUp(amount : T) = {
-      // println("Shifting start of edge " ++ edge.owner.toString ++ " up by " ++ amount.toString)
-      super.shiftUp(amount)
-    }
+    // override def shiftUp(amount : T) = {
+    //   // println("Shifting start of edge " ++ edge.owner.toString ++ " up by " ++ amount.toString)
+    //   super.shiftUp(amount)
+    // }
 
   }
 
@@ -157,20 +157,20 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     def rootY : T = edge.endY
     def rootY_=(t : T) = edge.endY = t
 
-    override def shiftLeft(amount : T) = {
-      println("Shifting end of edge " ++ edge.owner.toString ++ " left by " ++ amount.toString)
-      super.shiftLeft(amount)
-    }
+    // override def shiftLeft(amount : T) = {
+    //   println("Shifting end of edge " ++ edge.owner.toString ++ " left by " ++ amount.toString)
+    //   super.shiftLeft(amount)
+    // }
 
-    override def shiftRight(amount : T) = {
-      println("Shifting end of edge " ++ edge.owner.toString ++ " right by " ++ amount.toString)
-      super.shiftRight(amount)
-    }
+    // override def shiftRight(amount : T) = {
+    //   println("Shifting end of edge " ++ edge.owner.toString ++ " right by " ++ amount.toString)
+    //   super.shiftRight(amount)
+    // }
 
-    override def shiftUp(amount : T) = {
-      // println("Shifting end of edge " ++ edge.owner.toString ++ " up by " ++ amount.toString)
-      super.shiftUp(amount)
-    }
+    // override def shiftUp(amount : T) = {
+    //   // println("Shifting end of edge " ++ edge.owner.toString ++ " up by " ++ amount.toString)
+    //   super.shiftUp(amount)
+    // }
 
   }
 
@@ -248,7 +248,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   type RenderIn[M <: Nat] = Complex[M, A]
   type RenderOut[M <: Nat] = Option[Complex[M, LabeledBox]]
 
-  object RenderRecursor extends NatRecursor[RenderIn, RenderOut] {
+  object RenderRecursor extends NatRecursorT0P1[RenderIn, RenderOut] {
 
     def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, LabeledBox]] = {
       val canvas = createNestingCanvas
@@ -263,10 +263,10 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
         case Append(tl, hd) =>
           for {
             tailResult <- renderComplex(tl)
-            _ = println("========= Dimension " ++ natToInt(sc.dim).toString ++  " =========")
+            // _ = println("========= Dimension " ++ natToInt(sc.dim).toString ++  " =========")
             canvas = createNestingCanvas
             leaves <- tailResult.head.spine 
-            edges = leaves map ((lb : LabeledBox) => canvas.createEdgeLayout(lb.owner))
+            edges = map(leaves)((lb : LabeledBox) => canvas.createEdgeLayout(lb.owner))
             headResult <- renderNesting(hd, canvas, edges)
           } yield {
 
@@ -274,7 +274,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
             val baseBox = nesting.label
 
             // Should be a foreach ...
-            edges map (m => { m.rootEdge.startY = baseBox.y - (fromInt(2) * externalPadding) })
+            map(edges)(m => { m.rootEdge.startY = baseBox.y - (fromInt(2) * externalPadding) })
             layout.rootEdge.endY = baseBox.rootY + (fromInt(2) * externalPadding)
 
             canvas.finalizeRenderPass
@@ -286,7 +286,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   }
 
   def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, LabeledBox]] =
-    natRec(cmplx.dim)(RenderRecursor)(cmplx)
+    natRecT0P1(cmplx.dim)(RenderRecursor)(cmplx)
 
   //============================================================================================
   // OBJECT NESTING RENDERING
@@ -329,7 +329,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
         dot.horizontalDependants :+= newEdgeMarker
         dot.verticalDependants :+= newEdgeMarker
 
-        val leafMarkers = lvs.nodes
+        val leafMarkers = nodesOf(lvs)
         val leafCount = leafMarkers.length
 
         val marker =
@@ -357,7 +357,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
             val midMarker = leafMarkers(leafCount / 2)
 
-            println("Mid marker is: " ++ midMarker.toString)
+            // println("Mid marker is: " ++ midMarker.toString)
 
             if (isOdd) {
 
@@ -390,18 +390,18 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
               val leftChildShift = max(max(midLeftOffset, leftChild.rightMargin + externalPadding), dot.leftMargin)
               val rightChildShift = max(max(midRightOffset, rightChild.leftMargin + externalPadding), dot.rightMargin)
 
-              println("Left child shift: " ++ leftChildShift.toString)
-              println("Right child shift: " ++ rightChildShift.toString)
+              // println("Left child shift: " ++ leftChildShift.toString)
+              // println("Right child shift: " ++ rightChildShift.toString)
 
               val leftEdge =
                 (leftChildren foldRight leftChildShift)({
                   case (currentMarker, leftShift) => {
 
-                    println("Passing marker: " ++ currentMarker.toString)
+                    // println("Passing marker: " ++ currentMarker.toString)
 
                     val thisShift = leftShift + externalPadding + currentMarker.rightMargin
 
-                    println("Shifting " ++ currentMarker.element.owner.toString ++ " left by " ++ thisShift.toString)
+                    // println("Shifting " ++ currentMarker.element.owner.toString ++ " left by " ++ thisShift.toString)
 
                     currentMarker.element.shiftLeft(thisShift)
                     dot.horizontalDependants :+= currentMarker.element
@@ -423,11 +423,11 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
                 (rightChildren foldLeft rightChildShift)({
                   case (rightShift, currentMarker) => {
 
-                    println("Passing marker: " ++ currentMarker.toString)
+                    // println("Passing marker: " ++ currentMarker.toString)
 
                     val thisShift = rightShift + externalPadding + currentMarker.leftMargin
 
-                    println("Shifting " ++ currentMarker.element.owner.toString ++ " right by " ++ thisShift.toString)
+                    // println("Shifting " ++ currentMarker.element.owner.toString ++ " right by " ++ thisShift.toString)
 
                     currentMarker.element.shiftRight(thisShift)
                     dot.horizontalDependants :+= currentMarker.element
@@ -484,7 +484,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
           }
 
-        println("Rendered dot with label " ++ a.toString)
+        // println("Rendered dot with label " ++ a.toString)
 
         Some(marker, Dot(dot, c))
 
@@ -492,14 +492,14 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
       case Box(a, c) => {
 
-        val (leafCount, leavesWithIndices) = lvs.zipWithIndex
+        val (leafCount, leavesWithIndices) = zipWithIndex(lvs)
 
         def verticalPass(tr : Tree[S[N], Nesting[S[N], A]]) : Option[(LayoutMarker, Tree[S[N], Nesting[S[N], LabeledBox]])] =
           tr match {
 
             case l @ Leaf(addr) =>
               for {
-                leafMarkerWithIndex <- leavesWithIndices valueAt addr
+                leafMarkerWithIndex <- valueAt(leavesWithIndices, addr)
               } yield {
 
                 val (leafMarker, leafIndex) = leafMarkerWithIndex
@@ -518,20 +518,20 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
             case Node(sn, vns) =>
               for {
-                vresult <- vns traverse (verticalPass(_))
+                vresult <- traverse(vns)(verticalPass(_))
                 (layoutTree, resultTree) = unzip(vresult)
                 lresult <- renderNesting(sn, canvas, layoutTree)
                 (localLayout, resultNesting) = lresult
               } yield {
 
-                val descendantMarkers : List[LayoutMarker] = layoutTree.nodes
+                val descendantMarkers : List[LayoutMarker] = nodesOf(layoutTree)
 
                 val (leftMostChild, rightMostChild, heightOfChildren) =
                   (descendantMarkers foldLeft (localLayout, localLayout, zero))({
                     case ((lcMarker, rcMarker, ht), thisMarker) => {
 
                       if (! thisMarker.external) {
-                        println("Shifting " ++ thisMarker.element.owner.toString ++ " up by " ++ (localLayout.height + externalPadding).toString)
+                        // println("Shifting " ++ thisMarker.element.owner.toString ++ " up by " ++ (localLayout.height + externalPadding).toString)
                         thisMarker.element.shiftUp(localLayout.height + externalPadding)
                         localLayout.element.verticalDependants :+= thisMarker.element
                       }
@@ -578,7 +578,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
           val box = canvas.createInternalBox(a, layout)
 
           if (! layout.external) {
-            println("Shifting " ++ layout.element.owner.toString ++ " up by " ++ (strokeWidth + box.labelContainerHeight).toString)
+            // println("Shifting " ++ layout.element.owner.toString ++ " up by " ++ (strokeWidth + box.labelContainerHeight).toString)
             layout.element.shiftUp(strokeWidth + box.labelContainerHeight)
             box.verticalDependants :+= layout.element
             box.horizontalDependants :+= layout.element
@@ -598,7 +598,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
           }
 
-          println("Rendered box with label " ++ a.toString)
+          // println("Rendered box with label " ++ a.toString)
 
           (marker , Box(box, canopy))
 
