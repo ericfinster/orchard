@@ -12,6 +12,7 @@ import scalaz.std.option._
 import Nats._
 import Tree._
 import Nesting._
+import Complex._
 
 abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
@@ -254,7 +255,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, LabeledBox]] = {
       val canvas = createNestingCanvas
       // println("========= Dimension 0 =========")
-      val resultComplex = renderObjectNesting(zc.head, canvas)
+      val resultComplex = renderObjectNesting(head(zc), canvas)
       canvas.finalizeRenderPass
       Some(Base(resultComplex))
     }
@@ -266,7 +267,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
             tailResult <- renderComplex(tl)
             // _ = println("========= Dimension " ++ natToInt(sc.dim).toString ++  " =========")
             canvas = createNestingCanvas
-            leaves <- spine(tailResult.head)
+            leaves <- spine(head(tailResult))
             edges = map(leaves)((lb : LabeledBox) => canvas.createEdgeLayout(lb.owner))
             headResult <- renderNesting(hd, canvas, edges)
           } yield {

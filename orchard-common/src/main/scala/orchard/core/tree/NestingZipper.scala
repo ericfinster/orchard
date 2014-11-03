@@ -7,9 +7,6 @@
 
 package orchard.core.tree
 
-import scalaz.{Tree => _, Zipper => _, _}
-import scalaz.std.option._
-
 import Nats._
 import Tree._
 import Nesting._
@@ -46,7 +43,9 @@ case class Select[N <: Nat, +A](a : A, d : Derivative[N, Nesting[N, A]], c : Nes
 //
 
 case class NestingZipper[N <: Nat, +A](val focus : Nesting[N, A], val context : NestingContext[N, A]) {
+
   def dim : N = focus.dim
+
 }
 
 object NestingZipper {

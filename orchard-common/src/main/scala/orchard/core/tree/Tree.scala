@@ -273,6 +273,170 @@ trait TreeFunctions { tfns =>
 
   }
 
+  //============================================================================================
+  // EXTENTS
+  //
+
+  def extentsSetupPrefix[N <: Nat, A](addr : Address[N], tr : Tree[N, A]) 
+      : Tree[N, (Address[N], Derivative[N, Address[S[N]]], A)] = 
+    ExtentsSPRecursor.execute(addr.dim)(addr, tr)
+
+  type ExtentsSPIn0[N <: Nat, A] = Address[N]
+  type ExtentsSPIn1[N <: Nat, A] = Tree[N, A]
+  type ExtentsSPOut[N <: Nat, A] = Tree[N, (Address[N], Derivative[N, Address[S[N]]], A)] 
+
+  object ExtentsSPRecursor extends NatRecursorT1P2[ExtentsSPIn0, ExtentsSPIn1, ExtentsSPOut] {
+
+    def caseZero[A](addr : Address[_0], tr : Tree[_0, A]) 
+        : Tree[_0, (Address[_0], Derivative[_0, Address[_1]], A)] = 
+      tr match {
+        case Pt(a) => Pt((Root(), ZeroDeriv, a))
+      }
+
+    def caseSucc[P <: Nat, A](addr : Address[S[P]], tr : Tree[S[P], A]) 
+        : Tree[S[P], (Address[S[P]], Derivative[S[P], Address[S[S[P]]]], A)] = 
+      tr match {
+        case Leaf(ad) => Leaf(ad)
+        case Node(a, sh) => {
+
+          val shellInfo = extentsSetupPrefix(Root()(sh.dim), sh)
+          val localDerivShell = map(shellInfo)({ case (d, _, _) => Leaf(d) })
+          val localShell = map(shellInfo)({ case (d, _, t) => caseSucc(Step(d, addr), t) })
+
+          Node((addr, Open(localDerivShell, Empty()), a), localShell)
+
+        }
+      }
+
+  }
+
+  def extentsSetup[N <: Nat, A](tr : Tree[N, A]) : Tree[N, (Address[N], Derivative[N, Address[S[N]]], A)] =
+    extentsSetupPrefix(Root()(tr.dim), tr)
+
+  def flattenWithPrefix[N <: Nat, A](addr : Address[S[N]], d : Derivative[N, Address[S[N]]], t : Tree[S[N], A])
+      : Option[Tree[N, Address[S[N]]]] = 
+    t match {
+      case Leaf(_) => Some(Derivative.plug(d, addr))
+      case Node(a, shell) => shellExtentsPrefix(addr, shell)
+    }
+
+  def shellExtentsPrefix[N <: Nat, A](addr : Address[S[N]], shell : Tree[N, Tree[S[N], A]]) : Option[Tree[N, Address[S[N]]]] = 
+    for {
+      toJoin <- traverse(extentsSetup(shell))({ 
+        case (dir, deriv, tr) => flattenWithPrefix(Step(dir, addr), deriv, tr) 
+      })
+      result <- join(toJoin)
+    } yield result
+
+  def shellExtents[N <: Nat, A](shell : Tree[N, Tree[S[N], A]]) : Option[Tree[N, Address[S[N]]]] = 
+    shellExtentsPrefix(Root()(S(shell.dim)), shell)
+
+  //============================================================================================
+  // ZIP WITH ADDRESS
+  //
+
+  def zipWithPrefix[N <: Nat, A](addr : Address[N], tr : Tree[N, A]) : Tree[N, (A, Address[N])] =
+    ZipWithPrefRecursor.execute(addr.dim)(addr, tr)
+
+  type ZipWithPrefIn0[N <: Nat, A] = Address[N]
+  type ZipWithPrefIn1[N <: Nat, A] = Tree[N, A]
+  type ZipWithPrefOut[N <: Nat, A] = Tree[N, (A, Address[N])]
+
+  object ZipWithPrefRecursor extends NatRecursorT1P2[ZipWithPrefIn0, ZipWithPrefIn1, ZipWithPrefOut] {
+
+    def caseZero[A](addr : Address[_0], tr : Tree[_0, A]) : Tree[_0, (A, Address[_0])] = 
+      tr match {
+        case Pt(a) => Pt((a, Root()))
+      }
+
+    def caseSucc[P <: Nat, A](addr : Address[S[P]], tr : Tree[S[P], A]) : Tree[S[P], (A, Address[S[P]])] = 
+      tr match {
+        case Leaf(l) => Leaf(l)
+        case Node(a, shell) => {
+          Node((a, addr), map(zipWithPrefix(Root()(shell.dim), shell))({ 
+            case (t, d) => zipWithPrefix(Step(d, addr), t) 
+          }))
+        }
+      }
+
+  }
+
+  def zipWithAddress[N <: Nat, A](tr : Tree[N, A]) : Tree[N, (A, Address[N])] = 
+    zipWithPrefix(Root()(tr.dim), tr)
+
+
+
+  //============================================================================================
+  // ADDRESS TREE
+  //
+
+
+  def addressTreeWithPrefix[N <: Nat, A](addr : Address[N], tr : Tree[N, A]) : Tree[N, Address[N]] = 
+    AddrTrPrefRecursor.execute(addr.dim)(addr, tr)
+
+  type AddrTrPrefIn0[N <: Nat, A] = Address[N]
+  type AddrTrPrefIn1[N <: Nat, A] = Tree[N, A]
+  type AddrTrPrefOut[N <: Nat, A] = Tree[N, Address[N]]
+
+  object AddrTrPrefRecursor extends NatRecursorT1P2[AddrTrPrefIn0, AddrTrPrefIn1, AddrTrPrefOut] {
+
+    def caseZero[A](addr : Address[_0], tr : Tree[_0, A]) : Tree[_0, Address[_0]] = 
+      Pt(Root())
+
+    def caseSucc[P <: Nat, A](addr : Address[S[P]], tr : Tree[S[P], A]) : Tree[S[P], Address[S[P]]] = 
+      tr match {
+        case Leaf(l) => Leaf(l)
+        case Node(a, shell) => {
+          Node(addr, map(zipWithAddress(shell))({ 
+            case (t, d) => addressTreeWithPrefix(Step(d, addr), t) 
+          }))
+        }
+      }
+
+  }
+
+  def addressTree[N <: Nat, A](tr : Tree[N, A]) : Tree[N, Address[N]] =
+    addressTreeWithPrefix(Root()(tr.dim), tr)
+
+  //============================================================================================
+  // COROLLA
+  //
+
+  def corollaSetup[N <: Nat, A](tr : Tree[N, A]) : Tree[N, (Derivative[N, Address[N]], A)] = 
+    CorollaSetupRecursor.execute(tr.dim)(tr)
+
+  type CorollaSetupIn[N <: Nat, A] = Tree[N, A]
+  type CorollaSetupOut[N <: Nat, A] = Tree[N, (Derivative[N, Address[N]], A)]
+
+  object CorollaSetupRecursor extends NatRecursorT1P1[CorollaSetupIn, CorollaSetupOut] {
+
+    def caseZero[A](tr : Tree[_0, A]) : Tree[_0, (Derivative[_0, Address[_0]], A)] =
+      tr match {
+        case Pt(a) => Pt((ZeroDeriv, a))
+      }
+
+    def caseSucc[P <: Nat, A](tr : Tree[S[P], A]) : Tree[S[P], (Derivative[S[P], Address[S[P]]], A)] = 
+      tr match {
+        case Leaf(addr) => Leaf(addr)
+        case Node(a, shell) => {
+          Node((Open(map(addressTree(shell))(Leaf(_)), Empty()), a), map(shell)(caseSucc(_)))
+        }
+      }
+
+  }
+
+  def treeCorolla[N <: Nat, A](d : Derivative[N, Address[N]], t : Tree[S[N], A]) : Option[Tree[N, Address[N]]] = 
+    t match {
+      case Leaf(addr) => Some(Derivative.plug(d, addr))
+      case Node(a, sh) => shellCorolla(sh)
+    }
+
+  def shellCorolla[N <: Nat, A](shell : Tree[N, Tree[S[N], A]]) : Option[Tree[N, Address[N]]] = 
+    for {
+      toJoin <- traverse(corollaSetup(shell))({ case (d, t) => treeCorolla(d, t) })
+      result <- join(toJoin)
+    } yield result
+
 }
 
 object Tree extends TreeFunctions { 
