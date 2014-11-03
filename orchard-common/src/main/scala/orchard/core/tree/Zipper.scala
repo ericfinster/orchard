@@ -9,7 +9,6 @@ package orchard.core.tree
 
 import scalaz.Leibniz._
 
-import Dir._
 import Nats._
 import Tree._
 
@@ -121,25 +120,25 @@ object Zipper {
   // VISIT
   //
 
-  def visit[N <: Nat, A](d : Dir[N], z : Zipper[N, A]) : Option[Zipper[N, A]] =
+  def visit[N <: Nat, A](d : Direction[N], z : Zipper[N, A]) : Option[Zipper[N, A]] =
     VisitRecursor.execute(d.dim)(d, z)
 
-  type VisitIn0[N <: Nat, A] = Dir[N]
+  type VisitIn0[N <: Nat, A] = Direction[N]
   type VisitIn1[N <: Nat, A] = Zipper[N, A]
   type VisitOut[N <: Nat, A] = Option[Zipper[N, A]]
 
   object VisitRecursor extends NatOneRecursorT1P2[VisitIn0, VisitIn1, VisitOut] {
 
-    def caseZero[A](d : Dir[_0], z : Zipper[_0, A]) : Option[Zipper[_0, A]] = 
+    def caseZero[A](d : Direction[_0], z : Zipper[_0, A]) : Option[Zipper[_0, A]] = 
       Some(z)
 
-    def caseOne[A](d : Dir[_1], z : Zipper[_1, A]) : Option[Zipper[_1, A]] =
+    def caseOne[A](d : Direction[_1], z : Zipper[_1, A]) : Option[Zipper[_1, A]] =
       z match {
         case FocusList(Leaf(_), cntxt) => None
         case FocusList(Node(hd, Pt(tl)), cntxt) => Some(FocusList(tl, Then(hd, ZeroDeriv, cntxt)))
       }
 
-    def caseDblSucc[P <: Nat, A](d : Dir[S[S[P]]], z : Zipper[S[S[P]], A]) : Option[Zipper[S[S[P]], A]] = 
+    def caseDblSucc[P <: Nat, A](d : Direction[S[S[P]]], z : Zipper[S[S[P]], A]) : Option[Zipper[S[S[P]], A]] = 
       z match {
         case FocusBranch(Leaf(_), cntxt) => None
         case FocusBranch(Node(a, sh), cntxt) => 
@@ -160,7 +159,7 @@ object Zipper {
   // SEEK
   //
 
-  def seek[N <: Nat, A](addr : Addr[N], zipper : Zipper[N, A]) : Option[Zipper[N, A]] =
+  def seek[N <: Nat, A](addr : Address[N], zipper : Zipper[N, A]) : Option[Zipper[N, A]] =
     addr match {
       case Root() => Some(zipper)
       case Step(d, ds) =>

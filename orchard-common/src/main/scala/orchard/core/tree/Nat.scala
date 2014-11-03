@@ -310,7 +310,6 @@ trait Nats extends NatRecursors {
       case S(p) => natToInt(p) + 1
     }
 
-
   trait ZeroMatch[N <: Nat] {
 
     implicit def zeroCoh : Leibniz[Nothing, Nat, N, _0]

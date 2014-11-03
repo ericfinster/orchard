@@ -16,24 +16,12 @@ import scalaz.Leibniz._
 
 import Nats._
 
-sealed abstract class Dir[N <: Nat] { def dim : N }
-case class Root[N <: Nat](implicit val p : N) extends Dir[S[N]] { def dim = S(p) }
-case class Step[N <: Nat](d : Dir[N], ds : Dir[S[N]]) extends Dir[S[N]] { def dim = ds.dim }
-
-object Dir {
-
-  type Addr[N <: Nat] = Dir[S[N]]
-
-}
-
 sealed abstract class Tree[N <: Nat, +A] { def dim : N }
 case class Pt[+A](a : A) extends Tree[_0, A] { def dim = Z }
-case class Leaf[N <: Nat](addr : Dir[S[N]]) extends Tree[S[N], Nothing] { def dim = addr.dim }
+case class Leaf[N <: Nat](addr : Address[N]) extends Tree[S[N], Nothing] { def dim = S(addr.dim) }
 case class Node[N <: Nat, +A](a : A, shell : Tree[N, Tree[S[N], A]]) extends Tree[S[N], A] { def dim = S(shell.dim) }
 
 trait TreeFunctions { tfns => 
-
-  import Dir._
 
   //============================================================================================
   // TYPE PREDICATES
@@ -168,22 +156,22 @@ trait TreeFunctions { tfns =>
   // SEEK
   //
 
-  def seek[N <: Nat, A](tr : Tree[N, A], addr : Addr[N]) : Option[Zipper[N, A]] = 
+  def seek[N <: Nat, A](tr : Tree[N, A], addr : Address[N]) : Option[Zipper[N, A]] = 
     SeekRecursor.execute(tr.dim)(tr, addr)
 
   type SeekIn0[N <: Nat, A] = Tree[N, A]
-  type SeekIn1[N <: Nat, A] = Addr[N]
+  type SeekIn1[N <: Nat, A] = Address[N]
   type SeekOut[N <: Nat, A] = Option[Zipper[N, A]]
 
   object SeekRecursor extends NatOneRecursorT1P2[SeekIn0, SeekIn1, SeekOut] {
 
-    def caseZero[A](tr : Tree[_0, A], addr : Addr[_0]) : Option[Zipper[_0, A]] = 
+    def caseZero[A](tr : Tree[_0, A], addr : Address[_0]) : Option[Zipper[_0, A]] = 
       Zipper.seek(addr, FocusPoint(tr))
 
-    def caseOne[A](tr : Tree[_1, A], addr : Addr[_1]) : Option[Zipper[_1, A]] = 
+    def caseOne[A](tr : Tree[_1, A], addr : Address[_1]) : Option[Zipper[_1, A]] = 
       Zipper.seek(addr, FocusList(tr, Empty()))
 
-    def caseDblSucc[P <: Nat, A](tr : Tree[S[S[P]], A], addr : Addr[S[S[P]]]) : Option[Zipper[S[S[P]], A]] = 
+    def caseDblSucc[P <: Nat, A](tr : Tree[S[S[P]], A], addr : Address[S[S[P]]]) : Option[Zipper[S[S[P]], A]] = 
       Zipper.seek(addr, FocusBranch(tr, Empty()))
 
   }
@@ -192,7 +180,7 @@ trait TreeFunctions { tfns =>
   // VALUE AT
   //
 
-  def valueAt[N <: Nat, A](tr : Tree[N, A], addr : Addr[N]) : Option[A] = 
+  def valueAt[N <: Nat, A](tr : Tree[N, A], addr : Address[N]) : Option[A] = 
     for {
       zp <- seek(tr, addr)
       a <- rootValue(zp.focus)
