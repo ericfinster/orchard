@@ -9,6 +9,7 @@ package orchard.core.tree
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
+
 import scalaz.{Tree => _, Zipper => _, _}
 import scalaz.std.option._
 import scalaz.Leibniz._
@@ -46,19 +47,20 @@ trait TreeFunctions { tfns =>
   //
 
   def map[N <: Nat, A, B](tr : Tree[N, A])(f : A => B) : Tree[N, B] = 
-    MapRecursor.recurseWith(tr, f)
+    MapRecursor.execute(tr.dim)(tr, f)
 
-  type MapIn[M <: Nat, A, B] = A => B
+  type MapIn0[M <: Nat, A, B] = Tree[M, A]
+  type MapIn1[M <: Nat, A, B] = A => B
   type MapOut[M <: Nat, A, B] = Tree[M, B]
 
-  object MapRecursor extends TreeRecursorT2P1[MapIn, MapOut] {
+  object MapRecursor extends NatRecursorT2P2[MapIn0, MapIn1, MapOut] {
 
-    def zeroTree[A, B](tr : Tree[_0, A])(f : A => B) : Tree[_0, B] =
+    def caseZero[A, B](tr : Tree[_0, A], f : A => B) : Tree[_0, B] =
       tr match {
         case Pt(a) => Pt(f(a))
       }
 
-    def succTree[P <: Nat, A, B](tr : Tree[S[P], A])(f : A => B) : Tree[S[P], B] = 
+    def caseSucc[P <: Nat, A, B](tr : Tree[S[P], A], f : A => B) : Tree[S[P], B] = 
       tr match {
         case Leaf(addr) => Leaf(addr)
         case Node(a, shell) => Node(f(a), map(shell)(map(_)(f))) 
@@ -71,15 +73,16 @@ trait TreeFunctions { tfns =>
   //
 
   def traverse[N <: Nat, G[_], A, B](tr : Tree[N, A])(f : A => G[B])(implicit apG : Applicative[G]) : G[Tree[N, B]] = 
-    TraverseRecursor.recurseWith(tr)(f, apG)
+    TraverseRecursor.execute(tr.dim)(tr, f, apG)
 
-  type TraverseIn[N <: Nat, G[_], A, B] = A => G[B]
-  type TraverseImpl[N <: Nat, G[_], A, B] = Applicative[G]
+  type TraverseIn0[N <: Nat, G[_], A, B] = Tree[N, A]
+  type TraverseIn1[N <: Nat, G[_], A, B] = A => G[B]
+  type TraverseIn2[N <: Nat, G[_], A, B] = Applicative[G]
   type TraverseOut[N <: Nat, G[_], A, B] = G[Tree[N, B]]
 
-  object TraverseRecursor extends TreeRecursorC1T2P2[TraverseIn, TraverseImpl, TraverseOut] {
+  object TraverseRecursor extends NatRecursorC1T2P3[TraverseIn0, TraverseIn1, TraverseIn2, TraverseOut] {
 
-    def zeroTree[G[_], A, B](tr : Tree[_0, A])(f : A => G[B], apG : Applicative[G]) : G[Tree[_0, B]] = {
+    def caseZero[G[_], A, B](tr : Tree[_0, A], f : A => G[B], apG : Applicative[G]) : G[Tree[_0, B]] = {
       import apG._
 
       tr match {
@@ -87,7 +90,7 @@ trait TreeFunctions { tfns =>
       }
     }
 
-    def succTree[P <: Nat, G[_], A, B](tr : Tree[S[P], A])(f : A => G[B], apG : Applicative[G]) : G[Tree[S[P], B]] = {
+    def caseSucc[P <: Nat, G[_], A, B](tr : Tree[S[P], A], f : A => G[B], apG : Applicative[G]) : G[Tree[S[P], B]] = {
       import apG._
 
       tr match {
@@ -97,7 +100,7 @@ trait TreeFunctions { tfns =>
           val nodeCons : G[(B , Tree[P, Tree[S[P], B]]) => Tree[S[P], B]] =
             pure((b : B, sh : Tree[P, Tree[S[P], B]]) => Node(b, sh))
 
-          ap2(f(a), tfns.traverse(sh)(succTree(_)(f, apG))(apG))(nodeCons)
+          ap2(f(a), tfns.traverse(sh)(caseSucc(_, f, apG))(apG))(nodeCons)
 
         }
       }
@@ -139,7 +142,7 @@ trait TreeFunctions { tfns =>
   //
 
   def join[N <: Nat, A](tr : Tree[N, Tree[N, A]]) : Option[Tree[N, A]] =  
-    natRecT1P1(tr.dim)(JoinRecursor)(tr)
+    JoinRecursor.execute(tr.dim)(tr)
 
   type JoinIn[M <: Nat, A] = Tree[M, Tree[M, A]]
   type JoinOut[M <: Nat, A] = Option[Tree[M, A]]
@@ -166,7 +169,7 @@ trait TreeFunctions { tfns =>
   //
 
   def seek[N <: Nat, A](tr : Tree[N, A], addr : Addr[N]) : Option[Zipper[N, A]] = 
-    natOneRecT1P2(tr.dim)(SeekRecursor)(tr, addr)
+    SeekRecursor.execute(tr.dim)(tr, addr)
 
   type SeekIn0[N <: Nat, A] = Tree[N, A]
   type SeekIn1[N <: Nat, A] = Addr[N]
@@ -174,9 +177,14 @@ trait TreeFunctions { tfns =>
 
   object SeekRecursor extends NatOneRecursorT1P2[SeekIn0, SeekIn1, SeekOut] {
 
-    def caseZero[A](tr : Tree[_0, A], addr : Addr[_0]) : Option[Zipper[_0, A]] = ???
-    def caseOne[A](tr : Tree[_1, A], addr : Addr[_1]) : Option[Zipper[_1, A]] = ???
-    def caseDblSucc[P <: Nat, A](tr : Tree[S[S[P]], A], addr : Addr[S[S[P]]]) : Option[Zipper[S[S[P]], A]] = ???
+    def caseZero[A](tr : Tree[_0, A], addr : Addr[_0]) : Option[Zipper[_0, A]] = 
+      Zipper.seek(addr, FocusPoint(tr))
+
+    def caseOne[A](tr : Tree[_1, A], addr : Addr[_1]) : Option[Zipper[_1, A]] = 
+      Zipper.seek(addr, FocusList(tr, Empty()))
+
+    def caseDblSucc[P <: Nat, A](tr : Tree[S[S[P]], A], addr : Addr[S[S[P]]]) : Option[Zipper[S[S[P]], A]] = 
+      Zipper.seek(addr, FocusBranch(tr, Empty()))
 
   }
 
@@ -195,7 +203,7 @@ trait TreeFunctions { tfns =>
   //
 
   def rootValue[N <: Nat, A](tr : Tree[N, A]) : Option[A] = 
-    natRecT1P1(tr.dim)(RootValueRecursor)(tr)
+    RootValueRecursor.execute(tr.dim)(tr)
 
   type RootValueIn[N <: Nat, A] = Tree[N, A]
   type RootValueOut[N <: Nat, A] = Option[A]
@@ -220,26 +228,27 @@ trait TreeFunctions { tfns =>
   //
 
   def zipComplete[N <: Nat, A, B](trA : Tree[N, A], trB : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
-    ZipCompleteRecursor.recurseWith(trA, trB)
+    ZipCompleteRecursor.execute(trA.dim)(trA, trB)
 
-  type ZipCompleteIn[N <: Nat, A, B] = Tree[N, B]
+  type ZipCompleteIn0[N <: Nat, A, B] = Tree[N, A]
+  type ZipCompleteIn1[N <: Nat, A, B] = Tree[N, B]
   type ZipCompleteOut[N <: Nat, A, B] = Option[Tree[N, (A, B)]]
 
-  object ZipCompleteRecursor extends TreeRecursorT2P1[ZipCompleteIn, ZipCompleteOut] {
+  object ZipCompleteRecursor extends NatRecursorT2P2[ZipCompleteIn0, ZipCompleteIn1, ZipCompleteOut] {
 
-    def zeroTree[A, B](trA : Tree[_0, A])(trB : Tree[_0, B]) : Option[Tree[_0, (A, B)]] = 
+    def caseZero[A, B](trA : Tree[_0, A], trB : Tree[_0, B]) : Option[Tree[_0, (A, B)]] = 
       (trA, trB) match {
         case (Pt(a), Pt(b)) => Some(Pt((a, b)))
       }
 
-    def succTree[P <: Nat, A, B](trA : Tree[S[P], A])(trB : Tree[S[P], B]) : Option[Tree[S[P], (A, B)]] = 
+    def caseSucc[P <: Nat, A, B](trA : Tree[S[P], A], trB : Tree[S[P], B]) : Option[Tree[S[P], (A, B)]] = 
       (trA, trB) match {
         case (Leaf(addr), Leaf(_)) => Some(Leaf(addr))
         case (Node(a, ash), Node(b, bsh)) => 
           for {
             zsh <- zipComplete(ash, bsh)
             psh <- traverse(zsh)({
-              case (at, bt) => succTree(at)(bt)
+              case (at, bt) => caseSucc(at, bt)
             })
           } yield Node((a, b), psh)
 
@@ -253,7 +262,7 @@ trait TreeFunctions { tfns =>
   //
 
   def unzip[N <: Nat, A, B](tr : Tree[N, (A, B)]) : (Tree[N, A], Tree[N, B]) = 
-    natRecT2P1(tr.dim)(UnzipRecursor)(tr)
+    UnzipRecursor.execute(tr.dim)(tr)
 
   type UnzipIn[M <: Nat, A, B] = Tree[M, (A, B)]
   type UnzipOut[M <: Nat, A, B] = (Tree[M, A], Tree[M, B])
@@ -273,67 +282,6 @@ trait TreeFunctions { tfns =>
           (Node(a, ash), Node(b, bsh))
         }
       }
-
-  }
-
-  //============================================================================================
-  // TREE RECURSOR DEFINITIONS
-  //
-
-  // I thought this specialization would be useful, but I think it actually makes things a bit less
-  // uniform.  Probably you should take it out and just beef up the number of nat implementations ...
-
-  abstract class TreeRecursorC1T2P2[F[_ <: Nat, _[_], _, _], G[_ <: Nat, _[_], _, _], H[_ <: Nat, _[_], _, _]] 
-      extends NatRecursorC1T2P1[({ type L[M <: Nat, T[_], A, B] = (Tree[M, A], F[M, T, A, B], G[M, T, A, B]) })#L, H] {
-
-    type In[M <: Nat, T[_], A, B] = (Tree[M, A], F[M, T, A, B], G[M, T, A, B])
-    type Out[M <: Nat, T[_], A, B] = H[M, T, A, B]
-
-    def zeroTree[T[_], A, B](tr : Tree[_0, A])(f : F[_0, T, A, B], g : G[_0, T, A, B]) : H[_0, T, A, B]
-    def succTree[P <: Nat, T[_], A, B](tr : Tree[S[P], A])(f : F[S[P], T, A, B], g : G[S[P], T, A, B]) : H[S[P], T, A, B]
-
-    def caseZero[T[_], A, B](trpl : (Tree[_0, A], F[_0, T, A, B], G[_0, T, A, B])) : H[_0, T, A, B] = 
-      zeroTree(trpl._1)(trpl._2, trpl._3)
-
-    def caseSucc[P <: Nat, T[_], A, B](trpl : (Tree[S[P], A], F[S[P], T, A, B], G[S[P], T, A, B])) : H[S[P], T, A, B] =
-      succTree(trpl._1)(trpl._2, trpl._3)
-
-    def recurseWith[N <: Nat, T[_], A, B](tr : Tree[N, A])(f : F[N, T, A, B], g : G[N, T, A, B]) : H[N, T, A, B] =
-      natRecC1T2P1[In, Out, N, T, A, B](tr.dim)(this)((tr, f, g))
-
-  }
-
-  abstract class TreeRecursorT1P1[F[_ <: Nat, _], G[_ <: Nat, _]] 
-      extends NatRecursorT1P1[({ type L[M <: Nat, A] = (Tree[M, A], F[M, A]) })#L, G] {
-
-    type In[M <: Nat, A] = (Tree[M, A], F[M, A])
-    type Out[M <: Nat, A] = G[M, A]
-
-    def zeroTree[A](tr : Tree[_0, A])(f : F[_0, A]) : G[_0, A]
-    def succTree[P <: Nat, A](tr : Tree[S[P], A])(f : F[S[P], A]) : G[S[P], A]
-
-    def caseZero[A](pr : (Tree[_0, A], F[_0, A])) : G[_0, A] = zeroTree(pr._1)(pr._2)
-    def caseSucc[P <: Nat, A](pr : (Tree[S[P], A], F[S[P], A])) : G[S[P], A] = succTree(pr._1)(pr._2)
-
-    def recurseWith[N <: Nat, A](tr : Tree[N, A], f : F[N, A]) : G[N, A] =
-      natRecT1P1[In, Out, N, A](tr.dim)(this)((tr, f))
-
-  }
-
-  abstract class TreeRecursorT2P1[F[_ <: Nat, _, _], G[_ <: Nat, _, _]] 
-      extends NatRecursorT2P1[({ type L[M <: Nat, A, B] = (Tree[M, A], F[M, A, B]) })#L, G] {
-
-    type In[M <: Nat, A, B] = (Tree[M, A], F[M, A, B])
-    type Out[M <: Nat, A, B] = G[M, A, B]
-
-    def zeroTree[A, B](tr : Tree[_0, A])(f : F[_0, A, B]) : G[_0, A, B]
-    def succTree[P <: Nat, A, B](tr : Tree[S[P], A])(f : F[S[P], A, B]) : G[S[P], A, B]
-
-    def caseZero[A, B](pr : (Tree[_0, A], F[_0, A, B])) : G[_0, A, B] = zeroTree(pr._1)(pr._2)
-    def caseSucc[P <: Nat, A, B](pr : (Tree[S[P], A], F[S[P], A, B])) : G[S[P], A, B] = succTree(pr._1)(pr._2)
-
-    def recurseWith[N <: Nat, A, B](tr : Tree[N, A], f : F[N, A, B]) : G[N, A, B] =
-      natRecT2P1[In, Out, N, A, B](tr.dim)(this)((tr, f))
 
   }
 

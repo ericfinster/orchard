@@ -11,6 +11,7 @@ import scalaz.std.option._
 
 import Nats._
 import Tree._
+import Nesting._
 
 abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
@@ -265,13 +266,13 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
             tailResult <- renderComplex(tl)
             // _ = println("========= Dimension " ++ natToInt(sc.dim).toString ++  " =========")
             canvas = createNestingCanvas
-            leaves <- tailResult.head.spine 
+            leaves <- spine(tailResult.head)
             edges = map(leaves)((lb : LabeledBox) => canvas.createEdgeLayout(lb.owner))
             headResult <- renderNesting(hd, canvas, edges)
           } yield {
 
             val (layout, nesting) = headResult
-            val baseBox = nesting.label
+            val baseBox = labelOf(nesting)
 
             // Should be a foreach ...
             map(edges)(m => { m.rootEdge.startY = baseBox.y - (fromInt(2) * externalPadding) })
@@ -286,7 +287,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   }
 
   def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, LabeledBox]] =
-    natRecT0P1(cmplx.dim)(RenderRecursor)(cmplx)
+    RenderRecursor.execute(cmplx.dim)(cmplx)
 
   //============================================================================================
   // OBJECT NESTING RENDERING
@@ -299,8 +300,8 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
         val interior = renderObjectNesting(c, canvas)
 
-        val box = canvas.createInternalBox(a, interior.label)
-        val internalBox = interior.label
+        val internalBox = labelOf(interior)
+        val box = canvas.createInternalBox(a, internalBox)
 
         internalBox.shiftUp(strokeWidth + box.labelContainerHeight)
 

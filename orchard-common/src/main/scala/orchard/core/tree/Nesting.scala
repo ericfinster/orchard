@@ -14,43 +14,68 @@ import Dir._
 import Nats._
 import Tree._
 
-sealed abstract class Nesting[N <: Nat, +A] {
+sealed abstract class Nesting[N <: Nat, +A] { def dim : N }
+case class Obj[+A](a : A) extends Nesting[_0, A] { def dim = Z }
+case class Dot[N <: Nat, +A](a : A, c : Tree[N, Addr[N]]) extends Nesting[S[N], A] { def dim = S(c.dim) }
+case class Box[N <: Nat, +A](a : A, c : Tree[N, Nesting[N, A]]) extends Nesting[N, A] { def dim = c.dim }
 
-  def dim : N
+object Nesting {
 
-  def label : A
-  def spine : Option[Tree[N, A]]
+  //============================================================================================
+  // LABEL Of
+  //
 
-}
+  def labelOf[N <: Nat, A](nst : Nesting[N, A]) : A = 
+    LabelRecursor.execute(nst.dim)(nst)
 
-case class Obj[+A](a : A) extends Nesting[_0, A] {
+  type LabelIn[N <: Nat, A] = Nesting[N, A]
+  type LabelOut[N <: Nat, A] = A
 
-  def dim = Z
+  object LabelRecursor extends NatRecursorT1P1[LabelIn, LabelOut] {
 
-  def label : A = a
-  def spine : Option[Tree[_0, A]] = Some(Pt(a))
+    def caseZero[A](nst : Nesting[_0, A]) : A = 
+      nst match {
+        case Obj(a) => a
+        case Box(a, _) => a
+      }
 
-}
+    def caseSucc[P <: Nat, A](nst : Nesting[S[P], A]) : A = 
+      nst match {
+        case Dot(a, _) => a
+        case Box(a, _) => a
+      }
 
-case class Dot[N <: Nat, +A](a : A, c : Tree[N, Addr[N]]) extends Nesting[S[N], A] {
+  }
 
-  def dim = S(c.dim)
+  //============================================================================================
+  // SPINE
+  //
 
-  def label : A = a
-  def spine : Option[Tree[S[N], A]] = Some(Node(a, map(c)(Leaf(_))))
+  def spine[N <: Nat, A](nst : Nesting[N, A]) : Option[Tree[N, A]] = 
+    SpineRecursor.execute(nst.dim)(nst)
 
-}
+  type SpineIn[N <: Nat, A] = Nesting[N, A]
+  type SpineOut[N <: Nat, A] = Option[Tree[N, A]]
 
-case class Box[N <: Nat, +A](a : A, c : Tree[N, Nesting[N, A]]) extends Nesting[N, A] {
+  object SpineRecursor extends NatRecursorT1P1[SpineIn, SpineOut] {
 
-  def dim = c.dim
+    def caseZero[A](nst : Nesting[_0, A]) : Option[Tree[_0, A]] = 
+      nst match {
+        case Obj(a) => Some(Pt(a))
+        case Box(a, Pt(n)) => caseZero(n)
+      }
 
-  def label : A = a
-  def spine : Option[Tree[N, A]] = 
-    for {
-      st <- traverse(c)(_.spine)
-      sp <- join(st)
-    } yield sp
+    def caseSucc[P <: Nat, A](nst : Nesting[S[P], A]) : Option[Tree[S[P], A]] = 
+      nst match {
+        case Dot(a, srcs) => Some(Node(a, map(srcs)(Leaf(_))))
+        case Box(a, canopy) => 
+          for {
+            st <- traverse(canopy)(caseSucc(_))
+            sp <- join(st)
+          } yield sp
+      }
+
+  }
 
 }
 

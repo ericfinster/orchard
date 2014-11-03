@@ -122,7 +122,7 @@ object Zipper {
   //
 
   def visit[N <: Nat, A](d : Dir[N], z : Zipper[N, A]) : Option[Zipper[N, A]] =
-    natOneRecT1P2(d.dim)(VisitRecursor)(d, z)
+    VisitRecursor.execute(d.dim)(d, z)
 
   type VisitIn0[N <: Nat, A] = Dir[N]
   type VisitIn1[N <: Nat, A] = Zipper[N, A]
