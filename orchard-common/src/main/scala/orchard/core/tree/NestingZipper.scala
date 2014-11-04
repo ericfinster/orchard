@@ -46,6 +46,15 @@ case class NestingZipper[N <: Nat, +A](val focus : Nesting[N, A], val context : 
 
   def dim : N = focus.dim
 
+  def close : Nesting[N, A] = 
+    context.closeWith(focus)
+
+  def withFocus[B >: A](fcs : Nesting[N, B]) : NestingZipper[N, B] = 
+    NestingZipper(fcs, context)
+
+  def withContext[B >: A](cntxt : NestingContext[N, B]) : NestingZipper[N, B] =
+    NestingZipper(focus, cntxt)
+
 }
 
 object NestingZipper {
