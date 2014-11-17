@@ -3,3 +3,4 @@ target/
 *.jar
 _site
 orchard-play/logs/*
+*.agdai
