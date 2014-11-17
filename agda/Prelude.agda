@@ -70,6 +70,11 @@ module Prelude where
   _×_ : ∀ (A : Set) (B : Set) → Set
   A × B = Σ[ x ∈ A ] B
 
+  uncurry : {A : Set} → {B : A → Set} → {C : Σ A B → Set} →
+            ((x : A) → (y : B x) → C (x , y)) →
+            ((p : Σ A B) → C p)
+  uncurry f (x , y) = f x y
+
   data List (A : Set) : Set where
     []  : List A
     _∷_ : (x : A) (xs : List A) → List A
