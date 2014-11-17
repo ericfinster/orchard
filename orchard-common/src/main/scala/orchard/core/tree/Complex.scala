@@ -13,43 +13,15 @@ import scalaz.std.option._
 import Nats._
 import Tree._
 
-// A useful generalization of this might be to allow the type
-// "A" to depend on the dimension.  Doing this would allow for
-// a well typed comultiplication operation ....
-
-sealed abstract class Complex[N <: Nat, +A] { def dim : N }
-case class Base[+A](objNst : Nesting[_0, A]) extends Complex[_0, A] { def dim = Z }
-case class Append[N <: Nat, +A](tl : Complex[N, A], nst : Nesting[S[N], A]) extends Complex[S[N], A] { def dim = nst.dim }
-
 object Complex {
 
-  //============================================================================================
-  // HEAD
-  //
-
-  def head[N <: Nat, A](cmplx : Complex[N, A]) : Nesting[N, A] = 
-    HeadRecursor.execute(cmplx.dim)(cmplx)
-
-  type HeadIn[N <: Nat, A] = Complex[N, A]
-  type HeadOut[N <: Nat, A] = Nesting[N, A]
-
-  object HeadRecursor extends NatRecursorT1P1[HeadIn, HeadOut] {
-
-    def caseZero[A](cmplx : Complex[_0, A]) : Nesting[_0, A] = 
-      cmplx match {
-        case Base(objNst) => objNst
-      }
-
-    def caseSucc[P <: Nat, A](cmplx : Complex[S[P], A]) : Nesting[S[P], A] =
-      cmplx match {
-        case Append(_, nst) => nst
-      }
-
-  }
+  type Complex[N <: Nat, A] = Suite[Nesting, N, A]
 
   //============================================================================================
   // SOURCE ROUTINES
   //
+
+  import ComplexZipper._
 
   def sourceAt[N <: Nat, A](cmplx : Complex[N, A], addr : Address[S[N]]) : Option[Complex[N, A]] = 
     for {
@@ -59,8 +31,6 @@ object Complex {
 
 
   def restrictAt[N <: Nat, A](cmplx : Complex[N, A], addr : Address[S[N]]) : Option[Complex[N, A]] = {
-    import ComplexZipper._
-
     for {
       cz <- seek(addr, fromComplex(cmplx))
       cz0 <- restrictFocus(cz)
@@ -68,13 +38,49 @@ object Complex {
   }
 
   def contractAt[N <: Nat, A](cmplx : Complex[N, A], addr : Address[S[N]]) : Option[Complex[N, A]] = {
-    import ComplexZipper._
-
     for {
       cz <- seek(addr, fromComplex(cmplx))
       cz0 <- contractFocus(cz)
     } yield seal(cz0)
   }
+
+  // //============================================================================================
+  // // FACE AT
+  // //
+
+  // def faceAt[N <: Nat, M <: Nat, A](cmplx : Complex[N, A], addr : Address[S[M]])(implicit gte : Gte[N, M]) 
+  //     : Option[Complex[M, A]] = {
+  //   sourceAt(Suite.truncate(cmplx), addr)
+  // }
+
+  // def faceAtLocation[N <: Nat, A](cmplx : Complex[N, A], faceAddr : FaceAddress[N]) : Option[Complex[faceAddr.Dim, A]] = 
+  //   faceAt(cmplx, faceAddr.address)(faceAddr.gte)
+
+  // //============================================================================================
+  // // COMULTIPLICATION ROUTINES
+  // //
+
+  // def addrComult[N <: Nat, A](cmplx : Complex[N, A]) : Complex[N, (A, FaceAddress[N])] = ???
+
+  // def addrComultLocal[N <: Nat, M <: Nat, A](cmplx : Complex[M, A], gte : Gte[N, M]) : Complex[M, (A, FaceAddress[N])] = {
+
+  //   type ComultIn0[P <: Nat] = Complex[P, A]
+  //   type ComultIn1[P <: Nat] = Gte[N, P]
+  //   type ComultOut[P <: Nat] = Complex[P, (A, FaceAddress[N])]
+
+  //   object ComultRecursor extends NatRecursorT0P2[ComultIn0, ComultIn1, ComultOut] {
+
+  //     def caseZero(cmplx : Complex[_0, A], gte : Gte[N, _0]) : Complex[_0, (A, FaceAddress[N])] = ???
+  //     def caseSucc[P <: Nat](cmplx : Complex[S[P], A], gte : Gte[N, S[P]]) : Complex[S[P], (A, FaceAddress[N])] = ???
+
+  //   }
+
+  //   ???
+
+  // }
+
+
+  // def unwind[N <: Nat, M <: Nat](gte : Gte[N, S[M]]) : Gte[N, M] = ???
 
   //============================================================================================
   // SOURCE CALCULATION MONAD
@@ -107,7 +113,7 @@ object Complex {
           })(implicitly[Applicative[SrcM]])
         } yield ()
     }
-  }
 
+  }
 
 }

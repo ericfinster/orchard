@@ -12,48 +12,13 @@ import scalaz.std.option._
 
 import Nats._
 import Tree._
+import Suite._
 import Nesting._
 import Complex._
 
-sealed abstract class ComplexZipper[N <: Nat, +A] { def dim : N }
-case class ObjZipper[+A](objZipper : NestingZipper[_0, A]) extends ComplexZipper[_0, A] { def dim = Z }
-case class DiagramZipper[N <: Nat, +A](cmplxZipper : ComplexZipper[N, A], nstZipper : NestingZipper[S[N], A]) 
-  extends ComplexZipper[S[N], A] { def dim = nstZipper.dim }
-
 object ComplexZipper {
 
-  //============================================================================================
-  // HEAD OF
-  //
-
-  def headOf[N <: Nat, A](cz : ComplexZipper[N, A]) : NestingZipper[N, A] = 
-    HeadRecursor.execute(cz.dim)(cz)
-
-  type HeadIn[N <: Nat, A] = ComplexZipper[N, A]
-  type HeadOut[N <: Nat, A] = NestingZipper[N, A]
-
-  object HeadRecursor extends NatRecursorT1P1[HeadIn, HeadOut] {
-
-    def caseZero[A](cz : ComplexZipper[_0, A]) : NestingZipper[_0, A] = 
-      cz match {
-        case ObjZipper(hd) => hd
-      }
-
-    def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : NestingZipper[S[P], A] =
-      cz match {
-        case DiagramZipper(_, hd) => hd
-      }
-
-  }
-
-  //============================================================================================
-  // TAIL OF
-  //
-
-  def tailOf[N <: Nat, A](cz : ComplexZipper[S[N], A]) : ComplexZipper[N, A] = 
-    cz match {
-      case DiagramZipper(tl, _) => tl
-    }
+  type ComplexZipper[N <: Nat, A] = Suite[NestingZipper, N, A]
 
   //============================================================================================
   // SEAL
@@ -68,10 +33,10 @@ object ComplexZipper {
   object SealRecursor extends NatRecursorT1P1[SealIn, SealOut] {
 
     def caseZero[A](cz : ComplexZipper[_0, A]) : Complex[_0, A] = 
-      Base(headOf(cz).close)
+      cz.head.close
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : Complex[S[P], A] = 
-      Append(seal(tailOf(cz)) , headOf(cz).close)
+      seal(tailOf(cz)) >> cz.head.close
 
   }
 
@@ -88,37 +53,35 @@ object ComplexZipper {
 
   object VisitRecursor extends NatRecursorT1P2[VisitIn0, VisitIn1, VisitOut] {
 
-    def caseZero[A](dir : Direction[_1], cz : ComplexZipper[_0, A]) =
-      cz match {
-        case ObjZipper(oz) => 
-          for {
-            zp <- NestingZipper.visit(dir, oz)
-          } yield ObjZipper(zp)
-      }
+    def caseZero[A](dir : Direction[_1], cz : ComplexZipper[_0, A]) = 
+      for {
+        zp <- NestingZipper.visit(dir, cz.head)
+      } yield zp
 
     def caseSucc[P <: Nat, A](dir : Direction[S[S[P]]], cz : ComplexZipper[S[P], A]) : Option[ComplexZipper[S[P], A]] = 
       dir match {
-        case Wrap(Root()) => 
+        case Dir(Root()) => 
           for {
-            zp <- NestingZipper.visit(dir, headOf(cz))
-          } yield DiagramZipper(tailOf(cz), zp)
-        case Wrap(Step(d, ds)) => 
+            zp <- NestingZipper.visit(dir, cz.head)
+          } yield tailOf(cz) >> zp
+
+        case Dir(Step(d, ds)) => 
           for {
 
-            prefixZipper <- caseSucc(Wrap(ds), cz)
-            prefixNestingZipper = headOf(prefixZipper)
+            prefixZipper <- caseSucc(Dir(ds), cz)
+            prefixNestingZipper = prefixZipper.head
             nestingSibling <- NestingZipper.sibling(d, prefixNestingZipper)
             prefixSpine <- Nesting.spine(prefixNestingZipper.focus)
 
             res <- (
               prefixSpine match {
-                case Leaf(_) => Some(DiagramZipper(tailOf(prefixZipper), nestingSibling))
+                case Leaf(_) => Some(tailOf(prefixZipper) >> nestingSibling)
                 case Node(_, shell) => 
                   for {
                     extents <- Tree.shellExtents(shell)
                     recAddr <- Tree.valueAt(extents, d)
                     fixupLower <- seek(recAddr, tailOf(prefixZipper))
-                  } yield DiagramZipper(fixupLower, nestingSibling)
+                  } yield (fixupLower >> nestingSibling)
               }
             )
 
@@ -154,14 +117,10 @@ object ComplexZipper {
   object FromComplexRecursor extends NatRecursorT1P1[FromComplexIn, FromComplexOut] {
 
     def caseZero[A](cmplx : Complex[_0, A]) : ComplexZipper[_0, A] = 
-      cmplx match {
-        case Base(objNst) => ObjZipper(NestingZipper(objNst, Bottom()))
-      }
+      NestingZipper(cmplx.head, Bottom())
 
     def caseSucc[P <: Nat, A](cmplx : Complex[S[P], A]) : ComplexZipper[S[P], A] = 
-      cmplx match {
-        case Append(tl, hd) => DiagramZipper(fromComplex(tl), NestingZipper(hd, Bottom()))
-      }
+      fromComplex(tailOf(cmplx)) >> NestingZipper(cmplx.head, Bottom())
 
   }
 
@@ -179,19 +138,15 @@ object ComplexZipper {
   object UpdateFocusRecursor extends NatRecursorT1P2[UpdateFocusIn0, UpdateFocusIn1, UpdateFocusOut] {
 
     def caseZero[A](cz : ComplexZipper[_0, A], nst : Nesting[_0, A]) : ComplexZipper[_0, A] = 
-      cz match {
-        case ObjZipper(oz) => ObjZipper(oz.withFocus(nst))
-      }
+      cz.head.withFocus(nst)
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A], nst : Nesting[S[P], A]) : ComplexZipper[S[P], A] = 
-      cz match {
-        case DiagramZipper(tl, hd) => DiagramZipper(tl, hd.withFocus(nst))
-      }
+      tailOf(cz) >> cz.head.withFocus(nst)
 
   }
 
   def focusValue[N <: Nat, A](cz : ComplexZipper[N, A]) : A = 
-    labelOf(headOf(cz).focus)
+    labelOf(cz.head.focus)
 
   def focusCorolla[N <: Nat, A](cz : ComplexZipper[S[N], A]) : Option[Tree[N, Address[N]]] = 
     FocusCorollaRecursor.execute(tailOf(cz).dim)(cz)
@@ -206,7 +161,7 @@ object ComplexZipper {
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[S[P]], A]) : Option[Tree[S[P], Address[S[P]]]] = 
       cz match {
-        case DiagramZipper(tl, hd) =>
+        case (tl >> hd) =>
           for {
             sp <- Nesting.spine(hd.focus)
             result <- (
@@ -232,12 +187,12 @@ object ComplexZipper {
   object FocusUnitRecursor extends NatRecursorT1P1[FocusUnitIn, FocusUnitOut] {
 
     def caseZero[A](cz : ComplexZipper[_0, A]) : Option[Tree[_0, Nesting[_0, A]]] = 
-      Some(Pt(headOf(cz).focus))
+      Some(Pt(cz.head.focus))
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : Option[Tree[S[P], Nesting[S[P], A]]] = 
       for {
         cr <- focusCorolla(cz)
-      } yield Node(headOf(cz).focus, map(cr)(Leaf(_)))
+      } yield Node(cz.head.focus, map(cr)(Leaf(_)))
 
   }
 
@@ -254,8 +209,8 @@ object ComplexZipper {
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : Option[Tree[S[P], Address[S[P]]]] = 
       cz match {
-        case DiagramZipper(_, NestingZipper(Dot(a, cr), cn)) => None
-        case DiagramZipper(_, NestingZipper(Box(a, int), cn)) => Some(addressTree(int))
+        case (_ >> NestingZipper(Dot(_, _), _)) => None
+        case (_ >> NestingZipper(Box(_, int), _)) => Some(addressTree(int))
       }
 
   }
@@ -273,7 +228,7 @@ object ComplexZipper {
   object RestrictFocusRecursor extends NatRecursorT1P1[RestrictFocusIn, RestrictFocusOut] {
 
     def caseZero[A](cz : ComplexZipper[_0, A]) : Option[ComplexZipper[_0, A]] = 
-      Some(ObjZipper(headOf(cz).withContext(Bottom())))
+      Some(cz.head.withContext(Bottom()))
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : Option[ComplexZipper[S[P], A]] = {
 
@@ -283,15 +238,14 @@ object ComplexZipper {
       val MS = MonadState[SrcS, Complex[P, A]]
       import MS._
 
-      val tl = tailOf(cz)
-      val nst = headOf(cz).focus
-      val cn = headOf(cz).context
+      val nst = cz.head.focus
 
       for {
         fnst <- spine(nst)
-        newTail <- restrictFocus(tl)
+        newTail <- restrictFocus(tailOf(cz))
         newComplex <- exciseLocal(Root()(fnst.dim), fnst).exec(seal(newTail))
-      } yield DiagramZipper(fromComplex(newComplex), NestingZipper(nst, Bottom()))
+      } yield (fromComplex(newComplex) >> NestingZipper(nst, Bottom()))
+
     }
 
   }
@@ -310,18 +264,18 @@ object ComplexZipper {
 
     def caseZero[A](cz : ComplexZipper[_0, A]) : Option[ComplexZipper[_0, A]] = 
       cz match {
-        case ObjZipper(NestingZipper(fcs, cn)) =>
-          Some(ObjZipper(NestingZipper(Obj(labelOf(fcs)), cn)))
+        case Base(NestingZipper(fcs, cn)) =>
+          Some(NestingZipper(Obj(labelOf(fcs)), cn))
       }
 
     def caseSucc[P <: Nat, A](cz : ComplexZipper[S[P], A]) : Option[ComplexZipper[S[P], A]] =
       cz match {
-        case DiagramZipper(tl, NestingZipper(nst, cn)) =>
+        case (tl >> NestingZipper(nst, cn)) =>
           for {
             fnst <- spine(nst)
             newTl <- compressFocus(tl, fnst)
             cr <- focusCorolla(cz)
-          } yield DiagramZipper(newTl, NestingZipper(Dot(labelOf(nst), cr), cn))
+          } yield (newTl >> NestingZipper(Dot(labelOf(nst), cr), cn))
       }
 
   }

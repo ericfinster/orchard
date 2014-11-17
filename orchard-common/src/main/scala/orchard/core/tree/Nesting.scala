@@ -12,6 +12,8 @@ import scalaz.std.option._
 
 import Nats._
 import Tree._
+import Suite._
+import Complex._
 
 sealed abstract class Nesting[N <: Nat, +A] { def dim : N }
 case class Obj[+A](a : A) extends Nesting[_0, A] { def dim = Z }
@@ -76,20 +78,83 @@ object Nesting {
 
   }
 
-}
+  //============================================================================================
+  // WITH ADDRESS
+  //
 
-object NestingExamples {
+  def withAddressPrefix[N <: Nat, A](addr : Address[S[N]], nst : Nesting[N, A]) : Nesting[N, (A, Address[S[N]])] = 
+    WithAddrRecursor.execute(nst.dim)(addr, nst)
 
-  val fred0 : Nesting[_0, Int] = ??? //Box(4, Pt(Box(3, Pt(Box(2, Pt(Obj(1)))))))
+  type WithAddrPrefIn0[N <: Nat, A] = Address[S[N]]
+  type WithAddrPrefIn1[N <: Nat, A] = Nesting[N, A]
+  type WithAddrPrefOut[N <: Nat, A] = Nesting[N, (A, Address[S[N]])]
 
-  val fred1 : Nesting[_1, Int] = ??? //Box(13, Node(Box(12, Node(Dot(7, Pt(Root())),Pt(Leaf(Root())))),Pt(Node(Box(11, Node(Box(10, Leaf(Root())),Pt(Node(Dot(6, Pt(Root())),Pt(Leaf(Root())))))),Pt(Node(Box(9, Node(Box(8, Node(Dot(5, Pt(Root())),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root()))))))))
 
-  val fred2 : Nesting[_2, Int] = ??? //Box(22, Node(Box(21, Node(Dot(18, Node(Root(),Pt(Node(Step(Root(), Root()),Pt(Node(Step(Root(), Step(Root(), Root())),Pt(Leaf(Root())))))))),Node(Leaf(Root()),Pt(Node(Node(Dot(17, Node(Root(),Pt(Node(Step(Root(), Root()),Pt(Leaf(Root())))))),Node(Node(Dot(16, Leaf(Root())),Leaf(Root())),Pt(Node(Leaf(Step(Root(), Root())),Pt(Leaf(Root())))))),Pt(Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root()))))))))),Node(Node(Dot(19, Node(Root(),Pt(Leaf(Root())))),Node(Leaf(Root()),Pt(Leaf(Root())))),Pt(Node(Leaf(Step(Root(), Root())),Pt(Node(Node(Box(20, Node(Dot(15, Node(Root(),Pt(Leaf(Root())))),Node(Leaf(Root()),Pt(Leaf(Root()))))),Node(Node(Dot(14, Node(Root(),Pt(Leaf(Root())))),Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root())))))))))
+  object WithAddrRecursor extends NatRecursorT1P2[WithAddrPrefIn0, WithAddrPrefIn1, WithAddrPrefOut] {
 
-  val fred3 : Nesting[_3, Int] = ??? //Box(26, Node(Dot(25, Node(Root(),Node(Node(Step(Root(), Root()),Node(Leaf(Root()),Pt(Leaf(Root())))),Pt(Node(Leaf(Step(Root(), Root())),Pt(Node(Node(Step(Step(Root(), Step(Root(), Root())), Root()),Node(Node(Step(Root(), Step(Step(Root(), Step(Root(), Root())), Root())),Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root()))))))))),Node(Node(Dot(24, Node(Root(),Node(Leaf(Root()),Pt(Node(Node(Step(Step(Root(), Root()), Root()),Node(Node(Step(Root(), Step(Step(Root(), Root()), Root())),Leaf(Root())),Pt(Node(Leaf(Step(Root(), Root())),Pt(Leaf(Root())))))),Pt(Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root()))))))))),Node(Leaf(Root()),Node(Leaf(Root()),Pt(Node(Node(Leaf(Step(Step(Root(), Root()), Root())),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Root()), Root()))),Leaf(Root())),Pt(Node(Leaf(Step(Root(), Root())),Pt(Leaf(Root())))))),Pt(Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root()))))))))),Node(Node(Leaf(Step(Root(), Root())),Node(Leaf(Root()),Pt(Leaf(Root())))),Pt(Node(Leaf(Step(Root(), Root())),Pt(Node(Node(Node(Dot(23, Node(Root(),Node(Leaf(Root()),Pt(Leaf(Root()))))),Node(Leaf(Step(Step(Root(), Step(Root(), Root())), Root())),Node(Leaf(Root()),Pt(Leaf(Root()))))),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Step(Root(), Root())), Root()))),Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root()))))))))))
+    def caseZero[A](addr : Address[_1], nst : Nesting[_0, A]) : Nesting[_0, (A, Address[_1])] =
+      nst match {
+        case Obj(a) => Obj((a, addr))
+        case Box(a, canopy) => {
+          Box((a, addr), map(Tree.zipWithAddress(canopy))({
+            case (t, d) => withAddressPrefix(Step(d, addr), t)
+          }))
+        }
+      }
 
-  val fred4 : Nesting[_4, Int] = ??? //Dot(27, Node(Root(),Node(Node(Step(Root(), Root()),Node(Leaf(Root()),Node(Leaf(Root()),Pt(Node(Node(Leaf(Step(Step(Root(), Root()), Root())),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Root()), Root()))),Leaf(Root())),Pt(Node(Leaf(Step(Root(), Root())),Pt(Leaf(Root())))))),Pt(Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root()))))))))),Node(Node(Leaf(Step(Root(), Root())),Node(Leaf(Root()),Pt(Leaf(Root())))),Pt(Node(Leaf(Step(Root(), Root())),Pt(Node(Node(Node(Step(Step(Step(Root(), Step(Root(), Root())), Root()), Root()),Node(Leaf(Step(Step(Root(), Step(Root(), Root())), Root())),Node(Leaf(Root()),Pt(Leaf(Root()))))),Node(Node(Leaf(Step(Root(), Step(Step(Root(), Step(Root(), Root())), Root()))),Node(Leaf(Step(Root(), Step(Root(), Root()))),Pt(Leaf(Root())))),Pt(Leaf(Root())))),Pt(Leaf(Root()))))))))))
+    def caseSucc[P <: Nat, A](addr : Address[S[S[P]]], nst : Nesting[S[P], A]) : Nesting[S[P], (A, Address[S[S[P]]])] = 
+      nst match {
+        case Dot(a, cor) => Dot((a, addr), cor)
+        case Box(a, canopy) => {
+          Box((a, addr), map(Tree.zipWithAddress(canopy))({
+            case (t, d) => withAddressPrefix(Step(d, addr), t)
+          }))
+        }
+      }
 
-  val fred : Complex[_4, Int] = Append(Append(Append(Append(Base(fred0), fred1), fred2), fred3), fred4)
+  }
+
+  def withAddress[N <: Nat, A](nst : Nesting[N, A]) : Nesting[N, (A, Address[S[N]])] = 
+    withAddressPrefix(Root()(S(nst.dim)), nst)
+
+  //============================================================================================
+  // WITH FACE ADDRESS
+  //
+
+  // def withFaceAddressPrefix[N <: Nat, M <: Nat, A](addr : Address[S[M]], nst : Nesting[M, A], gte : Gte[N, M]) : Nesting[M, (A, FaceAddress[N])] = 
+    ???
+    // WithAddrRecursor.execute(nst.dim)(addr, nst)
+
+  // type WithAddrPrefIn0[N <: Nat, A] = Address[S[N]]
+  // type WithAddrPrefIn1[N <: Nat, A] = Nesting[N, A]
+  // type WithAddrPrefOut[N <: Nat, A] = Nesting[N, (A, Address[S[N]])]
+
+
+  // object WithAddrRecursor extends NatRecursorT1P2[WithAddrPrefIn0, WithAddrPrefIn1, WithAddrPrefOut] {
+
+  //   def caseZero[A](addr : Address[_1], nst : Nesting[_0, A]) : Nesting[_0, (A, Address[_1])] =
+  //     nst match {
+  //       case Obj(a) => Obj((a, addr))
+  //       case Box(a, canopy) => {
+  //         Box((a, addr), map(Tree.zipWithAddress(canopy))({
+  //           case (t, d) => withAddressPrefix(Step(d, addr), t)
+  //         }))
+  //       }
+  //     }
+
+  //   def caseSucc[P <: Nat, A](addr : Address[S[S[P]]], nst : Nesting[S[P], A]) : Nesting[S[P], (A, Address[S[S[P]]])] = 
+  //     nst match {
+  //       case Dot(a, cor) => Dot((a, addr), cor)
+  //       case Box(a, canopy) => {
+  //         Box((a, addr), map(Tree.zipWithAddress(canopy))({
+  //           case (t, d) => withAddressPrefix(Step(d, addr), t)
+  //         }))
+  //       }
+  //     }
+
+  // }
+
+  // def withAddress[N <: Nat, A](nst : Nesting[N, A]) : Nesting[N, (A, Address[S[N]])] = 
+  //   withAddressPrefix(Root()(S(nst.dim)), nst)
 
 }

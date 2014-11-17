@@ -255,19 +255,19 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, LabeledBox]] = {
       val canvas = createNestingCanvas
       // println("========= Dimension 0 =========")
-      val resultComplex = renderObjectNesting(head(zc), canvas)
+      val resultComplex = renderObjectNesting(zc.head, canvas)
       canvas.finalizeRenderPass
       Some(Base(resultComplex))
     }
 
     def caseSucc[P <: Nat](sc : Complex[S[P], A]) : Option[Complex[S[P], LabeledBox]] = 
       sc match {
-        case Append(tl, hd) =>
+        case (tl >> hd) =>
           for {
             tailResult <- renderComplex(tl)
             // _ = println("========= Dimension " ++ natToInt(sc.dim).toString ++  " =========")
             canvas = createNestingCanvas
-            leaves <- spine(head(tailResult))
+            leaves <- spine(tailResult.head)
             edges = map(leaves)((lb : LabeledBox) => canvas.createEdgeLayout(lb.owner))
             headResult <- renderNesting(hd, canvas, edges)
           } yield {
@@ -281,7 +281,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
             canvas.finalizeRenderPass
 
-            Append(tailResult, nesting)
+            (tailResult >> nesting)
           }
       }
 

@@ -12,19 +12,9 @@ import scala.language.higherKinds
 import scalaz.Leibniz
 import scalaz.Leibniz._
 
-trait NatRec0[Type] {
-
-  type OnZero <: Type
-  type OnSucc[P <: Nat, T <: Type] <: Type
-
-}
-
-trait NatRec1[Type] {
-
-  type OnZero[+A] <: Type
-  type OnSucc[P <: Nat, T[+_] <: Type, +A] <: Type
-
-}
+//============================================================================================
+// TYPE LEVEL NATURALS
+//
 
 sealed trait Nat { self => 
 
@@ -59,6 +49,28 @@ case class S[P <: Nat](val pred : P) extends Nat { self =>
 
 }
 
+//============================================================================================
+// TYPE RECURSORS
+//
+
+trait NatRec0[Type] {
+
+  type OnZero <: Type
+  type OnSucc[P <: Nat, T <: Type] <: Type
+
+}
+
+trait NatRec1[Type] {
+
+  type OnZero[+A] <: Type
+  type OnSucc[P <: Nat, T[+_] <: Type, +A] <: Type
+
+}
+
+//============================================================================================
+// VALUE RECURSORS
+//
+
 trait NatRecursors { self : Nats => 
 
   trait NatRecursorT0P1[F[_ <: Nat], G[_ <: Nat]] {
@@ -83,6 +95,32 @@ trait NatRecursors { self : Nats =>
       }
 
   }
+
+  trait NatRecursorT0P2[F[_ <: Nat], G[_ <: Nat], H[_ <: Nat]] {
+
+    def caseZero(fz : F[_0], gz : G[_0]) : H[_0]
+    def caseSucc[P <: Nat](fs : F[S[P]], gs : G[S[P]]) : H[S[P]]
+
+    def execute[N <: Nat](n : N)(fn : F[N], gn : G[N]) : H[N] = 
+      n match {
+        case IsZero(zm) => {
+          import zm._
+          val fz : F[_0] = zeroCoh.subst[F](fn)
+          val gz : G[_0] = zeroCoh.subst[G](gn)
+          val hz : H[_0] = caseZero(fz, gz)
+          zeroCoe.subst[H](hz)
+        }
+        case IsSucc(sm) => {
+          import sm._
+          val fs : F[S[P]] = succCoh.subst[F](fn)
+          val gs : G[S[P]] = succCoh.subst[G](gn)
+          val hs : H[S[P]] = caseSucc[P](fs, gs)
+          succCoe.subst[H](hs)
+        }
+      }
+
+  }
+
 
   trait NatRecursorT1P1[F[_ <: Nat, _], G[_ <: Nat, _]] {
 
@@ -278,6 +316,15 @@ trait Nats extends NatRecursors {
   type _8 = S[_7]
   type _9 = S[_8]
 
+  def natFromInt(i : Int) : Nat = 
+    if (i <= 0) Z else S(natFromInt(i - 1))
+
+  def natToInt[N <: Nat](n : N) : Int = 
+    n match {
+      case Z => 0
+      case S(p) => natToInt(p) + 1
+    }
+
   implicit def zeroNat : Z.type = Z
   implicit def succNat[P <: Nat](implicit p : P) : S[P] = S(p)
 
@@ -301,14 +348,43 @@ trait Nats extends NatRecursors {
       def leibniz : Leibniz[Nothing, Nat, S[P], S[P]] = refl[S[P]]
     }
 
-  def natFromInt(i : Int) : Nat = 
-    if (i <= 0) Z else S(natFromInt(i - 1))
+  sealed trait Lte[M <: Nat, N <: Nat]
+  case class ZeroLte[N <: Nat]() extends Lte[_0, N] 
+  case class SuccLte[M <: Nat, N <: Nat](lteMN : Lte[M, N]) extends Lte[S[M], S[N]] { type P = M ; type Q = N }
 
-  def natToInt[N <: Nat](n : N) : Int = 
-    n match {
-      case Z => 0
-      case S(p) => natToInt(p) + 1
-    }
+  trait LteRecursor[F[_ <: Nat, _ <: Nat], G[_ <: Nat, _ <: Nat]] {
+
+    def caseZeroLte[N <: Nat](fzs : F[_0, N]) : G[_0, N]
+    def caseSuccLte[M <: Nat, N <: Nat](fss : F[S[M], S[N]], lte : Lte[M, N]) : G[S[M], S[N]]
+
+    def execute[M <: Nat, N <: Nat](ev : Lte[M, N])(fnm : F[M, N]) : G[M, N] = 
+      ev match {
+        case zs @ ZeroLte() => caseZeroLte(fnm.asInstanceOf[F[_0, N]]).asInstanceOf[G[M, N]]
+        case ss @ SuccLte(lte) => caseSuccLte(fnm.asInstanceOf[F[S[ss.P], S[ss.Q]]], lte).asInstanceOf[G[M, N]]
+      }
+
+  }
+
+  // def lteLemma[M <: Nat, N <: Nat](lte : Lte[S[M], N]) : Lte[M, N] = 
+  //   lte match {
+  //     case ZeroRefl => ???
+  //     case ZeroSucc() => ???
+  //     case SuccSucc(_) => ???
+  //   }
+
+  // object Lte {
+
+  //   implicit def apply[M <: Nat, N <: Nat](implicit lte : Lte[M, N]) : Lte[M, N] = lte
+
+  //   type <=[M <: Nat, N <: Nat] = Lte[M, N]
+
+  //   implicit def lteReflZero = new <=[_0, _0] { }
+  //   implicit def lteSuccZero[M <: Nat] = new <=[_0, S[M]] { }
+  //   implicit def lteSuccSucc[M <: Nat, N <: Nat](implicit lte : M <= N) = new <=[S[M], S[N]] { }
+
+  //   def lteLemma[M <: Nat, N <: Nat](lte : S[M] <= N) : M <= N = ???
+
+  // }
 
   trait ZeroMatch[N <: Nat] {
 
