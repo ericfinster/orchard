@@ -106,3 +106,14 @@ module Tree where
   join {zero} (Pt (Pt a)) = just (Pt a)
   join {suc n} (Leaf addr) = just (Leaf addr)
   join {suc n} (Node tr tsh) = traverse-tree maybeA join tsh >>= graft tr
+
+  zipWithPrefix : {n : ℕ} → {A : Set} → Address n → Tree n A → Tree n (A × Address n)
+  zipWithPrefix {zero} pref (Pt a) = Pt (a , [])
+  zipWithPrefix {suc n} pref (Leaf addr) = Leaf addr
+  zipWithPrefix {suc n} pref (Node a sh) = 
+    Node (a , pref) (map-tree (λ { (t , d) → zipWithPrefix (d ∷ pref) t }) (zipWithPrefix [] sh))
+
+  zipWithAddress : {n : ℕ} → {A : Set} → Tree n A → Tree n (A × Address n)
+  zipWithAddress = zipWithPrefix []
+
+

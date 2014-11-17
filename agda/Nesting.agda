@@ -41,3 +41,11 @@ module Nesting where
   NestingT : (n : ℕ) → Traverse (Nesting n)
   NestingT n = record { isFunctor = NestingF n ; traverse = traverse-nesting {n} }
 
+  nestingWithPrefix : {n : ℕ} → {A : Set} → Address (suc n) → Nesting n A → Nesting n (A × Address (suc n))
+  nestingWithPrefix {zero} pref (obj a) = obj (a , pref)
+  nestingWithPrefix {suc n} pref (ext a cr) = ext (a , pref) cr
+  nestingWithPrefix {n} pref (int a sh) = 
+    int (a , pref) (map-tree (λ { (nst , dir) → nestingWithPrefix (dir ∷ pref) nst }) (zipWithAddress sh)) 
+
+  nestingWithAddr : {n : ℕ} → {A : Set} → Nesting n A → Nesting n (A × Address (suc n))
+  nestingWithAddr pd = nestingWithPrefix [] pd
