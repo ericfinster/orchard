@@ -136,7 +136,7 @@ case class HUnit[D <: Nat](l : List[HDN[D]]) extends HDN[S[D]] {
   def asScalaList(hl : List[HDN[D]]) : String =
     hl match {
       case Nil => "Root()"
-      case h :: hs => "Step(" ++ h.toScala ++ ", " ++ asScalaList(hs) ++ ")"
+      case h :: hs => "Step(Wrap(" ++ h.toScala ++ "), " ++ asScalaList(hs) ++ ")"
     }
 
   def toXml : String = asXmlList(l)
