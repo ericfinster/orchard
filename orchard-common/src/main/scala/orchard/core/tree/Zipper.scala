@@ -16,9 +16,9 @@ import Tree._
 // Derivatives
 //
 
-sealed abstract class Derivative[N <: Nat, +A] 
-case object ZeroDeriv extends Derivative[_0, Nothing] 
-case class Open[N <: Nat, +A](sh : Tree[N, Tree[S[N], A]], ct : Context[S[N], A]) extends Derivative[S[N], A]
+sealed abstract class Derivative[N <: Nat, +A] { def dim : N }
+case object ZeroDeriv extends Derivative[_0, Nothing] { val dim = Z }
+case class Open[N <: Nat, +A](sh : Tree[N, Tree[S[N], A]], ct : Context[S[N], A]) extends Derivative[S[N], A] { val dim = S(sh.dim) }
 
 object Derivative {
 
@@ -26,7 +26,8 @@ object Derivative {
   // PLUG
   //
 
-  def plug[N <: Nat, A](d : Derivative[N, A], a : A) : Tree[N, A] = ???
+  def plug[N <: Nat, A](d : Derivative[N, A], a : A) : Tree[N, A] = 
+    PlugRecursor.execute(d.dim)(d, a)
 
   type PlugIn0[N <: Nat, A] = Derivative[N, A]
   type PlugIn1[N <: Nat, A] = A
@@ -59,7 +60,8 @@ object Context {
   // CLOSE
   //
 
-  def close[N <: Nat, A](c : Context[N, A], t : Tree[N, A]) : Tree[N, A] = ???
+  def close[N <: Nat, A](c : Context[N, A], t : Tree[N, A]) : Tree[N, A] =
+    CloseRecursor.execute(t.dim)(c, t)
 
   type CloseIn0[N <: Nat, A] = Context[N, A]
   type CloseIn1[N <: Nat, A] = Tree[N, A]

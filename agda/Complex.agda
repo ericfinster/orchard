@@ -146,13 +146,13 @@ module Complex where
 
   -- And somehow, I think we want to use zippers to do it.
 
-  comult : {n : ℕ} → {A : ℕ → Set} → Complex A n → Maybe (Complex (Complex A) n)
-  comult {zero} (■ (obj ob)) = just (■ (obj (■ (obj ob))))
-  comult {zero} (■ (int a (pt nst))) = 
-    comult (■ nst) >>= (λ { (■ res) → just (■ (int (■ (obj a)) (pt res))) })
-  comult {suc n} (ic ⟫ nst) = 
+  comultiply : {n : ℕ} → {A : ℕ → Set} → Complex A n → Maybe (Complex (Complex A) n)
+  comultiply {zero} (■ (obj ob)) = just (■ (obj (■ (obj ob))))
+  comultiply {zero} (■ (int a (pt nst))) = 
+    comultiply (■ nst) >>= (λ { (■ res) → just (■ (int (■ (obj a)) (pt res))) })
+  comultiply {suc n} (ic ⟫ nst) = 
     traverse-nesting maybeA (λ { (_ , addr) → sourceAt (ic ⟫ nst) addr }) (nestingWithAddr nst) 
-    >>= (λ hd → comult ic 
+    >>= (λ hd → comultiply ic 
     >>= (λ tl → just (tl ⟫ hd)))
 
 

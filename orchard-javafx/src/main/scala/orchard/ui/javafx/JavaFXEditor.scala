@@ -13,6 +13,8 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.stage.FileChooser
 
+import orchard.core.tree.Complex
+
 import controls._
 
 abstract class JavaFXEditor extends PopupManager(new VBox) 
@@ -40,9 +42,13 @@ abstract class JavaFXEditor extends PopupManager(new VBox)
     import orchard.core.tree.NestingExamples._
 
     val renderer = new JavaFXRenderer(this)
-    renderer.renderComplex(fred)
 
-    consoleWrite("Finished rendering.")
+    for {
+      result <- renderer.renderComplex(fred)
+      //test <- Complex.comultiply(result)
+    } {
+      consoleWrite("Finished rendering.")
+    }
 
   }
 

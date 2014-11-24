@@ -33,39 +33,4 @@ object Suite {
       case (tl >> _) => tl
     }
 
-  def truncate[F[_ <: Nat, _], M <: Nat, N <: Nat, A](suite : Suite[F, N, A])(implicit lte : Lte[M, N]) : Suite[F, M, A] = {
-
-    type TruncateIn[P <: Nat, Q <: Nat] = Suite[F, Q, A]
-    type TruncateOut[P <: Nat, Q <: Nat] = Suite[F, P, A]
-
-    object TruncateRecursor extends LteRecursor[TruncateIn, TruncateOut] {
-
-      def caseZeroLte[P <: Nat](s : Suite[F, P, A]) : Suite[F, _0, A] = ???
-      def caseSuccLte[P <: Nat, Q <: Nat](s : Suite[F, S[Q], A], lte : Lte[P, Q]) : Suite[F, S[P], A] = ???
-
-    }
-
-    //TruncateRecursor.execute(suite)(gte)
-
-    ???
-  }
-
-
-  // trait GteRecursor[F[_ <: Nat, _ <: Nat], G[_ <: Nat, _ <: Nat]] {
-
-  //   def caseRefl[N <: Nat](fnn : F[N, N], n : N) : G[N, N]
-  //   def caseTrans[N <: Nat, M <: Nat](fsnm : F[S[N], M], gte : Gte[N, M]) : G[S[N], M]
-
-  //   def execute[N <: Nat, M <: Nat](fnm : F[N, M])(gte : Gte[N, M]) : G[N, M] = 
-  //     gte match {
-  //       case Refl(n) => {
-  //         caseRefl(fnm.asInstanceOf[F[N, N]], n).asInstanceOf[G[N, M]]
-  //       }
-  //       case t @ Trans(g) => {
-  //         caseTrans[t.P, M](fnm.asInstanceOf[F[S[t.P], M]], g).asInstanceOf[G[N, M]]
-  //       }
-  //     }
-
-  // }
-
 }

@@ -444,9 +444,39 @@ object Tree extends TreeFunctions {
   implicit def treeIsTraverse[N <: Nat] : Traverse[({ type L[+A] = Tree[N, A] })#L] = 
     new Traverse[({ type L[+A] = Tree[N, A] })#L] {
 
+      override def map[A, B](ta : Tree[N, A])(f : A => B) : Tree[N, B] = 
+        Tree.map(ta)(f)
+
       def traverseImpl[G[_], A, B](ta : Tree[N, A])(f : A => G[B])(implicit isA : Applicative[G]) : G[Tree[N, B]] = 
         Tree.traverse(ta)(f)
 
     }
+
+
+  import scalaz.syntax.FunctorOps
+  import scalaz.syntax.functor._
+
+  implicit def treeToFunctorOps[N <: Nat, A](tr : Tree[N, A]) : FunctorOps[({ type L[+X] = Tree[N, X] })#L, A] = 
+    ToFunctorOps[({ type L[+X] = Tree[N, X] })#L, A](tr)
+
+  import scalaz.syntax.TraverseOps
+  import scalaz.syntax.traverse._
+
+  implicit def treeToTraverseOps[N <: Nat, A](tr : Tree[N, A]) : TraverseOps[({ type L[+X] = Tree[N, X] })#L, A] = 
+    ToTraverseOps[({ type L[+X] = Tree[N, X] })#L, A](tr)
+
+
+  class TreeOps[N <: Nat, A](tr : Tree[N, A]) {
+
+    def zipWithAddress : Tree[N, (A, Address[N])] = 
+      Tree.zipWithAddress(tr)
+
+    def matchWith[B](trB : Tree[N, B]) : Option[Tree[N, (A, B)]] = 
+      Tree.zipComplete(tr, trB)
+
+  }
+
+  implicit def treeToTreeOps[N <: Nat, A](tr : Tree[N, A]) : TreeOps[N, A] = 
+    new TreeOps[N, A](tr)
 
 }

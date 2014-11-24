@@ -32,6 +32,18 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   def externalPadding : T
 
   //============================================================================================
+  // CUSTOM TYPES
+  //
+
+  type CanvasType <: NestingCanvas
+
+  type BoxType <: LabeledBox
+  type ExternalBoxType <: BoxType with ExternalBox
+  type InternalBoxType <: BoxType with InternalBox
+
+  type EdgeType <: Edge
+
+  //============================================================================================
   // ELEMENT CONSTRUCTORS
   //
 
@@ -39,10 +51,10 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
   trait NestingCanvas {
 
-    def createExternalBox(lbl : A) : ExternalBox
-    def createInternalBox(lbl : A, layout : BoxLayout) : InternalBox
+    def createExternalBox(lbl : A) : ExternalBoxType
+    def createInternalBox(lbl : A, layout : BoxLayout) : InternalBoxType
 
-    def createEdge(lbl : A) : Edge
+    def createEdge(lbl : A) : EdgeType
 
     def createEdgeLayout(lbl : A) : LayoutMarker =
       new LayoutMarker {
@@ -59,6 +71,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
     def initializeRenderPass : Unit = ()
     def finalizeRenderPass : Unit = ()
+
 
   }
 
@@ -103,6 +116,63 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
         verticalDependants foreach (_.shiftUp(amount))
       }
     }
+
+  }
+
+  trait LabeledBox extends BoxLayout with Rooted {
+
+    def x : T = rootX - leftMargin
+    def y : T = rootY - height
+
+    def halfLabelWidth : T
+    def halfLabelHeight : T
+
+    def labelWidth : T = halfLabelWidth * fromInt(2)
+    def labelHeight : T = halfLabelHeight * fromInt(2)
+
+    def labelContainerWidth : T = halfLeafWidth + labelWidth + (fromInt(2) * internalPadding)
+    def labelContainerHeight : T = fromInt(2) * internalPadding + labelHeight
+
+    override def toString =
+      "Box(" ++ owner.toString ++ ")(" ++ x.toString ++ ", " ++ y.toString ++ ", " ++ width.toString ++ ", " ++ height.toString ++ ")"
+
+  }
+
+  trait InternalBox extends LabeledBox {
+
+    def interior : BoxLayout
+
+    override def height : T =
+      strokeWidth +
+    labelContainerHeight +
+    interior.height +
+    internalPadding +
+    strokeWidth
+
+    override def leftMargin : T =
+      interior.leftMargin +
+    internalPadding +
+    (fromInt(2) * strokeWidth)
+
+    override def rightMargin : T =
+      max(
+        labelContainerWidth + strokeWidth,
+        interior.rightMargin + internalPadding + (fromInt(2) * strokeWidth)
+      )
+
+  }
+
+  trait ExternalBox extends LabeledBox {
+
+    override def height : T =
+      strokeWidth +
+    internalPadding +
+    labelHeight +
+    internalPadding +
+    strokeWidth
+
+    override def leftMargin : T = halfLabelWidth + internalPadding + strokeWidth
+    override def rightMargin : T = halfLabelWidth + internalPadding + strokeWidth
 
   }
 
@@ -186,73 +256,17 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
   }
 
-  trait LabeledBox extends BoxLayout with Rooted {
-
-    def x : T = rootX - leftMargin
-    def y : T = rootY - height
-
-    def halfLabelWidth : T
-    def halfLabelHeight : T
-
-    def labelWidth : T = halfLabelWidth * fromInt(2)
-    def labelHeight : T = halfLabelHeight * fromInt(2)
-
-    def labelContainerWidth : T = halfLeafWidth + labelWidth + (fromInt(2) * internalPadding)
-    def labelContainerHeight : T = fromInt(2) * internalPadding + labelHeight
-
-    override def toString = 
-      "Box(" ++ owner.toString ++ ")(" ++ x.toString ++ ", " ++ y.toString ++ ", " ++ width.toString ++ ", " ++ height.toString ++ ")"
-
-  }
-
-  trait InternalBox extends LabeledBox {
-
-    def interior : BoxLayout
-
-    override def height : T = 
-      strokeWidth + 
-        labelContainerHeight + 
-        interior.height +
-        internalPadding +
-        strokeWidth
-
-    override def leftMargin : T = 
-      interior.leftMargin + 
-        internalPadding +
-        (fromInt(2) * strokeWidth)
-
-    override def rightMargin : T = 
-      max(
-        labelContainerWidth + strokeWidth,
-        interior.rightMargin + internalPadding + (fromInt(2) * strokeWidth)
-      )
-
-  }
-
-  trait ExternalBox extends LabeledBox {
-
-    override def height : T = 
-      strokeWidth + 
-        internalPadding +
-        labelHeight + 
-        internalPadding +
-        strokeWidth
-
-    override def leftMargin : T = halfLabelWidth + internalPadding + strokeWidth
-    override def rightMargin : T = halfLabelWidth + internalPadding + strokeWidth
-
-  }
 
   //============================================================================================
   // COMPLEX RENDERING
   //
 
   type RenderIn[M <: Nat] = Complex[M, A]
-  type RenderOut[M <: Nat] = Option[Complex[M, LabeledBox]]
+  type RenderOut[M <: Nat] = Option[Complex[M, BoxType]]
 
   object RenderRecursor extends NatRecursorT0P1[RenderIn, RenderOut] {
 
-    def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, LabeledBox]] = {
+    def caseZero(zc : Complex[_0, A]) : Option[Complex[_0, BoxType]] = {
       val canvas = createNestingCanvas
       // println("========= Dimension 0 =========")
       val resultComplex = renderObjectNesting(zc.head, canvas)
@@ -260,7 +274,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
       Some(Base(resultComplex))
     }
 
-    def caseSucc[P <: Nat](sc : Complex[S[P], A]) : Option[Complex[S[P], LabeledBox]] = 
+    def caseSucc[P <: Nat](sc : Complex[S[P], A]) : Option[Complex[S[P], BoxType]] = 
       sc match {
         case (tl >> hd) =>
           for {
@@ -287,14 +301,14 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
   }
 
-  def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, LabeledBox]] =
+  def renderComplex[N <: Nat](cmplx : Complex[N, A]) : Option[Complex[N, BoxType]] =
     RenderRecursor.execute(cmplx.dim)(cmplx)
 
   //============================================================================================
   // OBJECT NESTING RENDERING
   //
 
-  def renderObjectNesting(nst : Nesting[_0, A], canvas : NestingCanvas) : Nesting[_0, LabeledBox] = 
+  def renderObjectNesting(nst : Nesting[_0, A], canvas : NestingCanvas) : Nesting[_0, BoxType] = 
     nst match {
       case Obj(a) => Obj(canvas.createExternalBox(a))
       case Box(a, Pt(c)) => {
@@ -319,7 +333,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
   //
 
   def renderNesting[N <: Nat](nst : Nesting[S[N], A], canvas : NestingCanvas, lvs : Tree[N, LayoutMarker])
-      : Option[(LayoutMarker, Nesting[S[N], LabeledBox])] =
+      : Option[(LayoutMarker, Nesting[S[N], BoxType])] =
     nst match {
       case Dot(a, c) => {
 
@@ -339,7 +353,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
             new LayoutMarker {
 
-              val element = dot
+              val element = (dot : Rooted)
               val external = false
 
               val rootEdge = edge
@@ -451,7 +465,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
             new LayoutMarker {
 
-              val element = dot
+              val element = (dot : Rooted)
               val external = false
 
               val rootEdge = edge
@@ -496,7 +510,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
 
         val (leafCount, leavesWithIndices) = zipWithIndex(lvs)
 
-        def verticalPass(tr : Tree[S[N], Nesting[S[N], A]]) : Option[(LayoutMarker, Tree[S[N], Nesting[S[N], LabeledBox]])] =
+        def verticalPass(tr : Tree[S[N], Nesting[S[N], A]]) : Option[(LayoutMarker, Tree[S[N], Nesting[S[N], BoxType]])] =
           tr match {
 
             case l @ Leaf(addr) =>
@@ -589,7 +603,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
           // Setup and return an appropriate marker
           val marker = new LayoutMarker {
 
-            val element = box
+            val element = (box : Rooted)
             val external = false
 
             val rootEdge = layout.rootEdge
@@ -618,7 +632,7 @@ abstract class Renderer[T, A](implicit isNumeric : Numeric[T]) {
     val element : Rooted
     val external : Boolean
 
-    val rootEdge : Edge
+    val rootEdge : EdgeType
 
     def height : T = zero
 
