@@ -452,45 +452,15 @@ trait OrchardDialogs { self : JavaFXEditor =>
 
   }
 
-  object ViewerDialog extends Dialog {
+  // object ViewerDialog extends Dialog with OrchardViewer {
 
-    heading.text = "View Expression"
+  //   heading.text = "View Expression"
 
-    val viewerArea = new StackPane { padding = Insets(10,10,10,10) }
-    borderPane.center = viewerArea
+  //   borderPane.center = viewerArea
 
-    def onHide = ()
-    def onShow = ()
+  //   def onHide = ()
+  //   def onShow = ()
 
-    addEventFilter(KeyEvent.KEY_PRESSED,
-      new EventHandler[KeyEvent] {
-        def handle(ev : KeyEvent) {
-          ev.getCode match {
-            case KeyCode.X => if (ev.isControlDown) onWrite
-            case _ => ()
-          }
-        }
-      })
-
-    def onWrite = {
-      fileChooser.setTitle("Export Snapshot")
-
-      val file = fileChooser.showSaveDialog(getScene.getWindow)
-
-      if (file != null) {
-
-        val image = viewerArea.content.head.snapshot(new SnapshotParameters, null)
-
-        try {
-          ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
-        } catch {
-          case e : java.io.IOException => {
-            println("There was an error writing to the file!.")
-          }
-        }
-      }
-    }
-
-  }
+  // }
 
 }

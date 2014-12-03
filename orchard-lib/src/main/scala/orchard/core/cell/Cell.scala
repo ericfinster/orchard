@@ -303,7 +303,7 @@ object NCell {
 
     def verticalTraverse(t : CellTree[D, String]) : String =
       t match {
-        case Seed(obj, _) => "id (" ++ obj.toString ++ ")"
+        case Seed(obj, _) => "pt (" ++ obj.toString ++ ")"
         case Leaf(shape, _) => { index += 1 ; "leaf " ++ addresses(perm(index)).toAgda }
         case Graft(cell, branches, _) => {
           // Recurse on the branches, getting their string. then "plug these into" the result

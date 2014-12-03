@@ -340,21 +340,34 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.R => if (ev.isControlDown) onRename
           case KeyCode.U => if (ev.isControlDown) onUnify(ev.isShiftDown)
           case KeyCode.G => if (ev.isControlDown) onGetEnvironmentCell
-  //         // case KeyCode.V => if (ev.isControlDown) onView
+          case KeyCode.K => if (ev.isControlDown) onView 
   //         // case KeyCode.L => if (ev.isControlDown) onLoadExpr
   //         // case KeyCode.G => if (ev.isControlDown) onGlobCardinal
   //         // case KeyCode.X => if (ev.isControlDown) onExtra
   //         // case KeyCode.P => if (ev.isControlDown) onPrintScreen
   //         // case KeyCode.W => if (ev.isControlDown) onWebView
   //         // case KeyCode.M => if (ev.isControlDown) displayMessage("Message", "This is a message!")
-          case KeyCode.Z => if (ev.isControlDown) onDebug
+          case KeyCode.Z => if (ev.isControlDown) { if (ev.isShiftDown) onDumpAgda else onDumpScala }
           case _ => ()
         }
       }
     })
 
+  def onDumpAgda = 
+    for {
+      wksp <- activeWorkspace
+      sheet <- wksp.activeSheet
+      selectedCell <- sheet.selectionBase
+    } {
+      val dumpCell : NCell[String] = selectedCell.neutralNCell map {
+        case None => "None"
+        case Some(expr) => expr.id
+      }
 
-  def onDebug = 
+      println(NCell.agdaSyntax(dumpCell))
+    }
+
+  def onDumpScala = 
     for {
       wksp <- activeWorkspace
       sheet <- wksp.activeSheet
@@ -375,10 +388,9 @@ object OrchardEditor extends PopupManager(new VBox)
       selectedCell <- sheet.selectionBase
     } {
 
-      val gallery = new StaticFrameworkGallery(selectedCell.neutralNCell)
-      ViewerDialog.viewerArea.content = gallery
-      gallery.renderAll
-      ViewerDialog.run
+      val viewer = new OrchardViewer
+      viewer.setActiveExpression(selectedCell.neutralNCell)
+      viewer.run
 
     }
 

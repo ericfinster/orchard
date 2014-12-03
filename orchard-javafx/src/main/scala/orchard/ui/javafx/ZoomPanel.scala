@@ -24,6 +24,13 @@ abstract class ZoomPanel[A] extends JavaFXPanel[A] {
 
   def childGroup = myChildGroup
 
+  private var zoomFactor : Double = 1.0
+
+  def setZoomFactor(zf : Double) : Unit = {
+    zoomFactor = zf
+    requestLayout
+  }
+
   override def resize(width : Double, height : Double) = {
     val bounds = childGroup.getLayoutBounds
 
@@ -35,19 +42,19 @@ abstract class ZoomPanel[A] extends JavaFXPanel[A] {
 
     if (xfactor < yfactor) {
       if (xfactor <= 1.0) {
-        childScaleTransform.setX(xfactor)
-        childScaleTransform.setY(xfactor)
+        childScaleTransform.setX(xfactor * zoomFactor)
+        childScaleTransform.setY(xfactor * zoomFactor)
       } else {
-        childScaleTransform.setX(1.0)
-        childScaleTransform.setY(1.0)
+        childScaleTransform.setX(zoomFactor)
+        childScaleTransform.setY(zoomFactor)
       }
     } else {
       if (yfactor <= 1.0) {
-        childScaleTransform.setX(yfactor)
-        childScaleTransform.setY(yfactor)
+        childScaleTransform.setX(yfactor * zoomFactor)
+        childScaleTransform.setY(yfactor * zoomFactor)
       } else {
-        childScaleTransform.setX(1.0)
-        childScaleTransform.setY(1.0)
+        childScaleTransform.setX(zoomFactor)
+        childScaleTransform.setY(zoomFactor)
       }
     }
 

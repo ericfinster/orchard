@@ -25,6 +25,16 @@ trait OrchardMenus { self : JavaFXEditor =>
     items ++= List(exitItem)
   }
 
+  val viewSelectedItem = new MenuItem {
+    text = "View Selected Cell"
+    onAction = onView
+  }
+
+  val viewMenu = new Menu {
+    text = "View"
+    items ++= List(viewSelectedItem)
+  }
+
   val newModuleItem = new MenuItem {
     text = "New Module"
     onAction = onNewModule
@@ -156,10 +166,12 @@ trait OrchardMenus { self : JavaFXEditor =>
   }
 
   val menuBar = new MenuBar {
-    menus ++= List(fileMenu, moduleMenu, workspaceMenu, substitutionMenu, expressionMenu, shapeMenu)
+    menus ++= List(fileMenu, viewMenu, moduleMenu, workspaceMenu, substitutionMenu, expressionMenu, shapeMenu)
   }
 
   def onExit : Unit
+
+  def onView : Unit
 
   def onNewModule : Unit
   def onOpenModule : Unit

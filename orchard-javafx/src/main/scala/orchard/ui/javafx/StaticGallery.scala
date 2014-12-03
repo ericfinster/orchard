@@ -10,7 +10,9 @@ package orchard.ui.javafx
 import scalafx.Includes._
 
 import javafx.geometry.Pos
+import javafx.scene.Group
 import javafx.scene.{layout => jfxsl}
+import javafx.scene.transform.Scale
 
 abstract class StaticGallery[A] extends jfxsl.HBox with JavaFXGallery[A] {
 
@@ -27,7 +29,14 @@ abstract class StaticGallery[A] extends jfxsl.HBox with JavaFXGallery[A] {
   myPanels onChange onMyPanelsChange
 
   def onMyPanelsChange : Unit = {
-    getChildren setAll myPanels
+    val myChildren = getChildren
+    myChildren.clear
+
+    myPanels foreach { p =>
+      val g = new Group
+      g.getChildren add p
+      myChildren add g
+    }
   }
 
 }

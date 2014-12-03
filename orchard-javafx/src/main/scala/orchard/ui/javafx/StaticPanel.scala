@@ -22,6 +22,16 @@ abstract class StaticPanel[A] extends JavaFXPanel[A] { thisPanel =>
   childGroup.setManaged(false)
   getChildren.add(childGroup)
 
+  private val myScale : Scale = new Scale(1, 1)
+
+  getTransforms add myScale
+
+  def setZoomFactor(f : Double) : Unit = {
+    myScale.setX(f)
+    myScale.setY(f)
+    requestLayout
+  }
+
   def childGroup = myChildGroup
 
   override def layoutChildren : Unit = {
