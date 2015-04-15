@@ -301,10 +301,17 @@ object NCell {
         }
       }
 
+    def addParens(str : String) : String = 
+      if (str.contains(' ')) {
+        "(" ++ str ++ ")"
+      } else {
+        str
+      }
+
     def verticalTraverse(t : CellTree[D, String]) : String =
       t match {
-        case Seed(obj, _) => "pt (" ++ obj.toString ++ ")"
-        case Leaf(shape, _) => { index += 1 ; "leaf " ++ addresses(perm(index)).toAgda }
+        case Seed(obj, _) => "pt " ++ addParens(obj.toString)
+        case Leaf(shape, _) => { index += 1 ; "leaf" } // ++ addresses(perm(index)).toAgda }
         case Graft(cell, branches, _) => {
           // Recurse on the branches, getting their string. then "plug these into" the result
           // by traversing the cells source tree.
@@ -312,7 +319,7 @@ object NCell {
           val verticalExprs = new Stack ++ (branches map (verticalTraverse(_)))
 
           cell match {
-            case Object(value, _) => "node (" ++ value.toString ++ ") (" ++ verticalExprs.pop ++ ")"
+            case Object(value, _) => "node " ++ addParens(value.toString) ++ " " ++ addParens(verticalExprs.pop)
             case Composite(value, srcTree, tgtValue, _) => {
 
               def horizontalTraverse(tr : CellTree[D#Pred, String]) : CellTree[D#Pred, String] =
@@ -333,7 +340,7 @@ object NCell {
                   }
                 }
 
-              "node (" ++ value.toString ++ ") (" ++ cellTreeAgdaSyntax(horizontalTraverse(srcTree)) ++ ")"
+              "node " ++ addParens(value.toString) ++ " " ++ addParens(cellTreeAgdaSyntax(horizontalTraverse(srcTree)))
             }
           }
         }
@@ -345,7 +352,7 @@ object NCell {
 
   def cellScalaSyntax[D <: Nat](cell : Cell[D, String]) : String = 
     cell match {
-      case Object(value, ev) => "Pointt(" ++ value.toString ++ ")"
+      case Object(value, ev) => "Point(" ++ value.toString ++ ")"
       case Composite(value, srcTree, tgtValue, ev) => cellTreeScalaSyntax(srcTree)
     }
 
@@ -366,7 +373,7 @@ object NCell {
     def verticalTraverse(t : CellTree[D, String]) : String =
       t match {
         case Seed(obj, _) => "Pt(" ++ obj.toString ++ ")"
-        case Leaf(shape, _) => { index += 1 ; "Leaf(" ++ addresses(perm(index)).toScala ++ ")" }
+        case Leaf(shape, _) => { index += 1 ; "Leaf(__" ++ S(shape.dim).toInt.toString ++ ")" }
         case Graft(cell, branches, _) => {
           // Recurse on the branches, getting their string. then "plug these into" the result
           // by traversing the cells source tree.
@@ -499,7 +506,7 @@ object NCell {
 
     def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, String], tgtLbl : A) = {
 
-      val lblString = "ext " ++ cellLbl.toString ++ " (" ++ cellTreeAgdaSyntax(srcs.addrTree map (_.toAgda)) ++ ")"
+      val lblString = "ext " ++ cellLbl.toString // ++ " (" ++ cellTreeAgdaSyntax(srcs.addrTree map (_.toAgda)) ++ ")"
       val tgtString = "int " ++ tgtLbl.toString ++ " (" ++ cellTreeAgdaSyntax(srcs) ++ ")"
 
       CompositeCell(lblString, srcs, tgtString)
@@ -515,7 +522,7 @@ object NCell {
 
     def generateCell[D <: Nat : HasPred](cellLbl : A, srcs : CellTree[D#Pred, String], tgtLbl : A) = {
 
-      val lblString = "Dot(" ++ cellLbl.toString ++ ", " ++ cellTreeScalaSyntax(srcs.addrTree map (_.toScala)) ++ ")"
+      val lblString = "Dot(" ++ cellLbl.toString ++ ", __" ++ S(srcs.dimension).toInt.toString ++ ")" // ", " ++ cellTreeScalaSyntax(srcs.addrTree map (_.toScala)) ++ ")"
       val tgtString = "Box(" ++ tgtLbl.toString ++ ", " ++ cellTreeScalaSyntax(srcs) ++ ")"
 
       CompositeCell(lblString, srcs, tgtString)

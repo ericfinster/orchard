@@ -334,7 +334,7 @@ object OrchardEditor extends PopupManager(new VBox)
           case KeyCode.M => if (ev.isControlDown) onNewModule
           case KeyCode.I => if (ev.isControlDown) onImportSubstitution
           case KeyCode.V => if (ev.isControlDown) { if (ev.isShiftDown) onNewSubstInShell else onNewSubstitution }
-          // case KeyCode.X => if (ev.isControlDown) onCloseWorkspace 
+          case KeyCode.X => if (ev.isControlDown) onExtend
           case KeyCode.L => if (ev.isControlDown) onAbstract
           case KeyCode.W => if (ev.isControlDown) onCancelSubstitution
           case KeyCode.R => if (ev.isControlDown) onRename
@@ -353,18 +353,36 @@ object OrchardEditor extends PopupManager(new VBox)
       }
     })
 
+  def onExtend = 
+    for {
+      wksp <- activeWorkspace 
+      sheet <- wksp.activeSheet
+    } {
+      sheet.extend
+    }
+
   def onDumpAgda = 
     for {
       wksp <- activeWorkspace
       sheet <- wksp.activeSheet
       selectedCell <- sheet.selectionBase
     } {
-      val dumpCell : NCell[String] = selectedCell.neutralNCell map {
-        case None => "None"
-        case Some(expr) => expr.id
+      // val dumpCell : NCell[String] = selectedCell.neutralNCell map {
+      //   case None => "None"
+      //   case Some(expr) => expr.id
+      // }
+
+      import orchard.core.complex._
+
+      val dumpCell = sheet.toCell map {
+        case Positive => "pos"
+        case Negative => "neg"
+        case Neutral(None) => "(neutral nothing)"
+        case Neutral(Some(expr)) => "(neutral (just " ++ expr.id ++ "))"
       }
 
       println(NCell.agdaSyntax(dumpCell))
+
     }
 
   def onDumpScala = 
@@ -373,9 +391,19 @@ object OrchardEditor extends PopupManager(new VBox)
       sheet <- wksp.activeSheet
       selectedCell <- sheet.selectionBase
     } {
-      val dumpCell : NCell[String] = selectedCell.neutralNCell map {
-        case None => "None"
-        case Some(expr) => expr.id
+      // val dumpCell : NCell[String] = selectedCell.neutralNCell map {
+      //   case None => "None"
+      //   case Some(expr) => expr.id
+      // }
+
+
+      import orchard.core.complex._
+
+      val dumpCell = sheet.toCell map {
+        case Positive => "Positive()"
+        case Negative => "Negative()"
+        case Neutral(None) => "Neutral(None)"
+        case Neutral(Some(expr)) => "Neutral(Some(" ++ expr.id ++ "))"
       }
 
       println(NCell.scalaSyntax(dumpCell))

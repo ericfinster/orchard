@@ -20,6 +20,10 @@ import javafx.event.EventHandler
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 
+import javax.imageio.ImageIO
+import javafx.scene.SnapshotParameters
+import javafx.embed.swing.SwingFXUtils
+
 import javafx.scene.{layout => jfxsl}
 
 import orchard.core.cell._
@@ -269,6 +273,7 @@ class OrchardViewer(implicit pm : PopupManager) extends Dialog {
       def handle(ev : KeyEvent) {
         ev.getCode match {
           // case KeyCode.X => close
+          case KeyCode.W => onWrite
           case _ => ()
         }
       }
@@ -278,23 +283,25 @@ class OrchardViewer(implicit pm : PopupManager) extends Dialog {
   def onShow = ()
   def onHide = ()
 
-  // def onWrite = {
-  //   fileChooser.setTitle("Export Snapshot")
+  def onWrite = {
 
-  //   val file = fileChooser.showSaveDialog(getScene.getWindow)
+    val fc = OrchardEditor.fileChooser
+    fc.setTitle("Export Snapshot")
 
-  //   if (file != null) {
+    val file = fc.showSaveDialog(getScene.getWindow)
 
-  //     val image = viewerArea.content.head.snapshot(new SnapshotParameters, null)
+    if (file != null) {
 
-  //     try {
-  //       ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
-  //     } catch {
-  //       case e : java.io.IOException => {
-  //         println("There was an error writing to the file!.")
-  //       }
-  //     }
-  //   }
-  // }
+      val image = viewerArea.content.head.snapshot(new SnapshotParameters, null)
+
+      try {
+        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+      } catch {
+        case e : java.io.IOException => {
+          println("There was an error writing to the file!.")
+        }
+      }
+    }
+  }
 
 }
