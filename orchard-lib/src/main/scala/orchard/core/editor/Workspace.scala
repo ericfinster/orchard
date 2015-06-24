@@ -178,16 +178,12 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
     } {
       if (selectedCell.isUnicityFillable) {
 
-        // editor.withFillerIdentifier(
-        //   (fillerString => {
-        //     IdentParser(fillerString) match {
-        //       case Success(fillerIdent, _) => {
-
-        //         // TODO : Check identifier is valid
-
+        editor.withFillerIdentifier(
+          (fillerString => {
+            IdentParser(fillerString) match {
+              case Success(fillerIdent, _) => {
         //         try {
         //           val contExpr = Contraction(selectedCell.neutralNCell, ??? /* fillerIdent */)
-
         //           sheet.deselectAll
         //           val newIdx = context.extendWith(contExpr)
         //           selectedCell.item = Neutral(newIdx)
@@ -196,11 +192,13 @@ trait Workspace extends CheckableEnvironment with HasEnvironment {
         //           case e : IllegalArgumentException => println("Duplicate identifier.")
         //         }
         //       }
-        //       case _ : NoSuccess => println("Filler parse failed.")
-        //     }
-        //   }))
 
-        ???
+
+              }
+              case _ : NoSuccess => println("Filler parse failed.")
+            }
+          })
+        )
 
       } else if (selectedCell.isExposedNook) {
 

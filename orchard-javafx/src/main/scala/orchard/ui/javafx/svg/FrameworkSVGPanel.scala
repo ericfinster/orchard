@@ -171,5 +171,6 @@ class FrameworkSVGPanel(labelEngine : WebEngine, val complex : SimpleFramework, 
   var baseCell : FrameworkSVGCell = newCell(complex.baseCells(baseIndex))
 
   refreshPanelData
+
 }
 
