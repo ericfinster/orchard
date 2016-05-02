@@ -1,5 +1,12 @@
 # Orchard 
 
+## Update
+
+I am no longer working on this version of my opetopic proof system.  I have
+moved everything to a web based version to make it more easily accessible.
+The new project is called [Opetopic](http://github.com/ericfinster/opetopic).
+An (incomplete) online demonstration is available [here](http://opetopic.net).
+
 ## Description
 
 Orchard is a graphical user interface for manipulating opetopic cells.  It provides
